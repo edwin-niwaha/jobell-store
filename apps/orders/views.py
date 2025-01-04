@@ -196,10 +196,10 @@ def cart_view(request):
 def send_order_email(recipient_name, recipient_email, order_id, is_customer=True):
 
     customer_order_history_url = (
-        "https://jobellstore.up.railway.app/api/orders/order-history/"
+        "https://jobellinc.com/api/orders/order-history/"
     )
     orders_to_be_processed_url = (
-        "https://jobellstore.up.railway.app/api/orders/to-be-processed/"
+        "https://jobellinc.com/api/orders/to-be-processed/"
     )
     subject = "Your Order has been Placed" if is_customer else "New Order to Process"
 
@@ -686,7 +686,7 @@ def send_order_status_email(recipient_name, recipient_email, order_status):
     subject = f"Your Order Status Has Been Updated: {order_status}"
 
     # Link to the order history
-    order_history_url = "https://jobellstore.up.railway.app/api/orders/order-history/"
+    order_history_url = "https://jobellinc.com/api/orders/order-history/"
 
     # Stylish HTML email body
     email_body = f"""
@@ -704,7 +704,7 @@ def send_order_status_email(recipient_name, recipient_email, order_status):
 
             <p>In the meantime, feel free to explore our latest products:</p>
             <div style="text-align: center; margin: 20px 0;">
-                <a href="https://jobellstore.up.railway.app/" style="background-color: #C0392B; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 5px;">View Products</a>
+                <a href="https://jobellinc.com/" style="background-color: #C0392B; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 5px;">View Products</a>
             </div>
 
             <p>Thank you for choosing us, and we look forward to serving you again soon!</p>

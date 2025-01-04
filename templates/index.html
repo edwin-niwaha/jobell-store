@@ -80,7 +80,7 @@
                         <div class="carousel-item {% if forloop.first %}active{% endif %}">
                           <a href="{% url 'orders:product_detail' product.id %}">
                             <!-- Responsive Image -->
-                            <img src="{{ image.image.url }}" class="d-block w-100 rounded-3 img-fluid" style="max-height: 200px; object-fit: contain;" alt="{{ product.name }}" />
+                            <img src="{{ image.image.url }}" class="d-block w-100 rounded-pill img-fluid" style="max-height: 200px; object-fit: contain;" alt="{{ product.name }}" />
                           </a>
                         </div>
                       {% endfor %}

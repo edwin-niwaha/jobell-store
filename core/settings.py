@@ -18,13 +18,13 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "default_secret_key")
 # Update to False in Production
 DEBUG = False
 # DEBUG = True
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "jobellstore.up.railway.app"]
-CSRF_TRUSTED_ORIGINS = ["https://jobellstore.up.railway.app"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "jobellinc.com"]
+CSRF_TRUSTED_ORIGINS = ["https://jobellinc.com"]
 
 ############################### CORS CONFIGURATION ###############################
 
 # CORS configuration
-CORS_ALLOWED_ORIGINS = ["https://jobellstore.up.railway.app"]
+CORS_ALLOWED_ORIGINS = ["https://jobellinc.com"]
 
 ############################### APPLICATION DEFINITION ###############################
 
@@ -207,8 +207,8 @@ DJOSER = {
 ############################### GENERAL SITE SETTINGS ###############################
 
 # General site settings
-SITE_NAME = "Jobell Inc Retail"
-DOMAIN = "https://jobellstore.up.railway.app"
+SITE_NAME = "Jobell Inc"
+DOMAIN = "https://jobellinc.com"
 
 ############################### PASSWORD VALIDATION ###############################
 
