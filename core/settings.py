@@ -18,6 +18,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "default_secret_key")
 # Update to False in Production
 DEBUG = False
 # DEBUG = True
+
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "jobellinc.com"]
 CSRF_TRUSTED_ORIGINS = ["https://jobellinc.com"]
 
@@ -245,6 +246,15 @@ USE_TZ = True
 # Login and session settings
 LOGIN_REDIRECT_URL = "/"
 LOGIN_URL = "login"
+
+# Determine environment
+DJANGO_ENV = os.getenv("DJANGO_ENV", "development")
+
+# Configure Google OAuth redirect URI
+if DJANGO_ENV == "production":
+    SOCIAL_AUTH_GOOGLE_OAUTH2_REDIRECT_URI = "https://jobellinc.com/oauth/complete/google-oauth2/"
+else:
+    SOCIAL_AUTH_GOOGLE_OAUTH2_REDIRECT_URI = "http://localhost:8000/oauth/complete/google-oauth2/"
 
 
 SESSION_COOKIE_AGE = 3600  # 60 * 60 seconds = 1 hour

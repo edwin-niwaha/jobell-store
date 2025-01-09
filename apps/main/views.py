@@ -31,7 +31,7 @@ def index(request):
     # Start with all active products
     products = Product.objects.prefetch_related("images", "productvolume_set").filter(
         status="ACTIVE"
-    )
+    ).order_by("name")
 
     # Initialize counts for cart, wishlist, and orders
     cart_count = 0
