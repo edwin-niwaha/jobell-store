@@ -252,9 +252,13 @@ DJANGO_ENV = os.getenv("DJANGO_ENV", "development")
 
 # Configure Google OAuth redirect URI
 if DJANGO_ENV == "production":
-    SOCIAL_AUTH_GOOGLE_OAUTH2_REDIRECT_URI = "https://jobellinc.com/oauth/complete/google-oauth2/"
+    SOCIAL_AUTH_GOOGLE_OAUTH2_REDIRECT_URI = (
+        "https://jobellinc.com/oauth/complete/google-oauth2/"
+    )
 else:
-    SOCIAL_AUTH_GOOGLE_OAUTH2_REDIRECT_URI = "http://localhost:8000/oauth/complete/google-oauth2/"
+    SOCIAL_AUTH_GOOGLE_OAUTH2_REDIRECT_URI = (
+        "http://localhost:8000/oauth/complete/google-oauth2/"
+    )
 
 
 SESSION_COOKIE_AGE = 3600  # 60 * 60 seconds = 1 hour

@@ -45,7 +45,7 @@ class ProductVolumeForm(forms.ModelForm):
 
     class Meta:
         model = ProductVolume
-        fields = ["volume", "product_type", "cost", "price", "image"]
+        fields = ["volume", "product_type", "cost", "price", "discount_value", "image"]
         widgets = {
             "volume": forms.Select(attrs={"class": "form-control"}),
             "product_type": forms.Select(attrs={"class": "form-control"}),
@@ -77,16 +77,6 @@ class ProductVolumeForm(forms.ModelForm):
 
     def clean_image(self):
         image = self.cleaned_data.get("image")
-
-        if image:
-            image_size = image.size
-            max_size = self.MAX_IMAGE_SIZE_MB * 1024 * 1024  # Convert MB to bytes
-
-            if image_size > max_size:
-                raise forms.ValidationError(
-                    f"Image size should not exceed {self.MAX_IMAGE_SIZE_MB} MB."
-                )
-
         return image
 
     def save(self, commit=True):

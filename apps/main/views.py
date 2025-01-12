@@ -29,9 +29,11 @@ def index(request):
     form = ProductFilterForm(request.GET)
 
     # Start with all active products
-    products = Product.objects.prefetch_related("images", "productvolume_set").filter(
-        status="ACTIVE"
-    ).order_by("name")
+    products = (
+        Product.objects.prefetch_related("images", "productvolume_set")
+        .filter(status="ACTIVE")
+        .order_by("name")
+    )
 
     # Initialize counts for cart, wishlist, and orders
     cart_count = 0
@@ -77,11 +79,11 @@ def index(request):
         if min_price is not None and max_price is not None:
             products = products.filter(
                 productvolume__price__gte=min_price, productvolume__price__lte=max_price
-            )
+            ).distinct()
         elif min_price is not None:
-            products = products.filter(productvolume__price__gte=min_price)
+            products = products.filter(productvolume__price__gte=min_price).distinct()
         elif max_price is not None:
-            products = products.filter(productvolume__price__lte=max_price)
+            products = products.filter(productvolume__price__lte=max_price).distinct()
 
         # Filter by search query if provided
         if search_query:

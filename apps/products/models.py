@@ -130,12 +130,14 @@ class ProductVolume(models.Model):
     price = models.DecimalField(
         max_digits=10, decimal_places=2, verbose_name="Selling Price"
     )
-    image = CloudinaryField(
-        "product_volume_image",
-        validators=[FileExtensionValidator(allowed_extensions=["jpg", "jpeg", "png"])],
+    discount_value = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
         null=True,
         blank=True,
+        verbose_name="Discount Value",
     )
+    image = CloudinaryField("image", blank=True, null=True)
 
     class Meta:
         unique_together = ("product", "volume", "product_type")
@@ -152,6 +154,23 @@ class ProductVolume(models.Model):
 
     def __str__(self):
         return f"{self.product.name} - {self.volume.ml}ML (Cost: {self.cost}, Price: {self.price})"
+
+    def apply_discount(self):
+        """Apply the percentage discount to the price of the product volume."""
+        if self.discount_value:  # Assume all discounts are percentages
+            self.price -= self.price * self.discount_value / 100
+
+            # Ensure the price doesn't go below zero
+            self.price = max(0, self.price)
+            self.save()
+
+    def get_discounted_price(self):
+        """Get the discounted price with a percentage discount applied."""
+        discounted_price = self.price
+        if self.discount_value:  # Assume all discounts are percentages
+            discounted_price -= self.price * self.discount_value / 100
+
+        return max(0, discounted_price)
 
 
 class ProductImage(models.Model):

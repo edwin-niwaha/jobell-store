@@ -43,9 +43,11 @@
                 <th>#</th>
                 <th>Image</th>
                 <th>Type</th>
-                <th>Volume (ML)</th>
+                <th>Volume</th>
                 <th class="text-right">Cost Price</th>
                 <th class="text-right">Selling Price</th>
+                <th class="text-right">Discount</th>
+                <th class="text-right">Discounted Price</th>
                 <th colspan="2" class="print-hide">Actions</th>
               </tr>
             </thead>
@@ -64,6 +66,8 @@
                   <td>{{ product_volume.volume.ml }} ML</td>
                   <td class="text-right">{{ product_volume.cost|floatformat:'2'|intcomma }}</td>
                   <td class="text-right">{{ product_volume.price|floatformat:'2'|intcomma }}</td>
+                  <td class="text-right">{{ product_volume.discount_value|default:'0' }}%</td>
+                  <td class="text-right">{{ product_volume.get_discounted_price|floatformat:'2'|intcomma }}</td>
                   <td class="text-center print-hide">
                     <a href="{% url 'products:update_product_volume' product.id product_volume.id %}" class="text-decoration-none" onclick="return confirm('Are you sure you want to update this record?');"><button type="button" class="btn btn-warning btn-sm" data-bs-toggle="tooltip" title="Update product volume"><i class="bi bi-pencil"></i></button></a>
                   </td>
@@ -108,8 +112,9 @@
                 <th>{{ total_ml }} ML</th>
                 <th class="text-right">{{ total_cost|floatformat:'2'|intcomma }}</th>
                 <th class="text-right">{{ total_price|floatformat:'2'|intcomma }}</th>
-                <th class="print-hide"></th>
-                <th class="print-hide"></th>
+                <th class="text-right">{{ total_discount_value|floatformat:'2' }}%</th>
+                <th class="text-right">{{ total_discounted_price|floatformat:'2'|intcomma }}</th>
+                <th colspan="2" class="print-hide"></th>
               </tr>
             </tfoot>
           </table>

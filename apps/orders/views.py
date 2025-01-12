@@ -88,7 +88,7 @@ def wishlist_view(request):
     wishlist_items = Wishlist.objects.filter(user=request.user)
 
     # Paginate the wishlist items (10 items per page)
-    paginator = Paginator(wishlist_items, 12)  # Show 10 wishlist items per page
+    paginator = Paginator(wishlist_items, 12)  # Show 12 wishlist items per page
     page_number = request.GET.get(
         "page"
     )  # Get the current page number from the request
@@ -195,12 +195,8 @@ def cart_view(request):
 # =================================== checkout_view ===================================
 def send_order_email(recipient_name, recipient_email, order_id, is_customer=True):
 
-    customer_order_history_url = (
-        "https://jobellinc.com/api/orders/order-history/"
-    )
-    orders_to_be_processed_url = (
-        "https://jobellinc.com/api/orders/to-be-processed/"
-    )
+    customer_order_history_url = "https://jobellinc.com/api/orders/order-history/"
+    orders_to_be_processed_url = "https://jobellinc.com/api/orders/to-be-processed/"
     subject = "Your Order has been Placed" if is_customer else "New Order to Process"
 
     if is_customer:

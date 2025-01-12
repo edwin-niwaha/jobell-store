@@ -1,0 +1,92 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}
+  Discounted Products
+{% endblock %}
+
+{% block content %}
+  <div class="container-fluid mt-4">
+    <hr />
+    <h2 class="text-center wishlist-heading"><i class="fas fa-percent text-success"></i> Discounted Products</h2>
+    <hr />
+
+    {% if page_obj %}
+      <div class="row">
+        {% for product in page_obj %}
+          <div class="col-md-3 mb-4">
+            <div class="card shadow-sm">
+              <!-- Product Image -->
+              {% if product.default_image %}
+                <a href="{% url 'orders:product_detail' product.id %}"><img src="{{ product.default_image.image.url }}" alt="{{ product.name }}" class="d-block w-100 rounded-pill img-fluid product-image" style="max-height: 200px; object-fit: contain;" /></a>
+              {% else %}
+                <a href="{% url 'orders:product_detail' product.id %}"><img src="{% static 'images/default-product.jpg' %}" alt="Default Product Image" class="d-block w-100 rounded-pill img-fluid" style="max-height: 200px; object-fit: contain;" /></a>
+              {% endif %}
+
+              <div class="card-body">
+                <!-- Product Name -->
+                <h5 class="card-title text-center font-weight-bold" style="color: #333;">{{ product.name }}</h5>
+
+                <!-- Read More Section -->
+                <div>
+                  <button class="btn btn-outline-secondary btn-sm w-100 mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#details-{{ product.id }}" aria-expanded="false" aria-controls="details-{{ product.id }}">Read More</button>
+                  <div class="collapse" id="details-{{ product.id }}">
+                    {% for volume in product.discounted_volumes %}
+                      <div class="bg-light p-2 rounded mb-2">
+                        <p class="mb-1">
+                          <span class="badge bg-primary">Volume: {{ volume.volume.ml }}ML</span>
+                        </p>
+                        <p class="mb-1 text-muted">
+                          Original Price:<del>UgX{{ volume.price|floatformat:'2'|intcomma }}</del>
+                        </p>
+                        <p class="mb-1">
+                          <span class="text-success font-weight-bold">Discounted Price: UgX{{ volume.get_discounted_price|floatformat:'2'|intcomma }}</span>
+                        </p>
+                        <p>
+                          <span class="badge bg-danger">Discount: {{ volume.discount_value }}%</span>
+                        </p>
+                      </div>
+                    {% endfor %}
+                  </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-flex justify-content-between mt-3">
+                  <a href="{% url 'orders:product_detail' product.id %}" class="btn btn-outline-primary btn-sm" title="View Product Details"><i class="mdi mdi-eye me-1"></i> View</a>
+                  <a href="{% url 'orders:product_detail' product.id %}" class="btn btn-success btn-sm" title="Add to Cart"><i class="mdi mdi-cart me-1"></i> Add to Cart</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Pagination Controls -->
+      <div class="d-flex justify-content-center mt-4">
+        <nav>
+          <ul class="pagination">
+            {% if page_obj.has_previous %}
+              <li class="page-item">
+                <a class="page-link" href="?page=1">&laquo; First</a>
+              </li>
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+              </li>
+            {% endif %}
+            {% if page_obj.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+              </li>
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+              </li>
+            {% endif %}
+          </ul>
+        </nav>
+      </div>
+    {% else %}
+      <p class="text-center text-muted">No discounted products found. Check back later!</p>
+    {% endif %}
+  </div>
+{% endblock %}

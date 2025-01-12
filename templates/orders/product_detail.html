@@ -12,7 +12,7 @@
             {% if product.images.exists %}
               {% for image in product.images.all %}
                 <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                  <img src="{{ image.image.url }}" class="d-block w-100 product-image" style="max-height: 100vh; object-fit: contain;" alt="{{ product.name }}" />
+                  <img src="{{ image.image.url }}" class="d-block w-100 rounded-pill img-fluid product-image" style="max-height: 100vh; object-fit: contain;" alt="{{ product.name }}" />
                 </div>
               {% endfor %}
             {% else %}
@@ -57,26 +57,7 @@
                         {{ product_volume.image.url }}
                       {% else %}
                         
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-
                         /staticfiles/images/no-image.png
-
-
-
-
-
-
-
-
-
 
                       {% endif %}">{{ product_volume.product_type }} - {{ product_volume.volume.ml }} ML - Price: {{ product_volume.price|floatformat:'2'|intcomma }}</option>
                   {% endfor %}

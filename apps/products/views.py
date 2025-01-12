@@ -273,12 +273,20 @@ def product_volume_list_view(request, product_id):
     total_cost = sum(volume.cost for volume in product_volumes)
     total_price = sum(volume.price for volume in product_volumes)
 
+    # Calculate totals for discount_value and get_discounted_price
+    total_discount_value = sum(volume.discount_value for volume in product_volumes)
+    total_discounted_price = sum(
+        volume.get_discounted_price() for volume in product_volumes
+    )
+
     context = {
         "product": product,
         "product_volumes": page_obj,
         "total_ml": total_ml,
         "total_cost": total_cost,
         "total_price": total_price,
+        "total_discount_value": total_discount_value,
+        "total_discounted_price": total_discounted_price,
         "query": query,
         "paginator": paginator,
         "page_obj": page_obj,
@@ -700,3 +708,36 @@ def delete_product_image(request, pk):
     records.delete()
     messages.info(request, "Record deleted successfully!", extra_tags="bg-danger")
     return HttpResponseRedirect(reverse("products:product_images"))
+
+
+# =================================== Discounted Poducts ===================================
+def discounted_product_list_view(request):
+    # Fetch products with at least one discounted volume
+    discounted_products = Product.objects.filter(
+        productvolume__discount_value__gt=0  # Filtering products that have at least one volume with discount
+    ).distinct()
+
+    # Paginate the discounted products (12 items per page)
+    paginator = Paginator(
+        discounted_products, 12
+    )  # Show 12 discounted products per page
+    page_number = request.GET.get(
+        "page"
+    )  # Get the current page number from the request
+    page_obj = paginator.get_page(page_number)  # Get the page object
+
+    # Fetch the default image and discounted prices for each discounted product
+    for product in page_obj:
+        product.default_image = ProductImage.objects.filter(
+            product=product, is_default=True
+        ).first()
+        # Add discounted volumes to the product
+        product.discounted_volumes = ProductVolume.objects.filter(
+            product=product, discount_value__gt=0
+        )
+
+    # Pass the page object to the template
+    context = {
+        "page_obj": page_obj,
+    }
+    return render(request, "products/discounted_products.html", context)

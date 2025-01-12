@@ -65,4 +65,5 @@ urlpatterns = [
     ),
     # ** Stock Alerts **
     path("stock-alerts/", views.stock_alerts_view, name="stock_alerts"),
+    path("discounted/", views.discounted_product_list_view, name="discounted_products"),
 ]
