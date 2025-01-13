@@ -1,0 +1,47 @@
+{% extends "accounts/base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow border-0 rounded-lg">
+        <div class="card-header text-center bg-warning text-white">
+            <h3 class="font-weight-light mb-0">Your Cart</h3>
+        </div>
+        <div class="card-body">
+            {% if cart.items.exists %}
+            <div class="mb-4">
+                <h5 class="text-primary">Cart Items</h5>
+                <ul class="list-group">
+                    {% for item in cart.items.all %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">{{ item.product.name }}</h6>
+                            <small>{{ item.quantity }} @ {{ item.volume.volume.ml }}ML @ UgX
+                                {{ item.volume.price|floatformat:"2"|intcomma }} each</small>
+                        </div>
+                        <span class="badge bg-primary rounded-pill">
+                            UgX {{ item.get_total_price|floatformat:"2"|intcomma }}
+                        </span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <strong>Total Price:</strong>
+                <h5 class="text-primary mb-0">UgX {{ total_price|floatformat:"2"|intcomma }}</h5>
+            </div>
+
+            <a href="{% url 'orders:checkout' %}" class="btn btn-success btn-lg w-100">
+                <i class="bi bi-credit-card"></i> Proceed to Checkout
+            </a>
+            {% else %}
+            <div class="alert alert-info" role="alert">
+                Your cart is empty.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock content %}

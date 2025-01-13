@@ -1,0 +1,113 @@
+/* Banner Styling */
+.banner-popup {
+    top: -100px;
+    /* Hidden above the viewport initially */
+    left: -100%;
+    background: linear-gradient(to right, #00c6ff, #0072ff);
+    z-index: 1050;
+    transition: top 0.8s ease-out, left 0.8s ease-out;
+    margin-top: 45px;
+    /* Space above the banner */
+    height: 85px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    /* Add padding for content spacing */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Active state */
+.banner-popup.active {
+    top: 0;
+    /* Slides down */
+    left: 0;
+    /* Slides in from the left */
+}
+
+/* Banner content styling */
+.banner-content {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: white;
+    flex: 1;
+    /* Allow content to grow and fill available space */
+    text-align: center;
+}
+
+/* Hover effect for link */
+.banner-link {
+    color: white;
+    text-decoration: none;
+}
+
+.banner-link:hover {
+    text-decoration: none;
+    color: #ffeb3b;
+    /* Yellow on hover for better visibility */
+}
+
+/* Close Button Styling */
+#closeBanner {
+    background-color: transparent;
+    border: none;
+    font-size: 2rem;
+    color: white;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+}
+
+/* Navbar Margin Adjust */
+.navbar {
+    transition: margin-top 0.5s ease-out;
+}
+
+.navbar.banner-closed {
+    margin-top: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .banner-popup {
+        height: auto;
+        /* Allow height to adjust based on content */
+        padding: 10px;
+        /* Reduce padding */
+        flex-direction: column;
+        /* Stack content vertically */
+    }
+
+    .banner-content {
+        font-size: 1.2rem;
+        /* Adjust font size for smaller screens */
+        text-align: center;
+        /* Center text */
+    }
+
+    #closeBanner {
+        font-size: 1.5rem;
+        /* Reduce button size */
+        top: 5px;
+        /* Adjust position */
+        right: 5px;
+    }
+}
+
+@media (max-width: 480px) {
+    .banner-popup {
+        padding: 5px;
+        /* Further reduce padding for very small screens */
+    }
+
+    .banner-content {
+        font-size: 1rem;
+        /* Smaller font size for very small screens */
+    }
+
+    #closeBanner {
+        font-size: 1.2rem;
+        /* Adjust close button size */
+    }
+}

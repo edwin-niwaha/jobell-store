@@ -195,8 +195,8 @@ def cart_view(request):
 # =================================== checkout_view ===================================
 def send_order_email(recipient_name, recipient_email, order_id, is_customer=True):
 
-    customer_order_history_url = "https://jobellinc.com/api/orders/order-history/"
-    orders_to_be_processed_url = "https://jobellinc.com/api/orders/to-be-processed/"
+    customer_order_history_url = "https://jobellinc.com/orders/order-history/"
+    orders_to_be_processed_url = "https://jobellinc.com/orders/to-be-processed/"
     subject = "Your Order has been Placed" if is_customer else "New Order to Process"
 
     if is_customer:
@@ -682,7 +682,7 @@ def send_order_status_email(recipient_name, recipient_email, order_status):
     subject = f"Your Order Status Has Been Updated: {order_status}"
 
     # Link to the order history
-    order_history_url = "https://jobellinc.com/api/orders/order-history/"
+    order_history_url = "https://jobellinc.com/orders/order-history/"
 
     # Stylish HTML email body
     email_body = f"""

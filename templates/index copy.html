@@ -7,47 +7,56 @@
     <!-- Header Section -->
     <div class="row mb-4 align-items-center">
       <hr />
-      <div class="col-12 col-md-2 text-center text-md-start">
+
+      <div class="col-md-2 text-center text-md-start">
         <!-- Logo -->
         <a href="/"><img src="{% static 'images/file.png' %}" alt="Logo" class="img-fluid" style="max-height: 90px;" /></a>
       </div>
-      <div class="col-12 col-md-4 text-center text-md-start">
+      <div class="col-md-4 text-center text-md-start">
         <h5 class="mt-2">Turn your dream perfume into reality.</h5>
       </div>
-      <div class="col-12 col-md-6">
+
+      <div class="col-md-6">
         <div class="hero text-center">
-          <div class="d-flex justify-content-center gap-3 flex-wrap">
-            <!-- Wishlist Icon -->
-            <a href="{% url 'orders:wishlist' %}" title="View wishlist">
-              <i class="mdi mdi-heart-outline fs-3"></i>
-              <span class="badge badge-pill badge-danger">{{ wishlist_count|default:0 }}</span> Wishlist
-            </a>
-            <!-- Cart Icon -->
-            <a href="{% url 'orders:cart' %}" title="View Cart">
-              <i class="mdi mdi-cart fs-3"></i>
-              <span class="badge badge-pill badge-danger">{{ cart_count|default:0 }}</span> Cart
-            </a>
-            <!-- Orders Icon -->
-            <a href="{% url 'orders:customer_order_history' %}" title="View Orders">
-              <i class="mdi mdi-receipt fs-3"></i>
-              <span class="badge badge-pill badge-danger">{{ order_count|default:0 }}</span> Orders
-            </a>
+          <div class="d-flex justify-content-center gap-3">
+            <!-- Step Indicators with Line -->
+            <div class="d-flex align-items-center gap-2">
+              <!-- Wishlist Icon -->
+              <a href="{% url 'orders:wishlist' %}" title="View wishlist" class="ml-md-3 mt-3 mt-md-0"><i class="mdi mdi-heart-outline fs-3"></i></a>
+              <span class="badge badge-pill badge-danger">{{ wishlist_count|default:0 }}</span>Wishlist
+
+              <!-- Connecting Line for Step 1 to Step 2 -->
+              <div class="step-line" style="width: 30px; height: 2px; background-color: #007bff;"></div>
+
+              <!-- Cart Icon -->
+              <a href="{% url 'orders:cart' %}" title="View Cart" class="ml-md-3 mt-3 mt-md-0"><i class="mdi mdi-cart fs-3"></i></a>
+              <!-- Cart Count Badge -->
+              <span class="badge badge-pill badge-danger">{{ cart_count|default:0 }}</span>
+
+              <!-- Connecting Line for Cart to Orders -->
+              <div class="step-line" style="width: 30px; height: 2px; background-color: #007bff;"></div>
+
+              <!-- Orders Icon -->
+              <a href="{% url 'orders:customer_order_history' %}" title="View Orders" class="ml-md-3 mt-3 mt-md-0"><i class="mdi mdi-receipt fs-3"></i></a>
+              <span class="badge badge-pill badge-danger">{{ order_count|default:0 }}</span>Orders
+            </div>
           </div>
         </div>
       </div>
     </div>
     <hr />
-
     <!-- Filters and Sorting -->
     <form method="get" action="{% url 'users-home' %}" class="py-2">
       <div class="row g-3">
         <!-- Category Filter -->
-        <div class="col-12 col-sm-6 col-md-3">{{ form.category }}</div>
+        <div class="col-md-3 col-sm-6">{{ form.category }}</div>
+
         <!-- Price Range Filters -->
-        <div class="col-6 col-md-2">{{ form.min_price }}</div>
-        <div class="col-6 col-md-2">{{ form.max_price }}</div>
+        <div class="col-md-2 col-sm-6">{{ form.min_price }}</div>
+        <div class="col-md-2 col-sm-6">{{ form.max_price }}</div>
+
         <!-- Search Filter -->
-        <div class="col-12 col-md-5 d-flex">
+        <div class="col-md-5 col-sm-6 d-flex">
           <div class="me-2 w-100">{{ form.search }}</div>
           <button type="submit" class="btn btn-primary"><i class="mdi mdi-filter-outline me-2"></i>Filter</button>
         </div>
@@ -61,7 +70,7 @@
       {% if products_with_images %}
         {% for product_info in products_with_images %}
           {% with product=product_info.product images=product_info.images min_price=product_info.min_price max_price=product_info.max_price %}
-            <div class="col-6 col-sm-4 col-md-3 mb-4 product-item">
+            <div class="col-lg-3 col-md-4 col-sm-6 mb-4 product-item">
               <div class="card h-100 shadow-sm">
                 <!-- Carousel -->
                 <div id="carousel-{{ product.id }}" class="carousel slide" data-bs-ride="carousel">
@@ -69,12 +78,15 @@
                     {% if images %}
                       {% for image in images %}
                         <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                          <a href="{% url 'orders:product_detail' product.id %}"><img src="{{ image.image.url }}" class="d-block w-100 rounded img-fluid" style="max-height: 200px; object-fit: contain;" alt="{{ product.name }}" /></a>
+                          <a href="{% url 'orders:product_detail' product.id %}">
+                            <!-- Responsive Image -->
+                            <img src="{{ image.image.url }}" class="d-block w-100 rounded-pill img-fluid" style="max-height: 200px; object-fit: contain;" alt="{{ product.name }}" />
+                          </a>
                         </div>
                       {% endfor %}
                     {% else %}
                       <div class="carousel-item active">
-                        <a href="{% url 'orders:product_detail' product.id %}"><img src="{% static 'default_image.png' %}" class="d-block w-100 rounded img-fluid" style="max-height: 200px; object-fit: contain;" alt="No image available" /></a>
+                        <a href="{% url 'orders:product_detail' product.id %}"><img src="{% static 'default_image.png' %}" class="d-block w-100 rounded-3 img-fluid" style="max-height: 200px; object-fit: contain;" alt="No image available" /></a>
                       </div>
                     {% endif %}
                   </div>
@@ -102,13 +114,15 @@
     </div>
 
     <!-- Pagination Controls -->
-    <div class="pagination d-flex justify-content-center">
+    <div class="pagination">
       <span class="step-links">
         {% if page_obj.has_previous %}
           <a href="?page=1&search={{ search_query }}">&laquo; first</a>
           <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}">previous</a>
         {% endif %}
+
         <span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.</span>
+
         {% if page_obj.has_next %}
           <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}">next</a>
           <a href="?page={{ page_obj.paginator.num_pages }}&search={{ search_query }}">last &raquo;</a>

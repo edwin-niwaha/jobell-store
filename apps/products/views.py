@@ -274,9 +274,9 @@ def product_volume_list_view(request, product_id):
     total_price = sum(volume.price for volume in product_volumes)
 
     # Calculate totals for discount_value and get_discounted_price
-    total_discount_value = sum(volume.discount_value for volume in product_volumes)
+    total_discount_value = sum(volume.discount_value or 0 for volume in product_volumes)
     total_discounted_price = sum(
-        volume.get_discounted_price() for volume in product_volumes
+        volume.get_discounted_price() or 0 for volume in product_volumes
     )
 
     context = {
@@ -374,7 +374,11 @@ def delete_product_volume_view(request, volume_id):
 @admin_or_manager_or_staff_required
 def products_list_all(request):
     # Fetch products with prefetch_related for volumes and images
-    products = Product.objects.prefetch_related("productvolume_set", "images").all()
+    products = (
+        Product.objects.prefetch_related("productvolume_set", "images")
+        .all()
+        .order_by("name")
+    )
 
     # Calculate totals using inventory quantities
     total_stock = sum(
@@ -410,12 +414,14 @@ def products_list_view(request):
     page = request.GET.get("page", 1)
 
     # Filter products based on the search query
-    products = Product.objects.prefetch_related(
-        "productvolume_set", "inventory"
-    ).filter(
-        Q(name__icontains=search_query)
-        | Q(category__name__icontains=search_query)
-        | Q(supplier__name__icontains=search_query)
+    products = (
+        Product.objects.prefetch_related("productvolume_set", "inventory")
+        .filter(
+            Q(name__icontains=search_query)
+            | Q(category__name__icontains=search_query)
+            | Q(supplier__name__icontains=search_query)
+        )
+        .order_by("name")
     )
 
     # Pagination

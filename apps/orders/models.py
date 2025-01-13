@@ -45,8 +45,19 @@ class CartItem(models.Model):
     def __str__(self):
         return f"{self.product.name} - {self.volume.volume.ml}ML (x{self.quantity})"
 
+    # def get_total_price(self):
+    #     return self.volume.price * self.quantity  # Use volume's price
+
     def get_total_price(self):
-        return self.volume.price * self.quantity  # Use volume's price
+        """
+        Calculate the total price for the cart item, considering any applicable discounts.
+        """
+        if self.volume.discount_value:
+            discounted_price = self.volume.price * (
+                1 - self.volume.discount_value / 100
+            )
+            return discounted_price * self.quantity
+        return self.volume.price * self.quantity
 
 
 class Order(models.Model):
@@ -107,7 +118,9 @@ class OrderDetail(models.Model):
     order = models.ForeignKey(Order, related_name="details", on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+    price = models.DecimalField(
+        max_digits=10, decimal_places=2
+    )  # Price at the time of order
 
     @property
     def total(self):

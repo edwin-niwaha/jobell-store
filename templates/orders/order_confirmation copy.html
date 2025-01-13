@@ -1,0 +1,60 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+{% load humanize %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+  <div class="container-fluid my-3">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <!-- Order Confirmation Card -->
+        <div id="printMe" class="card shadow-sm">
+          <div class="card-header text-center bg-warning text-white">
+            <h3 class="font-weight-light mb-0">Order Confirmation</h3>
+          </div>
+          <div class="card-body">
+            <p class="text-center text-success lead mb-4">Thank you for your order!</p>
+            <ul class="list-group mb-4">
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <strong>Order ID:</strong>
+                <span>{{ order.id }}</span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <strong>Total Amount:</strong>
+                <span>{{ order.total_amount|floatformat:'2'|intcomma }}</span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <strong>Status:</strong>
+                <span>{{ order.status }}</span>
+              </li>
+              {% comment %} <li class="list-group-item d-flex justify-content-between align-items-center">
+                <strong>Payment Method:</strong>
+                <span>{{ order.payment_method }}</span>
+              </li> {% endcomment %}
+            </ul>
+
+            <!-- Order Details Section -->
+            <h4 class="mb-3">Order Details</h4>
+            <ul class="list-group">
+              {% for detail in order.details.all %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <div>
+                    <strong>{{ detail.product.name }}</strong><br />
+                    Quantity: {{ detail.quantity }}<br />
+                    Price: {{ detail.price|floatformat:'2'|intcomma }} each
+                  </div>
+                  <span class="badge bg-primary rounded-pill">{{ detail.total|floatformat:'2'|intcomma }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+        <!-- Print Button -->
+        <div class="text-center mt-3 mb-3">
+          <button class="btn btn-info btn-lg" onclick="printDiv('printMe')"><i class="mdi mdi-printer"></i> Print Order Report</button>
+          <a href="{% url 'orders:customer_order_history' %}" class="btn btn-primary btn-lg"><i class="mdi mdi-history"></i> Back to Order History</a>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

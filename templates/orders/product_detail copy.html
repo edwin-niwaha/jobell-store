@@ -56,22 +56,14 @@
                       data-image-url="{% if product_volume.image %}
                         {{ product_volume.image.url }}
                       {% else %}
-                         /staticfiles/images/no-image.png
+                        
+                        /staticfiles/images/no-image.png
 
-                      {% endif %}">
-                      {{ product_volume.product_type }} - {{ product_volume.volume.ml }} ML -{% if product_volume.discount_value %}
-                        <del class="text-muted">{{ product_volume.price|floatformat:'2'|intcomma }}</del>
-                        <span class="text-danger">{{ product_volume.get_discounted_price|floatformat:'2'|intcomma }}</span>
-                        ({{ product_volume.discount_value|floatformat:'2' }}% Off)
-                      {% else %}
-                        Price: {{ product_volume.price|floatformat:'2'|intcomma }}
-                      {% endif %}
-                    </option>
+                      {% endif %}">{{ product_volume.product_type }} - {{ product_volume.volume.ml }} ML - Price: {{ product_volume.price|floatformat:'2'|intcomma }}</option>
                   {% endfor %}
                 </select>
               </td>
             </tr>
-
             <tr>
               <th scope="row">Description</th>
               <td colspan="3">{{ product.description|safe }}</td>
