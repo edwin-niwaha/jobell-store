@@ -55,7 +55,7 @@
                       {% endif %}
                     </td> {% endcomment %}
                     <td>{{ order.customer.first_name }} {{ order.customer.last_name }}</td>
-                    <td>{{ order.customer.phone }}</td>
+                    <td>{{ order.customer.mobile }}</td>
                     <td class="text-end">{{ order.total_amount|floatformat:'2'|intcomma }}</td>
                     {% comment %} <td>
                       <button class="btn btn-success btn-sm" type="button" onclick="makePayment(

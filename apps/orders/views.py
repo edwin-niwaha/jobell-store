@@ -267,10 +267,10 @@ def checkout_view(request):
             total_amount = cart.get_total_price()
 
             # Update the customer's information from the form
-            customer.first_name = form.cleaned_data["first_name"]
-            customer.last_name = form.cleaned_data["last_name"]
-            customer.email = form.cleaned_data["email"]
-            customer.phone = form.cleaned_data["phone"]
+            # customer.first_name = form.cleaned_data["first_name"]
+            # customer.last_name = form.cleaned_data["last_name"]
+            # customer.email = form.cleaned_data["email"]
+            customer.mobile = form.cleaned_data["mobile"]
             customer.address = form.cleaned_data["address"]
             customer.save()  # Save the updated customer information
 
@@ -314,10 +314,10 @@ def checkout_view(request):
         # Prepopulate the form with existing customer data if available
         form = CheckoutForm(
             initial={
-                "first_name": customer.first_name,
-                "last_name": customer.last_name,
-                "email": customer.email,
-                "phone": customer.phone,
+                # "first_name": customer.first_name,
+                # "last_name": customer.last_name,
+                # "email": customer.email,
+                "mobile": customer.mobile,
                 "address": customer.address,
             }
         )
@@ -335,10 +335,10 @@ def process_payment(request, order_id):
     form_title = "Payment Details"
 
     # Retrieve the customer's phone number
-    phone_number = order.customer.phone
+    phone_number = order.customer.mobile
     if not phone_number:
         return JsonResponse(
-            {"error": "The customer does not have a valid phone number."}, status=400
+            {"error": "The customer does not have a valid mobile number."}, status=400
         )
 
     if request.method == "POST":
@@ -541,20 +541,6 @@ def customer_order_history_view(request):
 
 
 # =================================== all_orders_view ===================================
-# @login_required
-# @admin_or_manager_or_staff_required
-# def all_orders_view(request):
-#     status_filter = request.GET.get("status", "")
-#     if status_filter == "All" or status_filter == "":
-#         orders = Order.objects.all().order_by("-created_at")
-#     else:
-#         orders = Order.objects.filter(status=status_filter)
-
-#     context = {
-#         "orders": orders,
-#         "status_filter": status_filter,
-#     }
-#     return render(request, "orders/all_orders.html", context)
 
 
 @login_required

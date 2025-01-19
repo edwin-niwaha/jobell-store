@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+  <div class="container-fluid">
+    <div class="row mb-3">
+      <div class="col-md-12 d-flex justify-content-between align-items-center">
+        <h3 class="display-4 mb-3 text-primary fw-bold">Testimonials</h3>
+        <div class="d-flex">
+          <button title="Print" type="button" class="btn btn-success ml-2" onclick="printDiv('printMe')"><i class="mdi mdi-printer btn-icon-prepend"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DataTable -->
+    <div id="printMe" class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h3>{{ table_title|upper }}</h3>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="my-table" id="dataTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Author</th>
+                <th>Testimonial</th>
+                <th class="text-center print-hide">Status</th>
+                <th colspan="3" class="text-center print-hide">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if testimonials %}
+                {% for testimonial in testimonials %}
+                  <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ testimonial.author }}</td>
+                    <td>{{ testimonial.text }}</td>
+                    <td>
+                      {% if testimonial.approved %}
+                        <span class="badge bg-success">Approved</span>
+                      {% else %}
+                        <span class="badge bg-danger">Not Approved</span>
+                      {% endif %}
+                    </td>
+                    {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
+                      <td class="text-center print-hide">
+                        <form method="post" style="display:inline;">
+                          {% csrf_token %}
+                          <input type="hidden" name="testimonial_id" value="{{ testimonial.id }}" />
+                          {% if not testimonial.approved %}
+                            <button type="submit" name="action" value="approve" class="btn btn-success btn-sm" title="Approve"><i class="fas fa-check"></i></button>
+                          {% else %}
+                            <button type="submit" name="action" value="reject" class="btn btn-warning btn-sm" title="Reject"><i class="fas fa-times"></i></button>
+                          {% endif %}
+                        </form>
+                      </td>
+                    {% endif %}
+                  </tr>
+                {% endfor %}
+              {% else %}
+                <tr>
+                  <td colspan="7" class="text-center">No testimonials available</td>
+                </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="d-flex justify-content-between align-items-center mt-3">
+          <div>Showing {{ testimonials.start_index }} to {{ testimonials.end_index }} of {{ testimonials.paginator.count }} entries</div>
+          <nav>
+            <ul class="pagination">
+              {% if testimonials.has_previous %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ testimonials.previous_page_number }}" aria-label="Previous"><span aria-hidden="true">&laquo;</span></a>
+                </li>
+              {% else %}
+                <li class="page-item disabled">
+                  <span class="page-link">&laquo;</span>
+                </li>
+              {% endif %}
+
+              {% for page in testimonials.paginator.page_range %}
+                {% if page == testimonials.number %}
+                  <li class="page-item active">
+                    <span class="page-link">{{ page }}</span>
+                  </li>
+                {% else %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ page }}">{{ page }}</a>
+                  </li>
+                {% endif %}
+              {% endfor %}
+
+              {% if testimonials.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ testimonials.next_page_number }}" aria-label="Next"><span aria-hidden="true">&raquo;</span></a>
+                </li>
+              {% else %}
+                <li class="page-item disabled">
+                  <span class="page-link">&raquo;</span>
+                </li>
+              {% endif %}
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

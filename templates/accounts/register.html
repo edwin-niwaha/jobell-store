@@ -1,4 +1,5 @@
 {% extends 'accounts/base.html' %}
+{% load static %}
 {% block title %}
   Register Page
 {% endblock %}
@@ -35,6 +36,18 @@
                     <div class="form-group">
                       <label class="small mb-1">Last Name</label>
                       {{ form.last_name }}
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label class="small mb-1">Tel</label>
+                      {{ form.tel }}
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label class="small mb-1">Mobile</label>
+                      {{ form.mobile }}
                     </div>
                   </div>
                 </div>
@@ -82,4 +95,5 @@
       </div>
     </div>
   </div>
+  <script src="{% static 'js/phone-input.js' %}"></script>
 {% endblock %}

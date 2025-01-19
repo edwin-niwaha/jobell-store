@@ -2,101 +2,82 @@
 {% load static %}
 
 {% block content %}
-<div class="container-fluid">
+  <div class="container-fluid">
     <div class="row mb-3">
-        <div class="col-md-12 d-flex justify-content-between align-items-center">
-            <a href="{% url 'customers:customers_add' %}" class="btn btn-dark ml-2">
-                <i class="mdi mdi-plus mr-2"></i>
-                Add Customer
-            </a>
-            <div class="d-flex">
-                <button title="Print" type="button" class="btn btn-success ml-2" onclick="printDiv('printMe')">
-                    <i class="mdi mdi-printer btn-icon-prepend"></i>
-                </button>
-            </div>
+      <div class="col-md-12 d-flex justify-content-between align-items-center">
+        <a href="{% url 'customers:customers_add' %}" class="btn btn-dark ml-2">
+          <i class="mdi mdi-plus mr-2"></i>
+          Add Customer
+        </a>
+        <div class="d-flex">
+          <button title="Print" type="button" class="btn btn-success ml-2" onclick="printDiv('printMe')"><i class="mdi mdi-printer btn-icon-prepend"></i></button>
         </div>
+      </div>
     </div>
 
     <!-- DataTable -->
     <div id="printMe" class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h3>{{ table_title|upper }}</h3>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="my-table" id="dataTable">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Phone</th>
-                            <th>Address</th>
-                            <th class="print-hide" colspan="2" class="text-center">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for c in customers %}
-                        <tr>
-                            <td>{{ forloop.counter }}</td>
-                            <td>{{ c.get_full_name }}</td>
-                            <td>{{ c.email }}</td>
-                            <td>{{ c.phone }}</td>
-                            <td>{{ c.address }}</td>
-                            <td class="text-center print-hide">
-                                <!-- Update button -->
-                                <a href="{% url 'customers:customers_update' c.id %}" class="text-decoration-none"
-                                    onclick="return confirm('Are you sure you want to update this record?');">
-                                    <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="tooltip"
-                                        title="Update customer">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                </a>
-                            </td>
-                            <td class="text-center print-hide">
-                                {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
-                                <!-- Delete button and modal -->
-                                <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal"
-                                    data-bs-target="#deleteModal{{ c.id }}" title="Delete customer">
-                                    <i class="bi bi-trash"></i>
-                                </button>
+      <div class="card-header py-3">
+        <h3>{{ table_title|upper }}</h3>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="my-table" id="dataTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Tel</th>
+                <th>Mobile</th>
+                <th>Address</th>
+                <th class="print-hide" colspan="2" class="text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for c in customers %}
+                <tr>
+                  <td>{{ forloop.counter }}</td>
+                  <td>{{ c.get_full_name }}</td>
+                  <td>{{ c.email }}</td>
+                  <td>{{ c.tel }}</td>
+                  <td>{{ c.mobile }}</td>
+                  <td>{{ c.address }}</td>
+                  <td class="text-center print-hide">
+                    <!-- Update button -->
+                    <a href="{% url 'customers:customers_update' c.id %}" class="text-decoration-none" onclick="return confirm('Are you sure you want to update this record?');"><button type="button" class="btn btn-warning btn-sm" data-bs-toggle="tooltip" title="Update customer"><i class="bi bi-pencil"></i></button></a>
+                  </td>
+                  <td class="text-center print-hide">
+                    {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
+                      <!-- Delete button and modal -->
+                      <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ c.id }}" title="Delete customer"><i class="bi bi-trash"></i></button>
 
-                                <!-- Delete Modal -->
-                                <div class="modal fade" id="deleteModal{{ c.id }}" tabindex="-1"
-                                    aria-labelledby="deleteModalLabel{{ c.id }}" aria-hidden="true">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title" id="deleteModalLabel{{ c.id }}">Delete Customer
-                                                </h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                    aria-label="Close">X</button>
-                                            </div>
-                                            <div class="modal-body">
-                                                Are you sure you want to delete the customer: <h3>{{ c.get_full_name }}?
-                                                </h3>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                                    Cancel
-                                                </button>
-                                                <a href="{% url 'customers:customers_delete' c.id %}"
-                                                    class="text-decoration-none">
-                                                    <button type="button" class="btn btn-danger">Delete</button>
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-
-            </div>
+                      <!-- Delete Modal -->
+                      <div class="modal fade" id="deleteModal{{ c.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ c.id }}" aria-hidden="true">
+                        <div class="modal-dialog">
+                          <div class="modal-content">
+                            <div class="modal-header">
+                              <h5 class="modal-title" id="deleteModalLabel{{ c.id }}">Delete Customer</h5>
+                              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">X</button>
+                            </div>
+                            <div class="modal-body">
+                              Are you sure you want to delete the customer: <h3>{{ c.get_full_name }}?</h3>
+                            </div>
+                            <div class="modal-footer">
+                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                              <a href="{% url 'customers:customers_delete' c.id %}" class="text-decoration-none"><button type="button" class="btn btn-danger">Delete</button></a>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
         </div>
+      </div>
     </div>
-</div>
-{% endblock content %}
+  </div>
+{% endblock %}

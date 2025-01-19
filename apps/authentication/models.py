@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from phonenumber_field.modelfields import PhoneNumberField
 import requests
 from io import BytesIO
 from cloudinary.uploader import upload
@@ -24,6 +25,20 @@ class Profile(models.Model):
     role = models.CharField(max_length=15, choices=ROLE_CHOICES, default="guest")
     avatar = CloudinaryField("avatar", default="default.jpg")
     bio = models.TextField()
+    tel = PhoneNumberField(
+        max_length=16,
+        null=True,
+        blank=True,
+        default="+12125552368",
+        verbose_name="Telephone",
+    )
+    mobile = PhoneNumberField(
+        max_length=16,
+        null=True,
+        blank=True,
+        default="+12125552368",
+        verbose_name="Mobile",
+    )
 
     def __str__(self):
         return self.user.username

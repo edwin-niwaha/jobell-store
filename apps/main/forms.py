@@ -1,4 +1,5 @@
 from django import forms
+from .models import Testimonial
 from apps.products.models import Category
 
 
@@ -43,3 +44,13 @@ class ProductFilterForm(forms.Form):
             attrs={"placeholder": "Search by product name", "class": "form-control"}
         ),
     )
+
+
+class TestimonialForm(forms.ModelForm):
+    class Meta:
+        model = Testimonial
+        fields = ["text", "author"]
+        widgets = {
+            "text": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "author": forms.TextInput(attrs={"class": "form-control"}),
+        }

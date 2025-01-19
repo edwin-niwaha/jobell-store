@@ -5,7 +5,7 @@ from django.db.models.functions import ExtractYear
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum, FloatField, F
 from django.db.models.functions import Coalesce
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.db.models import Min, Max
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
@@ -13,6 +13,9 @@ from apps.products.models import Product, Category
 from .forms import ProductFilterForm
 from apps.sales.models import Sale
 from apps.orders.models import Cart, CartItem, Order, Wishlist
+
+from .models import Testimonial
+from .forms import TestimonialForm
 
 from apps.authentication.decorators import (
     admin_or_manager_or_staff_required,
@@ -128,6 +131,17 @@ def index(request):
             }
         )
 
+    # Handle testimonial form submission
+    testimonial_form = TestimonialForm(request.POST or None)
+    if request.method == "POST" and testimonial_form.is_valid():
+        testimonial_form.save()
+        return redirect(
+            "users-home"
+        )  # Redirect to the same page after successful form submission
+
+    # Fetch all testimonials to display in the template
+    testimonials = Testimonial.objects.filter(approved=True)
+
     # Pass the form, filtered products, and pagination to the template
     return render(
         request,
@@ -140,6 +154,8 @@ def index(request):
             "cart_count": cart_count,
             "wishlist_count": wishlist_count,
             "order_count": order_count,
+            "testimonial_form": testimonial_form,
+            "testimonials": testimonials,
         },
     )
 
@@ -274,3 +290,40 @@ def sales_data_api(request):
 
     # Return the data as JSON
     return JsonResponse(data)
+
+
+# =================================== testimonials_view ===================================
+
+
+def testimonials_view(request):
+    # Fetch all testimonials
+    testimonials_list = Testimonial.objects.all()
+
+    # Pagination setup
+    paginator = Paginator(testimonials_list, 20)  # Show 20 testimonials per page
+    page_number = request.GET.get("page")
+    testimonials = paginator.get_page(page_number)
+
+    if request.method == "POST":
+        # Handle approval or rejection of a testimonial
+        testimonial_id = request.POST.get("testimonial_id")
+        action = request.POST.get("action")
+
+        if testimonial_id:
+            testimonial = Testimonial.objects.get(id=testimonial_id)
+            if action == "approve":
+                testimonial.approved = True
+            elif action == "reject":
+                testimonial.approved = False
+            elif action == "delete":
+                testimonial.delete()
+            testimonial.save()
+
+        return redirect("testimonials")  # Redirect to the same page after action
+
+    table_title = "Testimonials Management"
+    return render(
+        request,
+        "main/testimonials.html",
+        {"testimonials": testimonials, "table_title": table_title},
+    )

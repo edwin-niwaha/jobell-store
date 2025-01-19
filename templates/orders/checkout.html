@@ -1,54 +1,51 @@
-{% extends "accounts/base.html" %}
+{% extends 'accounts/base.html' %}
 {% load static %}
 {% load humanize %}
 {% load crispy_forms_tags %}
 
 {% block content %}
-<div class="container-fluid">
+  <div class="container-fluid">
     <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card-header text-center bg-warning text-white">
-                <h3 class="font-weight-light mb-0">Checkout</h3>
-            </div>
-            <!-- Card for Checkout Form -->
-            <div class="card shadow-sm">
-                <div class="card-body p-4">
-                    <form method="post">
-                        {% csrf_token %}
-                        <!-- Render form with crispy forms -->
-                        {{ form|crispy }}
-
-                        <!-- Cart Summary -->
-                        <h3 class="mt-4 mb-3">Cart Summary</h3>
-
-                        <ul class="list-group mb-3">
-                            {% for item in cart.items.all %}
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <span>
-                                    {{ item.product.name }} - {{ item.volume.volume.ml }}ML
-                                    <small class="text-muted">(x{{ item.quantity }})</small>
-                                </span>
-                                <span
-                                    class="badge bg-primary rounded-pill">{{ item.get_total_price|floatformat:"2"|intcomma }}</span>
-                            </li>
-                            {% endfor %}
-                        </ul>
-
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <strong>Total Amount:</strong>
-                            <h4 class="text-success">{{ cart.get_total_price|floatformat:"2"|intcomma }}</h4>
-                        </div>
-
-                        <!-- Submit Button -->
-                        <div class="text-center">
-                            <button type="submit" class="btn btn-lg btn-success px-5"
-                                onclick="return confirm('Are you sure you want to proceed?') && validateForm()">Place
-                                Order</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+      <div class="col-lg-8">
+        <div class="card-header text-center bg-warning text-white">
+          <h3 class="font-weight-light mb-0">Checkout</h3>
         </div>
+        <!-- Card for Checkout Form -->
+        <div class="card shadow-sm">
+          <div class="card-body p-4">
+            <form method="post">
+              {% csrf_token %}
+              <!-- Render form with crispy forms -->
+              {{ form|crispy }}
+
+              <!-- Cart Summary -->
+              <h3 class="mt-4 mb-3">Cart Summary</h3>
+
+              <ul class="list-group mb-3">
+                {% for item in cart.items.all %}
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>
+                      {{ item.product.name }} - {{ item.volume.volume.ml }}ML
+                      <small class="text-muted">(x{{ item.quantity }})</small>
+                    </span>
+                    <span class="badge bg-primary rounded-pill">{{ item.get_total_price|floatformat:'2'|intcomma }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <strong>Total Amount:</strong>
+                <h4 class="text-success">{{ cart.get_total_price|floatformat:'2'|intcomma }}</h4>
+              </div>
+
+              <!-- Submit Button -->
+              <div class="text-center">
+                <button type="submit" class="btn btn-lg btn-success px-5" onclick="return confirm('Are you sure you want to proceed?') && validateForm()">Place Order</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
-</div>
+  </div>
 {% endblock %}

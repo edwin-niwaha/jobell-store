@@ -26,11 +26,20 @@ class Customer(models.Model):
         null=True,
         verbose_name="Email",  # Increased email length
     )
-    phone = PhoneNumberField(
+
+    tel = PhoneNumberField(
+        max_length=16,
         null=True,
         blank=True,
         default="+12125552368",
-        verbose_name="Business Telephone",
+        verbose_name="Telephone",
+    )
+    mobile = PhoneNumberField(
+        max_length=16,
+        null=True,
+        blank=True,
+        default="+12125552368",
+        verbose_name="Mobile",
     )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated at")

@@ -12,7 +12,7 @@
         <a href="/"><img src="{% static 'images/file.png' %}" alt="Logo" class="img-fluid" style="max-height: 90px;" /></a>
       </div>
       <div class="col-12 col-md-4 text-center text-md-start">
-        <h5 class="mt-2">Turn your dream perfume into reality.</h5>
+        <h5 class="mt-2 text-primary fw-bold">Turn your dream perfume into reality.</h5>
       </div>
       <div class="col-12 col-md-6">
         <div class="hero text-center">
@@ -57,6 +57,14 @@
     <hr />
 
     <!-- Products Grid -->
+    <div class="row text-center py-3 bg-light">
+      <div class="col-12">
+        <h3 class="display-4 mb-3 text-primary fw-bold">🌟 Featured Products 🌟</h3>
+        <hr />
+        <p class="lead text-secondary">Discover our top-rated perfumes, handpicked for you. See what everyone is raving about!</p>
+      </div>
+    </div>
+
     <div class="row mt-4" id="search_list">
       {% if products_with_images %}
         {% for product_info in products_with_images %}
@@ -81,12 +89,12 @@
                 </div>
                 <!-- Product Info -->
                 <div class="card-body text-center">
-                  <h5 class="card-title text-uppercase">{{ product.name }}</h5>
+                  <h5 class="card-title text-uppercase text-primary">{{ product.name }}</h5>
                   <p class="card-text">{{ product.category }} - {{ product.gender }}</p>
                   <p class="card-text">
-                    <strong>Price:</strong>
+                    <strong>UGX:</strong>
                     {% if min_price and max_price %}
-                      UgX {{ min_price|floatformat:'2'|intcomma }} - UgX {{ max_price|floatformat:'2'|intcomma }}
+                      {{ min_price|floatformat:'2'|intcomma }} - {{ max_price|floatformat:'2'|intcomma }}
                     {% else %}
                       Price not available
                     {% endif %}
@@ -115,5 +123,77 @@
         {% endif %}
       </span>
     </div>
+    <!-- Welcome Audio Section -->
+
+    <div class="mt-4 text-center">
+      <audio id="welcome-audio" src="{% static 'audio/jobell_welcome.mp3' %}" preload="auto"></audio>
+      {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
+        <button id="play-audio" class="btn btn-success">Play Welcome Message</button>
+        <button id="pause-audio" class="btn btn-danger">Pause</button>
+      {% endif %}
+    </div>
+
+    <!-- Customer Testimonials -->
+    <div class="container mt-5">
+      <div class="row text-center">
+        <div class="col-12">
+          <h3 class="display-4 mb-3 text-primary fw-bold">What Our Customers Say</h3>
+          <hr />
+          <div id="testimonial-carousel" class="carousel slide" data-bs-ride="carousel">
+            <div class="carousel-inner">
+              {% for testimonial in testimonials %}
+                <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                  <div class="testimonial-card p-5 bg-light shadow-sm rounded-3">
+                    <p class="testimonial-text fs-4 text-muted mb-3">"{{ testimonial.text }}"</p>
+                    <p class="testimonial-author fs-5 text-dark fw-bold">- {{ testimonial.author }}</p>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+            <!-- Button to add a new testimonial -->
+            <div class="text-center mt-4">
+              <button type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#addTestimonialModal">Add New Testimonial</button>
+            </div>
+            <!-- Modal for adding testimonial -->
+            <div class="modal fade" id="addTestimonialModal" tabindex="-1" aria-labelledby="addTestimonialModalLabel" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title display-4 mb-3 text-primary fw-bold" id="addTestimonialModalLabel">Add Testimonial</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+                    <form method="POST" action="{% url 'users-home' %}">
+                      {% csrf_token %}
+                      <div class="mb-3">
+                        <label for="id_text" class="form-label">Testimonial</label>
+                        {{ testimonial_form.text }}
+                      </div>
+                      <div class="mb-3">
+                        <label for="id_author" class="form-label">Author Name</label>
+                        {{ testimonial_form.author }}
+                      </div>
+                      <button type="submit" class="btn btn-primary">Submit Testimonial</button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Carousel Controls -->
+            <button class="carousel-control-prev" type="button" data-bs-target="#testimonial-carousel" data-bs-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#testimonial-carousel" data-bs-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Next</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
+  <!-- Link to External JavaScript File -->
+  <script src="{% static 'js/welcome.js' %}"></script>
+  <!-- https://ttsmp3.com/ai -->
 {% endblock %}

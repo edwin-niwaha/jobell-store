@@ -247,19 +247,6 @@ USE_TZ = True
 LOGIN_REDIRECT_URL = "/"
 LOGIN_URL = "login"
 
-# Determine environment
-DJANGO_ENV = os.getenv("DJANGO_ENV", "development")
-
-# Configure Google OAuth redirect URI
-if DJANGO_ENV == "production":
-    SOCIAL_AUTH_GOOGLE_OAUTH2_REDIRECT_URI = (
-        "https://jobellinc.com/oauth/complete/google-oauth2/"
-    )
-else:
-    SOCIAL_AUTH_GOOGLE_OAUTH2_REDIRECT_URI = (
-        "http://localhost:8000/oauth/complete/google-oauth2/"
-    )
-
 
 SESSION_COOKIE_AGE = 3600  # 60 * 60 seconds = 1 hour
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # Close session when browser closes

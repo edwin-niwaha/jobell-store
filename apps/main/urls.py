@@ -13,4 +13,5 @@ urlpatterns = [
         name="monthly_earnings_view",
     ),
     path("dashboard/sales-data/", views.sales_data_api, name="sales-data-api"),
+    path("testimonials/", views.testimonials_view, name="testimonials"),
 ]
