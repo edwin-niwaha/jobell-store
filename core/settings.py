@@ -20,7 +20,12 @@ DEBUG = False  # Update to False in Production
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "jobellinc.com"]
 CSRF_TRUSTED_ORIGINS = ["https://jobellinc.com"]
 
-# SECURE_SSL_REDIRECT = True
+SITE_URL = "https://jobellinc.com"
+
+
+SECURE_SSL_REDIRECT = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 SESSION_COOKIE_DOMAIN = ".jobellinc.com"
 CSRF_COOKIE_SECURE = True
 CSRF_COOKIE_DOMAIN = ".jobellinc.com"
