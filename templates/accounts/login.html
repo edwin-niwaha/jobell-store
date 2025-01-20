@@ -27,16 +27,16 @@
                 <div class="form-row">
                   <div class="col-md-12">
                     <div class="form-group">
-                      {% comment %} <a href="{% url 'social:begin' 'google-oauth2' %}" class="btn btn-link btn-lg active btn-block btn-danger">
+                      <a href="{% url 'social:begin' 'google-oauth2' %}" class="btn btn-link btn-lg active btn-block btn-danger">
                         <i class="fab fa-google"></i>
                         <span class="ms-2 fs-12 text-uppercase">Sign in With Google</span>
-                      </a> {% endcomment %}
+                      </a>
 
-                      <!--           <a href="{% url 'social:begin' 'github' %}"
+                      <!--              <a href="{% url 'social:begin' 'github' %}"
                                             class="btn btn-link btn-lg active btn-block btn-secondary">
                                             <i class="fab fa-github"></i>
                                             <span class="ms-2 fs-12 text-uppercase">Sign in with GitHub</span>
-                                        </a>           -->
+                                        </a>              -->
 
                       {% comment %} <a href="{% url 'social:begin' 'twitter' %}" class="btn btn-link btn-lg active btn-block btn-primary">
                         <i class="fab fa-twitter"></i>
@@ -51,12 +51,13 @@
                       </a> {% endcomment %}
 
                       {% comment %} <div class="g-signin2" data-longtitle="true" data-onsuccess="onSignIn"></div>
+                      {% endcomment %}
                       <hr />
                       <p class="text-center">
                         <strong>OR</strong>
                       </p>
                       <hr />
-                      {% endcomment %}
+
                       <label class="small mb-1">Username</label>
                       {{ form.username }}
                     </div>

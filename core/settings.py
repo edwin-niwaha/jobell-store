@@ -15,16 +15,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Security settings
 SECRET_KEY = os.environ.get("SECRET_KEY", "default_secret_key")
 
-# Update to False in Production
-DEBUG = False
-# DEBUG = True
+DEBUG = False  # Update to False in Production
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "jobellinc.com"]
 CSRF_TRUSTED_ORIGINS = ["https://jobellinc.com"]
 
-############################### CORS CONFIGURATION ###############################
+# SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_DOMAIN = ".jobellinc.com"
+CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_DOMAIN = ".jobellinc.com"
 
-# CORS configuration
+############################### CORS CONFIGURATION ###############################
 CORS_ALLOWED_ORIGINS = ["https://jobellinc.com"]
 
 ############################### APPLICATION DEFINITION ###############################

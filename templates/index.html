@@ -9,7 +9,7 @@
       <hr />
       <div class="col-12 col-md-2 text-center text-md-start">
         <!-- Logo -->
-        <a href="/"><img src="{% static 'images/file.png' %}" alt="Logo" class="img-fluid" style="max-height: 90px;" /></a>
+        <a href="/"><img src="{% static 'images/file.png' %}" alt="Logo" class="img-fluid disable-right-click" style="max-height: 90px;" /></a>
       </div>
       <div class="col-12 col-md-4 text-center text-md-start">
         <h5 class="mt-2 text-primary fw-bold">Turn your dream perfume into reality.</h5>
@@ -77,12 +77,12 @@
                     {% if images %}
                       {% for image in images %}
                         <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                          <a href="{% url 'orders:product_detail' product.id %}"><img src="{{ image.image.url }}" class="d-block w-100 rounded img-fluid" style="max-height: 200px; object-fit: contain;" alt="{{ product.name }}" /></a>
+                          <a href="{% url 'orders:product_detail' product.id %}"><img src="{{ image.image.url }}" class="d-block w-100 rounded img-fluid disable-right-click" style="max-height: 200px; object-fit: contain;" alt="{{ product.name }}" /></a>
                         </div>
                       {% endfor %}
                     {% else %}
                       <div class="carousel-item active">
-                        <a href="{% url 'orders:product_detail' product.id %}"><img src="{% static 'default_image.png' %}" class="d-block w-100 rounded img-fluid" style="max-height: 200px; object-fit: contain;" alt="No image available" /></a>
+                        <a href="{% url 'orders:product_detail' product.id %}"><img src="{% static 'default_image.png' %}" class="d-block w-100 rounded img-fluid disable-right-click" style="max-height: 200px; object-fit: contain;" alt="No image available" /></a>
                       </div>
                     {% endif %}
                   </div>
@@ -127,10 +127,8 @@
 
     <div class="mt-4 text-center">
       <audio id="welcome-audio" src="{% static 'audio/jobell_welcome.mp3' %}" preload="auto"></audio>
-      {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
-        <button id="play-audio" class="btn btn-success">Play Welcome Message</button>
-        <button id="pause-audio" class="btn btn-danger">Pause</button>
-      {% endif %}
+      {% comment %} <button id="play-audio" class="btn btn-success">Play Welcome Message</button>
+      <button id="pause-audio" class="btn btn-danger">Pause</button> {% endcomment %}
     </div>
 
     <!-- Customer Testimonials -->

@@ -18,3 +18,10 @@ document.addEventListener('DOMContentLoaded', function () {
         audio.pause()
     })
 })
+
+// Disable right-click on images
+document.querySelectorAll('.disable-right-click').forEach(function (image) {
+    image.addEventListener('contextmenu', function (event) {
+        event.preventDefault();
+    });
+});
