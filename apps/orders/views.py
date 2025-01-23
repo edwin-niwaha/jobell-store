@@ -7,7 +7,7 @@ from django.conf import settings
 from django.contrib import messages
 import requests
 import uuid
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 import logging
 import base64
 from django.core.paginator import Paginator
@@ -106,34 +106,23 @@ def wishlist_view(request):
 
 
 # =================================== remove_from_wishlist ===================================
-@login_required
-def remove_from_wishlist(request, product_id):
-    # Get the wishlist item to remove
-    wishlist_item = get_object_or_404(
-        Wishlist, user=request.user, product_id=product_id
-    )
-
-    # Remove the item from the wishlist
-    wishlist_item.delete()
-
-    # Redirect back to the wishlist view
-    return redirect("orders:wishlist")
-
-
-from django.http import HttpResponse
-
 
 @login_required
 def remove_from_wishlist(request, product_id):
     try:
         # Try to get the wishlist item for the logged-in user
         wishlist_item = Wishlist.objects.get(user=request.user, product_id=product_id)
+
         # Remove the item from the wishlist
         wishlist_item.delete()
+        
+        messages.success(request, "Product has been removed from your wishlist.")
         return redirect("orders:wishlist")
+    
     except Wishlist.DoesNotExist:
-        # If the item doesn't exist in the wishlist, return a message or redirect
-        return HttpResponse("Product not found in your wishlist.", status=404)
+        # If the item doesn't exist in the wishlist for the user, return a message
+        messages.error(request, "Product not found in your wishlist.")
+        return redirect("orders:wishlist")
 
 
 # =================================== add_to_cart ===================================
