@@ -3,6 +3,7 @@
 {% load humanize %}
 
 {% block content %}
+  <link rel="stylesheet" href="{% static 'css/product_hoover.css' %}" />
   <div class="container-fluid py-4">
     <!-- Header Section -->
     <div class="row mb-4 align-items-center">
@@ -70,22 +71,26 @@
         {% for product_info in products_with_images %}
           {% with product=product_info.product images=product_info.images min_price=product_info.min_price max_price=product_info.max_price %}
             <div class="col-6 col-sm-4 col-md-3 mb-4 product-item">
-              <div class="card h-100 shadow-sm">
+              <div class="card h-100 shadow-sm position-relative">
                 <!-- Carousel -->
                 <div id="carousel-{{ product.id }}" class="carousel slide" data-bs-ride="carousel">
                   <div class="carousel-inner">
                     {% if images %}
                       {% for image in images %}
                         <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                          <a href="{% url 'orders:product_detail' product.id %}"><img src="{{ image.image.url }}" class="d-block w-100 rounded img-fluid disable-right-click" style="max-height: 200px; object-fit: contain;" alt="{{ product.name }}" /></a>
+                          <img src="{{ image.image.url }}" class="d-block w-100 rounded img-fluid disable-right-click" style="max-height: 200px; object-fit: contain;" alt="{{ product.name }}" />
                         </div>
                       {% endfor %}
                     {% else %}
                       <div class="carousel-item active">
-                        <a href="{% url 'orders:product_detail' product.id %}"><img src="{% static 'default_image.png' %}" class="d-block w-100 rounded img-fluid disable-right-click" style="max-height: 200px; object-fit: contain;" alt="No image available" /></a>
+                        <img src="{% static 'default_image.png' %}" class="d-block w-100 rounded img-fluid disable-right-click" style="max-height: 200px; object-fit: contain;" alt="No image available" />
                       </div>
                     {% endif %}
                   </div>
+                </div>
+                <!-- Hover View Product Details -->
+                <div class="hover-overlay">
+                  <a class="btn btn-primary btn-sm" href="{% url 'orders:product_detail' product.id %}">View Product Details</a>
                 </div>
                 <!-- Product Info -->
                 <div class="card-body text-center">

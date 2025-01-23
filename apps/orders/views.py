@@ -120,6 +120,22 @@ def remove_from_wishlist(request, product_id):
     return redirect("orders:wishlist")
 
 
+from django.http import HttpResponse
+
+
+@login_required
+def remove_from_wishlist(request, product_id):
+    try:
+        # Try to get the wishlist item for the logged-in user
+        wishlist_item = Wishlist.objects.get(user=request.user, product_id=product_id)
+        # Remove the item from the wishlist
+        wishlist_item.delete()
+        return redirect("orders:wishlist")
+    except Wishlist.DoesNotExist:
+        # If the item doesn't exist in the wishlist, return a message or redirect
+        return HttpResponse("Product not found in your wishlist.", status=404)
+
+
 # =================================== add_to_cart ===================================
 @login_required
 def add_to_cart(request, product_id):
