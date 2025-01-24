@@ -55,6 +55,12 @@
                           {% endif %}
                         </form>
                       </td>
+                      <td class="text-center print-hide">
+                        <a href="{% url 'testimonial_update' testimonial.id %}" class="btn btn-primary btn-sm" title="Update"><i class="fas fa-edit"></i></a>
+                      </td>
+                      <td class="text-center print-hide">
+                        <a href="{% url 'testimonial_delete' testimonial.id %}" class="btn btn-danger btn-sm" title="Delete" onclick="return confirm('Are you sure you want to delete this testimonial?');"><i class="fas fa-trash"></i></a>
+                      </td>
                     {% endif %}
                   </tr>
                 {% endfor %}

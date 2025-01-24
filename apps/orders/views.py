@@ -107,22 +107,25 @@ def wishlist_view(request):
 
 # =================================== remove_from_wishlist ===================================
 
-@login_required
-def remove_from_wishlist(request, product_id):
-    try:
-        # Try to get the wishlist item for the logged-in user
-        wishlist_item = Wishlist.objects.get(user=request.user, product_id=product_id)
 
-        # Remove the item from the wishlist
-        wishlist_item.delete()
-        
-        messages.success(request, "Product has been removed from your wishlist.")
-        return redirect("orders:wishlist")
-    
+@login_required
+def remove_from_wishlist(request, wishlist_item_id):
+    # Log the wishlist item ID to ensure it's being passed correctly
+    print(f"Wishlist Item ID passed: {wishlist_item_id}")
+
+    try:
+        # Check if the wishlist item exists for the logged-in user
+        wishlist_item = Wishlist.objects.get(id=wishlist_item_id, user=request.user)
+        print(f"Wishlist item found: {wishlist_item.product.name}")
     except Wishlist.DoesNotExist:
-        # If the item doesn't exist in the wishlist for the user, return a message
         messages.error(request, "Product not found in your wishlist.")
         return redirect("orders:wishlist")
+
+    # Remove the wishlist item
+    wishlist_item.delete()
+    messages.success(request, "Product has been removed from your wishlist.")
+
+    return redirect("orders:wishlist")
 
 
 # =================================== add_to_cart ===================================

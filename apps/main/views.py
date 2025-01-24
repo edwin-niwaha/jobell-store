@@ -5,7 +5,8 @@ from django.db.models.functions import ExtractYear
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum, FloatField, F
 from django.db.models.functions import Coalesce
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
 from django.db.models import Min, Max
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
@@ -327,3 +328,47 @@ def testimonials_view(request):
         "main/testimonials.html",
         {"testimonials": testimonials, "table_title": table_title},
     )
+
+
+# =================================== update_testimonial ===================================
+@login_required
+@admin_or_manager_or_staff_required
+def testimonial_update(request, pk):
+    testimonial = get_object_or_404(Testimonial, pk=pk)
+
+    if request.method == "POST":
+        form = TestimonialForm(request.POST, instance=testimonial)
+        if form.is_valid():
+            form.save()
+            return redirect("testimonials")  # Redirect to the testimonials list page
+    else:
+        form = TestimonialForm(instance=testimonial)
+
+        # Add 'form_title' to the context
+    context = {
+        "form": form,
+        "testimonial": testimonial,
+        "form_title": "Update Testimonial",  # Title for the form
+    }
+
+    return render(request, "main/testimonial_update.html", context)
+
+
+# =================================== delete_testimonial ===================================
+@login_required
+@admin_or_manager_or_staff_required
+def testimonial_delete(request, pk):
+    testimonial = get_object_or_404(Testimonial, pk=pk)
+
+    try:
+        testimonial.delete()
+        messages.success(
+            request, "Testimonial deleted successfully.", extra_tags="bg-danger"
+        )
+    except Exception as e:
+        messages.error(
+            request, "There was an error during the deletion!", extra_tags="bg-danger"
+        )
+        print(e)
+
+    return redirect("testimonials")

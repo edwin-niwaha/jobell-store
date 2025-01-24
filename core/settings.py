@@ -19,23 +19,20 @@ DEBUG = False  # Update to False in Production
 
 # Base domain and site configuration
 SITE_NAME = "Jobell Inc"
-DOMAIN = "jobellinc.com"
-SITE_URL = f"https://{DOMAIN}"
+BASE_DOMAIN = "jobellinc.com"
+SITE_URL = f"https://{BASE_DOMAIN}"
 
 # Allowed hosts and trusted origins
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", DOMAIN]
-CSRF_TRUSTED_ORIGINS = [SITE_URL]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", BASE_DOMAIN]
+CSRF_TRUSTED_ORIGINS = ["https://jobellinc.com", "http://localhost", "http://127.0.0.1"]
+
 
 # Security settings --comment in dev
 SECURE_SSL_REDIRECT = True  # Redirect HTTP to HTTPS
-SECURE_PROXY_SSL_HEADER = (
-    "HTTP_X_FORWARDED_PROTO",
-    "https",
-)  # Trust proxy's HTTPS header
-
-# CSRF_COOKIE_SECURE = True  # Secure CSRF cookies
-SESSION_COOKIE_DOMAIN = f".{DOMAIN}"  # Domain for session cookies
-CSRF_COOKIE_DOMAIN = f".{DOMAIN}"  # Domain for CSRF cookies
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO","https",)  # Trust proxy's HTTPS header
+CSRF_COOKIE_SECURE = True  # Secure CSRF cookies
+SESSION_COOKIE_DOMAIN = f".{BASE_DOMAIN}"  # Domain for session cookies
+CSRF_COOKIE_DOMAIN = f".{BASE_DOMAIN}"  # Domain for CSRF cookies
 
 # CORS configuration
 CORS_ALLOWED_ORIGINS = [SITE_URL]

@@ -3,7 +3,6 @@
 {% load humanize %}
 
 {% block content %}
-  <link rel="stylesheet" href="{% static 'css/product_hoover.css' %}" />
   <div class="container-fluid py-4">
     <!-- Header Section -->
     <div class="row mb-4 align-items-center">
@@ -21,17 +20,19 @@
             <!-- Wishlist Icon -->
             <a href="{% url 'orders:wishlist' %}" title="View wishlist">
               <i class="mdi mdi-heart-outline fs-3"></i>
-              <span class="badge badge-pill badge-danger">{{ wishlist_count|default:0 }}</span> Wishlist
+              <span class="badge badge-pill badge-danger">{{ wishlist_count|default:0 }}</span>
             </a>
+            <span class="arrow" style="color: green;">&#8594;</span>
             <!-- Cart Icon -->
             <a href="{% url 'orders:cart' %}" title="View Cart">
               <i class="mdi mdi-cart fs-3"></i>
-              <span class="badge badge-pill badge-danger">{{ cart_count|default:0 }}</span> Cart
+              <span class="badge badge-pill badge-danger">{{ cart_count|default:0 }}</span>
             </a>
+            <span class="arrow" style="color: green;">&#8594;</span>
             <!-- Orders Icon -->
             <a href="{% url 'orders:customer_order_history' %}" title="View Orders">
               <i class="mdi mdi-receipt fs-3"></i>
-              <span class="badge badge-pill badge-danger">{{ order_count|default:0 }}</span> Orders
+              <span class="badge badge-pill badge-danger">{{ order_count|default:0 }}</span>
             </a>
           </div>
         </div>
@@ -90,7 +91,7 @@
                 </div>
                 <!-- Hover View Product Details -->
                 <div class="hover-overlay">
-                  <a class="btn btn-primary btn-sm" href="{% url 'orders:product_detail' product.id %}">View Product Details</a>
+                  <a class="btn btn-primary btn-sm" href="{% url 'orders:product_detail' product.id %}">Product Details</a>
                 </div>
                 <!-- Product Info -->
                 <div class="card-body text-center">
@@ -155,7 +156,7 @@
             </div>
             <!-- Button to add a new testimonial -->
             <div class="text-center mt-4">
-              <button type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#addTestimonialModal">Add New Testimonial</button>
+              <button type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#addTestimonialModal">Add Testimonial</button>
             </div>
             <!-- Modal for adding testimonial -->
             <div class="modal fade" id="addTestimonialModal" tabindex="-1" aria-labelledby="addTestimonialModalLabel" aria-hidden="true">

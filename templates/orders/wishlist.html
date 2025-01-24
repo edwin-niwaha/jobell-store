@@ -8,27 +8,27 @@
 {% block content %}
   <div class="container-fluid mt-4">
     <hr />
-    <h2 class="text-center wishlist-heading"><i class="fas fa-heart text-danger"></i> Your Wishlist</h2> <hr />
+    <h2 class="text-center wishlist-heading mb-4"><i class="fas fa-heart text-danger"></i> Your Wishlist</h2>
+    <hr />
 
     {% if page_obj %}
       <div class="row">
         {% for item in page_obj %}
-          <div class="col-md-3 mb-4">
-            <!-- Change col-md-4 to col-md-3 for 4 items per row -->
-            <div class="card">
+          <div class="col-md-3 col-sm-6 mb-4">
+            <div class="card shadow-sm border-light rounded">
               {% if item.default_image %}
                 <img src="{{ item.default_image.image.url }}" class="card-img-top" alt="{{ item.product.name }}" style="height: 200px; object-fit: cover;" />
               {% else %}
                 <img src="{% static 'images/default-product.jpg' %}" class="card-img-top" alt="Default Product Image" style="height: 200px; object-fit: cover;" />
               {% endif %}
               <div class="card-body">
-                <h5 class="card-title">{{ item.product.name }}</h5>
+                <h5 class="card-title text-truncate" title="{{ item.product.name }}">{{ item.product.name }}</h5>
 
                 <!-- View Product Details Button with Icon -->
-                <a href="{% url 'orders:product_detail' item.product.id %}" title="View Product details" class="btn btn-primary btn-sm me-3"><i class="mdi mdi-eye me-2 fs-4"></i></a>
+                <a href="{% url 'orders:product_detail' item.product.id %}" title="View Product details" class="btn btn-primary btn-sm me-3"><i class="mdi mdi-eye me-2 fs-4"></i> View</a>
 
                 <!-- Remove from Wishlist Button with Icon -->
-                <button type="button" class="btn btn-danger btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#removeModal{{ item.id }}" title="Remove from Wishlist"><i class="mdi mdi-delete me-2 fs-4"></i></button>
+                <button type="button" class="btn btn-danger btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#removeModal{{ item.id }}" title="Remove from Wishlist"><i class="mdi mdi-delete me-2 fs-4"></i> Remove</button>
 
                 <!-- Modal -->
                 <div class="modal fade" id="removeModal{{ item.id }}" tabindex="-1" aria-labelledby="removeModalLabel{{ item.id }}" aria-hidden="true">
@@ -39,11 +39,10 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                       </div>
                       <div class="modal-body">
-                        Are you sure you want to delete the product: <h3>{{ item.product.name }}</h3>?
+                        Are you sure you want to delete the product: <h3 class="text-danger">{{ item.product.name }}</h3>?
                       </div>
                       <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <!-- Form to remove the product from the wishlist -->
                         <form action="{% url 'orders:remove_from_wishlist' item.id %}" method="post">
                           {% csrf_token %}
                           <button type="submit" class="btn btn-danger btn-sm w-100 w-md-auto">Remove</button>
@@ -59,23 +58,27 @@
       </div>
 
       <!-- Pagination Controls -->
-      <div class="pagination">
-        <span class="page-link">
-          {% if page_obj.has_previous %}
-            <a href="?page=1">&laquo; First</a>
-            <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
-          {% endif %}
-        </span>
+      <div class="d-flex justify-content-center mt-4">
+        <div class="pagination">
+          <span class="page-link">
+            {% if page_obj.has_previous %}
+              <a href="?page=1">&laquo; First</a>
+              <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+            {% endif %}
+          </span>
 
-        <span class="page-link">
-          {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}">Next</a>
-            <a href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
-          {% endif %}
-        </span>
+          <span class="page-link">
+            {% if page_obj.has_next %}
+              <a href="?page={{ page_obj.next_page_number }}">Next</a>
+              <a href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+            {% endif %}
+          </span>
+        </div>
       </div>
     {% else %}
-      <p>Your wishlist is empty. Start adding products!</p>
+      <p class="text-center mt-4">
+        Your wishlist is empty. <a href="/" class="btn btn-link">Start adding products!</a>
+      </p>
     {% endif %}
   </div>
 {% endblock %}

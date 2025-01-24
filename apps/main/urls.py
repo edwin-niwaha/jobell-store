@@ -14,4 +14,14 @@ urlpatterns = [
     ),
     path("dashboard/sales-data/", views.sales_data_api, name="sales-data-api"),
     path("testimonials/", views.testimonials_view, name="testimonials"),
+    path(
+        "testimonial/update/<int:pk>/",
+        views.testimonial_update,
+        name="testimonial_update",
+    ),
+    path(
+        "testimonials/delete/<int:pk>/",
+        views.testimonial_delete,
+        name="testimonial_delete",
+    ),
 ]

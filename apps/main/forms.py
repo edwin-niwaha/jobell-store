@@ -49,8 +49,31 @@ class ProductFilterForm(forms.Form):
 class TestimonialForm(forms.ModelForm):
     class Meta:
         model = Testimonial
-        fields = ["text", "author"]
-        widgets = {
-            "text": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
-            "author": forms.TextInput(attrs={"class": "form-control"}),
-        }
+        fields = ["text", "author", "approved"]
+
+    # Custom widgets
+    text = forms.CharField(
+        widget=forms.Textarea(
+            attrs={
+                "class": "form-control",
+                "rows": 3,
+                "maxlength": 200,
+                "placeholder": "Enter testimonial text",
+            }
+        )
+    )
+    author = forms.CharField(
+        widget=forms.TextInput(
+            attrs={"class": "form-control", "placeholder": "Enter author name"}
+        )
+    )
+    approved = forms.BooleanField(
+        required=False, widget=forms.CheckboxInput(attrs={"class": "form-check-input"})
+    )
+
+    def clean_text(self):
+        text = self.cleaned_data.get("text")
+        max_length = 200  # Set the maximum length here
+        if len(text) > max_length:
+            raise forms.ValidationError(f"Text cannot exceed {max_length} characters.")
+        return text
