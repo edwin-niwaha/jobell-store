@@ -3,10 +3,10 @@
 {% load humanize %}
 
 {% block content %}
-  <div class="container-fluid py-3">
-    <div class="card shadow-lg border-0">
-      <div class="card-header bg-primary text-white">
-        <h2 class="mb-0 text-center text-uppercase">Your Order History</h2>
+  <div class="container-fluid py-5">
+    <div class="card shadow-sm border-0 rounded-3">
+      <div class="card-header bg-primary text-white text-center">
+        <h2 class="mb-0 text-uppercase">Order History</h2>
       </div>
       <div class="card-body">
         {% if orders %}
@@ -14,14 +14,14 @@
             <table class="table table-striped table-hover table-bordered align-middle">
               <thead class="bg-secondary text-white">
                 <tr>
-                  <th>Order Id</th>
+                  <th>Order ID</th>
                   <th>Date</th>
-                  <th>Order Status</th>
-                  {% comment %} <th>Pay Status</th> {% endcomment %}
-                  <th>Customer Name</th>
-                  <th>Telephone</th>
-                  <th class="text-end">Total Amount</th>
-                  <th colspan="4" class="text-center">Action</th>
+                  <th>Status</th>
+                  <th>Payment</th>
+                  <th>Customer</th>
+                  <th>Phone</th>
+                  <th class="text-end">Total</th>
+                  <th colspan="2" class="text-center">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -46,43 +46,35 @@
                         <span class="badge bg-light text-dark">Unknown</span>
                       {% endif %}
                     </td>
-
-                    {% comment %} <td>
+                    <td>
                       {% if order.payment_status == 'paid' %}
                         <span class="badge bg-success">Paid</span>
                       {% else %}
                         <span class="badge bg-danger">Unpaid</span>
                       {% endif %}
-                    </td> {% endcomment %}
+                    </td>
                     <td>{{ order.customer.first_name }} {{ order.customer.last_name }}</td>
                     <td>{{ order.customer.mobile }}</td>
                     <td class="text-end">{{ order.total_amount|floatformat:'2'|intcomma }}</td>
-                    {% comment %} <td>
-                      <button class="btn btn-success btn-sm" type="button" onclick="makePayment(
-                                {{ order.id }},
-                                {{ order.total_amount }},
-                                '{{ order.customer.email|escapejs }}',
-                                '{{ order.customer.phone|escapejs }}',
-                                '{{ order.customer.get_full_name|escapejs }}'
-                              )">Pay Now</button>
-                    </td> {% endcomment %}
-                    {% comment %} <td>
+                    <td>
                       <a href="{% url 'orders:payment_flutter' %}" class="btn btn-success btn-sm">Pay Now</a>
-                    </td> {% endcomment %}
+                    </td>
                     <td class="text-center">
-                      <a href="{% url 'orders:order_detail_view' order.id %}" class="btn btn-info btn-sm">View Details</a>
+                      <a href="{% url 'orders:order_detail_view' order.id %}" class="btn btn-info btn-sm"><i class="mdi mdi-eye"></i> Details</a>
                     </td>
                   </tr>
                 {% empty %}
                   <tr>
-                    <td colspan="10" class="text-center">You have no orders yet.</td>
+                    <td colspan="8" class="text-center text-muted">No orders found.</td>
                   </tr>
                 {% endfor %}
               </tbody>
             </table>
           </div>
         {% else %}
-          <p class="text-center text-muted fs-4">You haven't placed any orders yet.</p>
+          <div class="text-center py-5">
+            <p class="fs-4 text-muted">You haven't placed any orders yet.</p>
+          </div>
         {% endif %}
 
         <div class="d-flex justify-content-end mt-4">
@@ -91,8 +83,7 @@
       </div>
     </div>
   </div>
-  <script src="https://checkout.flutterwave.com/v3.js"></script>
-  {% comment %} <script>
+  <script>
     function makePayment(orderId, amount, email, phone, fullName) {
       const logoUrl = '{% static "images/file.png" %}'
     
@@ -101,8 +92,8 @@
         tx_ref: `titanic-48981487343MDI0NzMx-${orderId}`,
         amount: amount,
         currency: 'UGX',
-        payment_options: 'card, mobilemoneyghana, ussd',
-        redirect_url: `http://127.0.0.1:8000/api/orders/comfirm_payment/${orderId}`,
+        payment_options: 'card, mobilemoneyuganda, ussd',
+        redirect_url: `https://jobellinc.com/orders/comfirm_payment/${orderId}`,
         meta: {
           order_id: orderId,
           consumer_mac: '92a3-912ba-1192a'
@@ -119,5 +110,6 @@
         }
       })
     }
-  </script> {% endcomment %}
+  </script>
+  <script src="https://checkout.flutterwave.com/v3.js"></script>
 {% endblock %}

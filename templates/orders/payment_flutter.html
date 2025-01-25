@@ -7,9 +7,9 @@
   <div class="container py-5">
     <div class="row justify-content-center">
       <div class="col-lg-6 col-md-8 col-sm-12">
-        <div class="card shadow-lg border-0">
+        <div class="card shadow-lg border-0 rounded-3">
           <!-- Card Header -->
-          <div class="card-header bg-success text-white text-center">
+          <div class="card-header bg-success text-white text-center rounded-top-3">
             <h4 class="fw-bold mb-0">{{ form_title|upper }}</h4>
           </div>
 
@@ -17,22 +17,24 @@
           <div class="card-body p-4">
             <form method="POST" action="https://checkout.flutterwave.com/v3/hosted/pay" onsubmit="return validatePaymentForm();">
               {% csrf_token %}
+
               <!-- Customer Name -->
               <div class="mb-3">
                 <label for="customer_name" class="form-label fw-semibold">Customer Name</label>
-                <input type="text" id="customer_name" name="customer[name]" class="form-control form-control-lg" placeholder="Enter your full name" required />
+                <input type="text" id="customer_name" name="customer[name]" class="form-control form-control-lg shadow-sm" placeholder="Enter your full name" aria-label="Customer Name" required />
               </div>
 
               <!-- Customer Email -->
               <div class="mb-3">
                 <label for="customer_email" class="form-label fw-semibold">Customer Email</label>
-                <input type="email" id="customer_email" name="customer[email]" class="form-control form-control-lg" placeholder="Enter your email" required />
+                <input type="email" id="customer_email" name="customer[email]" class="form-control form-control-lg shadow-sm" placeholder="Enter your email" aria-label="Customer Email" required />
               </div>
 
               <!-- Amount -->
               <div class="mb-3">
                 <label for="amount" class="form-label fw-semibold">Amount (UGX)</label>
-                <input type="number" id="amount" name="amount" class="form-control form-control-lg" placeholder="Enter amount" min="1" required />
+                <input type="number" id="amount" name="amount" class="form-control form-control-lg shadow-sm" placeholder="Enter amount" min="1" aria-label="Amount" required />
+                <div class="form-text text-danger d-none" id="amount-error">Please enter a valid amount greater than zero.</div>
               </div>
 
               <!-- Hidden Fields -->
@@ -43,7 +45,7 @@
 
               <!-- Submit Button -->
               <div class="d-grid mt-4">
-                <button class="btn btn-lg btn-success" type="submit" id="start-payment-button"><i class="mdi mdi-credit-card-outline"></i> Pay Now</button>
+                <button class="btn btn-lg btn-success shadow-sm" type="submit" id="start-payment-button"><i class="mdi mdi-credit-card-outline"></i> Pay Now</button>
               </div>
             </form>
           </div>
@@ -51,7 +53,7 @@
 
         <!-- Back Button -->
         <div class="text-center mt-3">
-          <a href="/" class="btn btn-link text-secondary"><i class="mdi mdi-arrow-left"></i> Continue Shopping</a>
+          <a href="/" class="btn btn-link text-secondary text-decoration-none"><i class="mdi mdi-arrow-left"></i> Continue Shopping</a>
         </div>
       </div>
     </div>
@@ -61,10 +63,14 @@
   <script>
     function validatePaymentForm() {
       const amount = document.getElementById('amount').value
+      const amountError = document.getElementById('amount-error')
+    
       if (amount <= 0) {
-        alert('Please enter a valid amount greater than zero.')
+        amountError.classList.remove('d-none')
         return false
       }
+    
+      amountError.classList.add('d-none')
       return true
     }
   </script>

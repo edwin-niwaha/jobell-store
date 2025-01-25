@@ -55,7 +55,7 @@ class ProductVolumeForm(forms.ModelForm):
         self.product = kwargs.pop("product", None)
         super().__init__(*args, **kwargs)
         # Dynamically populate the volume choices
-        self.fields["volume"].queryset = Volume.objects.all().order_by("volume")
+        self.fields["volume"].queryset = Volume.objects.all().order_by("ml")
 
     def clean(self):
         cleaned_data = super().clean()
