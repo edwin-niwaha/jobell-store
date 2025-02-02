@@ -28,14 +28,14 @@ CSRF_TRUSTED_ORIGINS = ["https://jobellinc.com", "http://localhost", "http://127
 
 
 # Security settings --comment in dev
-# SECURE_SSL_REDIRECT = True  # Redirect HTTP to HTTPS
-# SECURE_PROXY_SSL_HEADER = (
-#     "HTTP_X_FORWARDED_PROTO",
-#     "https",
-# )  # Trust proxy's HTTPS header
-# CSRF_COOKIE_SECURE = True  # Secure CSRF cookies
-# SESSION_COOKIE_DOMAIN = f".{BASE_DOMAIN}"  # Domain for session cookies
-# CSRF_COOKIE_DOMAIN = f".{BASE_DOMAIN}"  # Domain for CSRF cookies
+SECURE_SSL_REDIRECT = True  # Redirect HTTP to HTTPS
+SECURE_PROXY_SSL_HEADER = (
+    "HTTP_X_FORWARDED_PROTO",
+    "https",
+)  # Trust proxy's HTTPS header
+CSRF_COOKIE_SECURE = True  # Secure CSRF cookies
+SESSION_COOKIE_DOMAIN = f".{BASE_DOMAIN}"  # Domain for session cookies
+CSRF_COOKIE_DOMAIN = f".{BASE_DOMAIN}"  # Domain for CSRF cookies
 
 # CORS configuration
 CORS_ALLOWED_ORIGINS = [SITE_URL]
