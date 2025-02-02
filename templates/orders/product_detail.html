@@ -17,7 +17,7 @@
               {% endfor %}
             {% else %}
               <div class="carousel-item active">
-                <img src="{% static 'default_product_image.jpg' %}" class="d-block w-100 product-image" style="max-height: 100vh; object-fit: contain;" alt="No image available" />
+                <img src="{% static 'images/no-image.png' %}" class="d-block w-100 product-image" style="max-height: 100vh; object-fit: contain;" alt="No image available" />
               </div>
             {% endif %}
           </div>
@@ -58,7 +58,6 @@
                       {% else %}
                         
                          /staticfiles/images/no-image.png
-
 
                       {% endif %}">
                       {{ product_volume.product_type }} - {{ product_volume.volume.ml }} ML -{% if product_volume.discount_value %}

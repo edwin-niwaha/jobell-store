@@ -328,3 +328,7 @@ def validate_user_feedback(request, contact_id):
 
 def about_us(request):
     return render(request, "accounts/about_us.html")
+
+
+def privacy_policy(request):
+    return render(request, "accounts/privacy_policy.html")

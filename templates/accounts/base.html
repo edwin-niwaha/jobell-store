@@ -53,6 +53,11 @@
       .product-image {
         border-radius: 15px; /* Apply rounded corners to images */
       }
+      .footer-item {
+        font-family: 'Times New Roman', serif;
+        color: whitesmoke;
+        text-decoration: none;
+      }
     </style>
   </head>
 
@@ -68,6 +73,7 @@
       {% include '_partials/messages.html' %}
     {% endblock %}
     <!-- =============== Messages End ================= -->
+    {% include '_partials/cookies.html' %}
 
     <!-- Content -->
     <div class="container-fluid">
@@ -104,6 +110,8 @@
       <script src="{% static 'js/print.js' %}"></script>
       <!-- JavaScript for Quantity Control -->
       <script src="{% static 'js/cart.js' %}"></script>
+
+      <script src="{% static 'js/cookies.js' %}"></script>
     {% endblock %}
   </body>
 </html>

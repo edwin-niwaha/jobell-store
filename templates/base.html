@@ -25,6 +25,7 @@
         }
       }
     </style>
+    <!-- Styles -->
 
     <!-- Additional Stylesheets -->
     <link rel="stylesheet" href="{% static 'css/htmx_table.css' %}" /> <!-- HTMX Data tables CSS -->
@@ -77,12 +78,10 @@
           <div class="content-wrapper pb-0">
             <!-- Messages -->
             {% include '_partials/messages.html' %}
-
             {% block content %}
 
             {% endblock %}
           </div>
-
           <!-- Footer -->
           {% include '_partials/dash_footer.html' %}
         </div>

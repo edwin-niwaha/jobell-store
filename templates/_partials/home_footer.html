@@ -5,35 +5,32 @@
     <div class="row">
       <div class="col-sm-12 col-md-6">
         <h6>About</h6>
+        <hr />
         <p class="text-justify">Welcome to Jobell Inc, your ultimate destination for exquisite scents that elevate your spirit and enhance your unique identity. At Jobell, we believe that fragrance is not just a scent; it's an experience, a memory, and a reflection of your personality.</p>
       </div>
 
       <div class="col-xs-6 col-md-3">
         <h6>Products/Services</h6>
+        <hr />
         <ul class="footer-links">
-          <li>
-            <a href="#">Perfumes</a>
-          </li>
-          <li>
-            <a href="#">Home Fragrances</a>
-          </li>
-          <li>
-            <a href="#">Skin and Body Products</a>
-          </li>
+          <li class="footer-item">Perfumes</li>
+          <li class="footer-item">Home Fragrances</li>
+          <li class="footer-item">Skin and Body Products</li>
         </ul>
       </div>
 
       <div class="col-xs-6 col-md-3">
         <h6>Quick Links</h6>
+        <hr />
         <ul class="footer-links">
           <li>
-            <a href="{% url 'about_us' %}">About Us</a>
+            <a class="footer-item" href="{% url 'about_us' %}">About Us</a>
           </li>
           <li>
-            <a href="{% url 'contact_us' %}">Contact Us</a>
+            <a class="footer-item" href="{% url 'contact_us' %}">Contact Us</a>
           </li>
           <li>
-            <a href="#">Career Opportunities</a>
+            <a class="footer-item" href="{% url 'privacy_policy' %}">Privacy Policy</a>
           </li>
         </ul>
       </div>
@@ -45,7 +42,8 @@
     <div class="row">
       <div class="col-md-8 col-sm-6 col-xs-12">
         <p class="copyright-text">
-          Copyright &copy; <span id="year"></span> | All Rights Reserved by Jobell Inc | Crafted by <a target="_blank" href="https://perpetualict.com/" class="creator-link" style="font-family: 'Brush Script MT', cursive; color: whitesmoke; text-decoration: none;">Perpetual ICT Solutions</a>
+          Copyright &copy; <span id="year"></span> | All Rights Reserved by Jobell Inc | Crafted by
+          <a target="_blank" href="https://perpetualict.com/" class="creator-link" style="font-family: 'Brush Script MT', cursive; color: whitesmoke; text-decoration: none;">Perpetual ICT Solutions</a>
         </p>
         <script>
           // Automatically display the current year
