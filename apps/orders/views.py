@@ -40,7 +40,7 @@ def product_detail(request, id):
     cart_count = sum(item.quantity for item in cart_items)
 
     # Fetch volumes specific to this product
-    product_volumes = ProductVolume.objects.filter(product=product)
+    product_volumes = ProductVolume.objects.filter(product=product).order_by("volume__ml")
 
     context = {
         "product": product,

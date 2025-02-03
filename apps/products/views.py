@@ -254,7 +254,7 @@ def product_volume_list_view(request, product_id):
 
     # Search functionality
     query = request.GET.get("q", "")
-    product_volumes = ProductVolume.objects.filter(product=product)
+    product_volumes = ProductVolume.objects.filter(product=product).order_by("volume__ml")
     if query:
         product_volumes = product_volumes.filter(
             Q(product_type__icontains=query)
@@ -264,7 +264,7 @@ def product_volume_list_view(request, product_id):
         )
 
     # Pagination
-    paginator = Paginator(product_volumes, 10)  # 10 items per page
+    paginator = Paginator(product_volumes, 20)  # 20 items per page
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 

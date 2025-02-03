@@ -14,6 +14,8 @@ from apps.products.models import Product, Category
 from .forms import ProductFilterForm
 from apps.sales.models import Sale
 from apps.orders.models import Cart, CartItem, Order, Wishlist
+from apps.customers.models import Customer
+from django.db.models import Sum 
 
 from .models import Testimonial
 from .forms import TestimonialForm
@@ -45,28 +47,41 @@ def index(request):
     order_count = 0
 
     # Fetch the user's cart and calculate the cart count only if the user is authenticated
+    # if request.user.is_authenticated:
+    #     # Ensure the user is a Customer instance (if needed)
+    #     customer = None
+    #     if hasattr(request.user, "customer"):
+    #         customer = (
+    #             request.user.customer
+    #         )  # Assuming a one-to-one relationship between User and Customer
+
+    #     # Get or create the user's cart
+    #     cart, created = Cart.objects.get_or_create(user=request.user)
+    #     cart_items = CartItem.objects.filter(cart=cart)
+    #     cart_count = sum(item.quantity for item in cart_items)
+
+    #     # Fetch the user's wishlist count
+    #     wishlist_count = Wishlist.objects.filter(user=request.user).count()
+
+    #     # Fetch the user's order count
+    #     # If Order model expects a Customer instance, ensure we're using the Customer instance
+    #     if customer:
+    #         order_count = Order.objects.filter(customer=customer).count()
+    #     else:
+    #         order_count = 0  # If there's no customer instance, handle accordingly
+
     if request.user.is_authenticated:
-        # Ensure the user is a Customer instance (if needed)
-        customer = None
-        if hasattr(request.user, "customer"):
-            customer = (
-                request.user.customer
-            )  # Assuming a one-to-one relationship between User and Customer
+        customer = getattr(request.user, "customer", None)
 
         # Get or create the user's cart
-        cart, created = Cart.objects.get_or_create(user=request.user)
-        cart_items = CartItem.objects.filter(cart=cart)
-        cart_count = sum(item.quantity for item in cart_items)
+        cart, _ = Cart.objects.get_or_create(user=request.user)
+        cart_count = CartItem.objects.filter(cart=cart).aggregate(total_quantity=Sum("quantity"))["total_quantity"] or 0
 
         # Fetch the user's wishlist count
         wishlist_count = Wishlist.objects.filter(user=request.user).count()
 
-        # Fetch the user's order count
-        # If Order model expects a Customer instance, ensure we're using the Customer instance
-        if customer:
-            order_count = Order.objects.filter(customer=customer).count()
-        else:
-            order_count = 0  # If there's no customer instance, handle accordingly
+        # Fetch the user's order count, ensuring a valid customer instance
+        order_count = Order.objects.filter(customer=customer).count() if customer else 0
 
     # Apply filters if the form is valid
     if form.is_valid():
