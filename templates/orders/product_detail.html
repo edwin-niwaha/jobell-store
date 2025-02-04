@@ -113,7 +113,7 @@
             {% static 'images/no-image.png' %}
           {% endif %}"
           alt="Product Image"
-          class="rounded-circle img-fluid mt-3"
+          class="rounded-circle img-fluid mt-3 disable-right-click"
           style="width: 150px; height: 150px; object-fit: cover; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);" />
       </div>
     </div>
@@ -130,6 +130,13 @@
     
       // Update the image source
       document.getElementById('volume-image').src = imageUrl
+    })
+    
+    // disable-right-click
+    document.addEventListener('contextmenu', function (e) {
+      if (e.target.classList.contains('disable-right-click')) {
+        e.preventDefault()
+      }
     })
   </script>
 {% endblock %}
