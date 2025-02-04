@@ -268,7 +268,7 @@ LOGIN_URL = "login"
 
 
 SESSION_COOKIE_AGE = 3600  # 60 * 60 seconds = 1 hour
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # Close session when browser closes
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Close session when browser closes
 
 ############################### SOCIAL AUTHENTICATION SETTINGS ###############################
 
