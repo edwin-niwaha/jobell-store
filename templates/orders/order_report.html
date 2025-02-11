@@ -89,12 +89,10 @@
               <tbody>
                 {% for detail in order.details.all %}
                   <tr>
-                    <td>{{ detail.product.name }}</td>
-                    <td>
-                      {% if detail.product.volumes.all %}
-                        {% with product_volume=detail.product.volumes.all.0 %}
-                          {{ product_volume.ml }} ML
-                        {% endwith %}
+                    <td>{{ detail.product.name }} | {{ detail.product.category }} | {{ detail.product.gender }}</td>
+                    <td class="text-center">
+                      {% if detail.product_volume %}
+                        {{ detail.product_volume.volume.ml }} ML
                       {% else %}
                         No volume specified
                       {% endif %}

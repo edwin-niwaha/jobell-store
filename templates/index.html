@@ -44,12 +44,12 @@
     <form method="get" action="{% url 'users-home' %}" class="py-2">
       <div class="row g-3">
         <!-- Category Filter -->
-        <div class="col-12 col-sm-6 col-md-3">{{ form.category }}</div>
+        <div class="col-12 col-sm-6 col-md-6">{{ form.category }}</div>
         <!-- Price Range Filters -->
-        <div class="col-6 col-md-2">{{ form.min_price }}</div>
-        <div class="col-6 col-md-2">{{ form.max_price }}</div>
+        {% comment %} <div class="col-6 col-md-2">{{ form.min_price }}</div>
+        <div class="col-6 col-md-2">{{ form.max_price }}</div> {% endcomment %}
         <!-- Search Filter -->
-        <div class="col-12 col-md-5 d-flex">
+        <div class="col-12 col-md-6 d-flex">
           <div class="me-2 w-100">{{ form.search }}</div>
           <button type="submit" class="btn btn-primary"><i class="mdi mdi-filter-outline me-2"></i>Filter</button>
         </div>
@@ -61,9 +61,9 @@
     <!-- Products Grid -->
     <div class="row text-center py-3 bg-light">
       <div class="col-12">
-        <h3 class="display-4 mb-3 text-primary fw-bold">🌟 Featured Products 🌟</h3>
+        <h2 class="display-4 mb-3 fw-bold" style="color: #926F34;">🌟 Featured Products 🌟</h2>
         <hr />
-        <p class="lead text-secondary">Discover our top-rated perfumes, handpicked for you. See what everyone is raving about!</p>
+        {% comment %} <p class="lead text-secondary">Discover our top-rated perfumes, handpicked for you. See what everyone is raving about!</p> {% endcomment %}
       </div>
     </div>
 
@@ -89,10 +89,13 @@
                     {% endif %}
                   </div>
                 </div>
+
                 <!-- Hover View Product Details -->
                 <div class="hover-overlay">
-                  <a class="btn btn-primary btn-sm" href="{% url 'orders:product_detail' product.id %}">Product Details</a>
+                  <a class="badge bg-danger position-absolute top-0 end-0 translate-middle-y py-2 px-4" href="{% url 'orders:product_details_view' product.id %}">View Details</a>
+                  <a class="btn btn-primary btn-sm" href="{% url 'orders:product_detail' product.id %}">Shop Now</a>
                 </div>
+
                 <!-- Product Info -->
                 <div class="card-body text-center">
                   <h5 class="card-title text-uppercase text-primary">{{ product.name }}</h5>
@@ -141,7 +144,7 @@
     <div class="container mt-5">
       <div class="row text-center">
         <div class="col-12">
-          <h3 class="display-4 mb-3 text-primary fw-bold">What Our Customers Say</h3>
+          <h2 class="display-4 mb-3 fw-bold" style="color: #926F34;">What Our Customers Say</h2>
           <hr />
           <div id="testimonial-carousel" class="carousel slide" data-bs-ride="carousel">
             <div class="carousel-inner">
@@ -163,7 +166,7 @@
               <div class="modal-dialog">
                 <div class="modal-content">
                   <div class="modal-header">
-                    <h5 class="modal-title display-4 mb-3 text-primary fw-bold" id="addTestimonialModalLabel">Add Testimonial</h5>
+                    <h5 class="modal-title display-4 mb-3 fw-bold" id="addTestimonialModalLabel" style="color: #926F34;">Add Testimonial</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                   </div>
                   <div class="modal-body">

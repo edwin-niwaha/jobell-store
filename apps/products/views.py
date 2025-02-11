@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db import IntegrityError
 from django.db.models import Sum, F, Q
+from collections import defaultdict
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
 from django.urls import reverse
@@ -17,6 +18,7 @@ from .forms import (
     ProductVolumeForm,
     ProductForm,
     ProductImageForm,
+    VolumeSelectionForm,
 )
 
 
@@ -192,15 +194,23 @@ def volume_list(request):
         volumes = volumes.filter(ml__icontains=search_query)
 
     # Paginate the filtered categories
-    paginator = Paginator(volumes, 25)  # Show 10 categories per page
+    paginator = Paginator(volumes, 20)  # Show 20 categories per page
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
+
+    # Calculate totals
+    total_ml = sum(volume.ml for volume in volumes)
+    total_cost = sum(volume.cost for volume in volumes)
+    total_price = sum(volume.price for volume in volumes)
 
     context = {
         "table_title": "Volumes",
         "volumes": page_obj,
         "page_obj": page_obj,
         "search_query": search_query,
+        "total_ml": total_ml,
+        "total_cost": total_cost,
+        "total_price": total_price,
     }
     return render(request, "products/volume_ml_list.html", context)
 
@@ -211,7 +221,7 @@ def volume_list(request):
 @transaction.atomic
 def volume_add_view(request):
     if request.method == "POST":
-        form = VolumeForm(request.POST)
+        form = VolumeForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()
             messages.success(
@@ -231,7 +241,7 @@ def volume_add_view(request):
 def volume_update_view(request, volume_id):
     volume = get_object_or_404(Volume, id=volume_id)
     if request.method == "POST":
-        form = VolumeForm(request.POST, instance=volume)
+        form = VolumeForm(request.POST, request.FILES, instance=volume)
         if form.is_valid():
             form.save()
             messages.success(
@@ -246,6 +256,22 @@ def volume_update_view(request, volume_id):
     )
 
 
+# =================================== volumes(ML) delete ===================================
+@login_required
+@admin_required
+@transaction.atomic
+def delete_volume_view(request, volume_id):
+    # Get the volume object or return a 404 if not found
+    volume = get_object_or_404(Volume, id=volume_id)
+
+    # Delete the volume instance
+    volume.delete()
+    messages.success(request, "Volume deleted!", extra_tags="bg-danger")
+
+    # Redirect to a page after the deletion (e.g., volume list or product page)
+    return redirect(reverse("products:volume_list"))
+
+
 # =================================== Product volumes view ===================================
 @login_required
 @admin_or_manager_or_staff_required
@@ -254,13 +280,15 @@ def product_volume_list_view(request, product_id):
 
     # Search functionality
     query = request.GET.get("q", "")
-    product_volumes = ProductVolume.objects.filter(product=product).order_by("volume__ml")
+    product_volumes = ProductVolume.objects.filter(product=product).order_by(
+        "volume__ml"
+    )
     if query:
         product_volumes = product_volumes.filter(
             Q(product_type__icontains=query)
             | Q(volume__ml__icontains=query)
-            | Q(cost__icontains=query)
-            | Q(price__icontains=query)
+            | Q(volume__cost__icontains=query)
+            | Q(volume__price__icontains=query)
         )
 
     # Pagination
@@ -270,8 +298,8 @@ def product_volume_list_view(request, product_id):
 
     # Calculate totals
     total_ml = sum(volume.volume.ml for volume in product_volumes)
-    total_cost = sum(volume.cost for volume in product_volumes)
-    total_price = sum(volume.price for volume in product_volumes)
+    total_cost = sum(volume.volume.cost for volume in product_volumes)
+    total_price = sum(volume.volume.price for volume in product_volumes)
 
     # Calculate totals for discount_value and get_discounted_price
     total_discount_value = sum(volume.discount_value or 0 for volume in product_volumes)
@@ -295,6 +323,36 @@ def product_volume_list_view(request, product_id):
 
 
 # =================================== Product volumes add view ===================================
+# @login_required
+# @admin_or_manager_or_staff_required
+# def add_product_volume_view(request, product_id):
+#     product = get_object_or_404(Product, id=product_id)
+
+#     if request.method == "POST":
+#         form = ProductVolumeForm(request.POST, request.FILES)
+#         form.product = product  # Set the product explicitly before validation
+
+#         if form.is_valid():
+#             try:
+#                 with transaction.atomic():  # Wrap the database operation in an atomic block
+#                     form.save()  # The form now handles the uniqueness check
+#                     messages.success(
+#                         request, "Record added successfully!", extra_tags="bg-success"
+#                     )
+#                     return redirect(
+#                         "products:product_volume_list", product_id=product.id
+#                     )
+#             except IntegrityError:
+#                 form.add_error(None, "An unexpected error occurred while saving.")
+#     else:
+#         form = ProductVolumeForm()
+#         form.product = product  # Set the product explicitly for the initial form
+
+#     return render(
+#         request, "products/volumes_add.html", {"form": form, "product": product}
+#     )
+
+
 @login_required
 @admin_or_manager_or_staff_required
 def add_product_volume_view(request, product_id):
@@ -305,17 +363,35 @@ def add_product_volume_view(request, product_id):
         form.product = product  # Set the product explicitly before validation
 
         if form.is_valid():
-            try:
-                with transaction.atomic():  # Wrap the database operation in an atomic block
-                    form.save()  # The form now handles the uniqueness check
-                    messages.success(
-                        request, "Record added successfully!", extra_tags="bg-success"
-                    )
-                    return redirect(
-                        "products:product_volume_list", product_id=product.id
-                    )
-            except IntegrityError:
-                form.add_error(None, "An unexpected error occurred while saving.")
+            volume = form.cleaned_data["volume"]
+            product_type = form.cleaned_data["product_type"]
+
+            # Check if ProductVolume with the same product, volume, and product type already exists
+            if ProductVolume.objects.filter(
+                product=product, volume=volume, product_type=product_type
+            ).exists():
+                form.add_error(
+                    None,
+                    "This combination of product, volume, and product type already exists.",
+                )
+            else:
+                try:
+                    with transaction.atomic():  # Wrap the database operation in an atomic block
+                        form.save()  # The form now handles the save and uniqueness check
+                        messages.success(
+                            request,
+                            "Record added successfully!",
+                            extra_tags="bg-success",
+                        )
+                        return redirect(
+                            "products:product_volume_list", product_id=product.id
+                        )
+                except IntegrityError:
+                    form.add_error(None, "An unexpected error occurred while saving.")
+        else:
+            # Form is not valid
+            messages.error(request, "Please correct the errors below.")
+
     else:
         form = ProductVolumeForm()
         form.product = product  # Set the product explicitly for the initial form
@@ -389,10 +465,14 @@ def products_list_all(request):
         products.aggregate(total_ml=Sum("productvolume__volume__ml"))["total_ml"] or 0
     )
     total_cost = (
-        products.aggregate(total_cost=Sum("productvolume__cost"))["total_cost"] or 0
+        products.aggregate(total_cost=Sum("productvolume__volume__cost"))["total_cost"]
+        or 0
     )
     total_price = (
-        products.aggregate(total_price=Sum("productvolume__price"))["total_price"] or 0
+        products.aggregate(total_price=Sum("productvolume__volume__price"))[
+            "total_price"
+        ]
+        or 0
     )
 
     context = {
@@ -436,14 +516,14 @@ def products_list_view(request):
     # Calculate totals
     total_price = (
         ProductVolume.objects.filter(product__inventory__isnull=False).aggregate(
-            total_price=Sum(F("price") * F("product__inventory__quantity"))
+            total_price=Sum(F("volume__price") * F("product__inventory__quantity"))
         )["total_price"]
         or 0
     )
 
     total_cost = (
         ProductVolume.objects.filter(product__inventory__isnull=False).aggregate(
-            total_cost=Sum(F("cost") * F("product__inventory__quantity"))
+            total_cost=Sum(F("volume__cost") * F("product__inventory__quantity"))
         )["total_cost"]
         or 0
     )
@@ -747,3 +827,174 @@ def discounted_product_list_view(request):
         "page_obj": page_obj,
     }
     return render(request, "products/discounted_products.html", context)
+
+
+# =================================== add_volume_to_all Poducts ===================================
+
+
+@login_required
+@admin_required
+def add_volume_to_all_products_view(request):
+    """Handle form submission and add a selected volume with a product type to all products."""
+    if request.method == "POST":
+        form = VolumeSelectionForm(request.POST)
+        if form.is_valid():
+            volume = form.cleaned_data["volume"]
+            product_type = form.cleaned_data["product_type"]
+            products = Product.objects.all()
+
+            product_volumes = []
+            existing_combinations = 0  # Counter for existing combinations
+
+            # Check for existing combinations to avoid duplicates
+            for product in products:
+                # Check if the combination of product, volume, and product type already exists
+                if not ProductVolume.objects.filter(
+                    product=product, volume=volume, product_type=product_type
+                ).exists():
+                    product_volumes.append(
+                        ProductVolume(
+                            product=product,
+                            volume=volume,
+                            product_type=product_type,
+                        )
+                    )
+                else:
+                    existing_combinations += (
+                        1  # Increment the counter if combination already exists
+                    )
+
+            # Bulk insert while avoiding duplicates
+            ProductVolume.objects.bulk_create(product_volumes, ignore_conflicts=True)
+
+            # Messages based on whether new records were added or not
+            if product_volumes:
+                messages.success(
+                    request,
+                    f"Successfully Added {len(product_volumes)} ProductVolume records for {volume.ml}ML ({product_type})",
+                    extra_tags="bg-success",
+                )
+            if existing_combinations > 0:
+                messages.info(
+                    request,
+                    f"Oops! {existing_combinations} ProductVolume combinations already existed and were not added.",
+                    extra_tags="bg-danger",
+                )
+
+            return redirect(
+                "products:add-volume-to-all-products"
+            )  # Redirect to prevent resubmission issues
+
+    else:
+        form = VolumeSelectionForm()
+
+    return render(
+        request,
+        "products/add_volume_all.html",
+        {
+            "form": form,
+            "form_title": "Add Volume to All Products",
+        },
+    )
+
+
+# =================================== delete_selected_volumes_view ===================================
+@login_required
+@admin_required
+def delete_selected_volumes_view(request):
+    """Delete all ProductVolume records for a selected volume and product type."""
+    if request.method == "POST":
+        form = VolumeSelectionForm(request.POST)
+        if form.is_valid():
+            volume = form.cleaned_data["volume"]
+            product_type = form.cleaned_data["product_type"]
+
+            # Delete records that match the selected volume and product type
+            deleted_count, _ = ProductVolume.objects.filter(
+                volume=volume, product_type=product_type
+            ).delete()
+
+            if deleted_count > 0:
+                messages.success(
+                    request,
+                    f"Successfully deleted {deleted_count} ProductVolume records for {volume.ml}ML ({product_type}).",
+                    extra_tags="bg-success",
+                )
+            else:
+                messages.info(
+                    request,
+                    f"No records found for {volume.ml}ML ({product_type}) to delete.",
+                    extra_tags="bg-warning",
+                )
+
+            return redirect(
+                "products:delete-selected-volumes"
+            )  # Redirect after deletion
+
+    else:
+        form = VolumeSelectionForm()
+
+    return render(
+        request,
+        "products/delete_selected_volumes.html",
+        {
+            "form": form,
+            "form_title": "Delete Selected Volume Records",
+        },
+    )
+
+
+# =================================== All product_volumes_list_view ===================================
+
+
+@login_required
+@admin_or_manager_required
+def product_volumes_list_view(request):
+    """Display all volumes for products."""
+
+    # Retrieve search query
+    search_query = request.GET.get("search", "")
+
+    # Query to get all volumes, optionally filter or order as needed
+    if search_query:
+        # Search by product name or volume size (ML)
+        volumes = ProductVolume.objects.filter(
+            Q(volume__ml__icontains=search_query)
+            | Q(product__name__icontains=search_query)
+        ).select_related("product", "volume")
+    else:
+        volumes = (
+            ProductVolume.objects.all()
+            .select_related("product", "volume")
+            .order_by("product__name", "product_type")
+        )
+
+    # Calculate totals (if necessary)
+    total_ml = sum(volume.volume.ml for volume in volumes)
+    total_cost = sum(volume.volume.cost for volume in volumes)
+    total_price = sum(volume.volume.price for volume in volumes)
+
+    # Calculate totals for discount_value and get_discounted_price
+    total_discount_value = sum(volume.discount_value or 0 for volume in volumes)
+    total_discounted_price = sum(
+        volume.get_discounted_price() or 0 for volume in volumes
+    )
+    # Pagination (if applicable)
+    paginator = Paginator(volumes, 100)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    return render(
+        request,
+        "products/product_volumes_list.html",
+        {
+            "volumes": page_obj,
+            "total_ml": total_ml,
+            "total_cost": total_cost,
+            "total_price": total_price,
+            "total_discount_value": total_discount_value,
+            "total_discounted_price": total_discounted_price,
+            "search_query": search_query,  # Pass the search query
+            "table_title": "All Product Volumes",
+        },
+    )

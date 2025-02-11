@@ -4,6 +4,7 @@ from django.utils import timezone
 from apps.products.models import Product, ProductVolume
 from apps.customers.models import Customer
 from django.contrib.auth.models import User
+from django.utils.functional import cached_property
 
 
 class Cart(models.Model):
@@ -53,11 +54,11 @@ class CartItem(models.Model):
         Calculate the total price for the cart item, considering any applicable discounts.
         """
         if self.volume.discount_value:
-            discounted_price = self.volume.price * (
+            discounted_price = self.volume.volume.price * (
                 1 - self.volume.discount_value / 100
             )
             return discounted_price * self.quantity
-        return self.volume.price * self.quantity
+        return self.volume.volume.price * self.quantity
 
 
 class Order(models.Model):
@@ -117,14 +118,32 @@ class Order(models.Model):
 class OrderDetail(models.Model):
     order = models.ForeignKey(Order, related_name="details", on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product_volume = models.ForeignKey(ProductVolume, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
     price = models.DecimalField(
         max_digits=10, decimal_places=2
-    )  # Price at the time of order
+    )  # Original price at the time of order
+    discounted_price = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True
+    )  # Store discounted price
 
     @property
     def total(self):
-        return self.quantity * self.price
+        """Calculates total using the discounted price if available"""
+        return self.quantity * (
+            self.discounted_price if self.discounted_price else self.price
+        )
+
+    @cached_property
+    def has_discount(self):
+        """Check if the item had a discount when ordered"""
+        return self.discounted_price is not None and self.discounted_price < self.price
+
+    def save(self, *args, **kwargs):
+        # Automatically use the ProductVolume's discounted price for the order detail
+        if not self.discounted_price and self.product_volume.discount_value:
+            self.discounted_price = self.product_volume.get_discounted_price()
+        super().save(*args, **kwargs)
 
 
 class Wishlist(models.Model):

@@ -13,7 +13,7 @@
           </button>
         </a>
         <div class="d-flex">
-          <a href="{% url 'products:add_product_volume' product.id %}" class="btn btn-success ml-3 font-weight-bold"><i class="mdi mdi-plus mr-2"></i> Add Volume & Price</a>
+          <a href="{% url 'products:add_product_volume' product.id %}" class="btn btn-success ml-3 font-weight-bold">Manage Volumes for - <i style="color: gold;">{{ product.name }}</i></a>
           <button title="Print" type="button" class="btn btn-success ml-2" onclick="printDiv('printMe')"><i class="mdi mdi-printer btn-icon-prepend"></i></button>
         </div>
       </div>
@@ -56,16 +56,16 @@
                 <tr>
                   <td>{{ forloop.counter }}</td>
                   <td>
-                    {% if product_volume.image %}
-                      <img src="{{ product_volume.image.url }}" alt="{{ product_volume.product.name }}" style="max-height: 50px; max-width: 50px;" />
+                    {% if product_volume.volume.image %}
+                      <img src="{{ product_volume.volume.image.url }}" alt="{{ product_volume.product.name }}" style="max-height: 50px; max-width: 50px;" />
                     {% else %}
                       <span>No Image</span>
                     {% endif %}
                   </td>
                   <td>{{ product_volume.product_type }}</td>
                   <td>{{ product_volume.volume.ml }} ML</td>
-                  <td class="text-right">{{ product_volume.cost|floatformat:'2'|intcomma }}</td>
-                  <td class="text-right">{{ product_volume.price|floatformat:'2'|intcomma }}</td>
+                  <td class="text-right">{{ product_volume.volume.cost|floatformat:'2'|intcomma }}</td>
+                  <td class="text-right">{{ product_volume.volume.price|floatformat:'2'|intcomma }}</td>
                   <td class="text-right">{{ product_volume.discount_value|default:'0' }}%</td>
                   <td class="text-right">{{ product_volume.get_discounted_price|floatformat:'2'|intcomma }}</td>
                   <td class="text-center print-hide">
@@ -106,9 +106,7 @@
             </tbody>
             <tfoot>
               <tr>
-                <th></th>
-                <th></th>
-                <th>Total</th>
+                <th colspan="3">Total</th>
                 <th>{{ total_ml }} ML</th>
                 <th class="text-right">{{ total_cost|floatformat:'2'|intcomma }}</th>
                 <th class="text-right">{{ total_price|floatformat:'2'|intcomma }}</th>

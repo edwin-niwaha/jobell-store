@@ -12,6 +12,12 @@
             Go back
           </button>
         </a>
+        <div class="d-flex">
+          <a href="{% url 'sales:sales_list' %}" class="btn btn-dark ml-2">
+            <i class="mdi mdi-cart-outline mr-2"></i>
+            Sales
+          </a>
+        </div>
       </div>
     </div>
     <!-- Sale Form -->
@@ -27,13 +33,31 @@
 
             <div class="card-body">
               <!-- Search Product -->
-              <div class="form-group">
+              {% comment %} <div class="form-group">
                 <label for="searchbox_products">Search Product:</label>
                 <select class="form-control" name="searchbox_products" id="searchbox_products">
                   <option value="" selected disabled hidden>Select a product</option>
                   {% for product in products %}
                     {% for product_volume in product.productvolume_set.all %}
                       <option value="{{ product.id }}-{{ product_volume.id }}" data-price="{{ product_volume.price }}" data-name="{{ product.name }}" data-volume="{{ product_volume.volume }}">{{ product.name }} - {{ product_volume.volume }}</option>
+                    {% endfor %}
+                  {% endfor %}
+                </select>
+              </div> {% endcomment %}
+
+              <div class="form-group">
+                <label for="searchbox_products">Search Product:</label>
+                <select class="form-control" name="searchbox_products" id="searchbox_products">
+                  <option value="" selected disabled hidden>Select a product</option>
+                  {% for product in products %}
+                    {% for product_volume in product.productvolume_set.all %}
+                      {% if product_volume.discount_value %}
+                        {% with discounted_price=product_volume.get_discounted_price %}
+                          <option value="{{ product.id }}-{{ product_volume.id }}" data-price="{{ discounted_price }}" data-cost="{{ product_volume.volume.cost }}" data-name="{{ product.name }}" data-volume="{{ product_volume.volume.ml }}" data-discount="{{ product_volume.discount_value }}">{{ product.name }} - {{ product_volume.volume.ml }}ML - Price: {{ product_volume.volume.price }} - {{ product_volume.product_type }} (Discount: {{ product_volume.discount_value }}% Off)</option>
+                        {% endwith %}
+                      {% else %}
+                        <option value="{{ product.id }}-{{ product_volume.id }}" data-price="{{ product_volume.volume.price }}" data-cost="{{ product_volume.volume.cost }}" data-name="{{ product.name }}" data-volume="{{ product_volume.volume.ml }}">{{ product.name }} - {{ product_volume.volume.ml }}ML - Price: {{ product_volume.volume.price }} - {{ product_volume.product_type }}</option>
+                      {% endif %}
                     {% endfor %}
                   {% endfor %}
                 </select>

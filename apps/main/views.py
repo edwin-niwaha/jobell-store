@@ -15,7 +15,7 @@ from .forms import ProductFilterForm
 from apps.sales.models import Sale
 from apps.orders.models import Cart, CartItem, Order, Wishlist
 from apps.customers.models import Customer
-from django.db.models import Sum 
+from django.db.models import Sum
 
 from .models import Testimonial
 from .forms import TestimonialForm
@@ -47,35 +47,17 @@ def index(request):
     order_count = 0
 
     # Fetch the user's cart and calculate the cart count only if the user is authenticated
-    # if request.user.is_authenticated:
-    #     # Ensure the user is a Customer instance (if needed)
-    #     customer = None
-    #     if hasattr(request.user, "customer"):
-    #         customer = (
-    #             request.user.customer
-    #         )  # Assuming a one-to-one relationship between User and Customer
-
-    #     # Get or create the user's cart
-    #     cart, created = Cart.objects.get_or_create(user=request.user)
-    #     cart_items = CartItem.objects.filter(cart=cart)
-    #     cart_count = sum(item.quantity for item in cart_items)
-
-    #     # Fetch the user's wishlist count
-    #     wishlist_count = Wishlist.objects.filter(user=request.user).count()
-
-    #     # Fetch the user's order count
-    #     # If Order model expects a Customer instance, ensure we're using the Customer instance
-    #     if customer:
-    #         order_count = Order.objects.filter(customer=customer).count()
-    #     else:
-    #         order_count = 0  # If there's no customer instance, handle accordingly
-
     if request.user.is_authenticated:
         customer = getattr(request.user, "customer", None)
 
         # Get or create the user's cart
         cart, _ = Cart.objects.get_or_create(user=request.user)
-        cart_count = CartItem.objects.filter(cart=cart).aggregate(total_quantity=Sum("quantity"))["total_quantity"] or 0
+        cart_count = (
+            CartItem.objects.filter(cart=cart).aggregate(
+                total_quantity=Sum("quantity")
+            )["total_quantity"]
+            or 0
+        )
 
         # Fetch the user's wishlist count
         wishlist_count = Wishlist.objects.filter(user=request.user).count()
@@ -97,12 +79,17 @@ def index(request):
         # Filter by price range if provided
         if min_price is not None and max_price is not None:
             products = products.filter(
-                productvolume__price__gte=min_price, productvolume__price__lte=max_price
+                productvolume__volume__price__gte=min_price,
+                productvolume__volume__price__lte=max_price,
             ).distinct()
         elif min_price is not None:
-            products = products.filter(productvolume__price__gte=min_price).distinct()
+            products = products.filter(
+                productvolume__volume__price__gte=min_price
+            ).distinct()
         elif max_price is not None:
-            products = products.filter(productvolume__price__lte=max_price).distinct()
+            products = products.filter(
+                productvolume__volume__price__lte=max_price
+            ).distinct()
 
         # Filter by search query if provided
         if search_query:
@@ -133,8 +120,12 @@ def index(request):
 
         volumes = product.productvolume_set.all()
         if volumes.exists():
-            min_vol_price = volumes.aggregate(Min("price"))["price__min"]
-            max_vol_price = volumes.aggregate(Max("price"))["price__max"]
+            min_vol_price = volumes.aggregate(Min("volume__price"))[
+                "volume__price__min"
+            ]
+            max_vol_price = volumes.aggregate(Max("volume__price"))[
+                "volume__price__max"
+            ]
         else:
             min_vol_price = max_vol_price = None
 

@@ -5,14 +5,15 @@
   <div class="container-fluid">
     <div class="row mb-3">
       <div class="col-md-12 d-flex justify-content-between align-items-center">
-        <a href="{% url 'products:product_volume_list' product.id %}">
+        <a href="{% url 'products:add-volume-to-all-products' %}">
           <button type="button" class="btn btn-info font-weight-bold">
-            <i class="fas fa-long-arrow-alt-left mr-2"></i>
-            Back to Volumes
+            <i class="mdi mdi-arrow-left-bold mr-2"></i>
+            Go back
           </button>
         </a>
         <div class="d-flex">
-          <a href="{% url 'products:volume_add' %}" class="btn btn-success ml-3 font-weight-bold"><i class="mdi mdi-plus mr-2"></i> Add Volume(ML)</a>
+          <a href="{% url 'products:delete-selected-volumes' %}" class="btn btn-success ml-3 font-weight-bold">Manage Volumes</a>
+          <a href="{% url 'products:product-volumes-list' %}" class="btn btn-success ml-3 font-weight-bold">View Volumes</a>
         </div>
       </div>
     </div>
@@ -20,15 +21,14 @@
       <div class="col-12">
         <div class="card card-secondary">
           <div class="card-header">
-            <h2>Update volume & prices for ... <span class="text-primary">{{ product.name }}</span></h2>
+            <h3>{{ form_title|upper }}</h3>
           </div>
           <div class="card-body">
             <form method="post">
               {% csrf_token %}
-              <!--  -->
               {{ form|crispy }}
               <div class="form-group mt-4 mb-0">
-                <button type="submit" class="col-md-12 btn btn-dark" onclick="return confirm('Are you sure you want to proceed?') && validateForm()">Update Volume</button>
+                <button type="submit" class="btn btn-dark btn-block" onclick="return confirm('Are you sure you want to proceed?') && validateForm()">Add Volume to All Products</button>
               </div>
             </form>
           </div>

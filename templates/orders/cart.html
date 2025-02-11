@@ -3,7 +3,7 @@
 {% load humanize %}
 
 {% block content %}
-  <div class="container-fluid">
+  <div class="container-fluid py-5">
     <div class="card shadow border-0 rounded-lg">
       <div class="card-header text-center bg-warning text-white">
         <h3 class="font-weight-light mb-0">Your Cart</h3>
@@ -16,14 +16,20 @@
               {% for item in cart.items.all %}
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                   <div>
-                    <h6 class="mb-1">{{ item.product.name }}</h6>
+                    <h6 class="mb-1">
+                      <span class="text-primary fw-bold">{{ item.product.name }}</span> |
+                      <span class="text-success">{{ item.product.category }}</span> |
+                      <span class="text-info">{{ item.product.gender }}</span> |
+                      <span class="text-warning">{{ item.volume.product_type }}</span>
+                    </h6>
+
                     <small>
-                      {{ item.quantity }} @ {{ item.volume.volume.ml }}ML @{% if item.volume.discount_value %}
-                        <del class="text-muted">UgX {{ item.volume.price|floatformat:'2'|intcomma }}</del>
+                      {{ item.volume.volume.ml }}ML (x{{ item.quantity }}) @{% if item.volume.discount_value %}
+                        <del class="text-muted">UgX {{ item.volume.volume.price|floatformat:'2'|intcomma }}</del>
                         <span class="text-danger">UgX {{ item.volume.get_discounted_price|floatformat:'2'|intcomma }}</span>
                         ({{ item.volume.discount_value|floatformat:'2' }}% Off)
                       {% else %}
-                        UgX {{ item.volume.price|floatformat:'2'|intcomma }}
+                        UgX {{ item.volume.volume.price|floatformat:'2'|intcomma }}
                       {% endif %}each
                     </small>
                   </div>

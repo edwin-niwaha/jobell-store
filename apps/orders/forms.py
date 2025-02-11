@@ -5,7 +5,7 @@ from phonenumbers import parse, is_valid_number, phonenumberutil
 
 
 class CheckoutForm(forms.Form):
-    """
+
     first_name = forms.CharField(
         max_length=50,
         widget=forms.TextInput(
@@ -34,19 +34,6 @@ class CheckoutForm(forms.Form):
             }
         ),
     )
-
-
-    phone = forms.CharField(
-        max_length=15,
-        required=False,
-        widget=forms.TextInput(
-            attrs={
-                "class": "form-control",
-                "placeholder": "Phone Number",
-            }
-        ),
-    )
-    """
 
     mobile = forms.CharField(
         max_length=20,

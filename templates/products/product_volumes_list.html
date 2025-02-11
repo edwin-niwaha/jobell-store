@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+  <div class="container-fluid">
+    <div class="row mb-3">
+      <div class="col-md-12 d-flex justify-content-between align-items-center">
+        <a href="{% url 'products:products_list' %}">
+          <button type="button" class="btn btn-info font-weight-bold">
+            <i class="mdi mdi-arrow-left-bold mr-2"></i>
+            Go back
+          </button>
+        </a>
+        <div class="d-flex">
+          <a href="{% url 'products:add-volume-to-all-products' %}" class="btn btn-success ml-3 font-weight-bold">Manage Volumes</a>
+          <button title="Print" type="button" class="btn btn-success ml-2" onclick="printDiv('printMe')"><i class="mdi mdi-printer btn-icon-prepend"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-md-12">
+        <form method="get" action="{% url 'products:product-volumes-list' %}">
+          <div class="input-group">
+            <input type="text" class="form-control" name="search" value="{{ query }}" placeholder="Search by volume or product name" />
+            <button class="btn btn-primary" type="submit"><i class="mdi mdi-magnify"></i> Search</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- DataTable -->
+    <div id="printMe" class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h3>{{ table_title|upper }}</h3>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="my-table" id="dataTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th style="width: 150px;">Product</th>
+                <th style="width: 90px;">Type</th>
+                <th class="text-center">Volume(ML)</th>
+                <th class="text-right">Cost Price</th>
+                <th class="text-right">Selling Price</th>
+                <th class="text-right">Discount Value</th>
+                <th class="text-right">Discounted Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for volume in volumes %}
+                <tr>
+                  <td>{{ forloop.counter }}</td>
+                  <td>{{ volume.product.name }}</td>
+                  <td>{{ volume.product_type }}</td>
+                  <td class="text-center">{{ volume.volume.ml }}</td> <!-- Volume in ML -->
+                  <td class="text-right">{{ volume.volume.cost|floatformat:'2'|intcomma }}</td> <!-- Cost Price -->
+                  <td class="text-right">{{ volume.volume.price|floatformat:'2'|intcomma }}</td>
+                  <td class="text-right">{{ volume.discount_value|default:'0' }}%</td>
+                  <td class="text-right">{{ volume.get_discounted_price|floatformat:'2'|intcomma }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+
+            <tfoot>
+              <tr>
+                <th colspan="3">Total</th>
+                <th class="text-center">{{ total_ml }} ML</th>
+                <th class="text-right">{{ total_cost|floatformat:'2'|intcomma }}</th>
+                <th class="text-right">{{ total_price|floatformat:'2'|intcomma }}</th>
+                <th class="text-right">{{ total_discount_value|floatformat:'2' }}%</th>
+                <th class="text-right">{{ total_discounted_price|floatformat:'2'|intcomma }}</th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <!-- Pagination controls -->
+        <div class="d-flex justify-content-between align-items-center mt-4">
+          <nav>
+            <ul class="pagination">
+              {% if page_obj.has_previous %}
+                <li class="page-item">
+                  <a class="page-link" href="?q={{ query }}&page={{ page_obj.previous_page_number }}">Previous</a>
+                </li>
+              {% endif %}
+              {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                  <li class="page-item active">
+                    <span class="page-link">{{ num }}</span>
+                  </li>
+                {% else %}
+                  <li class="page-item">
+                    <a class="page-link" href="?q={{ query }}&page={{ num }}">{{ num }}</a>
+                  </li>
+                {% endif %}
+              {% endfor %}
+              {% if page_obj.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="?q={{ query }}&page={{ page_obj.next_page_number }}">Next</a>
+                </li>
+              {% endif %}
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

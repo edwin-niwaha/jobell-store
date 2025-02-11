@@ -26,6 +26,7 @@ PRODUCT_TYPE_CHOICES = [
     ("", "-- Choose product type --"),
     ("Roll-On", "Roll-On"),
     ("Spray", "Spray"),
+    ("Diffuser", "Diffuser"),
 ]
 
 
@@ -48,9 +49,30 @@ class Category(models.Model):
 
 class Volume(models.Model):
     ml = models.IntegerField(unique=True, verbose_name="Volume in ML")
+    cost = models.DecimalField(
+        max_digits=10, decimal_places=2, verbose_name="Cost Price"
+    )
+    price = models.DecimalField(
+        max_digits=10, decimal_places=2, verbose_name="Selling Price"
+    )
+    image = CloudinaryField("image", blank=True, null=True)
+
+    class Meta:
+        db_table = "volume_details"
+        ordering = ["ml"]  # Sort by volume in ascending order
+        verbose_name = "Volume"
+        verbose_name_plural = "Volumes"
+
+    def save(self, *args, **kwargs):
+        if self.image and not str(self.image).startswith("http"):
+            upload_result = cloudinary.uploader.upload(
+                self.image.file, folder="product_volume_images"
+            )
+            self.image = upload_result["url"]
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.ml} ML"
+        return f"{self.ml} ML (Cost: {self.cost}, Price: {self.price})"
 
 
 class Product(models.Model):
@@ -123,13 +145,6 @@ class ProductVolume(models.Model):
     )
     volume = models.ForeignKey(Volume, on_delete=models.CASCADE)
 
-    # Cost and Price determined by the selected volume for this product
-    cost = models.DecimalField(
-        max_digits=10, decimal_places=2, verbose_name="Cost Price"
-    )
-    price = models.DecimalField(
-        max_digits=10, decimal_places=2, verbose_name="Selling Price"
-    )
     discount_value = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -137,38 +152,29 @@ class ProductVolume(models.Model):
         blank=True,
         verbose_name="Discount Value",
     )
-    image = CloudinaryField("image", blank=True, null=True)
 
     class Meta:
         unique_together = ("product", "volume", "product_type")
         verbose_name = "Product Volume"
         verbose_name_plural = "Product Volumes"
 
-    def save(self, *args, **kwargs):
-        if self.image and not str(self.image).startswith("http"):
-            upload_result = cloudinary.uploader.upload(
-                self.image.file, folder="product_volume_images"
-            )
-            self.image = upload_result["url"]
-        super().save(*args, **kwargs)
-
     def __str__(self):
-        return f"{self.product.name} - {self.volume.ml}ML (Cost: {self.cost}, Price: {self.price})"
+        return f"{self.product.name} - {self.volume.ml}ML (Cost: {self.volume.cost}, Price: {self.volume.price})"
 
     def apply_discount(self):
         """Apply the percentage discount to the price of the product volume."""
         if self.discount_value:  # Assume all discounts are percentages
-            self.price -= self.price * self.discount_value / 100
+            self.volume.price -= self.volume.price * self.discount_value / 100
 
             # Ensure the price doesn't go below zero
-            self.price = max(0, self.price)
+            self.volume.price = max(0, self.volume.price)
             self.save()
 
     def get_discounted_price(self):
         """Get the discounted price with a percentage discount applied."""
-        discounted_price = self.price
+        discounted_price = self.volume.price
         if self.discount_value:  # Assume all discounts are percentages
-            discounted_price -= self.price * self.discount_value / 100
+            discounted_price -= self.volume.price * self.discount_value / 100
 
         return max(0, discounted_price)
 

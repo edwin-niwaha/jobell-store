@@ -1,7 +1,7 @@
 {% if messages %}
   <div class="toast-container position-fixed top-50 start-50 translate-middle p-3" style="z-index: 1000;">
     {% for message in messages %}
-      <div class="toast fade show {% if message.tags %}{{ message.tags }}{% endif %}" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="5000">
+      <div class="toast fade show {% if message.tags %}{{ message.tags }}{% endif %}" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="10000">
         <div class="toast-header">
           <strong class="me-auto">Notification</strong>
           <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>

@@ -10,6 +10,7 @@
           Add Product
         </a>
         <div class="d-flex">
+          <a href="{% url 'products:add-volume-to-all-products' %}" class="btn btn-success ml-3 font-weight-bold">Manage Volumes for All Products</a>
           <a href="{% url 'products:update_product_image' %}" class="btn btn-success font-weight-bold ml-2"><i class="mdi mdi-cloud-upload mr-2"></i></a>
           <button title="Print" type="button" class="btn btn-success ml-2" onclick="printDiv('printMe')"><i class="mdi mdi-printer btn-icon-prepend"></i></button>
         </div>

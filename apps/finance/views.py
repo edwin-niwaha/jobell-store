@@ -517,7 +517,7 @@ def profit_and_loss_view(request):
         # Calculate COGS (Cost of Goods Sold)
         cogs = (
             SaleDetail.objects.filter(sale__trans_date__range=[start_date, end_date])
-            .annotate(cogs=F("product_volume__cost") * F("quantity"))
+            .annotate(cogs=F("product_volume__volume__cost") * F("quantity"))
             .aggregate(total_cogs=Sum("cogs"))
         )["total_cogs"] or 0
 
@@ -588,6 +588,109 @@ def profit_and_loss_view(request):
 
 
 # =================================== Balnce Sheet View ===================================
+# @login_required
+# @admin_or_manager_required
+# def balance_sheet_view(request):
+#     # Set the date range (start_date, end_date) based on user input or defaults
+#     start_date = request.GET.get("start_date", datetime.today().strftime("%Y-%m-%d"))
+#     end_date = request.GET.get("end_date", datetime.today().strftime("%Y-%m-%d"))
+
+#     # Convert string dates to date objects
+#     start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+#     end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+
+#     # Fetch transactions for the selected date range
+#     transactions = Transaction.objects.filter(
+#         transaction_date__range=[start_date, end_date]
+#     )
+
+#     # Initialize the balances
+#     assets = 0
+#     liabilities = 0
+#     equity = 0
+#     revenue = 0
+#     expenses = 0
+
+#     # Calculate the balances based on account type
+#     for account in ChartOfAccounts.objects.all():
+#         account_transactions = transactions.filter(account=account)
+
+#         # Calculate the net balance for the account
+#         debit_total = (
+#             account_transactions.filter(transaction_type="debit").aggregate(
+#                 Sum("amount")
+#             )["amount__sum"]
+#             or 0
+#         )
+#         credit_total = (
+#             account_transactions.filter(transaction_type="credit").aggregate(
+#                 Sum("amount")
+#             )["amount__sum"]
+#             or 0
+#         )
+#         net_balance = debit_total - credit_total
+
+#         total_amount = account_transactions.aggregate(Sum("amount"))["amount__sum"] or 0
+
+#         if account.account_type == "asset":
+#             assets += net_balance
+#         elif account.account_type == "liability":
+#             liabilities += net_balance
+#         elif account.account_type == "equity":
+#             equity += total_amount
+#         elif account.account_type == "revenue":
+#             revenue += total_amount
+#         elif account.account_type == "expense":
+#             expenses += total_amount
+
+#     # Fetch SaleDetails within the date range
+#     sales_details = SaleDetail.objects.filter(
+#         sale__trans_date__range=(start_date, end_date)
+#     )
+
+#     # Calculate Revenue: Sum of (selling price * quantity sold)
+#     sales_revenue = (
+#         sales_details.annotate(selling_price=F("product_volume__volume__price")).aggregate(
+#             total_revenue=Sum(F("selling_price") * F("quantity"))
+#         )["total_revenue"]
+#         or 0
+#     )
+
+#     # Calculate Cost of Goods Sold (COGS)
+#     cogs = (
+#         sales_details.annotate(cost_price=F("product_volume__volume__cost")).aggregate(
+#             total_cogs=Sum(F("cost_price") * F("quantity"))
+#         )["total_cogs"]
+#         or 0
+#     )
+
+#     # Calculate Gross Profit (Sales Revenue - COGS)
+#     gross_profit = sales_revenue - cogs
+
+#     # Calculate Net Profit (Gross Profit + Other Income - Operating Expenses)
+#     net_income = gross_profit + revenue - expenses
+
+#     # Calculate Retained Earnings: Retained Earnings = Net Income + Previous Retained Earnings
+#     retained_earnings = equity + net_income
+
+#     # Ensure assets = liabilities + equity
+#     liabilities = assets - equity
+
+#     # Return the result to the template
+#     context = {
+#         "start_date": start_date,
+#         "end_date": end_date,
+#         "assets": assets,
+#         "liabilities": liabilities,
+#         "equity": equity,
+#         "retained_earnings": retained_earnings,
+#         "net_income": net_income,
+#         "table_title": "Statement of Financial Position",
+#     }
+
+#     return render(request, "finance/balance_sheet.html", context)
+
+
 @login_required
 @admin_or_manager_required
 def balance_sheet_view(request):
@@ -648,17 +751,21 @@ def balance_sheet_view(request):
         sale__trans_date__range=(start_date, end_date)
     )
 
-    # Calculate Revenue: Sum of (selling price * quantity sold)
-    sales_revenue = (
-        sales_details.annotate(selling_price=F("product_volume__price")).aggregate(
-            total_revenue=Sum(F("selling_price") * F("quantity"))
-        )["total_revenue"]
-        or 0
-    )
+    # Initialize sales revenue
+    sales_revenue = 0
 
-    # Calculate Cost of Goods Sold (COGS)
+    # Loop through each SaleDetail and apply the discount logic
+    for sale_detail in sales_details:
+        # Get the corresponding ProductVolume instance
+        product_volume = sale_detail.product_volume
+        discounted_price = product_volume.get_discounted_price()
+
+        # Accumulate revenue (discounted price * quantity)
+        sales_revenue += discounted_price * sale_detail.quantity
+
+    # Calculate Cost of Goods Sold (COGS) with discounts considered for prices
     cogs = (
-        sales_details.annotate(cost_price=F("product_volume__cost")).aggregate(
+        sales_details.annotate(cost_price=F("product_volume__volume__cost")).aggregate(
             total_cogs=Sum(F("cost_price") * F("quantity"))
         )["total_cogs"]
         or 0

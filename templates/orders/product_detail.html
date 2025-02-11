@@ -3,7 +3,7 @@
 {% load humanize %}
 
 {% block content %}
-  <div class="container-fluid">
+  <div class="container-fluid py-5">
     <div class="row">
       <!-- Product Image Carousel -->
       <div class="col-12 col-md-6 mb-4 product-item">
@@ -12,7 +12,7 @@
             {% if product.images.exists %}
               {% for image in product.images.all %}
                 <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                  <img src="{{ image.image.url }}" class="d-block w-100 rounded-pill img-fluid product-image disable-right-click" style="max-height: 100vh; object-fit: contain;" alt="{{ product.name }}" />
+                  <img src="{{ image.image.url }}" class="d-block w-100 rounded-pill img-fluid product-image disable-right-click" style="max-height: 90vh; object-fit: contain;" alt="{{ product.name }}" />
                 </div>
               {% endfor %}
             {% else %}
@@ -27,13 +27,14 @@
       <!-- Product Details -->
       <div class="col-12 col-md-6">
         <!-- Product Details Table -->
-        <table class="table table-bordered">
-          <thead>
-            <tr class="bg-primary text-white">
+        <table class="table table-bordered rounded-3 overflow-hidden">
+          <thead class="bg-primary text-warning">
+            <tr class="fs-5">
               <th scope="col">Detail</th>
-              <th colspan="3" scope="col">Information</th>
+              <th scope="col" colspan="3">Information</th>
             </tr>
           </thead>
+
           <tbody>
             <tr>
               <th scope="row">Product Name</th>
@@ -53,19 +54,21 @@
                 <select name="volume_id" id="volume" form="add-to-cart-form" class="form-control" required>
                   {% for product_volume in product_volumes %}
                     <option value="{{ product_volume.id }}"
-                      data-image-url="{% if product_volume.image %}
-                        {{ product_volume.image.url }}
+                      data-image-url="{% if product_volume.volume.image %}
+                        {{ product_volume.volume.image.url }}
                       {% else %}
                         
-                         /staticfiles/images/no-image.png
+                        /staticfiles/images/no-image.png
 
                       {% endif %}">
                       {{ product_volume.product_type }} - {{ product_volume.volume.ml }} ML -{% if product_volume.discount_value %}
-                        <del class="text-muted">{{ product_volume.price|floatformat:'2'|intcomma }}</del>
+                        <!-- Crossed-out original price if discounted -->
+                        <del class="text-muted">{{ product_volume.volume.price|floatformat:'2'|intcomma }}</del>
                         <span class="text-danger">{{ product_volume.get_discounted_price|floatformat:'2'|intcomma }}</span>
                         ({{ product_volume.discount_value|floatformat:'2' }}% Off)
                       {% else %}
-                        Price: {{ product_volume.price|floatformat:'2'|intcomma }}
+                        <!-- Show regular price when no discount -->
+                        Price: {{ product_volume.volume.price|floatformat:'2'|intcomma }}
                       {% endif %}
                     </option>
                   {% endfor %}
@@ -73,10 +76,10 @@
               </td>
             </tr>
 
-            <tr>
+            {% comment %} <tr>
               <th scope="row">Description</th>
               <td colspan="3">{{ product.description|safe }}</td>
-            </tr>
+            </tr> {% endcomment %}
           </tbody>
         </table>
 
@@ -107,14 +110,14 @@
         <hr />
         <!-- Product Image Based on Volume Selection -->
         <img id="volume-image"
+          class="d-block w-50 rounded-pill img-fluid product-image disable-right-click"
+          style="max-height: 45vh; object-fit: contain;"
           src="{% if product_volumes and product_volumes.0.image %}
             {{ product_volumes.0.image.url }}
           {% else %}
             {% static 'images/no-image.png' %}
           {% endif %}"
-          alt="Product Image"
-          class="rounded-circle img-fluid mt-3 disable-right-click"
-          style="width: 150px; height: 150px; object-fit: cover; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);" />
+          alt="Product Image" />
       </div>
     </div>
   </div>

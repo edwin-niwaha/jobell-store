@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block content %}
   <div class="container-fluid">
@@ -37,7 +38,10 @@
             <thead>
               <tr>
                 <th>#</th>
-                <th>Volume(ML)</th>
+                <th>Image</th>
+                <th class="text-center">Volume(ML)</th>
+                <th class="text-right">Cost Price</th>
+                <th class="text-right">Selling Price</th>
                 <th class="print-hide" colspan="2" class="text-center">Actions</th>
               </tr>
             </thead>
@@ -45,14 +49,58 @@
               {% for volume in volumes %}
                 <tr>
                   <td>{{ forloop.counter }}</td>
-                  <td>{{ volume.ml }}</td>
+                  <td>
+                    {% if volume.image %}
+                      <img src="{{ volume.image.url }}" alt="{{ volume.product.name }}" class="rounded-circle account-img" height="50" width="50" />
+                    {% else %}
+                      <span>No Image</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center">{{ volume.ml }}</td>
+                  <td class="text-right">{{ volume.cost|floatformat:'2'|intcomma }}</td>
+                  <td class="text-right">{{ volume.price|floatformat:'2'|intcomma }}</td>
                   <td class="text-center print-hide">
                     <!-- Update button -->
                     <a href="{% url 'products:volume_update' volume.id %}" class="text-decoration-none" onclick="return confirm('Are you sure you want to update this record?');"><button type="button" class="btn btn-warning btn-sm" data-bs-toggle="tooltip" title="Update Volume"><i class="bi bi-pencil"></i></button></a>
                   </td>
+                  {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
+                    <td class="text-center print-hide">
+                      <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ volume.id }}" title="Delete product"><i class="bi bi-trash"></i></button>
+
+                      <div class="modal fade" id="deleteModal{{ volume.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ volume.id }}" aria-hidden="true">
+                        <div class="modal-dialog">
+                          <div class="modal-content">
+                            <div class="modal-header">
+                              <h5 class="modal-title" id="deleteModalLabel{{ volume.id }}">Delete Volume</h5>
+                              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">X</button>
+                            </div>
+                            <div class="modal-body">
+                              <p>
+                                Are you sure you want to delete <strong>{{ volume.ml }}ML?</strong>
+                              </p>
+                              <p>This process cannot be reversed.</p>
+                            </div>
+                            <div class="modal-footer">
+                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                              <a href="{% url 'products:delete_volume' volume.id %}" class="text-decoration-none"><button type="button" class="btn btn-danger">Delete</button></a>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                  {% endif %}
                 </tr>
               {% endfor %}
             </tbody>
+            <tfoot>
+              <tr>
+                <th colspan="2">Total</th>
+                <th class="text-center">{{ total_ml }} ML</th>
+                <th class="text-right">{{ total_cost|floatformat:'2'|intcomma }}</th>
+                <th class="text-right">{{ total_price|floatformat:'2'|intcomma }}</th>
+                <th colspan="2" class="print-hide"></th>
+              </tr>
+            </tfoot>
           </table>
         </div>
         <!-- Pagination controls -->

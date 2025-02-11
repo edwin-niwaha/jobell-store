@@ -4,20 +4,49 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
-  <div class="container-fluid">
+  <div class="container-fluid py-5">
     <div class="row justify-content-center">
-      <div class="col-lg-8">
+      <div class="col-lg-12">
         <div class="card-header text-center bg-warning text-white">
           <h3 class="font-weight-light mb-0">Checkout</h3>
         </div>
         <!-- Card for Checkout Form -->
         <div class="card shadow-sm">
           <div class="card-body p-4">
-            <form method="post">
+            <form method="POST" class="p-4 border rounded shadow-sm bg-light">
               {% csrf_token %}
               <!-- Render form with crispy forms -->
-              {{ form|crispy }}
+              {% comment %} {{ form|crispy }} {% endcomment %}
 
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label for="{{ form.first_name.id_for_label }}" class="form-label">First Name</label>
+                  <input type="text" name="{{ form.first_name.name }}" value="{{ form.first_name.value|default:'' }}" class="form-control" id="first_name" placeholder="First Name" required />
+                </div>
+                <div class="col-md-6">
+                  <label for="{{ form.last_name.id_for_label }}" class="form-label">Last Name</label>
+                  <input type="text" name="{{ form.last_name.name }}" value="{{ form.last_name.value|default:'' }}" class="form-control" id="last_name" placeholder="Last Name (optional)" />
+                </div>
+              </div>
+
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
+                  <input type="email" name="{{ form.email.name }}" value="{{ form.email.value|default:'' }}" class="form-control" id="email" placeholder="Email (optional)" />
+                </div>
+                <div class="col-md-6">
+                  <label for="{{ form.mobile.id_for_label }}" class="form-label">Mobile</label>
+                  <input type="text" name="{{ form.mobile.name }}" value="{{ form.mobile.value|default:'' }}" class="form-control" id="mobile" />
+                  {% if form.mobile.help_text %}
+                    <small class="form-text text-muted">{{ form.mobile.help_text }}</small>
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label for="{{ form.address.id_for_label }}" class="form-label">Address</label>
+                <textarea name="{{ form.address.name }}" class="form-control" rows="2" id="address" placeholder="Address" required>{{ form.address.value|default:'' }}</textarea>
+              </div>
               <!-- Cart Summary -->
               <h3 class="mt-4 mb-3">Cart Summary</h3>
 
@@ -25,8 +54,24 @@
                 {% for item in cart.items.all %}
                   <li class="list-group-item d-flex justify-content-between align-items-center">
                     <span>
-                      {{ item.product.name }} - {{ item.volume.volume.ml }}ML
-                      <small class="text-muted">(x{{ item.quantity }})</small>
+                      {% comment %} {{ item.product.name }} - {{ item.volume.volume.ml }}ML{% endcomment %}
+                      <h6 class="mb-1">
+                        <span class="text-primary fw-bold">{{ item.product.name }}</span> |
+                        <span class="text-success">{{ item.product.category }}</span> |
+                        <span class="text-info">{{ item.product.gender }}</span> |
+                        <span class="text-warning">{{ item.volume.product_type }}</span>
+                      </h6>
+                      {% comment %} {{ item.volume.volume.ml }}ML
+                      <small class="text-muted">(x{{ item.quantity }})</small> {% endcomment %}
+                      <small>
+                        {{ item.volume.volume.ml }}ML (x{{ item.quantity }}) @{% if item.volume.discount_value %}
+                          <del class="text-muted">UgX {{ item.volume.volume.price|floatformat:'2'|intcomma }}</del>
+                          <span class="text-danger">UgX {{ item.volume.get_discounted_price|floatformat:'2'|intcomma }}</span>
+                          ({{ item.volume.discount_value|floatformat:'2' }}% Off)
+                        {% else %}
+                          UgX {{ item.volume.volume.price|floatformat:'2'|intcomma }}
+                        {% endif %}each
+                      </small>
                     </span>
                     <span class="badge bg-primary rounded-pill">{{ item.get_total_price|floatformat:'2'|intcomma }}</span>
                   </li>
@@ -48,4 +93,13 @@
       </div>
     </div>
   </div>
+  {% comment %} <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      document.querySelectorAll('input, textarea').forEach(function (field) {
+        if (field.value.trim() !== '') {
+          field.setAttribute('readonly', 'readonly')
+        }
+      })
+    })
+  </script> {% endcomment %}
 {% endblock %}

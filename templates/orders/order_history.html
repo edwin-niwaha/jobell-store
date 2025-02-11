@@ -15,12 +15,12 @@
               <thead class="bg-secondary text-white">
                 <tr>
                   <th>Order ID</th>
-                  <th>Date</th>
-                  <th>Status</th>
-                  <th>Payment</th>
+                  <th>Order Date</th>
+                  <th>Order - Status</th>
+                  <th>Payment - Status</th>
                   <th>Customer</th>
-                  <th>Phone</th>
-                  <th class="text-end">Total</th>
+                  <th>Tel. Contact</th>
+                  <th class="text-end">Total Amount (UgX)</th>
                   <th colspan="2" class="text-center">Actions</th>
                 </tr>
               </thead>
@@ -56,9 +56,9 @@
                     <td>{{ order.customer.first_name }} {{ order.customer.last_name }}</td>
                     <td>{{ order.customer.mobile }}</td>
                     <td class="text-end">{{ order.total_amount|floatformat:'2'|intcomma }}</td>
-                    <td>
+                    {% comment %} <td>
                       <a href="{% url 'orders:payment_flutter' %}" class="btn btn-success btn-sm">Pay Now</a>
-                    </td>
+                    </td> {% endcomment %}
                     <td class="text-center">
                       <a href="{% url 'orders:order_detail_view' order.id %}" class="btn btn-info btn-sm"><i class="mdi mdi-eye"></i> Details</a>
                     </td>

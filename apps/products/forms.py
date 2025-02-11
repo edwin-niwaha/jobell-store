@@ -1,6 +1,13 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import Category, Volume, ProductVolume, Product, ProductImage
+from .models import (
+    Category,
+    Volume,
+    ProductVolume,
+    Product,
+    ProductImage,
+    PRODUCT_TYPE_CHOICES,
+)
 from apps.inventory.models import Inventory
 
 
@@ -30,13 +37,17 @@ class CategoryForm(forms.ModelForm):
 class VolumeForm(forms.ModelForm):
     class Meta:
         model = Volume
-        fields = ["ml"]
+        fields = ["ml", "cost", "price", "image"]
         widgets = {
             "ml": forms.NumberInput(attrs={"class": "form-control"}),
         }
         labels = {
             "ml": "Volume in ML",
         }
+
+    def clean_image(self):
+        image = self.cleaned_data.get("image")
+        return image
 
 
 # =================================== ProductVolumeForm form ===================================
@@ -45,7 +56,8 @@ class ProductVolumeForm(forms.ModelForm):
 
     class Meta:
         model = ProductVolume
-        fields = ["volume", "product_type", "cost", "price", "discount_value", "image"]
+        # fields = ["volume", "product_type", "cost", "price", "discount_value", "image"]
+        fields = ["volume", "product_type", "discount_value"]
         widgets = {
             "volume": forms.Select(attrs={"class": "form-control"}),
             "product_type": forms.Select(attrs={"class": "form-control"}),
@@ -74,10 +86,6 @@ class ProductVolumeForm(forms.ModelForm):
                 "Oops! This combination of volume and product type is already assigned to this product."
             )
         return cleaned_data
-
-    def clean_image(self):
-        image = self.cleaned_data.get("image")
-        return image
 
     def save(self, commit=True):
         product_volume = super().save(commit=False)
@@ -167,3 +175,17 @@ class ProductImageForm(forms.ModelForm):
     def clean_image(self):
         image = self.cleaned_data.get("image")
         return image
+
+
+# =================================== Volume Selection Form ===================================
+class VolumeSelectionForm(forms.Form):
+    volume = forms.ModelChoiceField(
+        queryset=Volume.objects.all(),
+        widget=forms.Select(attrs={"class": "form-control"}),
+        label="Select Volume",
+    )
+    product_type = forms.ChoiceField(
+        choices=PRODUCT_TYPE_CHOICES,  # Choices for product type
+        widget=forms.Select(attrs={"class": "form-control"}),
+        label="Select Product Type",
+    )

@@ -73,7 +73,7 @@
       {% include '_partials/messages.html' %}
     {% endblock %}
     <!-- =============== Messages End ================= -->
-    {% include '_partials/cookies.html' %}
+    {% comment %} {% include '_partials/cookies.html' %} {% endcomment %}
 
     <!-- Content -->
     <div class="container-fluid">
@@ -111,7 +111,7 @@
       <!-- JavaScript for Quantity Control -->
       <script src="{% static 'js/cart.js' %}"></script>
 
-      <script src="{% static 'js/cookies.js' %}"></script>
+      {% comment %} <script src="{% static 'js/cookies.js' %}"></script> {% endcomment %}
     {% endblock %}
   </body>
 </html>

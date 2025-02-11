@@ -237,7 +237,7 @@ def send_contact_email(name, email):
         "👉 [View Products](https://jobellinc.com/)\n\n"
         "If you have additional questions or concerns, let us know—we're here to help!\n\n"
         "Warm regards,\n"
-        "The Jobel Inc. Team\n"
+        "The Jobell Inc. Team\n"
         "Management"
     )
     from_email = getattr(settings, "EMAIL_HOST_USER", None)

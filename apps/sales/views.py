@@ -82,6 +82,105 @@ def sales_list_view(request):
 
 
 # =================================== sales_report_view view ===================================
+# @admin_or_manager_or_staff_required
+# @login_required
+# def sales_report_view(request):
+#     # Initialize the form with GET data
+#     form = ReportPeriodForm(request.GET)
+#     start_date = None
+#     end_date = None
+
+#     if form.is_valid():
+#         start_date = form.cleaned_data["start_date"]
+#         end_date = form.cleaned_data["end_date"]
+
+#     # Filter sales by date range and prefetch related data
+#     sales = Sale.objects.filter(
+#         trans_date__range=[start_date, end_date]
+#     ).prefetch_related("items__product_volume", "items__product")
+
+#     # Aggregate totals
+#     total_sales = sales.aggregate(
+#         total_revenue=Sum("items__total_detail"),  # Calculate directly from items
+#         total_items_sold=Sum("items__quantity"),
+#         total_transactions=Count("id"),
+#     )
+
+#     # Calculate COGS
+#     cogs = 0
+#     for sale in sales:
+#         for item in sale.items.all():
+#             product_volume = item.product_volume
+#             if product_volume:
+#                 cogs += product_volume.cost * item.quantity
+
+#     # Calculate stock balance
+#     stock_balance = (
+#         Inventory.objects.aggregate(total_stock=Sum("quantity"))["total_stock"] or 0
+#     )
+
+#     # Prepare detailed sales data
+#     sale_details = []
+#     total_profit_after_sales = 0
+
+#     for sale in sales:
+#         sale_profit = 0
+#         item_details = []
+
+#         for item in sale.items.all():
+#             product = item.product
+#             product_volume = item.product_volume
+
+#             if product_volume:
+#                 item_profit = (
+#                     product_volume.price - product_volume.cost
+#                 ) * item.quantity
+#                 sale_profit += item_profit
+#                 total_profit_after_sales += item_profit
+
+#                 item_details.append(
+#                     {
+#                         "product": product.name,
+#                         "volume": product_volume.volume.ml,
+#                         "price": product_volume.price,
+#                         "cost": product_volume.cost,
+#                         "quantity": item.quantity,
+#                         "total": item.total_detail,
+#                     }
+#                 )
+
+#         sale_details.append(
+#             {
+#                 "trans_date": sale.trans_date,
+#                 "customer": (
+#                     f"{sale.customer.first_name} {sale.customer.last_name}"
+#                     if sale.customer
+#                     else "N/A"
+#                 ),
+#                 "grand_total": sale.grand_total,
+#                 "profit": sale_profit,
+#                 "payment_method": sale.payment_method,
+#                 "item_details": item_details,
+#             }
+#         )
+
+#     context = {
+#         "form": form,
+#         "start_date": start_date,
+#         "end_date": end_date,
+#         "total_revenue": total_sales["total_revenue"],
+#         "total_items_sold": total_sales["total_items_sold"],
+#         "total_transactions": total_sales["total_transactions"],
+#         "total_cogs": cogs,
+#         "sales": sale_details,
+#         "stock_balance": stock_balance,
+#         "total_profit_after_sales": total_profit_after_sales,
+#         "table_title": "Sales Report",
+#     }
+
+#     return render(request, "sales/sales_report.html", context)
+
+
 @admin_or_manager_or_staff_required
 @login_required
 def sales_report_view(request):
@@ -97,7 +196,7 @@ def sales_report_view(request):
     # Filter sales by date range and prefetch related data
     sales = Sale.objects.filter(
         trans_date__range=[start_date, end_date]
-    ).prefetch_related("items__product_volume", "items__product")
+    ).prefetch_related("items__product_volume__volume", "items__product")
 
     # Aggregate totals
     total_sales = sales.aggregate(
@@ -111,8 +210,8 @@ def sales_report_view(request):
     for sale in sales:
         for item in sale.items.all():
             product_volume = item.product_volume
-            if product_volume:
-                cogs += product_volume.cost * item.quantity
+            if product_volume and product_volume.volume:
+                cogs += product_volume.volume.cost * item.quantity
 
     # Calculate stock balance
     stock_balance = (
@@ -131,19 +230,20 @@ def sales_report_view(request):
             product = item.product
             product_volume = item.product_volume
 
-            if product_volume:
-                item_profit = (
-                    product_volume.price - product_volume.cost
-                ) * item.quantity
+            if product_volume and product_volume.volume:
+                volume = product_volume.volume
+                # Apply discount if exists
+                discounted_price = product_volume.get_discounted_price()
+                item_profit = (discounted_price - volume.cost) * item.quantity
                 sale_profit += item_profit
                 total_profit_after_sales += item_profit
 
                 item_details.append(
                     {
                         "product": product.name,
-                        "volume": product_volume.volume.ml,
-                        "price": product_volume.price,
-                        "cost": product_volume.cost,
+                        "volume": volume.ml,
+                        "price": discounted_price,  # Use discounted price
+                        "cost": volume.cost,
                         "quantity": item.quantity,
                         "total": item.total_detail,
                     }
@@ -182,6 +282,8 @@ def sales_report_view(request):
 
 
 # =================================== Sale Add view ===================================
+
+
 @admin_or_manager_or_staff_required
 @login_required
 def sales_add_view(request):
@@ -189,7 +291,7 @@ def sales_add_view(request):
     products = (
         Product.objects.filter(status="ACTIVE")
         .select_related("inventory")
-        .prefetch_related("productvolume_set")
+        .prefetch_related("productvolume_set__volume")  # Include volume relation
     )
 
     # Prepare context for rendering
@@ -232,7 +334,16 @@ def sales_add_view(request):
                     # Parse combined product and volume IDs
                     product_id, volume_id = map(int, product_data["id"].split("-"))
                     product_obj = Product.objects.get(id=product_id)
-                    product_volume = ProductVolume.objects.get(id=volume_id)
+                    product_volume = ProductVolume.objects.select_related("volume").get(
+                        id=volume_id
+                    )
+
+                    # Fetch price and discount
+                    original_price = product_volume.volume.price
+                    discounted_price = (
+                        product_volume.get_discounted_price()
+                    )  # Apply discount if any
+
                     quantity_requested = int(product_data["quantity"])
 
                     # Check if the product's inventory has sufficient stock
@@ -256,10 +367,11 @@ def sales_add_view(request):
                     detail_attributes = {
                         "sale": new_sale,
                         "product": product_obj,
-                        "product_volume": product_volume,  # Include product volume
-                        "price": float(product_data["price"]),
+                        "product_volume": product_volume,
+                        "price": discounted_price,  # Use discounted price
                         "quantity": quantity_requested,
-                        "total_detail": float(product_data["total_product"]),
+                        "total_detail": discounted_price
+                        * quantity_requested,  # Apply discount in total
                     }
                     SaleDetail.objects.create(**detail_attributes)
                     logger.info(f"Sale detail added: {detail_attributes}")

@@ -40,7 +40,9 @@ def product_detail(request, id):
     cart_count = sum(item.quantity for item in cart_items)
 
     # Fetch volumes specific to this product
-    product_volumes = ProductVolume.objects.filter(product=product).order_by("volume__ml")
+    product_volumes = ProductVolume.objects.filter(product=product).order_by(
+        "volume__ml"
+    )
 
     context = {
         "product": product,
@@ -49,6 +51,50 @@ def product_detail(request, id):
     }
 
     return render(request, "orders/product_detail.html", context)
+
+
+# =================================== Products Detail for quests not signed in ===================================
+
+
+def product_details_view(request, id):
+    try:
+        # Fetch the product and related ProductVolume details
+        product = Product.objects.get(id=id)
+        product_volumes = ProductVolume.objects.filter(product=product).order_by(
+            "volume__ml"
+        )
+
+        # Prepare context with product and volume details
+        context = {
+            "product_id": product.id,
+            "name": product.name,
+            "gender": product.gender,
+            "description": product.description,
+            "category": product.category.name if product.category else "N/A",
+            "volumes": [],
+        }
+
+        # Loop through ProductVolume instances to gather the volume details
+        for product_volume in product_volumes:
+            volume = product_volume.volume  # Get the related Volume object
+            discount_value = product_volume.discount_value or 0
+            volume_data = {
+                "ml": volume.ml,
+                "price": volume.price,
+                "image": volume.image.url if volume.image else "",
+                "product_type": product_volume.product_type,  # Include the product type if needed
+                "discount_value": discount_value,
+                "discounted_price": product_volume.get_discounted_price(),  # Apply any discount
+            }
+            context["volumes"].append(volume_data)
+
+        return render(request, "orders/product_detail_partial.html", context)
+    except Product.DoesNotExist:
+        return render(
+            request,
+            "orders/product_detail_partial.html",
+            {"error": "Product not found"},
+        )
 
 
 # =================================== Products Wishlist ===================================
@@ -275,9 +321,9 @@ def checkout_view(request):
             total_amount = cart.get_total_price()
 
             # Update the customer's information from the form
-            # customer.first_name = form.cleaned_data["first_name"]
-            # customer.last_name = form.cleaned_data["last_name"]
-            # customer.email = form.cleaned_data["email"]
+            customer.first_name = form.cleaned_data["first_name"]
+            customer.last_name = form.cleaned_data["last_name"]
+            customer.email = form.cleaned_data["email"]
             customer.mobile = form.cleaned_data["mobile"]
             customer.address = form.cleaned_data["address"]
             customer.save()  # Save the updated customer information
@@ -292,12 +338,16 @@ def checkout_view(request):
 
             # Create OrderDetail entries for each item in the cart
             for item in cart.items.all():
+                product_volume = item.volume  # ProductVolume instance
+                discounted_price = product_volume.get_discounted_price()
                 # item.volume refers to the ProductVolume
                 OrderDetail.objects.create(
                     order=order,
                     product=item.product,
+                    product_volume=item.volume,
                     quantity=item.quantity,
-                    price=item.volume.price,  # Use price from ProductVolume
+                    discounted_price=discounted_price,
+                    price=item.volume.volume.price,  # Use price from ProductVolume
                 )
 
             # Clear the cart items after checkout
@@ -322,9 +372,9 @@ def checkout_view(request):
         # Prepopulate the form with existing customer data if available
         form = CheckoutForm(
             initial={
-                # "first_name": customer.first_name,
-                # "last_name": customer.last_name,
-                # "email": customer.email,
+                "first_name": customer.first_name,
+                "last_name": customer.last_name,
+                "email": customer.email,
                 "mobile": customer.mobile,
                 "address": customer.address,
             }

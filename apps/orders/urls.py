@@ -3,7 +3,12 @@ from . import views
 
 app_name = "orders"
 urlpatterns = [
-    path("product/<int:id>/", views.product_detail, name="product_detail"),
+    path(
+        "product/<int:id>/", views.product_details_view, name="product_details_view"
+    ),  # This is the first view
+    path(
+        "product/detail/<int:id>/", views.product_detail, name="product_detail"
+    ),  # This is the second detailed view
     path("wishlist/add/<int:product_id>/", views.wishlist_add, name="wishlist_add"),
     path("wishlist/", views.wishlist_view, name="wishlist"),
     path(
