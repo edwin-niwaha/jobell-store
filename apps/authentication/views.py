@@ -40,17 +40,46 @@ logger = logging.getLogger(__name__)
 
 
 # =================================== Register User  ===================================
+# class RegisterView(View):
+#     form_class = RegisterForm
+#     initial = {"key": "value"}
+#     template_name = "accounts/register.html"
+
+#     def dispatch(self, request, *args, **kwargs):
+#         # will redirect to the home page if a user tries to access the register page while logged in
+#         if request.user.is_authenticated:
+#             return redirect(to="/")
+
+#         # else process dispatch as it otherwise normally would
+#         return super(RegisterView, self).dispatch(request, *args, **kwargs)
+
+#     def get(self, request, *args, **kwargs):
+#         form = self.form_class(initial=self.initial)
+#         return render(request, self.template_name, {"form": form})
+
+#     def post(self, request, *args, **kwargs):
+#         form = self.form_class(request.POST)
+
+#         if form.is_valid():
+#             form.save()
+
+#             username = form.cleaned_data.get("username")
+#             messages.success(
+#                 request, f"Account created for {username}", extra_tags="bg-success"
+#             )
+
+#             return redirect(to="login")
+
+#         return render(request, self.template_name, {"form": form})
+
 class RegisterView(View):
     form_class = RegisterForm
     initial = {"key": "value"}
     template_name = "accounts/register.html"
 
     def dispatch(self, request, *args, **kwargs):
-        # will redirect to the home page if a user tries to access the register page while logged in
         if request.user.is_authenticated:
             return redirect(to="/")
-
-        # else process dispatch as it otherwise normally would
         return super(RegisterView, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
@@ -61,7 +90,10 @@ class RegisterView(View):
         form = self.form_class(request.POST)
 
         if form.is_valid():
-            form.save()
+            user = form.save()  # Save the user and get the instance
+
+            # Auto-create a Profile for the user
+            Profile.objects.create(user=user)
 
             username = form.cleaned_data.get("username")
             messages.success(
@@ -71,27 +103,46 @@ class RegisterView(View):
             return redirect(to="login")
 
         return render(request, self.template_name, {"form": form})
-
+    
 
 # =================================== Login View ===================================
 
+
+# class CustomLoginView(LoginView):
+#     form_class = LoginForm
+
+#     def form_valid(self, form):
+#         remember_me = form.cleaned_data.get("remember_me")
+
+#         if not remember_me:
+#             # set session expiry to 0 seconds. So it will automatically close the session after the browser is closed.
+#             self.request.session.set_expiry(0)
+
+#             # Set session as modified to force data updates/cookie to be saved.
+#             self.request.session.modified = True
+
+#         # else browser session will be as long as the session cookie time "SESSION_COOKIE_AGE" defined in settings.py
+#         return super(CustomLoginView, self).form_valid(form)
 
 class CustomLoginView(LoginView):
     form_class = LoginForm
 
     def form_valid(self, form):
+        user = form.get_user()
+
+        # Check if the user has a profile, create one if it doesn't exist
+        if not hasattr(user, "profile"):
+            Profile.objects.create(user=user)
+
         remember_me = form.cleaned_data.get("remember_me")
 
         if not remember_me:
-            # set session expiry to 0 seconds. So it will automatically close the session after the browser is closed.
+            # Set session expiry to 0 seconds so the session ends when the browser is closed
             self.request.session.set_expiry(0)
-
-            # Set session as modified to force data updates/cookie to be saved.
             self.request.session.modified = True
 
-        # else browser session will be as long as the session cookie time "SESSION_COOKIE_AGE" defined in settings.py
-        return super(CustomLoginView, self).form_valid(form)
-
+        return super().form_valid(form)
+    
 
 # =================================== Reset password View  ===================================
 
