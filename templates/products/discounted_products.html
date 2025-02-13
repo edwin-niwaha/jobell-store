@@ -38,7 +38,7 @@
                           <span class="badge bg-primary">Volume: {{ volume.volume.ml }}ML</span>
                         </p>
                         <p class="mb-1 text-muted">
-                          Original Price:<del>UgX{{ volume.price|floatformat:'2'|intcomma }}</del>
+                          Original Price:<del>UgX{{ volume.volume.price|floatformat:'2'|intcomma }}</del>
                         </p>
                         <p class="mb-1">
                           <span class="text-success font-weight-bold">Discounted Price: UgX{{ volume.get_discounted_price|floatformat:'2'|intcomma }}</span>
