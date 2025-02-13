@@ -6,14 +6,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Banner messages
     const messages = [
-        '🎉 Welcome to Our Online Store! Check out the latest products and amazing discounts. 🎉',
-        '🔥 Huge Sale! Get up to 10% off on all items. Shop now! 🔥',
-        '💥 Limited Time Offer! Free shipping on orders over UgX 200,000 ! 🚚',
-        '🎁 Exclusive Deal: Buy one, get one free on selected items! 🛍️',
+        '🎉 Welcome to Our Online Store!🎉',
+        '🎁 Check out the latest products and amazing discounts. 🛍️',
         '💸 Hot Deal Alert! Save big on your favorite products! 💰',
-        '🚨 Flash Sale! 50% off for the next 24 hours only! ⏰⚡',
-        '🌟 New Arrivals! Discover the latest trends and discounts. ✨🛒',
-        '🥳 Big Savings! Get your favorite products at unbeatable prices! 💸',
+        // '🔥 Huge Sale! Get up to 10% off on all items. Shop now! 🔥',
+        // '💥 Limited Time Offer! Free shipping on orders over UgX 200,000 ! 🚚',
+        // '🎁 Exclusive Deal: Buy one, get one free on selected items! 🛍️',
+        // '🚨 Flash Sale! 50% off for the next 24 hours only! ⏰⚡',
+        // '🌟 New Arrivals! Discover the latest trends and discounts. ✨🛒',
+        // '🥳 Big Savings! Get your favorite products at unbeatable prices! 💸',
     ];
 
     let currentMessageIndex = 0;
