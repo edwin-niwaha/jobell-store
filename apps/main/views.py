@@ -96,7 +96,7 @@ def index(request):
             products = products.filter(name__icontains=search_query)
 
     # Pagination setup
-    paginator = Paginator(products, 20)  # Show 20 products per page
+    paginator = Paginator(products, 32)
     page_number = request.GET.get("page", 1)
 
     try:
