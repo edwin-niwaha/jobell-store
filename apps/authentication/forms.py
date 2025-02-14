@@ -271,6 +271,7 @@ class ContactForm(forms.ModelForm):
         exclude = ("is_valid",)
         widgets = {
             "message": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "email": forms.EmailInput(attrs={"class": "form-control"})
         }
 
     def clean_email(self):

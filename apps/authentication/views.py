@@ -274,9 +274,7 @@ def delete_profile(request, pk):
 
 
 # ===================================  Contact Us  ===================================
-@transaction.atomic
 def send_contact_email(name, email):
-
     subject = "We've Received Your Message"
 
     message = (
@@ -291,47 +289,52 @@ def send_contact_email(name, email):
         "The Jobell Inc. Team\n"
         "Management"
     )
-    from_email = getattr(settings, "EMAIL_HOST_USER", None)
-    to = [email]
 
+    from_email = getattr(settings, "EMAIL_HOST_USER", None)
+    recipients = [email]  # Send to user
+
+    # Send confirmation email to user
     try:
-        send_mail(subject, message, from_email, to)
-        return True
+        send_mail(subject, message, from_email, recipients)
     except Exception as e:
         logger.error(f"Error sending email to {email}: {str(e)}")
         return False
 
+    # Send notification email to ED_EMAIL
+    if hasattr(settings, "ED_EMAIL") and settings.ED_EMAIL:
+        admin_subject = f"New Contact Form Submission from {name}"
+        admin_message = f"New message received from {name} ({email}). Please check the system for details."
+
+        try:
+            send_mail(admin_subject, admin_message, from_email, [settings.ED_EMAIL])
+        except Exception as e:
+            logger.error(f"Error sending email to {settings.ED_EMAIL}: {str(e)}")
+
+    return True
 
 def contact_us(request):
+    form = ContactForm()
 
     if request.method == "POST":
+        if not request.user.is_authenticated:
+            messages.error(request, "You must be logged in to send a message.", extra_tags="bg-danger")
+            return redirect("login")  # Redirect non-logged-in users to login page
+        
         form = ContactForm(request.POST)
         if form.is_valid():
             instance = form.save()
-
-            # Attempt to send the confirmation email
             email_sent = send_contact_email(instance.name, instance.email)
 
             if email_sent:
                 messages.success(
-                    request,
-                    "Your message has been sent successfully. We will get back to you soon!",
-                    extra_tags="bg-success",
+                    request, "Your message has been sent successfully. We will get back to you soon!", extra_tags="bg-success"
                 )
             else:
-                messages.error(
-                    request,
-                    "Sorry, an error occurred while sending your message. Please try again later.",
-                    extra_tags="bg-danger",
-                )
+                messages.error(request, "Sorry, an error occurred while sending your message. Please try again later.", extra_tags="bg-danger")
 
-            # Redirect to the contact page
             return HttpResponseRedirect(reverse("contact_us"))
-    else:
-        form = ContactForm()
 
     return render(request, "accounts/contact_us.html", {"form": form})
-
 
 # =================================== Display User Feedback ===================================
 @login_required
