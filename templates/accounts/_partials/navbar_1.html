@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+  {% load bootstrap5 %} {% load static %}
+
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet" />
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
+    <!-- MDB -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/3.6.0/mdb.min.css" rel="stylesheet" />
+  </head>
+
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg bg-dark navbar-dark fixed-top">
+      <div class="container-fluid">
+        <button class="navbar-toggler" type="button" data-mdb-toggle="collapse" data-mdb-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0" style="font-family: 'Times New Roman', Times, serif">
+            <li class="nav-item">
+              <a class="nav-link" href="/">Home</a>
+            </li>
+            {% if user.is_authenticated %}
+              {% if user.profile.role == 'guest' %}
+                <li class="nav-item">
+                  <!-- Hide the dashboard -->
+                </li>
+              {% else %}
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a>
+                </li>
+              {% endif %}
+            {% endif %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'orders:wishlist' %}">Wishlist</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'orders:customer_order_history' %}">Orders</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'about_us' %}">About Us</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'contact_us' %}">Contact Us</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'blog:blog_list' %}">Blog</a>
+            </li>
+          </ul>
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0" style="font-family: 'Times New Roman', Times, serif">
+            {% if user.is_authenticated %}
+              <li>
+                <a href="{% url 'users-profile' %}" class="nav-item nav-link">My Profile</a>
+              </li>
+              <li>
+                <a href="{% url 'logout' %}" class="nav-item nav-link" onclick="return confirm('Are you sure you want to logout?');">Logout</a>
+              </li>
+            {% else %}
+              <li class="nav-item me-2">
+                <b><a href="{% url 'login' %}" class="nav-item nav-link">Log in</a></b>
+              </li>
+              <li class="nav-item">
+                <b><a class="nav-link" href="{% url 'users-register' %}">Register</a></b>
+              </li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/3.6.0/mdb.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

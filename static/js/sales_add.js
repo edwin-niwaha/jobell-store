@@ -1,25 +1,33 @@
-document.addEventListener('DOMContentLoaded', function () {
-    const productSelect = document.getElementById('searchbox_products');
-    const productTableBody = document.querySelector('#table_products tbody');
-    const subTotalInput = document.getElementById('sub_total');
-    const taxPercentageInput = document.getElementById('tax_percentage');
-    const taxAmountInput = document.getElementById('tax_amount');
-    const grandTotalInput = document.getElementById('grand_total');
-    const amountPayedInput = document.getElementById('amount_payed');
-    const amountChangeInput = document.getElementById('amount_change');
-    const form = document.querySelector('.saleForm');
+$(document).ready(function () {
+    // Initialize Select2 for the product select dropdown
+    $('#searchbox_products').select2({
+        placeholder: 'Search for a product...',
+        allowClear: true,
+        width: '100%'
+    });
+
+    const $productSelect = $('#searchbox_products');
+    const $productTableBody = $('#table_products tbody');
+    const $subTotalInput = $('#sub_total');
+    const $taxPercentageInput = $('#tax_percentage');
+    const $taxAmountInput = $('#tax_amount');
+    const $grandTotalInput = $('#grand_total');
+    const $amountPayedInput = $('#amount_payed');
+    const $amountChangeInput = $('#amount_change');
+    const $form = $('.saleForm');
 
     let productIndex = 0;
     let selectedProducts = [];
 
     // Handle product selection
     function handleProductSelection() {
-        const selectedOption = productSelect.options[productSelect.selectedIndex];
-        const productId = selectedOption.value;
-        const productName = selectedOption.getAttribute('data-name');
-        const productVolume = selectedOption.getAttribute('data-volume');
-        const productPrice = parseFloat(selectedOption.getAttribute('data-price'));
+        const $selectedOption = $productSelect.find('option:selected');
+        const productId = $selectedOption.val();
+        const productName = $selectedOption.data('name');
+        const productVolume = $selectedOption.data('volume');
+        const productPrice = parseFloat($selectedOption.data('price'));
 
+        // Add product row to the table if it hasn't been added already
         if (productId && !selectedProducts.includes(productId)) {
             selectedProducts.push(productId);
             addProductRow(productId, productName, productVolume, productPrice);
@@ -29,103 +37,103 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Add new product row to the table
     function addProductRow(productId, productName, productVolume, productPrice) {
-        const newRow = document.createElement('tr');
-        newRow.innerHTML = `
-            <td>${++productIndex}</td>
-            <td>${productName}</td>
-            <td>${productVolume}</td>
-            <td>${productPrice.toFixed(2)}</td>
-            <td><input type="number" class="form-control quantity-input" value="1" min="1" data-price="${productPrice}" data-product-id="${productId}"></td>
-            <td class="product-total">${productPrice.toFixed(2)}</td>
-            <td class="text-center"><button type="button" class="btn btn-danger btn-sm delete-product" data-product-id="${productId}"><i class="fas fa-trash-alt"></i></button></td>
-        `;
-        productTableBody.appendChild(newRow);
+        const newRow = `
+      <tr>
+        <td>${++productIndex}</td>
+        <td>${productName}</td>
+        <td>${productVolume}</td>
+        <td>${productPrice.toFixed(2)}</td>
+        <td><input type="number" class="form-control quantity-input" value="1" min="1" data-price="${productPrice}" data-product-id="${productId}"></td>
+        <td class="product-total">${productPrice.toFixed(2)}</td>
+        <td class="text-center"><button type="button" class="btn btn-danger btn-sm delete-product" data-product-id="${productId}"><i class="fas fa-trash-alt"></i></button></td>
+      </tr>
+    `;
+        $productTableBody.append(newRow);
     }
 
     // Update totals when quantity or tax percentage changes
     function updateTotals() {
         let subtotal = 0;
-        document.querySelectorAll('.product-total').forEach(totalCell => {
-            subtotal += parseFloat(totalCell.textContent);
+        $('.product-total').each(function () {
+            subtotal += parseFloat($(this).text());
         });
-        subTotalInput.value = subtotal.toFixed(2);
+        $subTotalInput.val(subtotal.toFixed(2));
 
-        const taxPercentage = parseFloat(taxPercentageInput.value) || 0;
+        const taxPercentage = parseFloat($taxPercentageInput.val()) || 0;
         const taxAmount = subtotal * (taxPercentage / 100);
-        taxAmountInput.value = taxAmount.toFixed(2);
+        $taxAmountInput.val(taxAmount.toFixed(2));
 
         const grandTotal = subtotal + taxAmount;
-        grandTotalInput.value = grandTotal.toFixed(2);
+        $grandTotalInput.val(grandTotal.toFixed(2));
 
-        const amountPayed = parseFloat(amountPayedInput.value) || 0;
+        const amountPayed = parseFloat($amountPayedInput.val()) || 0;
         const amountChange = amountPayed - grandTotal;
-        amountChangeInput.value = amountChange.toFixed(2);
+        $amountChangeInput.val(amountChange.toFixed(2));
     }
 
     // Update individual product total when quantity changes
-    function updateProductTotal(input) {
-        const price = parseFloat(input.getAttribute('data-price'));
-        const quantity = Math.max(parseInt(input.value), 1); // Prevent invalid quantities
+    function updateProductTotal($input) {
+        const price = parseFloat($input.data('price'));
+        const quantity = Math.max(parseInt($input.val()), 1); // Prevent invalid quantities
         const productTotal = price * quantity;
-        input.closest('tr').querySelector('.product-total').textContent = productTotal.toFixed(2);
+        $input.closest('tr').find('.product-total').text(productTotal.toFixed(2));
     }
 
     // Remove product when delete button is clicked
     function removeProduct(e) {
-        if (e.target.closest('.delete-product')) {
-            const productId = e.target.closest('.delete-product').getAttribute('data-product-id');
-            selectedProducts = selectedProducts.filter(id => id !== productId);
-            e.target.closest('tr').remove();
-            updateTotals();
-        }
+        const $button = $(e.target).closest('.delete-product');
+        const productId = $button.data('product-id');
+        selectedProducts = selectedProducts.filter(id => id !== productId);
+        $button.closest('tr').remove();
+        updateTotals();
     }
 
     // Add hidden product data to the form on submit
     function addProductDataToForm(event) {
-        const grandTotal = parseFloat(grandTotalInput.value);
-        const amountPayed = parseFloat(amountPayedInput.value) || 0;
+        const grandTotal = parseFloat($grandTotalInput.val());
+        const amountPayed = parseFloat($amountPayedInput.val()) || 0;
 
+        // Prevent form submission if amount paid is less than grand total
         if (amountPayed < grandTotal) {
-            event.preventDefault(); // Prevent form submission
+            event.preventDefault();
             alert('The paid amount must be equal to or greater than the total amount.');
             return false;
         }
 
         // Remove existing hidden product inputs
-        document.querySelectorAll('input[name="products"]').forEach(input => input.remove());
+        $('input[name="products"]').remove();
 
         // Add new hidden inputs with product data
         selectedProducts.forEach(productId => {
-            const row = Array.from(productTableBody.querySelectorAll('tr')).find(row =>
-                row.querySelector('.delete-product').getAttribute('data-product-id') === productId
-            );
-            const quantity = parseInt(row.querySelector('.quantity-input').value);
-            const price = parseFloat(row.querySelector('.product-total').textContent) / quantity;
-            const totalProduct = parseFloat(row.querySelector('.product-total').textContent);
-
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'products';
-            input.value = JSON.stringify({
-                id: productId,
-                price: price,
-                quantity: quantity,
-                total_product: totalProduct
+            const $row = $productTableBody.find('tr').filter(function () {
+                return $(this).find('.delete-product').data('product-id') === productId;
             });
-            form.appendChild(input);
+            const quantity = parseInt($row.find('.quantity-input').val());
+            const price = parseFloat($row.find('.product-total').text()) / quantity;
+            const totalProduct = parseFloat($row.find('.product-total').text());
+
+            const input = $('<input>', {
+                type: 'hidden',
+                name: 'products',
+                value: JSON.stringify({
+                    id: productId,
+                    price: price,
+                    quantity: quantity,
+                    total_product: totalProduct
+                })
+            });
+            $form.append(input);
         });
     }
 
     // Event Listeners
-    productSelect.addEventListener('change', handleProductSelection);
-    productTableBody.addEventListener('input', function (e) {
-        if (e.target.classList.contains('quantity-input')) {
-            updateProductTotal(e.target);
-            updateTotals();
-        }
+    $productSelect.on('change', handleProductSelection);
+    $productTableBody.on('input', '.quantity-input', function () {
+        updateProductTotal($(this));
+        updateTotals();
     });
-    productTableBody.addEventListener('click', removeProduct);
-    taxPercentageInput.addEventListener('input', updateTotals);
-    amountPayedInput.addEventListener('keyup', updateTotals);
-    form.addEventListener('submit', addProductDataToForm);
+    $productTableBody.on('click', '.delete-product', removeProduct);
+    $taxPercentageInput.on('input', updateTotals);
+    $amountPayedInput.on('keyup', updateTotals);
+    $form.on('submit', addProductDataToForm);
 });

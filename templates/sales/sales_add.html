@@ -1,146 +1,305 @@
-{% extends 'base.html' %}
 {% load static %}
-{% load crispy_forms_tags %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <link rel="shortcut icon" href="{% static 'images/file.png' %}" />
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font/css/materialdesignicons.min.css" rel="stylesheet" />
 
-{% block content %}
-  <div class="container-fluid">
-    <div class="row mb-3">
-      <div class="col-md-12 d-flex justify-content-between align-items-center">
-        <a href="{% url 'sales:sales_list' %}">
-          <button type="button" class="btn btn-info font-weight-bold">
-            <i class="mdi mdi-arrow-left-bold mr-2"></i>
-            Go back
-          </button>
-        </a>
-        <div class="d-flex">
-          <a href="{% url 'sales:sales_list' %}" class="btn btn-dark ml-2">
-            <i class="mdi mdi-cart-outline mr-2"></i>
-            Sales
-          </a>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
+
+    <!-- jQuery (Required for Select2) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+  </head>
+
+  <body>
+    <div class="container" style="margin-top: 80px;">
+      <!-- Topbar -->
+      {% include 'accounts/_partials/navbar_1.html' %}
+
+      <div class="main-panel">
+        <div class="content-wrapper pb-0">
+          <!-- Messages -->
+          {% include '_partials/messages.html' %}
+
+          <div class="row mb-3">
+            <div class="col-md-12 d-flex justify-content-between align-items-center">
+              <a href="{% url 'sales:sales_list' %}"><button type="button" class="btn btn-info font-weight-bold"><i class="mdi mdi-arrow-left-bold mr-2"></i>Go back</button></a>
+              <div class="d-flex">
+                <a href="{% url 'sales:sales_list' %}" class="btn btn-dark ml-2"><i class="mdi mdi-cart-outline mr-2"></i>Sales</a>
+              </div>
+            </div>
+          </div>
+          <hr />
+          <!-- Sale Form -->
+          <form action="{% url 'sales:sales_add' %}" class="saleForm" method="post">
+            {% csrf_token %}
+
+            <div class="row">
+              <!-- Left Column: Products Selection -->
+              <div class="col-md-9">
+                <div class="card card-secondary">
+                  <div class="card-header">
+                    SALE PRODUCTS <span class="count count-varient2 bg-primary text-white px-2 py-1 rounded">{{ total_stock }}</span>
+                  </div>
+
+                  <div class="card-body">
+                    <!-- Search Product -->
+                    <div class="form-group">
+                      <label for="searchbox_products">Search Product:</label>
+                      <select class="form-control" id="searchbox_products" name="searchbox_products">
+                        <option value="" selected disabled hidden>Select a product</option>
+                        {% for product in products %}
+                          {% for product_volume in product.productvolume_set.all %}
+                            {% if product_volume.discount_value %}
+                              {% with discounted_price=product_volume.get_discounted_price %}
+                                <option value="{{ product.id }}-{{ product_volume.id }}" data-price="{{ discounted_price }}" data-cost="{{ product_volume.volume.cost }}" data-name="{{ product.name }}" data-volume="{{ product_volume.volume.ml }}" data-discount="{{ product_volume.discount_value }}">{{ product.name }} - {{ product_volume.volume.ml }}ML - Price: {{ product_volume.volume.price }} - {{ product_volume.product_type }} (Discount: {{ product_volume.discount_value }}% Off)</option>
+                              {% endwith %}
+                            {% else %}
+                              <option value="{{ product.id }}-{{ product_volume.id }}" data-price="{{ product_volume.volume.price }}" data-cost="{{ product_volume.volume.cost }}" data-name="{{ product.name }}" data-volume="{{ product_volume.volume.ml }}">{{ product.name }} - {{ product_volume.volume.ml }}ML - Price: {{ product_volume.volume.price }} - {{ product_volume.product_type }}</option>
+                            {% endif %}
+                          {% endfor %}
+                        {% endfor %}
+                      </select>
+                    </div>
+
+                    <!-- Products Table -->
+                    <div class="table-responsive mt-4">
+                      <table class="table table-hover text-nowrap" id="table_products">
+                        <thead>
+                          <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Volume</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Total</th>
+                            <th class="text-center">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <!-- Dynamic product rows will be added here -->
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Column: Sale Details -->
+              <div class="col-md-3">
+                <div class="card card-secondary">
+                  <div class="card-header">Sale Details</div>
+                  <div class="card-body">
+                    <!-- Customer Selection -->
+                    <div class="form-group">
+                      <label for="searchbox_customers">Customer</label>
+                      <select name="customer" class="form-control chzn-select" id="searchbox_customers" required>
+                        <option value="" selected disabled hidden>Select the customer</option>
+                        {% for customer in customers %}
+                          <option value="{{ customer.value }}">{{ customer.label }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+
+                    <!-- Sale Details Fields -->
+                    <div class="form-group mt-4">
+                      <label for="trans_date">Date</label>
+                      <input name="trans_date" class="form-control" id="trans_date" type="date" required />
+                    </div>
+                    <div class="form-group mt-4">
+                      <label for="sub_total">Subtotal</label>
+                      <input name="sub_total" class="form-control" id="sub_total" type="number" readonly />
+                    </div>
+                    <div class="form-group">
+                      <label for="tax_percentage">Tax Inclusive (%)</label>
+                      <input name="tax_percentage" class="form-control" id="tax_percentage" type="number" value="0" required />
+                    </div>
+                    <div class="form-group">
+                      <label for="tax_amount">Tax Amount</label>
+                      <input name="tax_amount" class="form-control" id="tax_amount" type="number" readonly />
+                    </div>
+                    <div class="form-group">
+                      <label for="grand_total">Grand Total</label>
+                      <input name="grand_total" class="form-control" id="grand_total" type="number" readonly />
+                    </div>
+                    <div class="form-group">
+                      <label for="amount_payed">Amount Payed</label>
+                      <input name="amount_payed" class="form-control" id="amount_payed" type="number" required />
+                    </div>
+
+                    <!-- Amount Change (Hidden) -->
+                    <div class="form-group">
+                      <label for="amount_change">Change</label>
+                      <input name="amount_change" class="form-control" id="amount_change" type="number" readonly />
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="form-group mt-4 mb-0">
+                      <button type="submit" class="btn btn-dark btn-block" onclick="return confirm('Are you sure you want to proceed?') && validateForm()">Create Sale</button>
+                  </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
         </div>
       </div>
     </div>
-    <!-- Sale Form -->
-    <form action="{% url 'sales:sales_add' %}" class="saleForm" method="post">
-      {% csrf_token %}
 
-      <div class="row">
-        <div class="col-md-9">
-          <div class="card card-secondary">
-            <div class="card-header">
-              SALE PRODUCTS <span class="count count-varient2 bg-primary text-white px-2 py-1 rounded">{{ total_stock }}</span>
-            </div>
+    <!-- Sales Add Script -->
+    {% comment %} <script src="{% static 'js/sales_add.js' %}"></script> {% endcomment %}
+  </body>
 
-            <div class="card-body">
-              <!-- Search Product -->
-              {% comment %} <div class="form-group">
-                <label for="searchbox_products">Search Product:</label>
-                <select class="form-control" name="searchbox_products" id="searchbox_products">
-                  <option value="" selected disabled hidden>Select a product</option>
-                  {% for product in products %}
-                    {% for product_volume in product.productvolume_set.all %}
-                      <option value="{{ product.id }}-{{ product_volume.id }}" data-price="{{ product_volume.price }}" data-name="{{ product.name }}" data-volume="{{ product_volume.volume }}">{{ product.name }} - {{ product_volume.volume }}</option>
-                    {% endfor %}
-                  {% endfor %}
-                </select>
-              </div> {% endcomment %}
+  <script>
+    $(document).ready(function () {
+      // Initialize Select2 for the product select dropdown
+      $('#searchbox_products').select2({
+        placeholder: 'Search for a product...',
+        allowClear: true,
+        width: '100%'
+      });
+  
+      const $productSelect = $('#searchbox_products');
+      const $productTableBody = $('#table_products tbody');
+      const $subTotalInput = $('#sub_total');
+      const $taxPercentageInput = $('#tax_percentage');
+      const $taxAmountInput = $('#tax_amount');
+      const $grandTotalInput = $('#grand_total');
+      const $amountPayedInput = $('#amount_payed');
+      const $amountChangeInput = $('#amount_change');
+      const $form = $('.saleForm');
+  
+      let productIndex = 0;
+      let selectedProducts = [];
+  
+      // Handle product selection
+      function handleProductSelection() {
+        const $selectedOption = $productSelect.find('option:selected');
+        const productId = $selectedOption.val();
+        const productName = $selectedOption.data('name');
+        const productVolume = $selectedOption.data('volume');
+        const productPrice = parseFloat($selectedOption.data('price'));
+  
+        // Add product row to the table if it hasn't been added already
+        if (productId && !selectedProducts.includes(productId)) {
+          selectedProducts.push(productId);
+          addProductRow(productId, productName, productVolume, productPrice);
+          updateTotals();
+        }
+      }
+  
+      // Add new product row to the table
+      function addProductRow(productId, productName, productVolume, productPrice) {
+        const newRow = `
+          <tr>
+            <td>${++productIndex}</td>
+            <td>${productName}</td>
+            <td>${productVolume}</td>
+            <td>${productPrice.toFixed(2)}</td>
+            <td><input type="number" class="form-control quantity-input" value="1" min="1" data-price="${productPrice}" data-product-id="${productId}"></td>
+            <td class="product-total">${productPrice.toFixed(2)}</td>
+            <td class="text-center"><button type="button" class="btn btn-danger btn-sm delete-product" data-product-id="${productId}"><i class="fas fa-trash-alt"></i></button></td>
+          </tr>
+        `;
+        $productTableBody.append(newRow);
+      }
+  
+      // Update totals when quantity or tax percentage changes
+      function updateTotals() {
+        let subtotal = 0;
+        $('.product-total').each(function () {
+          subtotal += parseFloat($(this).text());
+        });
+        $subTotalInput.val(subtotal.toFixed(2));
+  
+        const taxPercentage = parseFloat($taxPercentageInput.val()) || 0;
+        const taxAmount = subtotal * (taxPercentage / 100);
+        $taxAmountInput.val(taxAmount.toFixed(2));
+  
+        const grandTotal = subtotal + taxAmount;
+        $grandTotalInput.val(grandTotal.toFixed(2));
+  
+        const amountPayed = parseFloat($amountPayedInput.val()) || 0;
+        const amountChange = amountPayed - grandTotal;
+        $amountChangeInput.val(amountChange.toFixed(2));
+      }
+  
+      // Update individual product total when quantity changes
+      function updateProductTotal($input) {
+        const price = parseFloat($input.data('price'));
+        const quantity = Math.max(parseInt($input.val()), 1); // Prevent invalid quantities
+        const productTotal = price * quantity;
+        $input.closest('tr').find('.product-total').text(productTotal.toFixed(2));
+      }
+  
+      // Remove product when delete button is clicked
+      function removeProduct(e) {
+        const $button = $(e.target).closest('.delete-product');
+        const productId = $button.data('product-id');
+        selectedProducts = selectedProducts.filter(id => id !== productId);
+        $button.closest('tr').remove();
+        updateTotals();
+      }
+  
+      // Add hidden product data to the form on submit
+      function addProductDataToForm(event) {
+        const grandTotal = parseFloat($grandTotalInput.val());
+        const amountPayed = parseFloat($amountPayedInput.val()) || 0;
+  
+        // Prevent form submission if amount paid is less than grand total
+        if (amountPayed < grandTotal) {
+          event.preventDefault();
+          alert('The paid amount must be equal to or greater than the total amount.');
+          return false;
+        }
+  
+        // Remove existing hidden product inputs
+        $('input[name="products"]').remove();
+  
+        // Add new hidden inputs with product data
+        selectedProducts.forEach(productId => {
+          const $row = $productTableBody.find('tr').filter(function () {
+            return $(this).find('.delete-product').data('product-id') === productId;
+          });
+          const quantity = parseInt($row.find('.quantity-input').val());
+          const price = parseFloat($row.find('.product-total').text()) / quantity;
+          const totalProduct = parseFloat($row.find('.product-total').text());
+  
+          const input = $('<input>', {
+            type: 'hidden',
+            name: 'products',
+            value: JSON.stringify({
+              id: productId,
+              price: price,
+              quantity: quantity,
+              total_product: totalProduct
+            })
+          });
+          $form.append(input);
+        });
+      }
+  
+      // Event Listeners
+      $productSelect.on('change', handleProductSelection);
+      $productTableBody.on('input', '.quantity-input', function () {
+        updateProductTotal($(this));
+        updateTotals();
+      });
+      $productTableBody.on('click', '.delete-product', removeProduct);
+      $taxPercentageInput.on('input', updateTotals);
+      $amountPayedInput.on('keyup', updateTotals);
+      $form.on('submit', addProductDataToForm);
+    });
+  </script>
 
-              <div class="form-group">
-                <label for="searchbox_products">Search Product:</label>
-                <select class="form-control" name="searchbox_products" id="searchbox_products">
-                  <option value="" selected disabled hidden>Select a product</option>
-                  {% for product in products %}
-                    {% for product_volume in product.productvolume_set.all %}
-                      {% if product_volume.discount_value %}
-                        {% with discounted_price=product_volume.get_discounted_price %}
-                          <option value="{{ product.id }}-{{ product_volume.id }}" data-price="{{ discounted_price }}" data-cost="{{ product_volume.volume.cost }}" data-name="{{ product.name }}" data-volume="{{ product_volume.volume.ml }}" data-discount="{{ product_volume.discount_value }}">{{ product.name }} - {{ product_volume.volume.ml }}ML - Price: {{ product_volume.volume.price }} - {{ product_volume.product_type }} (Discount: {{ product_volume.discount_value }}% Off)</option>
-                        {% endwith %}
-                      {% else %}
-                        <option value="{{ product.id }}-{{ product_volume.id }}" data-price="{{ product_volume.volume.price }}" data-cost="{{ product_volume.volume.cost }}" data-name="{{ product.name }}" data-volume="{{ product_volume.volume.ml }}">{{ product.name }} - {{ product_volume.volume.ml }}ML - Price: {{ product_volume.volume.price }} - {{ product_volume.product_type }}</option>
-                      {% endif %}
-                    {% endfor %}
-                  {% endfor %}
-                </select>
-              </div>
-
-              <!-- Products Table -->
-              <div class="table-responsive mt-4">
-                <table class="table table-hover text-nowrap" id="table_products">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Name</th>
-                      <th>Volume</th>
-                      <th>Price</th>
-                      <th>Quantity</th>
-                      <th>Total</th>
-                      <th class="text-center">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <!-- Dynamic product rows will be added here -->
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Right Column: Sale Details -->
-        <div class="col-md-3">
-          <div class="card card-secondary">
-            <div class="card-header">Sale Details</div>
-            <div class="card-body">
-              <!-- Customer Selection -->
-              <div class="form-group">
-                <label for="searchbox_customers">Customer</label>
-                <select name="customer" class="form-control chzn-select" id="searchbox_customers" required>
-                  <option value="" selected disabled hidden>Select the customer</option>
-                  {% for customer in customers %}
-                    <option value="{{ customer.value }}">{{ customer.label }}</option>
-                  {% endfor %}
-                </select>
-              </div>
-
-              <!-- Sale Details Fields -->
-              <div class="form-group mt-4">
-                <label for="trans_date">Date</label>
-                <input name="trans_date" class="form-control" id="trans_date" type="date" required />
-              </div>
-              <div class="form-group mt-4">
-                <label for="sub_total">Subtotal</label>
-                <input name="sub_total" class="form-control" id="sub_total" type="number" readonly />
-              </div>
-              <div class="form-group">
-                <label for="tax_percentage">Tax Inclusive (%)</label>
-                <input name="tax_percentage" class="form-control" id="tax_percentage" type="number" value="0" required />
-              </div>
-              <div class="form-group">
-                <label for="tax_amount">Tax Amount</label>
-                <input name="tax_amount" class="form-control" id="tax_amount" type="number" readonly />
-              </div>
-              <div class="form-group">
-                <label for="grand_total">Grand Total</label>
-                <input name="grand_total" class="form-control" id="grand_total" type="number" readonly />
-              </div>
-              <div class="form-group">
-                <label for="amount_payed">Amount Payed</label>
-                <input name="amount_payed" class="form-control" id="amount_payed" type="number" required />
-              </div>
-
-              <!-- Amount Change (Hidden) type="hidden" -->
-              <div class="form-group">
-                <label for="amount_payed">Change</label>
-                <input name="amount_change" class="form-control" id="amount_change" type="number" readonly />
-              </div>
-
-              <!-- Submit Button -->
-              <button type="submit" class="btn btn-success font-weight-bold" onclick="return confirm('Are you sure you want to proceed?') && validateForm()">Create Sale</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </form>
-  </div>
-  <script src="{% static 'js/sales_add.js' %}"></script>
-{% endblock %}
+</html>
