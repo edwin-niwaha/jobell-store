@@ -323,34 +323,6 @@ def product_volume_list_view(request, product_id):
 
 
 # =================================== Product volumes add view ===================================
-# @login_required
-# @admin_or_manager_or_staff_required
-# def add_product_volume_view(request, product_id):
-#     product = get_object_or_404(Product, id=product_id)
-
-#     if request.method == "POST":
-#         form = ProductVolumeForm(request.POST, request.FILES)
-#         form.product = product  # Set the product explicitly before validation
-
-#         if form.is_valid():
-#             try:
-#                 with transaction.atomic():  # Wrap the database operation in an atomic block
-#                     form.save()  # The form now handles the uniqueness check
-#                     messages.success(
-#                         request, "Record added successfully!", extra_tags="bg-success"
-#                     )
-#                     return redirect(
-#                         "products:product_volume_list", product_id=product.id
-#                     )
-#             except IntegrityError:
-#                 form.add_error(None, "An unexpected error occurred while saving.")
-#     else:
-#         form = ProductVolumeForm()
-#         form.product = product  # Set the product explicitly for the initial form
-
-#     return render(
-#         request, "products/volumes_add.html", {"form": form, "product": product}
-#     )
 
 
 @login_required

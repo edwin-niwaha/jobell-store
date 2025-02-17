@@ -1,8 +1,9 @@
 import json
 import logging
+from decimal import Decimal
 from collections import defaultdict
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Q, F
 from django.db.models import Sum, Count
 from datetime import datetime, timedelta
 from django.db import transaction
@@ -82,6 +83,8 @@ def sales_list_view(request):
 
 
 # =================================== sales_report_view view ===================================
+
+
 # @admin_or_manager_or_staff_required
 # @login_required
 # def sales_report_view(request):
@@ -97,7 +100,7 @@ def sales_list_view(request):
 #     # Filter sales by date range and prefetch related data
 #     sales = Sale.objects.filter(
 #         trans_date__range=[start_date, end_date]
-#     ).prefetch_related("items__product_volume", "items__product")
+#     ).prefetch_related("items__product_volume__volume", "items__product")
 
 #     # Aggregate totals
 #     total_sales = sales.aggregate(
@@ -111,8 +114,8 @@ def sales_list_view(request):
 #     for sale in sales:
 #         for item in sale.items.all():
 #             product_volume = item.product_volume
-#             if product_volume:
-#                 cogs += product_volume.cost * item.quantity
+#             if product_volume and product_volume.volume:
+#                 cogs += product_volume.volume.cost * item.quantity
 
 #     # Calculate stock balance
 #     stock_balance = (
@@ -131,19 +134,20 @@ def sales_list_view(request):
 #             product = item.product
 #             product_volume = item.product_volume
 
-#             if product_volume:
-#                 item_profit = (
-#                     product_volume.price - product_volume.cost
-#                 ) * item.quantity
+#             if product_volume and product_volume.volume:
+#                 volume = product_volume.volume
+#                 # Apply discount if exists
+#                 discounted_price = product_volume.get_discounted_price()
+#                 item_profit = (discounted_price - volume.cost) * item.quantity
 #                 sale_profit += item_profit
 #                 total_profit_after_sales += item_profit
 
 #                 item_details.append(
 #                     {
 #                         "product": product.name,
-#                         "volume": product_volume.volume.ml,
-#                         "price": product_volume.price,
-#                         "cost": product_volume.cost,
+#                         "volume": volume.ml,
+#                         "price": discounted_price,  # Use discounted price
+#                         "cost": volume.cost,
 #                         "quantity": item.quantity,
 #                         "total": item.total_detail,
 #                     }
@@ -181,8 +185,6 @@ def sales_list_view(request):
 #     return render(request, "sales/sales_report.html", context)
 
 
-@admin_or_manager_or_staff_required
-@login_required
 def sales_report_view(request):
     # Initialize the form with GET data
     form = ReportPeriodForm(request.GET)
@@ -205,7 +207,6 @@ def sales_report_view(request):
         total_transactions=Count("id"),
     )
 
-    # Calculate COGS
     cogs = 0
     for sale in sales:
         for item in sale.items.all():
@@ -229,25 +230,34 @@ def sales_report_view(request):
         for item in sale.items.all():
             product = item.product
             product_volume = item.product_volume
+            # Get the original price from the ProductVolume (before discount)
+            original_price = (
+                product_volume.volume.price if product_volume else product.price
+            )
 
-            if product_volume and product_volume.volume:
-                volume = product_volume.volume
-                # Apply discount if exists
-                discounted_price = product_volume.get_discounted_price()
-                item_profit = (discounted_price - volume.cost) * item.quantity
-                sale_profit += item_profit
-                total_profit_after_sales += item_profit
+            # Apply discount if exists (use price from SaleDetail)
+            discounted_price = item.price  # Use the price from SaleDetail directly
+            item_profit = (
+                (Decimal(discounted_price) - product_volume.volume.cost) * item.quantity
+                if product_volume
+                else 0
+            )
+            sale_profit += item_profit
+            total_profit_after_sales += item_profit
 
-                item_details.append(
-                    {
-                        "product": product.name,
-                        "volume": volume.ml,
-                        "price": discounted_price,  # Use discounted price
-                        "cost": volume.cost,
-                        "quantity": item.quantity,
-                        "total": item.total_detail,
-                    }
-                )
+            item_details.append(
+                {
+                    "product": product.name,
+                    "volume": product_volume.volume.ml if product_volume else None,
+                    "original_price": original_price,  # Add original price
+                    "price": discounted_price,  # Use price from SaleDetail
+                    "cost": (
+                        product_volume.volume.cost if product_volume else 0
+                    ),  # Use cost from ProductVolume
+                    "quantity": item.quantity,
+                    "total": item.total_detail,
+                }
+            )
 
         sale_details.append(
             {
@@ -282,8 +292,6 @@ def sales_report_view(request):
 
 
 # =================================== Sale Add view ===================================
-
-
 @admin_or_manager_or_staff_required
 @login_required
 def sales_add_view(request):

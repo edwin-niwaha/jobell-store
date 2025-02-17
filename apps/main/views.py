@@ -1,5 +1,6 @@
 import json
 from django.http import JsonResponse
+from decimal import Decimal
 from datetime import date, timedelta
 from django.db.models.functions import ExtractYear
 from django.contrib.auth.decorators import login_required
@@ -10,9 +11,9 @@ from django.contrib import messages
 from django.db.models import Min, Max
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
-from apps.products.models import Product, Category
+from apps.products.models import Product, Category, ProductVolume
 from .forms import ProductFilterForm
-from apps.sales.models import Sale
+from apps.sales.models import Sale, SaleDetail
 from apps.orders.models import Cart, CartItem, Order, Wishlist
 from apps.customers.models import Customer
 from django.db.models import Sum
@@ -216,6 +217,33 @@ def dashboard(request):
     # Get top-selling products using the new method
     top_products = get_top_selling_products()
 
+    # Fetch all sales and prefetch related data
+    sales = Sale.objects.prefetch_related(
+        "items__product_volume__volume", "items__product"
+    )
+
+    # Initialize total profit after sales
+    total_profit_after_sales = Decimal(0)
+
+    # Calculate total profit from all sales
+    for sale in sales:
+        for item in sale.items.all():
+            product = item.product
+            product_volume = item.product_volume
+
+            # Determine volume and price details
+            volume = product_volume.volume if product_volume else None
+            cost = volume.cost if volume else 0
+            discounted_price = item.price  # Price directly from SaleDetail
+
+            # Calculate and accumulate profit
+            item_profit = (Decimal(discounted_price) - Decimal(cost)) * Decimal(
+                item.quantity
+            )
+            total_profit_after_sales += item_profit
+
+    # total_profit_after_sales now holds the total profit from all sales
+
     # Total stock from Inventory
     total_stock = Product.objects.filter(status="ACTIVE").aggregate(
         total=Coalesce(Sum("inventory__quantity"), 0)
@@ -232,6 +260,7 @@ def dashboard(request):
         "total_sales_week": total_sales_week,
         "total_sales_month": total_sales_month,
         "top_products": top_products,
+        "total_profit_after_sales": total_profit_after_sales,
     }
 
     return render(request, "main/dashboard.html", context)

@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from django.db import IntegrityError
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.contrib import messages
@@ -6,6 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Sum
 from .models import Inventory
 from .forms import InventoryForm
+from apps.inventory.models import Product
 
 from apps.authentication.decorators import (
     admin_or_manager_or_staff_required,
@@ -75,27 +77,84 @@ def inventory_report_view(request):
 
 
 # =================================== Inventory Add view ===================================
+# @login_required
+# @admin_or_manager_or_staff_required
+# def inventory_add_view(request):
+#     context = {
+#         "table_title": "Add Inventory",
+#     }
+#     if request.method == "POST":
+#         form = InventoryForm(request.POST)
+#         if form.is_valid():
+#             form.save()
+#             messages.success(
+#                 request, "Inventory added successfully!", extra_tags="bg-success"
+#             )
+#             return redirect(
+#                 "inventory:inventory_list"
+#             )  # Adjust the redirect as necessary
+#     else:
+#         form = InventoryForm()
+#         context["form"] = form
+
+#     return render(request, "inventory/inventory_add.html", context=context)
+
+
 @login_required
 @admin_or_manager_or_staff_required
 def inventory_add_view(request):
     context = {
         "table_title": "Add Inventory",
+        "products": Product.objects.filter(
+            status="ACTIVE"
+        ),  # Pass only active products
     }
+
     if request.method == "POST":
         form = InventoryForm(request.POST)
         if form.is_valid():
-            form.save()
-            messages.success(
-                request, "Inventory added successfully!", extra_tags="bg-success"
-            )
-            return redirect(
-                "inventory:inventory_list"
-            )  # Adjust the redirect as necessary
+            # Get the product ID from the form data (use `product_id` instead of `product` field)
+            product_id = request.POST.get(
+                "product_id"
+            )  # Assuming the field name is 'product_id'
+            product = Product.objects.get(id=product_id)
+
+            # Check if the inventory for this product already exists
+            existing_inventory = Inventory.objects.filter(product=product).first()
+
+            if existing_inventory:
+                # If an inventory entry for this product already exists, show a message
+                messages.error(
+                    request,
+                    "This product already has an inventory entry!",
+                    extra_tags="bg-danger",
+                )
+                return redirect(
+                    "inventory:inventory_list"
+                )  # Redirect to inventory list
+
+            # Save the form but don't commit yet
+            inventory = form.save(commit=False)
+
+            # Assign the selected product to the inventory item
+            inventory.product = product
+            try:
+                inventory.save()
+                messages.success(
+                    request, "Inventory added successfully!", extra_tags="bg-success"
+                )
+                return redirect("inventory:inventory_list")  # Adjust redirect as needed
+            except IntegrityError as e:
+                messages.error(
+                    request, f"Error saving inventory: {str(e)}", extra_tags="bg-danger"
+                )
+                return redirect("inventory:inventory_add")
+
     else:
         form = InventoryForm()
-        context["form"] = form
 
-    return render(request, "inventory/inventory_add.html", context=context)
+    context["form"] = form
+    return render(request, "inventory/inventory_add.html", context)
 
 
 # =================================== Inventory Update view ===================================

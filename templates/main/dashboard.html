@@ -2,241 +2,318 @@
 {% load static %}
 {% load humanize %}
 {% block content %}
-
-<!-- Horizontal Card Section -->
-<div class="container-fluid">
+  <!-- Horizontal Card Section -->
+  <div class="container-fluid">
     <div class="page-header flex-wrap">
-        <h3 class="mb-0">Dashboard</h3>
+      <h3 class="mb-0">Dashboard</h3>
     </div>
     <hr class="bg-info" style="height: 1px;" />
 
     <!-- Content Row -->
     <div class="row">
-        <!-- Earnings (Monthly) Card -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card bg-primary text-white shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="text-xs font-weight-bold mb-1">Av. Earnings (Monthly)</div>
-                            <div class="h5 mb-0 font-weight-bold">UgX {{ avg_month|floatformat:"2"|intcomma }}</div>
-                        </div>
-                        <div>
-                            <i class="mdi mdi-calendar mdi-36px"></i>
-                        </div>
-                    </div>
-                </div>
+      <!-- Earnings (Monthly) Card -->
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-primary text-white shadow h-100 py-2">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="text-xs font-weight-bold mb-1">Av. Earnings (Monthly)</div>
+                <div class="h5 mb-0 font-weight-bold">UgX {{ avg_month|floatformat:'2'|intcomma }}</div>
+              </div>
+              <div>
+                <i class="mdi mdi-calendar mdi-36px"></i>
+              </div>
             </div>
+          </div>
         </div>
+      </div>
 
-        <!-- Earnings (Annual) Card -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card bg-success text-white shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="text-xs font-weight-bold mb-1">Earnings (Annual)</div>
-                            <div class="h5 mb-0 font-weight-bold">UgX {{ annual_earnings|floatformat:"2"|intcomma }}
-                            </div>
-                        </div>
-                        <div>
-                            <i class="mdi mdi-cash-multiple mdi-36px"></i>
-                        </div>
-                    </div>
-                </div>
+      <!-- Earnings (Annual) Card -->
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-success text-white shadow h-100 py-2">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="text-xs font-weight-bold mb-1">Earnings (Annual)</div>
+                <div class="h5 mb-0 font-weight-bold">UgX {{ annual_earnings|floatformat:'2'|intcomma }}</div>
+              </div>
+              <div>
+                <i class="mdi mdi-cash-multiple mdi-36px"></i>
+              </div>
             </div>
+          </div>
         </div>
+      </div>
 
-        <!-- Products Card -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card bg-info text-white shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="text-xs font-weight-bold mb-1">Products Registered</div>
-                            <hr class="bg-white" style="height: 1px;" />
-                            <div class="h5 mb-0 font-weight-bold">{{ products }}</div>
-                        </div>
-                        <div>
-                            <i class="mdi mdi-package-variant mdi-36px"></i>
-                        </div>
-                    </div>
-                </div>
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-warning text-white shadow h-100 py-2">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="text-xs font-weight-bold mb-1">Total Profit After Sales</div>
+                <hr class="bg-white" style="height: 1px;" />
+                <div class="h5 mb-0 font-weight-bold">UgX {{ total_profit_after_sales|floatformat:2|intcomma }}</div>
+              </div>
+              <div>
+                <i class="mdi mdi-cart mdi-36px"></i>
+              </div>
             </div>
+          </div>
         </div>
+      </div>
 
-        <!-- Categories Card -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card bg-warning text-white shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="text-xs font-weight-bold mb-1">Products Categories</div>
-                            <hr class="bg-white" style="height: 1px;" />
-                            <div class="h5 mb-0 font-weight-bold">{{ categories }}</div>
-                        </div>
-                        <div>
-                            <i class="mdi mdi-tag mdi-36px"></i>
-                        </div>
-                    </div>
-                </div>
+      <!-- Products Card -->
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-info text-white shadow h-100 py-2">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="text-xs font-weight-bold mb-1">Products Registered</div>
+                <hr class="bg-white" style="height: 1px;" />
+                <div class="h5 mb-0 font-weight-bold">{{ products }}</div>
+              </div>
+              <div>
+                <i class="mdi mdi-package-variant mdi-36px"></i>
+              </div>
             </div>
+          </div>
         </div>
+      </div>
+
+      <!-- Categories Card -->
+      {% comment %} <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-warning text-white shadow h-100 py-2">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="text-xs font-weight-bold mb-1">Products Categories</div>
+                <hr class="bg-white" style="height: 1px;" />
+                <div class="h5 mb-0 font-weight-bold">{{ categories }}</div>
+              </div>
+              <div>
+                <i class="mdi mdi-tag mdi-36px"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div> {% endcomment %}
     </div>
 
     <!-- Top Selling Products Chart -->
     <div class="row">
-        <div class="col-xl-12 col-lg-12">
-            <div class="card shadow mb-4">
-                <div
-                    class="card-header py-3 d-flex flex-row align-items-center justify-content-between bg-primary text-white">
-                    <h6 class="m-0 font-weight-bold">Top Selling Products</h6>
-                </div>
+      <div class="col-xl-12 col-lg-12">
+        <div class="card shadow mb-4">
+          <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between bg-primary text-white">
+            <h6 class="m-0 font-weight-bold">Top Selling Products</h6>
+          </div>
 
-                <div class="card-body">
-                    <div class="row text-center">
-                        {% if top_products %}
-                        {% for product in top_products %}
-                        <div class="col-md-4 mb-4">
-                            <div class="card h-100 border-light"
-                                style="background-color: {% if forloop.counter0 == 0 %} #d4edda {% elif forloop.counter0 == 1 %} #cce5ff {% elif forloop.counter0 == 2 %} #fff3cd {% elif forloop.counter0 == 3 %} #f8d7da {% elif forloop.counter0 == 4 %} #f0f8ff {% else %} #ffeeba {% endif %};">
-                                <div class="card-body">
-                                    <h5 class="card-title font-weight-bold">{{ product.name }}</h5>
-                                    <p class="card-text">
-                                        <span class="badge badge-success">Total Sold:
-                                            {{ product.total_quantity_sold|default:"0" }}</span>
-                                    </p>
-                                    <p class="card-text">Total Sales Value: UgX:
-                                        {{ product.total_sales_value|floatformat:"2"|intcomma }}</p>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                        {% else %}
-                        <div class="col-12">
-                            <div class="alert alert-warning" role="alert">
-                                No sales available.
-                            </div>
-                        </div>
-                        {% endif %}
+          <div class="card-body">
+            <div class="row text-center">
+              {% if top_products %}
+                {% for product in top_products %}
+                  <div class="col-md-4 mb-4">
+                    <div class="card h-100 border-light"
+                      style="background-color: {% if forloop.counter0 == 0 %}
+                        
+                        
+                        
+                        
+                        
+                         #d4edda
+
+
+
+
+
+                      {% elif forloop.counter0 == 1 %}
+                        
+                        
+                        
+                        
+                        
+                         #cce5ff
+
+
+
+
+
+                      {% elif forloop.counter0 == 2 %}
+                        
+                        
+                        
+                        
+                        
+                         #fff3cd
+
+
+
+
+
+                      {% elif forloop.counter0 == 3 %}
+                        
+                        
+                        
+                        
+                        
+                         #f8d7da
+
+
+
+
+
+                      {% elif forloop.counter0 == 4 %}
+                        
+                        
+                        
+                        
+                        
+                         #f0f8ff
+
+
+
+
+
+                      {% else %}
+                        
+                        
+                        
+                        
+                        
+                         #ffeeba
+
+
+
+
+
+                      {% endif %};">
+                      <div class="card-body">
+                        <h5 class="card-title font-weight-bold">{{ product.name }}</h5>
+                        <p class="card-text">
+                          <span class="badge badge-success">
+                            Total Sold:
+                            {{ product.total_quantity_sold|default:'0' }}
+                          </span>
+                        </p>
+                        <p class="card-text">Total Sales Value: UgX:
+                          {{ product.total_sales_value|floatformat:'2'|intcomma }}</p>
+                      </div>
                     </div>
+                  </div>
+                {% endfor %}
+              {% else %}
+                <div class="col-12">
+                  <div class="alert alert-warning" role="alert">No sales available.</div>
                 </div>
+              {% endif %}
             </div>
+          </div>
         </div>
+      </div>
     </div>
-
 
     <div class="row">
-        <!-- Sales Today Card -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card bg-success text-white shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="text-xs font-weight-bold mb-1">Sales Today</div>
-                            <div class="h5 mb-0 font-weight-bold">UgX {{ total_sales_today|floatformat:"2"|intcomma }}
-                            </div>
-                        </div>
-                        <div>
-                            <i class="mdi mdi-calendar-today mdi-36px"></i>
-                        </div>
-                    </div>
-                </div>
+      <!-- Sales Today Card -->
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-success text-white shadow h-100 py-2">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="text-xs font-weight-bold mb-1">Sales Today</div>
+                <div class="h5 mb-0 font-weight-bold">UgX {{ total_sales_today|floatformat:'2'|intcomma }}</div>
+              </div>
+              <div>
+                <i class="mdi mdi-calendar-today mdi-36px"></i>
+              </div>
             </div>
+          </div>
         </div>
+      </div>
 
-        <!-- Sales This Week Card -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card bg-info text-white shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="text-xs font-weight-bold mb-1">Sales This Week</div>
-                            <div class="h5 mb-0 font-weight-bold">UgX {{ total_sales_week|floatformat:"2"|intcomma }}
-                            </div>
-                        </div>
-                        <div>
-                            <i class="mdi mdi-calendar-week mdi-36px"></i>
-                        </div>
-                    </div>
-                </div>
+      <!-- Sales This Week Card -->
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-info text-white shadow h-100 py-2">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="text-xs font-weight-bold mb-1">Sales This Week</div>
+                <div class="h5 mb-0 font-weight-bold">UgX {{ total_sales_week|floatformat:'2'|intcomma }}</div>
+              </div>
+              <div>
+                <i class="mdi mdi-calendar-week mdi-36px"></i>
+              </div>
             </div>
+          </div>
         </div>
+      </div>
 
-        <!-- Sales This Month Card -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card bg-warning text-white shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="text-xs font-weight-bold mb-1">Sales This Month</div>
-                            <div class="h5 mb-0 font-weight-bold">UgX {{ total_sales_month|floatformat:"2"|intcomma }}
-                            </div>
-                        </div>
-                        <div>
-                            <i class="mdi mdi-calendar-month mdi-36px"></i>
-                        </div>
-                    </div>
-                </div>
+      <!-- Sales This Month Card -->
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-warning text-white shadow h-100 py-2">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="text-xs font-weight-bold mb-1">Sales This Month</div>
+                <div class="h5 mb-0 font-weight-bold">UgX {{ total_sales_month|floatformat:'2'|intcomma }}</div>
+              </div>
+              <div>
+                <i class="mdi mdi-calendar-month mdi-36px"></i>
+              </div>
             </div>
+          </div>
         </div>
+      </div>
 
-        <!-- Stock Balance Card -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card bg-danger text-white shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="text-xs font-weight-bold mb-1">Stock Balance</div>
-                            <div class="h5 mb-0 font-weight-bold">{{ total_stock }}</div>
-                        </div>
-                        <div>
-                            <i class="mdi mdi-cube mdi-36px"></i>
-                        </div>
-                    </div>
-                </div>
+      <!-- Stock Balance Card -->
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-danger text-white shadow h-100 py-2">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="text-xs font-weight-bold mb-1">Stock Balance</div>
+                <div class="h5 mb-0 font-weight-bold">{{ total_stock }}</div>
+              </div>
+              <div>
+                <i class="mdi mdi-cube mdi-36px"></i>
+              </div>
             </div>
+          </div>
         </div>
+      </div>
     </div>
-
 
     <!-- Year Earnings Overview Chart -->
     <div class="row">
-        <div class="col-xl-12 col-lg-12">
-            <div class="card shadow mb-4">
-                <!-- Card Header -->
-                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">Year Earnings Overview (Jan - Dec, <span
-                            id="currentYear"></span>)
-                    </h6>
-                </div>
-                <!-- Card Body -->
-                <div class="card-body">
-                    <div class="chart-area">
-                        <canvas id="myLineChart" height="400px"></canvas>
-                    </div>
-                </div>
+      <div class="col-xl-12 col-lg-12">
+        <div class="card shadow mb-4">
+          <!-- Card Header -->
+          <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">Year Earnings Overview (Jan - Dec, <span id="currentYear"></span>)</h6>
+          </div>
+          <!-- Card Body -->
+          <div class="card-body">
+            <div class="chart-area">
+              <canvas id="myLineChart" height="400px"></canvas>
             </div>
+          </div>
         </div>
+      </div>
     </div>
     <!-- Year Earnings Overview Chart -->
     <div class="row">
-        <div class="col-xl-12 col-lg-12">
-            <div class="card shadow mb-4">
-                <!-- Card Header -->
-                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">Earnings over the years
-                    </h6>
-                </div>
-                <!-- Card Body -->
-                <div class="card-body">
-                    <div class="chart-area">
-                        <canvas id="salesChart" width="400" height="200"></canvas>
-                    </div>
-                </div>
+      <div class="col-xl-12 col-lg-12">
+        <div class="card shadow mb-4">
+          <!-- Card Header -->
+          <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">Earnings over the years</h6>
+          </div>
+          <!-- Card Body -->
+          <div class="card-body">
+            <div class="chart-area">
+              <canvas id="salesChart" width="400" height="200"></canvas>
             </div>
+          </div>
         </div>
+      </div>
     </div>
-</div>
-
-{% endblock content %}
+  </div>
+{% endblock %}

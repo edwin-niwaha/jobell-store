@@ -72,6 +72,7 @@ logger = logging.getLogger(__name__)
 
 #         return render(request, self.template_name, {"form": form})
 
+
 class RegisterView(View):
     form_class = RegisterForm
     initial = {"key": "value"}
@@ -103,7 +104,7 @@ class RegisterView(View):
             return redirect(to="login")
 
         return render(request, self.template_name, {"form": form})
-    
+
 
 # =================================== Login View ===================================
 
@@ -124,6 +125,7 @@ class RegisterView(View):
 #         # else browser session will be as long as the session cookie time "SESSION_COOKIE_AGE" defined in settings.py
 #         return super(CustomLoginView, self).form_valid(form)
 
+
 class CustomLoginView(LoginView):
     form_class = LoginForm
 
@@ -142,7 +144,7 @@ class CustomLoginView(LoginView):
             self.request.session.modified = True
 
         return super().form_valid(form)
-    
+
 
 # =================================== Reset password View  ===================================
 
@@ -312,14 +314,19 @@ def send_contact_email(name, email):
 
     return True
 
+
 def contact_us(request):
     form = ContactForm()
 
     if request.method == "POST":
         if not request.user.is_authenticated:
-            messages.error(request, "You must be logged in to send a message.", extra_tags="bg-danger")
+            messages.error(
+                request,
+                "You must be logged in to send a message.",
+                extra_tags="bg-danger",
+            )
             return redirect("login")  # Redirect non-logged-in users to login page
-        
+
         form = ContactForm(request.POST)
         if form.is_valid():
             instance = form.save()
@@ -327,14 +334,21 @@ def contact_us(request):
 
             if email_sent:
                 messages.success(
-                    request, "Your message has been sent successfully. We will get back to you soon!", extra_tags="bg-success"
+                    request,
+                    "Your message has been sent successfully. We will get back to you soon!",
+                    extra_tags="bg-success",
                 )
             else:
-                messages.error(request, "Sorry, an error occurred while sending your message. Please try again later.", extra_tags="bg-danger")
+                messages.error(
+                    request,
+                    "Sorry, an error occurred while sending your message. Please try again later.",
+                    extra_tags="bg-danger",
+                )
 
             return HttpResponseRedirect(reverse("contact_us"))
 
     return render(request, "accounts/contact_us.html", {"form": form})
+
 
 # =================================== Display User Feedback ===================================
 @login_required

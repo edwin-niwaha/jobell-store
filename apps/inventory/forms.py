@@ -5,9 +5,9 @@ from .models import Inventory
 class InventoryForm(forms.ModelForm):
     class Meta:
         model = Inventory
-        fields = ["product", "quantity", "low_stock_threshold"]
+        fields = ["quantity", "low_stock_threshold"]
         widgets = {
-            "product": forms.Select(attrs={"class": "form-control"}),
+            # "product": forms.Select(attrs={"class": "form-control"}),
             "quantity": forms.NumberInput(
                 attrs={"class": "form-control", "placeholder": "Enter stock quantity"}
             ),
@@ -19,7 +19,7 @@ class InventoryForm(forms.ModelForm):
             ),
         }
         labels = {
-            "product": "Product",
+            # "product": "Product",
             "quantity": "Stock Quantity",
             "low_stock_threshold": "Low Stock Threshold",
         }

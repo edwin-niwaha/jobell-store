@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 #     logger.info(f"UID from social auth: {uid}")
 
 #     # Assign a default role
-#     user.profile.role = "guest"  
+#     user.profile.role = "guest"
 #     user.profile.save()
 #     logger.info(f"Profile updated for user: {user}")
 
@@ -29,15 +29,14 @@ def create_profile(backend, user, response, *args, **kwargs):
 
     if created:
         logger.info(f"Profile created for user: {user}")
-    
+
     uid = kwargs.get("uid", None)
     logger.info(f"UID from social auth: {uid}")
 
     # Assign a default role only if it does not exist
     if not profile.role or profile.role.strip() == "":
-        profile.role = "guest"  
+        profile.role = "guest"
         profile.save()
         logger.info(f"Profile updated with role 'guest' for user: {user}")
     else:
         logger.info(f"Profile role already set ({profile.role}), no update needed.")
-
