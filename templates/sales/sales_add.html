@@ -19,6 +19,10 @@
 
     <!-- Select2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+
+    <!-- CSS for Searchable dropdown -->
+    <link rel="stylesheet" href="{% static 'css/chosen.css' %}" /> 
+
   </head>
 
   <body>
@@ -159,6 +163,7 @@
     <!-- Sales Add Script -->
     {% comment %} <script src="{% static 'js/sales_add.js' %}"></script> {% endcomment %}
   </body>
+  <script src="{% static 'js/chosen.jquery.js' %}"></script>
 
   <script>
     $(document).ready(function () {
@@ -301,5 +306,11 @@
       $form.on('submit', addProductDataToForm);
     });
   </script>
-
+  <!-- Initialization for Chosen dropdown -->
+  <script type="text/javascript">
+    $('.chzn-select').chosen()
+    $('.chzn-select-deselect').chosen({
+      allow_single_deselect: true
+    })
+  </script>
 </html>
