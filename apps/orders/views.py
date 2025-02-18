@@ -164,12 +164,12 @@ def remove_from_wishlist(request, wishlist_item_id):
         wishlist_item = Wishlist.objects.get(id=wishlist_item_id, user=request.user)
         print(f"Wishlist item found: {wishlist_item.product.name}")
     except Wishlist.DoesNotExist:
-        messages.error(request, "Product not found in your wishlist.")
+        messages.error(request, "Product not found in your wishlist.", extra_tags="bg-danger")
         return redirect("orders:wishlist")
 
     # Remove the wishlist item
     wishlist_item.delete()
-    messages.success(request, "Product has been removed from your wishlist.")
+    messages.success(request, "Product has been removed from your wishlist.", extra_tags="bg-success")
 
     return redirect("orders:wishlist")
 
@@ -245,6 +245,32 @@ def cart_view(request):
 
     return render(request, "orders/cart.html", context)
 
+@login_required
+def update_cart(request, item_id):
+    cart = get_object_or_404(Cart, user=request.user)
+    item = get_object_or_404(CartItem, id=item_id, cart=cart)
+
+    if request.method == "POST":
+        quantity = int(request.POST.get("quantity", 1))
+        
+        if quantity > 0:
+            item.quantity = quantity
+            item.save()
+            messages.success(request, "Cart updated successfully.", extra_tags="bg-success")
+        else:
+            messages.error(request, "Quantity must be at least 1.", extra_tags="bg-danger")
+
+    return redirect("orders:cart")
+
+@login_required
+def remove_from_cart(request, item_id):
+    cart = get_object_or_404(Cart, user=request.user)
+    item = get_object_or_404(CartItem, id=item_id, cart=cart)
+
+    item.delete()
+    messages.success(request, "Item removed from cart.", extra_tags="bg-success")
+
+    return redirect("orders:cart")
 
 # =================================== checkout_view ===================================
 def send_order_email(recipient_name, recipient_email, order_id, is_customer=True):
@@ -309,7 +335,7 @@ def checkout_view(request):
     except Cart.DoesNotExist:
         messages.error(request, "Your cart is empty.")
         return redirect(
-            "orders:cart_view"
+            "orders:cart"
         )  # Redirect to cart view if the cart is empty
 
     # Get or create a customer entry for the current user

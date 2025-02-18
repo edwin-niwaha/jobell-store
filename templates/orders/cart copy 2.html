@@ -3,7 +3,7 @@
 {% load humanize %}
 
 {% block content %}
-  <div class="container-fluid py-3">
+  <div class="container-fluid py-5">
     <div class="card shadow border-0 rounded-lg">
       <div class="card-header text-center bg-warning text-white">
         <h3 class="font-weight-light mb-0">Your Cart</h3>
@@ -14,16 +14,16 @@
             <h5 class="text-primary">Cart Items</h5>
             <ul class="list-group">
               {% for item in cart.items.all %}
-                <li class="list-group-item d-flex flex-column flex-md-row justify-content-between align-items-center">
-                  <div class="text-center text-md-start">
-                    <h6 class="mb-1 text-break">
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <div>
+                    <h6 class="mb-1">
                       <span class="text-primary fw-bold">{{ item.product.name }}</span> |
                       <span class="text-success">{{ item.product.category }}</span> |
                       <span class="text-info">{{ item.product.gender }}</span> |
                       <span class="text-warning">{{ item.volume.product_type }}</span>
                     </h6>
 
-                    <small class="text-break">
+                    <small>
                       {{ item.volume.volume.ml }}ML (x{{ item.quantity }}) @{% if item.volume.discount_value %}
                         <del class="text-muted">UgX {{ item.volume.volume.price|floatformat:'2'|intcomma }}</del>
                         <span class="text-danger">UgX {{ item.volume.get_discounted_price|floatformat:'2'|intcomma }}</span>
@@ -33,31 +33,20 @@
                       {% endif %}each
                     </small>
                   </div>
-
-                  <div class="d-flex flex-column flex-sm-row align-items-center gap-2 mt-2 mt-md-0">
-                    <form method="post" action="{% url 'orders:update_cart' item.id %}" class="d-flex align-items-center">
-                      {% csrf_token %}
-                      <input type="number" name="quantity" value="{{ item.quantity }}" min="1" class="form-control form-control-sm" style="width: 60px;" />
-                      <button title="Update Cart" type="submit" class="btn btn-primary btn-sm ms-2">Update</button>
-                    </form>
-
-                    <a title="Remove Item" href="{% url 'orders:remove_from_cart' item.id %}" class="btn btn-danger btn-sm ms-2" onclick="return confirm('Are you sure you want to remove this item?');">Remove</a>
-                  </div>
-
-                  <span class="badge bg-primary rounded-pill mt-2 mt-md-0">UgX {{ item.get_total_price|floatformat:'2'|intcomma }}</span>
+                  <span class="badge bg-primary rounded-pill">UgX {{ item.get_total_price|floatformat:'2'|intcomma }}</span>
                 </li>
               {% endfor %}
             </ul>
           </div>
 
-          <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-4">
             <strong>Total Price:</strong>
-            <h5 class="text-primary mb-2 mb-sm-0">UgX {{ total_price|floatformat:'2'|intcomma }}</h5>
+            <h5 class="text-primary mb-0">UgX {{ total_price|floatformat:'2'|intcomma }}</h5>
           </div>
 
           <a href="{% url 'orders:checkout' %}" class="btn btn-success btn-lg w-100"><i class="bi bi-credit-card"></i> Proceed to Checkout</a>
         {% else %}
-          <div class="alert alert-info text-center" role="alert">Your cart is empty.</div>
+          <div class="alert alert-info" role="alert">Your cart is empty.</div>
         {% endif %}
       </div>
     </div>

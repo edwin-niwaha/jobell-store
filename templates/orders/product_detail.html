@@ -3,7 +3,7 @@
 {% load humanize %}
 
 {% block content %}
-  <div class="container-fluid py-5">
+  <div class="container-fluid py-3">
     <div class="row">
       <!-- Product Image Carousel -->
       <div class="col-12 col-md-6 mb-4 product-item">
@@ -52,13 +52,18 @@
               <th scope="row">Type | Volume | Price</th>
               <td colspan="3">
                 <select name="volume_id" id="volume" form="add-to-cart-form" class="form-control" required>
+                  <option value="" disabled selected>Choose a volume...</option>
                   {% for product_volume in product_volumes %}
                     <option value="{{ product_volume.id }}"
                       data-image-url="{% if product_volume.volume.image %}
                         {{ product_volume.volume.image.url }}
                       {% else %}
                         
+                        
+                        
                         /staticfiles/images/no-image.png
+
+
 
                       {% endif %}">
                       {{ product_volume.product_type }} - {{ product_volume.volume.ml }} ML -{% if product_volume.discount_value %}
@@ -94,7 +99,7 @@
           </form>
           <form method="POST" class="mx-1" action="{% url 'orders:wishlist_add' product.id %}">
             {% csrf_token %}
-            <button type="submit" class="btn btn-outline-primary ms-2"><i class="fas fa-heart"></i> Add to Wishlist</button>
+            <button title="Add to Wishlist" type="submit" class="btn btn-outline-primary ms-2"><i class="fas fa-heart"></i></button>
           </form>
 
           {% if user.is_authenticated %}
