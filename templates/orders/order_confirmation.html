@@ -14,23 +14,25 @@
           </div>
           <div class="card-body">
             <p class="text-center text-success lead mb-4">Thank you for your order!</p>
-            <ul class="list-group mb-4">
-              <li class="list-group-item d-flex justify-content-between align-items-center">
-                <strong>Order ID:</strong>
+            <ul class="list-group shadow-sm rounded-lg overflow-hidden mb-4">
+              <li class="list-group-item d-flex justify-content-between align-items-center bg-primary text-white">
+                <strong><i class="mdi mdi-receipt"></i> Order ID:</strong>
                 <span>{{ order.id }}</span>
               </li>
               <li class="list-group-item d-flex justify-content-between align-items-center">
-                <strong>Total Amount:</strong>
-                <span>UgX {{ order.total_amount|floatformat:'2'|intcomma }}</span>
+                <strong><i class="mdi mdi-cash"></i> Total Amount:</strong>
+                <span class="text-success fw-bold">UgX {{ order.total_amount|floatformat:'2'|intcomma }}</span>
               </li>
               <li class="list-group-item d-flex justify-content-between align-items-center">
-                <strong>Status:</strong>
-                <span>{{ order.status }}</span>
+                <strong><i class="mdi mdi-progress-check"></i> Status:</strong>
+                {% if order.status == 'Completed' %}
+                  <span class="badge bg-success">{{ order.status }}</span>
+                {% elif order.status == 'Pending' %}
+                  <span class="badge bg-warning">{{ order.status }}</span>
+                {% else %}
+                  <span class="badge bg-danger">{{ order.status }}</span>
+                {% endif %}
               </li>
-              {% comment %} <li class="list-group-item d-flex justify-content-between align-items-center">
-                <strong>Payment Method:</strong>
-                <span>{{ order.payment_method }}</span>
-              </li> {% endcomment %}
             </ul>
 
             <!-- Order Details Section -->
@@ -65,8 +67,10 @@
         </div>
         <!-- Print Button -->
         <div class="text-center mt-3 mb-3">
-          <button class="btn btn-info btn-lg" onclick="printDiv('printMe')"><i class="mdi mdi-printer"></i> Print Order Report</button>
-          <a href="{% url 'orders:customer_order_history' %}" class="btn btn-primary btn-lg"><i class="mdi mdi-history"></i> Back to Order History</a>
+          <div class="d-flex flex-column flex-sm-row justify-content-center gap-2">
+            <button class="btn btn-info btn-sm" onclick="printDiv('printMe')"><i class="mdi mdi-printer"></i> Print Order Report</button>
+            <a href="{% url 'orders:customer_order_history' %}" class="btn btn-primary btn-sm"><i class="mdi mdi-history"></i> Back to Order History</a>
+          </div>
         </div>
       </div>
     </div>
