@@ -52,8 +52,8 @@
                     <td>
                       {% if order.status == 'Pending' %}
                         <span class="badge bg-warning">Pending</span>
-                      {% elif order.status == 'Shipped' %}
-                        <span class="badge bg-info text-dark">Shipped</span>
+                      {% elif order.status == 'Out for Delivery' %}
+                        <span class="badge bg-info text-dark">Out for Delivery</span>
                       {% elif order.status == 'Delivered' %}
                         <span class="badge bg-success">Delivered</span>
                       {% elif order.status == 'Canceled' %}

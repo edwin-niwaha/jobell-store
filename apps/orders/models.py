@@ -62,10 +62,9 @@ class CartItem(models.Model):
 
 
 class Order(models.Model):
-    # Constants for choices
     ORDER_STATUS_CHOICES = [
         ("Pending", "Pending"),
-        ("Shipped", "Shipped"),
+        ("Out for Delivery", "Out for Delivery"),
         ("Delivered", "Delivered"),
         ("Canceled", "Canceled"),
         ("Refunded", "Refunded"),
@@ -73,10 +72,6 @@ class Order(models.Model):
     ]
     PAYMENT_METHOD_CHOICES = [
         ("Mobile Money", "Mobile Money"),
-        # ('Visa', 'Visa Payment'),
-        # ('MasterCard', 'MasterCard Payment'),
-        # ('PayPal', 'PayPal Payment'),
-        # Add more options as necessary
     ]
     PAYMENT_STATUS_CHOICES = [
         ("pending", "Pending"),

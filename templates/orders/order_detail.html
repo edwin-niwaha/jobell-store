@@ -1,5 +1,5 @@
 {% extends 'accounts/base.html' %} {% load static %} {% load humanize %} {% block content %}
-  <div class="container-fluid my-5">
+  <div class="container-fluid my-2">
     <div class="card shadow-lg border-0">
       <div class="card-header bg-primary text-white">
         <h2 class="mb-0 text-center">Order Details - #{{ order.id }}</h2>
@@ -10,6 +10,7 @@
           <div class="col-md-6">
             <div class="bg-light p-3 rounded">
               <h4 class="text-primary">Order Information</h4>
+              <hr />
               <p>
                 <strong>Order ID:</strong> {{ order.id }}
               </p>
@@ -20,8 +21,8 @@
                 <strong>Status:</strong>
                 {% if order.status == 'Pending' %}
                   <span class="badge bg-warning">Pending</span>
-                {% elif order.status == 'Shipped' %}
-                  <span class="badge bg-info text-dark">Shipped</span>
+                {% elif order.status == 'Out for Delivery' %}
+                  <span class="badge bg-info text-dark">Out for Delivery</span>
                 {% elif order.status == 'Delivered' %}
                   <span class="badge bg-success">Delivered</span>
                 {% elif order.status == 'Canceled' %}
@@ -35,15 +36,15 @@
                 {% endif %}
               </p>
               <p>
-                <strong>Total Amount:</strong> UGX:{{ order.total_amount|floatformat:'2'|intcomma }}
-              </p>
-              <p>
                 <strong>Payment Status:</strong>
                 {% if order.payment_status == 'paid' %}
                   <span class="badge bg-success">Paid</span>
                 {% else %}
                   <span class="badge bg-danger">Unpaid</span>
                 {% endif %}
+              </p>
+              <p>
+                <strong>Total Amount:</strong> UGX:{{ order.total_amount|floatformat:'2'|intcomma }}
               </p>
             </div>
           </div>
@@ -52,6 +53,7 @@
           <div class="col-md-6">
             <div class="bg-light p-3 rounded">
               <h4 class="text-primary">Customer Information</h4>
+              <hr />
               <p>
                 <strong>Name:</strong> {{ order.customer.get_full_name }}
               </p>
@@ -59,17 +61,50 @@
                 <strong>Email:</strong> {{ order.customer.email }}
               </p>
               <p>
-                <strong>Phone:</strong> {{ order.customer.mobile }}
+                <strong>Tel:</strong> {{ order.customer.tel }}
+              </p>
+              <p>
+                <strong>Mobile:</strong> {{ order.customer.mobile }}
               </p>
               <p>
                 <strong>Address:</strong> {{ order.customer.address|default:'N/A' }}
               </p>
             </div>
           </div>
+
+          <!-- Order Tracking Progress Bar -->
+          <h4 class="mt-4 text-primary">Order Tracking</h4>
+          <div class="container mt-3">
+            <div class="progress" style="height: 25px; border-radius: 10px;">
+              {% for status in statuses %}
+                <div class="progress-bar 
+                    {% if order.status == status %}
+                    
+                    
+                      bg-success 
+
+
+                  {% else %}
+                    
+                    
+                      bg-secondary 
+
+
+                  {% endif %}"
+                  role="progressbar"
+                  style="width: {{ progress_width }}%; border-radius: 10px; transition: width 0.4s;"
+                  aria-valuenow="{{ forloop.counter }}"
+                  aria-valuemin="0"
+                  aria-valuemax="{{ statuses|length }}">
+                  <span class="text-white">{{ forloop.counter }}. {{ status }}</span> <!-- Display step number and status -->
+                </div>
+              {% endfor %}
+            </div>
+          </div>
         </div>
 
         <!-- Order Items -->
-        <h4 class="mt-5 text-primary">Order Items</h4>
+        <h4 class="mt-4 text-primary">Order Items</h4>
         {% if order.details.exists %}
           <div class="table-responsive">
             <table class="table table-bordered table-hover align-middle">

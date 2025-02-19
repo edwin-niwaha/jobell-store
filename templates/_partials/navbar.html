@@ -18,8 +18,8 @@
         </a>
         <div class="dropdown-menu navbar-dropdown preview-list" aria-labelledby="orderDropdown">
           <h6 class="p-3 mb-0">Customer Orders</h6>
-          {% if pending_and_shipped_orders %}
-            {% for order in pending_and_shipped_orders %}
+          {% if pending_and_out_for_delivery %}
+            {% for order in pending_and_out_for_delivery %}
               <a class="dropdown-item preview-item" href="{% url 'orders:orders_to_be_processed' %}" onclick="return confirm('You will be redirected to a page for taking action');">
                 <div class="preview-item-content flex-grow">
                   <span class="badge badge-pill badge-success">Request</span>

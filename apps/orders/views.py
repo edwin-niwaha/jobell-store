@@ -164,12 +164,16 @@ def remove_from_wishlist(request, wishlist_item_id):
         wishlist_item = Wishlist.objects.get(id=wishlist_item_id, user=request.user)
         print(f"Wishlist item found: {wishlist_item.product.name}")
     except Wishlist.DoesNotExist:
-        messages.error(request, "Product not found in your wishlist.", extra_tags="bg-danger")
+        messages.error(
+            request, "Product not found in your wishlist.", extra_tags="bg-danger"
+        )
         return redirect("orders:wishlist")
 
     # Remove the wishlist item
     wishlist_item.delete()
-    messages.success(request, "Product has been removed from your wishlist.", extra_tags="bg-success")
+    messages.success(
+        request, "Product has been removed from your wishlist.", extra_tags="bg-success"
+    )
 
     return redirect("orders:wishlist")
 
@@ -245,6 +249,7 @@ def cart_view(request):
 
     return render(request, "orders/cart.html", context)
 
+
 @login_required
 def update_cart(request, item_id):
     cart = get_object_or_404(Cart, user=request.user)
@@ -252,15 +257,20 @@ def update_cart(request, item_id):
 
     if request.method == "POST":
         quantity = int(request.POST.get("quantity", 1))
-        
+
         if quantity > 0:
             item.quantity = quantity
             item.save()
-            messages.success(request, "Cart updated successfully.", extra_tags="bg-success")
+            messages.success(
+                request, "Cart updated successfully.", extra_tags="bg-success"
+            )
         else:
-            messages.error(request, "Quantity must be at least 1.", extra_tags="bg-danger")
+            messages.error(
+                request, "Quantity must be at least 1.", extra_tags="bg-danger"
+            )
 
     return redirect("orders:cart")
+
 
 @login_required
 def remove_from_cart(request, item_id):
@@ -272,9 +282,72 @@ def remove_from_cart(request, item_id):
 
     return redirect("orders:cart")
 
-# =================================== checkout_view ===================================
-def send_order_email(recipient_name, recipient_email, order_id, is_customer=True):
 
+# =================================== checkout_view ===================================
+# def send_order_email(recipient_name, recipient_email, order_id, is_customer=True):
+
+#     customer_order_history_url = "https://jobellinc.com/orders/order-history/"
+#     orders_to_be_processed_url = "https://jobellinc.com/orders/to-be-processed/"
+#     subject = "Your Order has been Placed" if is_customer else "New Order to Process"
+
+#     if is_customer:
+#         email_body = f"""
+#         <html>
+#         <body style="font-family: Arial, sans-serif; color: #333;">
+#             <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+#                 <h2 style="color: #2E86C1; text-align: center;">Thank You for Your Purchase!</h2>
+#                 <p>Hello <strong>{recipient_name}</strong>,</p>
+#                 <p>Your order ID is <strong>{order_id}</strong>. You can view your order details and track the status by clicking the button below:</p>
+#                 <div style="text-align: center; margin: 20px 0;">
+#                     <a href="{customer_order_history_url}" style="background-color: #2E86C1; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 5px;">View Order History</a>
+#                 </div>
+#                 <p>Thanks for shopping with us!</p>
+#                 <p style="color: #888;">- Jobel Inc Management</p>
+#             </div>
+#         </body>
+#         </html>
+#         """
+#     else:
+#         email_body = f"""
+#         <html>
+#         <body style="font-family: Arial, sans-serif; color: #333;">
+#             <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+#                 <h2 style="color: #C0392B; text-align: center;">New Order to Process</h2>
+#                 <p>Hello <strong>Jobel Inc Team</strong>,</p>
+#                 <p>A new order has been placed. The order ID is <strong>{order_id}</strong>. Please review and process the order by clicking the button below:</p>
+#                 <div style="text-align: center; margin: 20px 0;">
+#                     <a href="{orders_to_be_processed_url}" style="background-color: #C0392B; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 5px;">Process Order</a>
+#                 </div>
+#                 <p>Thanks for your prompt attention!</p>
+#                 <p style="color: #888;">- Jobel Inc Management</p>
+#             </div>
+#         </body>
+#         </html>
+#         """
+
+#     from_email = getattr(settings, "EMAIL_HOST_USER", None)
+#     to = [recipient_email]
+
+#     # Send HTML email
+#     try:
+#         email = EmailMultiAlternatives(subject, strip_tags(email_body), from_email, to)
+#         email.attach_alternative(email_body, "text/html")
+#         email.send()
+#         return True
+#     except Exception as e:
+#         logger.error(f"Error sending email to {recipient_email}: {str(e)}")
+#         return False
+
+
+def send_order_email(
+    recipient_name,
+    recipient_email,
+    order_id,
+    order_details,
+    order_status,
+    total_price,
+    is_customer=True,
+):
     customer_order_history_url = "https://jobellinc.com/orders/order-history/"
     orders_to_be_processed_url = "https://jobellinc.com/orders/to-be-processed/"
     subject = "Your Order has been Placed" if is_customer else "New Order to Process"
@@ -282,19 +355,49 @@ def send_order_email(recipient_name, recipient_email, order_id, is_customer=True
     if is_customer:
         email_body = f"""
         <html>
-        <body style="font-family: Arial, sans-serif; color: #333;">
-            <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-                <h2 style="color: #2E86C1; text-align: center;">Thank You for Your Purchase!</h2>
-                <p>Hello <strong>{recipient_name}</strong>,</p>
-                <p>Your order ID is <strong>{order_id}</strong>. You can view your order details and track the status by clicking the button below:</p>
-                <div style="text-align: center; margin: 20px 0;">
-                    <a href="{customer_order_history_url}" style="background-color: #2E86C1; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 5px;">View Order History</a>
+            <body style="font-family: Arial, sans-serif; color: #333;">
+                <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #f9f9f9;">
+                    <h2 style="color: #2E86C1; text-align: center;">Thank You for Your Purchase!</h2>
+                    <p>Dear <strong>{recipient_name}</strong>,</p>
+                    <p>Thank you for placing your order with us! We appreciate your trust in our products and services. Your order has been successfully received and is being processed. Here are the details of your order:</p>
+
+                    <h4>Order ID: <strong>{order_id}</strong> | Status: <span style="color: #FF5733;">{order_status}</span></h4>
+                    
+                    <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                        <tr style="background-color: #f2f2f2;">
+                            <th style="padding: 10px; border: 1px solid #ddd;">Product</th>
+                            <th style="padding: 10px; border: 1px solid #ddd;">Volume</th>
+                            <th style="padding: 10px; border: 1px solid #ddd;">Qty</th>
+                            <th style="padding: 10px; border: 1px solid #ddd;">Price @</th>
+                            <th style="padding: 10px; border: 1px solid #ddd;">Image</th>
+                        </tr>
+                        {''.join(
+                            f"""
+                            <tr>
+                                <td style="padding: 10px; border: 1px solid #ddd;">{item['product_name']}</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">{item['volume']} ML</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">{item['quantity']}</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">UgX {item['price']:,.2f}</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">
+                                    <img src="{item['image_url']}" alt="{item['product_name']}" style="width: 50px; height: auto; border-radius: 5px;">
+                                </td>
+                            </tr>
+                            """ for item in order_details
+                        )}
+                    </table>
+
+                    <h3 style="text-align: right; color: #2E86C1;">Total Price: UgX {total_price:,.2f}</h3>
+
+                    <div style="text-align: center; margin: 20px 0;">
+                        <a href="{customer_order_history_url}" style="background-color: #2E86C1; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 5px;">View Order History</a>
+                    </div>
+
+                    <p>Thank you for shopping with us!</p>
+                    <p style="color: #888;">- Jobel Inc Management</p>
                 </div>
-                <p>Thanks for shopping with us!</p>
-                <p style="color: #888;">- Jobel Inc Management</p>
-            </div>
-        </body>
+            </body>
         </html>
+
         """
     else:
         email_body = f"""
@@ -328,66 +431,177 @@ def send_order_email(recipient_name, recipient_email, order_id, is_customer=True
         return False
 
 
+# @login_required
+# def checkout_view(request):
+#     try:
+#         cart = Cart.objects.get(user=request.user)
+#     except Cart.DoesNotExist:
+#         messages.error(request, "Your cart is empty.")
+#         return redirect(
+#             "orders:cart"
+#         )  # Redirect to cart view if the cart is empty
+
+#     # Get or create a customer entry for the current user
+#     customer, created = Customer.objects.get_or_create(user=request.user)
+
+#     if request.method == "POST":
+#         form = CheckoutForm(request.POST)
+#         if form.is_valid():
+#             total_amount = cart.get_total_price()
+
+#             # Update the customer's information from the form
+#             customer.first_name = form.cleaned_data["first_name"]
+#             customer.last_name = form.cleaned_data["last_name"]
+#             customer.email = form.cleaned_data["email"]
+#             customer.mobile = form.cleaned_data["mobile"]
+#             customer.address = form.cleaned_data["address"]
+#             customer.save()  # Save the updated customer information
+
+#             # Create the order
+#             order = Order.objects.create(
+#                 customer=customer,
+#                 created_at=timezone.now(),
+#                 total_amount=total_amount,
+#                 status="Pending",  # Or set a default status
+#             )
+
+#             # Create OrderDetail entries for each item in the cart
+#             for item in cart.items.all():
+#                 product_volume = item.volume  # ProductVolume instance
+#                 discounted_price = product_volume.get_discounted_price()
+#                 # item.volume refers to the ProductVolume
+#                 OrderDetail.objects.create(
+#                     order=order,
+#                     product=item.product,
+#                     product_volume=item.volume,
+#                     quantity=item.quantity,
+#                     discounted_price=discounted_price,
+#                     price=item.volume.volume.price,  # Use price from ProductVolume
+#                 )
+
+#             # Clear the cart items after checkout
+#             cart.items.all().delete()
+
+#             # Send email to customer and retail (both using the same sender email)
+#             send_order_email(
+#                 customer.first_name, customer.email, order.id, is_customer=True
+#             )
+#             send_order_email(
+#                 "Jobell Inc", settings.EMAIL_HOST_USER, order.id, is_customer=False
+#             )
+
+#             # Optionally, redirect to an order confirmation page
+#             messages.success(
+#                 request,
+#                 f"Your order has been placed successfully! Order ID: {order.id}",
+#             )
+#             return redirect("orders:order_confirmation", order_id=order.id)
+
+#     else:
+#         # Prepopulate the form with existing customer data if available
+#         form = CheckoutForm(
+#             initial={
+#                 "first_name": customer.first_name,
+#                 "last_name": customer.last_name,
+#                 "email": customer.email,
+#                 "mobile": customer.mobile,
+#                 "address": customer.address,
+#             }
+#         )
+
+#     return render(request, "orders/checkout.html", {"form": form, "cart": cart})
+
+
 @login_required
 def checkout_view(request):
     try:
         cart = Cart.objects.get(user=request.user)
     except Cart.DoesNotExist:
         messages.error(request, "Your cart is empty.")
-        return redirect(
-            "orders:cart"
-        )  # Redirect to cart view if the cart is empty
+        return redirect("orders:cart")  # Redirect to cart view if the cart is empty
 
-    # Get or create a customer entry for the current user
     customer, created = Customer.objects.get_or_create(user=request.user)
+
+    total_price = sum(
+        item.get_total_price() for item in cart.items.all()
+    )  # Calculate total price
 
     if request.method == "POST":
         form = CheckoutForm(request.POST)
         if form.is_valid():
-            total_amount = cart.get_total_price()
+            total_amount = total_price  # Use total_price here
 
-            # Update the customer's information from the form
+            # Update customer details
             customer.first_name = form.cleaned_data["first_name"]
             customer.last_name = form.cleaned_data["last_name"]
             customer.email = form.cleaned_data["email"]
             customer.mobile = form.cleaned_data["mobile"]
             customer.address = form.cleaned_data["address"]
-            customer.save()  # Save the updated customer information
+            customer.save()
 
             # Create the order
             order = Order.objects.create(
                 customer=customer,
                 created_at=timezone.now(),
                 total_amount=total_amount,
-                status="Pending",  # Or set a default status
+                status="Pending",
             )
 
-            # Create OrderDetail entries for each item in the cart
+            order_details = []  # Initialize order_details list
+
+            # Create OrderDetail entries
             for item in cart.items.all():
-                product_volume = item.volume  # ProductVolume instance
+                product_volume = item.volume
                 discounted_price = product_volume.get_discounted_price()
-                # item.volume refers to the ProductVolume
+                image_url = (
+                    product_volume.volume.image.url
+                    if product_volume.volume.image
+                    else ""
+                )
+
+                order_details.append(
+                    {
+                        "product_name": item.product.name,
+                        "volume": item.volume.volume.ml,
+                        "quantity": item.quantity,
+                        "price": discounted_price,
+                        "image_url": image_url,
+                        "order_status": order.status,
+                    }
+                )
+
                 OrderDetail.objects.create(
                     order=order,
                     product=item.product,
                     product_volume=item.volume,
                     quantity=item.quantity,
                     discounted_price=discounted_price,
-                    price=item.volume.volume.price,  # Use price from ProductVolume
+                    price=item.volume.volume.price,
                 )
 
-            # Clear the cart items after checkout
+            # Clear cart after checkout
             cart.items.all().delete()
 
-            # Send email to customer and retail (both using the same sender email)
+            # Send confirmation emails
             send_order_email(
-                customer.first_name, customer.email, order.id, is_customer=True
+                customer.first_name,
+                customer.email,
+                order.id,
+                order_details,
+                order.status,
+                total_price,
+                is_customer=True,
             )
             send_order_email(
-                "Jobell Inc", settings.EMAIL_HOST_USER, order.id, is_customer=False
+                "Jobel Inc",
+                settings.EMAIL_HOST_USER,
+                order.id,
+                order_details,
+                order.status,
+                total_price,
+                is_customer=False,
             )
 
-            # Optionally, redirect to an order confirmation page
             messages.success(
                 request,
                 f"Your order has been placed successfully! Order ID: {order.id}",
@@ -395,7 +609,6 @@ def checkout_view(request):
             return redirect("orders:order_confirmation", order_id=order.id)
 
     else:
-        # Prepopulate the form with existing customer data if available
         form = CheckoutForm(
             initial={
                 "first_name": customer.first_name,
@@ -406,7 +619,11 @@ def checkout_view(request):
             }
         )
 
-    return render(request, "orders/checkout.html", {"form": form, "cart": cart})
+    return render(
+        request,
+        "orders/checkout.html",
+        {"form": form, "cart": cart, "total_price": total_price},
+    )
 
 
 # =================================== process_payment ===================================
@@ -578,7 +795,7 @@ def order_confirmation_view(request, order_id):
 @admin_or_manager_or_staff_required
 def orders_to_be_processed_view(request):
     search_query = request.GET.get("search", "")
-    orders = Order.objects.filter(status__in=["Pending", "Shipped"]).order_by(
+    orders = Order.objects.filter(status__in=["Pending", "Out for Delivery"]).order_by(
         "created_at"
     )
 
@@ -693,10 +910,23 @@ def order_report_view(request, order_id):
 
 
 # =================================== order_detail_view ===================================
+
+
 @login_required
 def order_detail_view(request, order_id):
     order = get_object_or_404(Order, id=order_id, customer=request.user.customer)
-    return render(request, "orders/order_detail.html", {"order": order})
+
+    statuses = ["Pending", "Out for Delivery", "Delivered"]
+    total_statuses = len(statuses)
+    progress_width = (
+        100 / total_statuses if total_statuses else 0
+    )  # Calculate the width for each status
+
+    return render(
+        request,
+        "orders/order_detail.html",
+        {"order": order, "statuses": statuses, "progress_width": progress_width},
+    )
 
 
 # =================================== order_process_view ===================================

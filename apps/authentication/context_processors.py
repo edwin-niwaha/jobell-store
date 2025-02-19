@@ -51,15 +51,15 @@ def low_stock_alerts_context(request):
 
 
 def pending_orders_context(request):
-    # Fetch orders with statuses "Pending" or "Shipped"
-    pending_and_shipped_orders = Order.objects.filter(
-        status__in=["Pending", "Shipped"]
+    # Fetch orders with statuses "Pending" or "Out for Delivery"
+    pending_and_out_for_delivery = Order.objects.filter(
+        status__in=["Pending", "Out for Delivery"]
     ).select_related("customer")
 
-    # Count the total number of pending and shipped orders
-    pending_and_shipped_count = pending_and_shipped_orders.count()
+    # Count the total number of pending and Out for Delivery orders
+    pending_and_out_for_delivery_count = pending_and_out_for_delivery.count()
 
     return {
-        "pending_and_shipped_orders": pending_and_shipped_orders,
-        "pending_orders_count": pending_and_shipped_count,
+        "pending_and_out_for_delivery": pending_and_out_for_delivery,
+        "pending_orders_count": pending_and_out_for_delivery_count,
     }

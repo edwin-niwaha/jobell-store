@@ -16,7 +16,7 @@
                     <option value="" {% if status_filter == "" %}selected{% endif %}>-- Select Status --</option>
                     <option value="All" {% if status_filter == "All" %}selected{% endif %}>All Orders</option>
                     <option value="Pending" {% if status_filter == "Pending" %}selected{% endif %}>Pending</option>
-                    <option value="Shipped" {% if status_filter == "Shipped" %}selected{% endif %}>Shipped</option>
+                    <option value="Out for Delivery" {% if status_filter == "Out for Delivery" %}selected{% endif %}>Out for Delivery</option>
                     <option value="Delivered" {% if status_filter == "Delivered" %}selected{% endif %}>Delivered
                     </option>
                     <option value="Canceled" {% if status_filter == "Canceled" %}selected{% endif %}>Canceled</option>
@@ -56,8 +56,8 @@
                             <td>
                                 {% if order.status == 'Pending' %}
                                   <span class="badge bg-warning">Pending</span>
-                                {% elif order.status == 'Shipped' %}
-                                  <span class="badge bg-info text-dark">Shipped</span>
+                                {% elif order.status == 'Out for Delivery' %}
+                                  <span class="badge bg-info text-dark">Out for Delivery</span>
                                 {% elif order.status == 'Delivered' %}
                                   <span class="badge bg-success">Delivered</span>
                                 {% elif order.status == 'Canceled' %}

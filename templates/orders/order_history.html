@@ -32,8 +32,8 @@
                     <td>
                       {% if order.status == 'Pending' %}
                         <span class="badge bg-warning">Pending</span>
-                      {% elif order.status == 'Shipped' %}
-                        <span class="badge bg-info text-dark">Shipped</span>
+                      {% elif order.status == 'Out for Delivery' %}
+                        <span class="badge bg-info text-dark">Out for Delivery</span>
                       {% elif order.status == 'Delivered' %}
                         <span class="badge bg-success">Delivered</span>
                       {% elif order.status == 'Canceled' %}
@@ -78,7 +78,7 @@
         {% endif %}
 
         <div class="d-flex justify-content-end mt-4">
-          <a href="/" class="btn btn-lg btn-primary"><i class="mdi mdi-cart-outline"></i> Continue Shopping</a>
+          <a href="/" class="btn btn-lg btn-primary btn-sm"><i class="mdi mdi-cart-outline"></i> Continue Shopping</a>
         </div>
       </div>
     </div>
