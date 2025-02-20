@@ -17,7 +17,7 @@
                   <th>Order ID</th>
                   <th>Order Date</th>
                   <th>Order - Status</th>
-                  <th>Payment - Status</th>
+                  {% comment %} <th>Payment - Status</th> {% endcomment %}
                   <th>Customer</th>
                   <th>Tel. Contact</th>
                   <th class="text-end">Total Amount (UgX)</th>
@@ -46,13 +46,13 @@
                         <span class="badge bg-light text-dark">Unknown</span>
                       {% endif %}
                     </td>
-                    <td>
+                    {% comment %} <td>
                       {% if order.payment_status == 'paid' %}
                         <span class="badge bg-success">Paid</span>
                       {% else %}
                         <span class="badge bg-danger">Unpaid</span>
                       {% endif %}
-                    </td>
+                    </td> {% endcomment %}
                     <td>{{ order.customer.first_name }} {{ order.customer.last_name }}</td>
                     <td>{{ order.customer.mobile }}</td>
                     <td class="text-end">{{ order.total_amount|floatformat:'2'|intcomma }}</td>
