@@ -35,17 +35,19 @@
                   <span class="badge bg-light text-dark">Unknown</span>
                 {% endif %}
               </p>
-              <p>
+              {% comment %} <p>
                 <strong>Payment Status:</strong>
                 {% if order.payment_status == 'paid' %}
                   <span class="badge bg-success">Paid</span>
                 {% else %}
                   <span class="badge bg-danger">Unpaid</span>
                 {% endif %}
-              </p>
+              </p> {% endcomment %}
               <p>
-                <strong>Total Amount:</strong> UGX:{{ order.total_amount|floatformat:'2'|intcomma }}
+                <strong>Total Amount:</strong>
+                <span class="badge rounded-pill bg-primary">UGX: {{ order.total_amount|floatformat:'2'|intcomma }}</span>
               </p>
+              <hr />
             </div>
           </div>
 
@@ -81,13 +83,37 @@
                     {% if order.status == status %}
                     
                     
+                    
+                    
+                    
+                    
+                    
+                    
                       bg-success 
+
+
+
+
+
+
 
 
                   {% else %}
                     
                     
+                    
+                    
+                    
+                    
+                    
+                    
                       bg-secondary 
+
+
+
+
+
+
 
 
                   {% endif %}"
