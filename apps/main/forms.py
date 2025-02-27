@@ -86,6 +86,11 @@ class NewsletterForm(forms.ModelForm):
         ),
         error_messages={"unique": "This email is already subscribed."},
     )
+    consent = forms.BooleanField(
+        required=True,
+        widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
+        label="By clicking this checkbox, you consent to receiving emails from Jobell Inc."
+    )
 
     class Meta:
         model = Subscriber

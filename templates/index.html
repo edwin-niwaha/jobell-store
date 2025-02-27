@@ -260,23 +260,34 @@
     <!-- Newsletter -->
     <div class="container-fluid mt-5 mb-4">
       <div class="row text-center">
-        <h2 class="display-4 mb-3 fw-bold" style="color: #926F34;">Stay Updated!</h2>
+        <h2 class="display-4 mb-3 fw-bold" style="color: #926F34;">Let’s keep in touch</h2>
         <hr />
       </div>
       <div class="card shadow-lg border-0">
         <div class="card-body text-center">
-          <p class="text-muted">Sign up for our newsletter and be the first to know about new fragrances and exclusive offers.</p>
+          <p class="text-muted">Subscribe to the mailing list to be the first to know about new fragrances and exclusive offers.</p>
 
           <!-- Newsletter Signup Form -->
-          <form method="POST" action="{% url 'users-home' %}" class="d-flex justify-content-center">
+          <form method="POST" action="{% url 'users-home' %}" class="d-flex flex-column align-items-center w-50 mx-auto">
             {% csrf_token %}
-            <div class="input-group w-50">
-              {{ newsletter_form.email }}
-              <button type="submit" name="submit_newsletter" class="btn btn-primary">Subscribe</button>
-            </div>
+
+            <!-- Email Input -->
+            <div class="input-group mb-3 w-100">{{ newsletter_form.email }}</div>
             {% for error in newsletter_form.email.errors %}
               <div class="invalid-feedback d-block">{{ error }}</div>
             {% endfor %}
+
+            <!-- Consent Checkbox -->
+            <div class="form-check mb-3">
+              {{ newsletter_form.consent }}
+              <label class="form-check-label" for="{{ newsletter_form.consent.id_for_label }}">By clicking this checkbox, you consent to receiving emails from Jobell Inc.</label>
+            </div>
+            {% for error in newsletter_form.consent.errors %}
+              <div class="invalid-feedback d-block">{{ error }}</div>
+            {% endfor %}
+
+            <!-- Subscribe Button -->
+            <button type="submit" name="submit_newsletter" class="btn btn-primary">Subscribe</button>
           </form>
         </div>
       </div>

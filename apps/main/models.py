@@ -13,6 +13,7 @@ class Testimonial(models.Model):
 
 class Subscriber(models.Model):
     email = models.EmailField(unique=True)
+    consent = models.BooleanField(default=False, verbose_name="Email Consent")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated at")
 
