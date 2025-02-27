@@ -72,6 +72,16 @@
                 <b><a class="nav-link" href="{% url 'users-register' %}">Register</a></b>
               </li>
             {% endif %}
+            <!-- Cart Button with Icon -->
+            <li class="nav-item">
+              <a href="{% url 'orders:cart' %}" class="position-relative nav-link text-dark" title="View Cart">
+                <div class="d-flex align-items-center">
+                  <i class="mdi mdi-cart fs-5 text-primary"></i>
+                  <!-- Badge for Cart Count -->
+                  <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">{{ cart_count_user|default:0 }}</span>
+                </div>
+              </a>
+            </li>
           </ul>
         </div>
       </div>

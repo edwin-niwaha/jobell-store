@@ -18,7 +18,7 @@
                 <strong>Date:</strong> {{ order.created_at|date:'d M Y, H:i A' }}
               </p>
               <p>
-                <strong>Status:</strong>
+                <strong>Order Status:</strong>
                 {% if order.status == 'Pending' %}
                   <span class="badge bg-warning">Pending</span>
                 {% elif order.status == 'Out for Delivery' %}
@@ -89,7 +89,7 @@
               <tbody>
                 {% for detail in order.details.all %}
                   <tr>
-                    <td>{{ detail.product.name }} | {{ detail.product.category }} | {{ detail.product.gender }}</td>
+                    <td>{{ detail.product.name }} | {{ detail.product.category }} | {{ detail.product.gender }} | {{ detail.product_volume.product_type }}</td>
                     <td class="text-center">
                       {% if detail.product_volume %}
                         {{ detail.product_volume.volume.ml }} ML

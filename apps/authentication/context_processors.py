@@ -1,7 +1,7 @@
 from apps.authentication.models import Profile, Contact
 from apps.products.models import Product
-from apps.orders.models import Order
-from django.db.models import F
+from apps.orders.models import Order, Cart, CartItem
+from django.db.models import F, Sum
 
 
 def guest_profiles_context(request):
@@ -62,4 +62,21 @@ def pending_orders_context(request):
     return {
         "pending_and_out_for_delivery": pending_and_out_for_delivery,
         "pending_orders_count": pending_and_out_for_delivery_count,
+    }
+
+
+def cart_count_user_context(request):
+    cart_count_user = 0
+
+    if request.user.is_authenticated:
+        cart, _ = Cart.objects.get_or_create(user=request.user)
+        cart_count_user = (
+            CartItem.objects.filter(cart=cart).aggregate(
+                total_quantity=Sum("quantity")
+            )["total_quantity"]
+            or 0
+        )
+
+    return {
+        "cart_count_user": cart_count_user,
     }

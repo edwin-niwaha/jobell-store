@@ -118,6 +118,7 @@ TEMPLATES = [
                 "apps.authentication.context_processors.guest_user_feedback_context",
                 "apps.authentication.context_processors.low_stock_alerts_context",
                 "apps.authentication.context_processors.pending_orders_context",
+                "apps.authentication.context_processors.cart_count_user_context",
             ],
         },
     },
@@ -150,7 +151,7 @@ DATABASES = {
     "default": dj_database_url.config(
         default=os.getenv("DATABASE_URL"),
         conn_max_age=600,  # Keep the connection alive for 10 minutes
-        ssl_require=True    # Ensure a secure (SSL-encrypted) connection
+        ssl_require=True,  # Ensure a secure (SSL-encrypted) connection
     )
 }
 

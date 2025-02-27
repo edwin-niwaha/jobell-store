@@ -1,5 +1,5 @@
 from django import forms
-from .models import Testimonial
+from .models import Testimonial, Subscriber
 from apps.products.models import Category
 
 
@@ -77,3 +77,22 @@ class TestimonialForm(forms.ModelForm):
         if len(text) > max_length:
             raise forms.ValidationError(f"Text cannot exceed {max_length} characters.")
         return text
+
+
+class NewsletterForm(forms.ModelForm):
+    email = forms.EmailField(
+        widget=forms.EmailInput(
+            attrs={"placeholder": "Enter your email", "class": "form-control"}
+        ),
+        error_messages={"unique": "This email is already subscribed."},
+    )
+
+    class Meta:
+        model = Subscriber
+        fields = ["email"]
+
+    def clean_email(self):
+        email = self.cleaned_data.get("email")
+        if Subscriber.objects.filter(email=email).exists():
+            raise forms.ValidationError("This email is already subscribed.")
+        return email

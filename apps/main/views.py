@@ -18,8 +18,8 @@ from apps.orders.models import Cart, CartItem, Order, Wishlist
 from apps.customers.models import Customer
 from django.db.models import Sum
 
-from .models import Testimonial
-from .forms import TestimonialForm
+from .models import Testimonial, Subscriber
+from .forms import TestimonialForm, NewsletterForm
 
 from apps.authentication.decorators import (
     admin_or_manager_or_staff_required,
@@ -97,7 +97,7 @@ def index(request):
             products = products.filter(name__icontains=search_query)
 
     # Pagination setup
-    paginator = Paginator(products, 32)
+    paginator = Paginator(products, 30)
     page_number = request.GET.get("page", 1)
 
     try:
@@ -139,13 +139,28 @@ def index(request):
             }
         )
 
-    # Handle testimonial form submission
+    # Handle testimonial and nesletter forms submission
     testimonial_form = TestimonialForm(request.POST or None)
+    newsletter_form = NewsletterForm(request.POST or None)
+
     if request.method == "POST" and testimonial_form.is_valid():
         testimonial_form.save()
-        return redirect(
-            "users-home"
-        )  # Redirect to the same page after successful form submission
+        messages.success(
+            request,
+            "Your testimonial has been submitted successfully!",
+            extra_tags="bg-success",
+        )
+        return redirect("users-home")
+
+    # Handle Newsletter Form Submission
+    if "submit_newsletter" in request.POST and newsletter_form.is_valid():
+        newsletter_form.save()
+        messages.success(
+            request,
+            "Thank you for subscribing to our newsletter!",
+            extra_tags="bg-success",
+        )
+        return redirect("users-home")
 
     # Fetch all testimonials to display in the template
     testimonials = Testimonial.objects.filter(approved=True)
@@ -164,6 +179,7 @@ def index(request):
             "order_count": order_count,
             "testimonial_form": testimonial_form,
             "testimonials": testimonials,
+            "newsletter_form": newsletter_form,
         },
     )
 
@@ -407,3 +423,21 @@ def testimonial_delete(request, pk):
         print(e)
 
     return redirect("testimonials")
+
+
+# =================================== subscribers ===================================
+@login_required
+@admin_or_manager_or_staff_required
+def subscriber_list_view(request):
+    subscriber_list = Subscriber.objects.all().order_by("id")
+
+    # Pagination logic
+    paginator = Paginator(subscriber_list, 50)
+    page_number = request.GET.get("page")
+    subscribers = paginator.get_page(page_number)
+
+    context = {
+        "subscribers": subscribers,
+        "table_title": "Subscribers List",
+    }
+    return render(request, "main/subscriber.html", context)

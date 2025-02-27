@@ -26,6 +26,8 @@
     <!-- Font Awesome icons -->
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css" integrity="sha384-oS3vJWv+0UjzBfQzYUhtDYW+Pj2yciDJxpsK1OYPAYjqT085Qq/1cq5FLXAZQ7Ay" crossorigin="anonymous" />
 
+    <!-- Video -->
+    <link rel="stylesheet" href="{% static 'css/video.css' %}" />
     <title>
       {% block title %}
         JOBELL INC
@@ -61,7 +63,7 @@
     </style>
   </head>
 
-  <body>
+  <body style="background: linear-gradient(to bottom, #F8F9FA, #E0E7FF);">
     <!-- ========== Topbar Start ========== -->
     {% block topbar %}
       {% include 'accounts/_partials/navbar.html' %}
@@ -113,5 +115,20 @@
 
       {% comment %} <script src="{% static 'js/cookies.js' %}"></script> {% endcomment %}
     {% endblock %}
+    <!-- Start of Tawk.to Script -->
+    <script type="text/javascript">
+      var Tawk_API = Tawk_API || {},
+        Tawk_LoadStart = new Date()
+      ;(function () {
+        var s1 = document.createElement('script'),
+          s0 = document.getElementsByTagName('script')[0]
+        s1.async = true
+        s1.src = 'https://embed.tawk.to/67be2a6557476c190f8fff7a/1ikvdb7ot'
+        s1.charset = 'UTF-8'
+        s1.setAttribute('crossorigin', '*')
+        s0.parentNode.insertBefore(s1, s0)
+      })()
+    </script>
+    <!-- End of Tawk.to Script -->
   </body>
 </html>

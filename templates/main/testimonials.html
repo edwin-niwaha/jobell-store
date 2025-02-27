@@ -5,7 +5,12 @@
   <div class="container-fluid">
     <div class="row mb-3">
       <div class="col-md-12 d-flex justify-content-between align-items-center">
-        <h3 class="display-4 mb-3 text-primary fw-bold">Testimonials</h3>
+        <a href="{% url 'dashboard' %}">
+          <button type="button" class="btn btn-info font-weight-bold">
+            <i class="mdi mdi-arrow-left-bold mr-2"></i>
+            Go back
+          </button>
+        </a>
         <div class="d-flex">
           <button title="Print" type="button" class="btn btn-success ml-2" onclick="printDiv('printMe')"><i class="mdi mdi-printer btn-icon-prepend"></i></button>
         </div>

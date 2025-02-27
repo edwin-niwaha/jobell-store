@@ -24,4 +24,5 @@ urlpatterns = [
         views.testimonial_delete,
         name="testimonial_delete",
     ),
+    path("subscribers/", views.subscriber_list_view, name="subscriber_list"),
 ]

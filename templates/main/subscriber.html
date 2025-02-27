@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+  <div class="container-fluid">
+    <div class="row mb-3">
+      <div class="col-md-12 d-flex justify-content-between align-items-center">
+        <a href="{% url 'dashboard' %}">
+          <button type="button" class="btn btn-info font-weight-bold">
+            <i class="mdi mdi-arrow-left-bold mr-2"></i>
+            Go back
+          </button>
+        </a>
+        <div class="d-flex">
+          <button title="Print" type="button" class="btn btn-success ml-2" onclick="printDiv('printMe')"><i class="mdi mdi-printer btn-icon-prepend"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DataTable -->
+    <div id="printMe" class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h3>{{ table_title|upper }}</h3>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="my-table" id="dataTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Subscriber Email</th>
+                <th>Subscribed On</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if subscribers %}
+                {% for subscriber in subscribers %}
+                  <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ subscriber.email }}</td>
+                    <td>{{ subscriber.created_at|date:'Y-m-d H:i' }}</td>
+                  </tr>
+                {% endfor %}
+              {% else %}
+                <tr>
+                  <td colspan="7" class="text-center">No subscribers available</td>
+                </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="d-flex justify-content-between align-items-center mt-3">
+          <div>Showing {{ subscribers.start_index }} to {{ subscribers.end_index }} of {{ subscribers.paginator.count }} entries</div>
+          <nav>
+            <ul class="pagination">
+              {% if subscribers.has_previous %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ subscribers.previous_page_number }}" aria-label="Previous"><span aria-hidden="true">&laquo;</span></a>
+                </li>
+              {% else %}
+                <li class="page-item disabled">
+                  <span class="page-link">&laquo;</span>
+                </li>
+              {% endif %}
+
+              {% for page in subscribers.paginator.page_range %}
+                {% if page == subscribers.number %}
+                  <li class="page-item active">
+                    <span class="page-link">{{ page }}</span>
+                  </li>
+                {% else %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ page }}">{{ page }}</a>
+                  </li>
+                {% endif %}
+              {% endfor %}
+
+              {% if subscribers.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ subscribers.next_page_number }}" aria-label="Next"><span aria-hidden="true">&raquo;</span></a>
+                </li>
+              {% else %}
+                <li class="page-item disabled">
+                  <span class="page-link">&raquo;</span>
+                </li>
+              {% endif %}
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

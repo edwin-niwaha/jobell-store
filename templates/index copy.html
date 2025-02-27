@@ -3,54 +3,70 @@
 {% load humanize %}
 
 {% block content %}
-  <div class="container-fluid">
-    <div class="container-fluid position-relative" style="overflow: hidden; border-radius: 10px;">
-      <!-- Background Video -->
-      <video autoplay muted loop class="background-video">
-        <source src="{% static 'videos/background.mp4' %}" type="video/mp4" />
-      </video>
-
-      <!-- Header Section -->
-      <div class="row mb-4 align-items-center" style="padding: 20px; border-radius: 8px;">
-        <div class="col-12 text-center">
-          <!-- Logo -->
-          <a href="/"><img src="{% static 'images/file.png' %}" alt="Logo" class="img-fluid disable-right-click" style="max-height: 130px;" /></a>
-        </div>
+  <div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row mb-4 align-items-center">
+      <hr />
+      <div class="col-12 col-md-2 text-center text-md-start">
+        <!-- Logo -->
+        <a href="/"><img src="{% static 'images/file.png' %}" alt="Logo" class="img-fluid disable-right-click" style="max-height: 90px;" /></a>
       </div>
-
-      <!-- Filters and Sorting -->
-      <form method="get" action="{% url 'users-home' %}" class="py-2">
-        <div class="row g-3">
-          <!-- Category Filter -->
-          <div class="col-12 col-sm-6 col-md-6">{{ form.category }}</div>
-          <!-- Search Filter -->
-          <div class="col-12 col-md-6 d-flex">
-            <div class="me-2 w-100">{{ form.search }}</div>
-            <button type="submit" class="btn btn-primary"><i class="mdi mdi-filter-outline me-2"></i>Filter</button>
-          </div>
-        </div>
-      </form>
-
-      <!-- Welcome message -->
-      <div class="container-fluid mt-5 mb-5">
-        <div class="row text-center">
-          <div class="col-12">
-            <h2 class="display-4 mb-3 fw-bold text-primary" style="color: #926F34;">Welcome to Jobell Inc. Online Store</h2>
-            <h4 class="mt-2 fw-bold text-primary">Turn Your Dream Perfume into Reality</h4>
+      <div class="col-12 col-md-4 text-center text-md-start">
+        <h5 class="mt-2 text-primary fw-bold">Turn your dream perfume into reality.</h5>
+      </div>
+      <div class="col-12 col-md-6">
+        <div class="hero text-center">
+          <div class="d-flex justify-content-center gap-3 flex-wrap">
+            <!-- Wishlist Icon -->
+            <a href="{% url 'orders:wishlist' %}" title="View wishlist">
+              <i class="mdi mdi-heart-outline fs-3"></i>
+              <span class="badge badge-pill badge-danger">{{ wishlist_count|default:0 }}</span>
+            </a>
+            <span class="arrow" style="color: green;">&#8594;</span>
+            <!-- Cart Icon -->
+            <a href="{% url 'orders:cart' %}" title="View Cart">
+              <i class="mdi mdi-cart fs-3"></i>
+              <span class="badge badge-pill badge-danger">{{ cart_count|default:0 }}</span>
+            </a>
+            <span class="arrow" style="color: green;">&#8594;</span>
+            <!-- Orders Icon -->
+            <a href="{% url 'orders:customer_order_history' %}" title="View Orders">
+              <i class="mdi mdi-receipt fs-3"></i>
+              <span class="badge badge-pill badge-danger">{{ order_count|default:0 }}</span>
+            </a>
           </div>
         </div>
       </div>
     </div>
+    <hr />
 
-    <!-- Featured Products -->
-    <div class="container-fluid mt-5">
-      <div class="row text-center">
-        <div class="col-12">
-          <h2 class="display-4 mb-3 fw-bold" style="color: #926F34;">🌟 Featured Products 🌟</h2>
-          <hr />
+    <!-- Filters and Sorting -->
+    <form method="get" action="{% url 'users-home' %}" class="py-2">
+      <div class="row g-3">
+        <!-- Category Filter -->
+        <div class="col-12 col-sm-6 col-md-6">{{ form.category }}</div>
+        <!-- Price Range Filters -->
+        {% comment %} <div class="col-6 col-md-2">{{ form.min_price }}</div>
+        <div class="col-6 col-md-2">{{ form.max_price }}</div> {% endcomment %}
+        <!-- Search Filter -->
+        <div class="col-12 col-md-6 d-flex">
+          <div class="me-2 w-100">{{ form.search }}</div>
+          <button type="submit" class="btn btn-primary"><i class="mdi mdi-filter-outline me-2"></i>Filter</button>
         </div>
       </div>
+    </form>
+
+    <hr />
+
+    <!-- Products Grid -->
+    <div class="row text-center py-3 bg-light">
+      <div class="col-12">
+        <h2 class="display-4 mb-3 fw-bold" style="color: #926F34;">🌟 Featured Products 🌟</h2>
+        <hr />
+        {% comment %} <p class="lead text-secondary">Discover our top-rated perfumes, handpicked for you. See what everyone is raving about!</p> {% endcomment %}
+      </div>
     </div>
+
     <div class="row mt-4" id="search_list">
       {% if products_with_images %}
         {% for product_info in products_with_images %}
@@ -125,7 +141,7 @@
     </div>
 
     <!-- Why Choose Us Section -->
-    <div class="container-fluid mt-5 mb-4">
+    <div class="container-fluid mt-5">
       <div class="row text-center">
         <div class="col-12">
           <h2 class="display-4 mb-3 fw-bold" style="color: #926F34;">Why Choose Us?</h2>
@@ -133,66 +149,20 @@
         </div>
       </div>
       <div class="row">
-        <div class="col-md-4">
-          <div class="card text-center shadow-sm">
-            <div class="card-body">
-              <i class="mdi mdi-star-circle-outline fs-1 text-primary"></i>
-              <h4 class="mt-3">Premium Quality</h4>
-              <p>We use only the finest ingredients to craft luxurious and long-lasting perfumes.</p>
-            </div>
-          </div>
+        <div class="col-md-4 text-center">
+          <i class="mdi mdi-star-circle-outline fs-1 text-primary"></i>
+          <h4 class="mt-3">Premium Quality</h4>
+          <p>We use only the finest ingredients to craft luxurious and long-lasting perfumes.</p>
         </div>
-        <div class="col-md-4">
-          <div class="card text-center shadow-sm">
-            <div class="card-body">
-              <i class="mdi mdi-bottle-wine fs-1 text-success"></i>
-              <h4 class="mt-3">Custom Blends</h4>
-              <p>Personalize your scent with our bespoke fragrance-making services.</p>
-            </div>
-          </div>
+        <div class="col-md-4 text-center">
+          <i class="mdi mdi-bottle-wine fs-1 text-success"></i>
+          <h4 class="mt-3">Custom Blends</h4>
+          <p>Personalize your scent with our bespoke fragrance-making services.</p>
         </div>
-        <div class="col-md-4">
-          <div class="card text-center shadow-sm">
-            <div class="card-body">
-              <i class="mdi mdi-truck-fast-outline fs-1 text-warning"></i>
-              <h4 class="mt-3">Fast & Reliable Delivery</h4>
-              <p>Enjoy quick and secure shipping right to your doorstep.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Vision, Mission, and Values Section -->
-    <div class="container-fluid mt-4">
-      <div class="card shadow-lg border-0">
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-6">
-              <h3 class="text-primary">Our Mission</h3>
-              <p class="text-muted">Our mission is to provide our customers with high-quality products at competitive prices, backed by exceptional customer service. We strive to create a seamless shopping experience, from browsing to delivery, ensuring that you receive the best value and satisfaction.</p>
-            </div>
-            <div class="col-md-6">
-              <h3 class="text-primary">Our Vision</h3>
-              <p class="text-muted">Our vision is to be the leading online retailer, known for our commitment to quality, innovation, and customer satisfaction. We aim to continuously expand our product range and improve our services to meet the evolving needs of our customers.</p>
-            </div>
-          </div>
-          <div class="row text-center mt-4">
-            <div class="col-md-12">
-              <h3 class="text-primary">Our Values</h3>
-              <div class="mt-3">
-                <p class="text-muted">
-                  <i class="fas fa-check-circle text-success me-2"></i><strong>Customer First:</strong> We prioritize our customers' needs and strive to exceed their expectations with every interaction.
-                </p>
-                <p class="text-muted">
-                  <i class="fas fa-check-circle text-success me-2"></i><strong>Quality:</strong> We are committed to offering products of the highest quality and stand behind everything we sell.
-                </p>
-                <p class="text-muted">
-                  <i class="fas fa-check-circle text-success me-2"></i><strong>Integrity:</strong> We conduct our business with honesty and transparency.
-                </p>
-              </div>
-            </div>
-          </div>
+        <div class="col-md-4 text-center">
+          <i class="mdi mdi-truck-fast-outline fs-1 text-warning"></i>
+          <h4 class="mt-3">Fast & Reliable Delivery</h4>
+          <p>Enjoy quick and secure shipping right to your doorstep.</p>
         </div>
       </div>
     </div>
@@ -207,8 +177,8 @@
             <div class="carousel-inner">
               {% for testimonial in testimonials %}
                 <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                  <div class="testimonial-card p-5 bg-light shadow-sm rounded-3 d-flex flex-column justify-content-center align-items-center text-center h-100">
-                    <p class="testimonial-text fs-4 text-muted mb-3 text-truncate w-75">"{{ testimonial.text }}"</p>
+                  <div class="testimonial-card p-5 bg-light shadow-sm rounded-3">
+                    <p class="testimonial-text fs-4 text-muted mb-3">"{{ testimonial.text }}"</p>
                     <p class="testimonial-author fs-5 text-dark fw-bold">- {{ testimonial.author }}</p>
                   </div>
                 </div>
@@ -256,35 +226,10 @@
         </div>
       </div>
     </div>
-
-    <!-- Newsletter -->
-    <div class="container-fluid mt-5 mb-4">
-      <div class="row text-center">
-        <h2 class="display-4 mb-3 fw-bold" style="color: #926F34;">Stay Updated!</h2>
-        <hr />
-      </div>
-      <div class="card shadow-lg border-0">
-        <div class="card-body text-center">
-          <p class="text-muted">Sign up for our newsletter and be the first to know about new fragrances and exclusive offers.</p>
-
-          <!-- Newsletter Signup Form -->
-          <form method="POST" action="{% url 'users-home' %}" class="d-flex justify-content-center">
-            {% csrf_token %}
-            <div class="input-group w-50">
-              {{ newsletter_form.email }}
-              <button type="submit" name="submit_newsletter" class="btn btn-primary">Subscribe</button>
-            </div>
-            {% for error in newsletter_form.email.errors %}
-              <div class="invalid-feedback d-block">{{ error }}</div>
-            {% endfor %}
-          </form>
-        </div>
-      </div>
-    </div>
   </div>
   <!-- Link to External JavaScript File -->
   <script src="{% static 'js/welcome.js' %}"></script>
-  <!-- https://ttsmp3.com/ai -->
-  <!-- https://any2text.com/files/1953151 -->
-  <!-- https://www.tawk.to/ -->
+  <!--  https://ttsmp3.com/ai 
+   https://any2text.com/files/1953151
+    -->
 {% endblock %}
