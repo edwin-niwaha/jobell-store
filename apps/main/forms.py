@@ -89,7 +89,7 @@ class NewsletterForm(forms.ModelForm):
     consent = forms.BooleanField(
         required=True,
         widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
-        label="By clicking this checkbox, you consent to receiving emails from Jobell Inc."
+        label="By clicking this checkbox, you consent to receiving emails from Jobell Inc.",
     )
 
     class Meta:
