@@ -44,14 +44,10 @@ python -m venv .venv
 source .venv/Scripts/activate
 ```
 
-- macOS/Linux:
-```bash
-pip install -r requirements.txt
-```
-
 ### 3. Install Required Python Packages
 ```bash
 pip install -r requirements.txt
+pip freeze > requirements.txt
 ```
 
 ### 4. Set Up Database

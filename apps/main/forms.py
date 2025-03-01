@@ -1,6 +1,7 @@
 from django import forms
 from .models import Testimonial, Subscriber
 from apps.products.models import Category
+from ckeditor.widgets import CKEditorWidget
 
 
 class ProductFilterForm(forms.Form):
@@ -101,3 +102,10 @@ class NewsletterForm(forms.ModelForm):
         if Subscriber.objects.filter(email=email).exists():
             raise forms.ValidationError("This email is already subscribed.")
         return email
+
+
+class EmailForm(forms.Form):
+    subject = forms.CharField(
+        max_length=255, widget=forms.TextInput(attrs={"class": "form-control"})
+    )
+    message = forms.CharField(widget=CKEditorWidget())

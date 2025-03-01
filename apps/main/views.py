@@ -1,4 +1,7 @@
 import json
+from django.conf import settings
+from django.core.mail import send_mail
+from django.utils.html import strip_tags
 from django.http import JsonResponse
 from decimal import Decimal
 from datetime import date, timedelta
@@ -19,7 +22,7 @@ from apps.customers.models import Customer
 from django.db.models import Sum
 
 from .models import Testimonial, Subscriber
-from .forms import TestimonialForm, NewsletterForm
+from .forms import TestimonialForm, NewsletterForm, EmailForm
 
 from apps.authentication.decorators import (
     admin_or_manager_or_staff_required,
@@ -425,7 +428,7 @@ def testimonial_delete(request, pk):
     return redirect("testimonials")
 
 
-# =================================== subscribers ===================================
+# =================================== Subscribers List ===================================
 @login_required
 @admin_or_manager_or_staff_required
 def subscriber_list_view(request):
@@ -441,3 +444,66 @@ def subscriber_list_view(request):
         "table_title": "Subscribers List",
     }
     return render(request, "main/subscriber.html", context)
+
+
+# =================================== delete subscribers ===================================
+
+
+@login_required
+@admin_or_manager_or_staff_required
+def delete_subscriber_view(request, subscriber_id):
+    subscriber = get_object_or_404(Subscriber, id=subscriber_id)
+    subscriber.delete()
+    messages.success(
+        request, "Subscriber deleted successfully.", extra_tags="bg-danger"
+    )
+    return redirect("subscriber_list")
+
+
+# =================================== Send Email ===================================
+def send_bulk_email_view(request):
+    table_title = "Subscriber Email List"
+
+    if request.method == "POST":
+        form = EmailForm(request.POST)
+        if form.is_valid():
+            subject = form.cleaned_data["subject"]
+            message = form.cleaned_data["message"]  # This will be rich text
+            from_email = settings.EMAIL_HOST_USER
+
+            # Fetch all subscriber emails
+            recipients = list(Subscriber.objects.values_list("email", flat=True))
+
+            if recipients:
+                send_mail(
+                    subject,
+                    message,
+                    from_email,
+                    recipients,
+                    fail_silently=False,
+                    html_message=message,  # Send the message as HTML content
+                )
+                messages.success(
+                    request,
+                    "Email sent successfully to all subscribers.",
+                    extra_tags="bg-success",
+                )
+            else:
+                messages.warning(request, "No subscribers to send email to.")
+            return redirect("send_bulk_email")  # Prevent resubmission
+
+    else:
+        form = EmailForm()
+
+    subscribers = Subscriber.objects.all()
+    paginator = Paginator(subscribers, 10)
+    page_number = request.GET.get("page")
+    subscribers = paginator.get_page(page_number)
+
+    context = {
+        "form": form,
+        "table_title": table_title,
+        "subscribers": subscribers,
+    }
+
+    return render(request, "main/send_bulk_email.html", context)

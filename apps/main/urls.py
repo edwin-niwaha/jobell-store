@@ -25,4 +25,10 @@ urlpatterns = [
         name="testimonial_delete",
     ),
     path("subscribers/", views.subscriber_list_view, name="subscriber_list"),
+    path(
+        "subscribers/delete/<int:subscriber_id>/",
+        views.delete_subscriber_view,
+        name="delete_subscriber",
+    ),
+    path("send-email/", views.send_bulk_email_view, name="send_bulk_email"),
 ]

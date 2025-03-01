@@ -5,10 +5,10 @@
   <div class="container-fluid">
     <div class="row mb-3">
       <div class="col-md-12 d-flex justify-content-between align-items-center">
-        <a href="{% url 'dashboard' %}">
+        <a href="{% url 'send_bulk_email' %}">
           <button type="button" class="btn btn-info font-weight-bold">
-            <i class="mdi mdi-arrow-left-bold mr-2"></i>
-            Go back
+            <i class="mdi mdi-email"></i>
+            Send Email
           </button>
         </a>
         <div class="d-flex">
@@ -30,6 +30,7 @@
                 <th>#</th>
                 <th>Subscriber Email</th>
                 <th>Subscribed On</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -39,6 +40,9 @@
                     <td>{{ forloop.counter }}</td>
                     <td>{{ subscriber.email }}</td>
                     <td>{{ subscriber.created_at|date:'Y-m-d H:i' }}</td>
+                    <td class="text-center">
+                      <a href="{% url 'delete_subscriber' subscriber.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this subscriber?');"><i class="mdi mdi-delete"></i></a>
+                    </td>
                   </tr>
                 {% endfor %}
               {% else %}
