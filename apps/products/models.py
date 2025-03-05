@@ -6,6 +6,13 @@ from apps.supplier.models import Supplier
 from cloudinary.models import CloudinaryField
 import cloudinary.uploader
 
+
+def validate_image_size(value):
+    limit = 1500 * 1024  # 1,500 KB (1.5 MB)
+    if value.size > limit:
+        raise ValidationError(f"Image size should not exceed 1.5 MB.")
+
+
 # Define choices for product status
 STATUS_CHOICES = [
     ("", "-- Choose status --"),
@@ -183,8 +190,16 @@ class ProductImage(models.Model):
     product = models.ForeignKey(
         Product, related_name="images", on_delete=models.CASCADE
     )
-    # image = models.ImageField(upload_to="product_images/", verbose_name="Product Image")
-    image = CloudinaryField("image", blank=True, null=True)
+    # image = CloudinaryField("image", blank=True, null=True)
+    image = CloudinaryField(
+        "image",
+        validators=[
+            FileExtensionValidator(allowed_extensions=["jpg", "jpeg", "png"]),
+            validate_image_size,
+        ],
+        null=True,
+        blank=True,
+    )
     is_default = models.BooleanField(default=False, verbose_name="Is Default")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated at")

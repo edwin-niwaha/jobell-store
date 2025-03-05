@@ -172,9 +172,11 @@ class ProductImageForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["image"].widget = forms.FileInput(attrs={"accept": "image/*"})
 
-    def clean_image(self):
-        image = self.cleaned_data.get("image")
-        return image
+    def clean_picture(self):
+        picture = self.cleaned_data.get("image")
+        if picture and picture.size > 1500 * 1024:  # 1.5 MB
+            raise forms.ValidationError("Image size should not exceed 1.5 MB.")
+        return picture
 
 
 # =================================== Volume Selection Form ===================================
