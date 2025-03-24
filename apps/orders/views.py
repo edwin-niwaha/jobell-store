@@ -21,6 +21,7 @@ from apps.products.models import Product, ProductVolume, ProductImage
 from django.core.exceptions import MultipleObjectsReturned
 from .forms import CheckoutForm, OrderStatusForm
 from apps.customers.models import Customer
+from apps.products.models import Review
 
 from apps.authentication.decorators import (
     admin_required,
@@ -32,26 +33,77 @@ logger = logging.getLogger(__name__)
 
 
 # =================================== Products Detail ===================================
+
 @login_required
 def product_detail(request, id):
     product = get_object_or_404(Product, id=id)
+
+    # Handle review submission
+    if request.method == 'POST' and 'submit_review' in request.POST:
+        if Review.objects.filter(product=product, user=request.user).exists():
+            # Add message for already reviewed
+            messages.info(request, "Oops! You've already reviewed this product.", extra_tags="bg-danger")
+            return redirect('orders:product_detail', id=id)
+        
+        review_text = request.POST.get('review_text')
+        rating = int(request.POST.get('rating'))
+
+        if review_text and rating:
+            Review.objects.create(
+                product=product,
+                user=request.user,
+                review_text=review_text,
+                rating=rating
+            )
+
+        # Redirect to prevent re-posting the form if refreshed
+        return redirect('orders:product_detail', id=id)
+
+    # Handle "Set as Featured" or "Remove from Featured" based on the POST request
+    if request.method == 'POST':
+        # Check if we are toggling 'is_featured'
+        if 'set_featured' in request.POST:
+            product.is_featured = True
+        elif 'remove_featured' in request.POST:
+            product.is_featured = False
+        
+        # Save the updated product
+        product.save()
+        return redirect('orders:product_detail', id=id)
+
+    # Continue fetching cart and product details
     cart, created = Cart.objects.get_or_create(user=request.user)
     cart_items = CartItem.objects.filter(cart=cart)
     cart_count = sum(item.quantity for item in cart_items)
 
     # Fetch volumes specific to this product
-    product_volumes = ProductVolume.objects.filter(product=product).order_by(
-        "volume__ml"
-    )
+    product_volumes = ProductVolume.objects.filter(product=product).order_by("volume__ml")
+
+    # Fetch reviews
+    reviews = Review.objects.filter(product=product, is_verified=True).order_by('-created_at')
+
+    # Pagination
+    paginator = Paginator(reviews, 5)  # Show 5 reviews per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Count of verified reviews (assuming there is an 'is_verified' field in your Review model)
+    verified_reviews_count = reviews.filter(is_verified=True).count()
+
+    # Process reviews to generate the filled and empty stars
+    for review in page_obj:
+        review.filled_stars = '★' * review.rating
+        review.empty_stars = '☆' * (5 - review.rating)
 
     context = {
         "product": product,
-        "product_volumes": product_volumes,  # Pass product-specific volumes to the template
+        "product_volumes": product_volumes,
         "cart_count": cart_count,
+        "reviews": page_obj,  # Pass paginated reviews
+        "verified_reviews_count": verified_reviews_count,  # Add verified reviews count
     }
 
     return render(request, "orders/product_detail.html", context)
-
 
 # =================================== Products Detail for quests not signed in ===================================
 
@@ -283,61 +335,6 @@ def remove_from_cart(request, item_id):
     return redirect("orders:cart")
 
 
-# =================================== checkout_view ===================================
-# def send_order_email(recipient_name, recipient_email, order_id, is_customer=True):
-
-#     customer_order_history_url = "https://jobellinc.com/orders/order-history/"
-#     orders_to_be_processed_url = "https://jobellinc.com/orders/to-be-processed/"
-#     subject = "Your Order has been Placed" if is_customer else "New Order to Process"
-
-#     if is_customer:
-#         email_body = f"""
-#         <html>
-#         <body style="font-family: Arial, sans-serif; color: #333;">
-#             <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-#                 <h2 style="color: #2E86C1; text-align: center;">Thank You for Your Purchase!</h2>
-#                 <p>Hello <strong>{recipient_name}</strong>,</p>
-#                 <p>Your order ID is <strong>{order_id}</strong>. You can view your order details and track the status by clicking the button below:</p>
-#                 <div style="text-align: center; margin: 20px 0;">
-#                     <a href="{customer_order_history_url}" style="background-color: #2E86C1; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 5px;">View Order History</a>
-#                 </div>
-#                 <p>Thanks for shopping with us!</p>
-#                 <p style="color: #888;">- Jobel Inc Management</p>
-#             </div>
-#         </body>
-#         </html>
-#         """
-#     else:
-#         email_body = f"""
-#         <html>
-#         <body style="font-family: Arial, sans-serif; color: #333;">
-#             <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-#                 <h2 style="color: #C0392B; text-align: center;">New Order to Process</h2>
-#                 <p>Hello <strong>Jobel Inc Team</strong>,</p>
-#                 <p>A new order has been placed. The order ID is <strong>{order_id}</strong>. Please review and process the order by clicking the button below:</p>
-#                 <div style="text-align: center; margin: 20px 0;">
-#                     <a href="{orders_to_be_processed_url}" style="background-color: #C0392B; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 5px;">Process Order</a>
-#                 </div>
-#                 <p>Thanks for your prompt attention!</p>
-#                 <p style="color: #888;">- Jobel Inc Management</p>
-#             </div>
-#         </body>
-#         </html>
-#         """
-
-#     from_email = getattr(settings, "EMAIL_HOST_USER", None)
-#     to = [recipient_email]
-
-#     # Send HTML email
-#     try:
-#         email = EmailMultiAlternatives(subject, strip_tags(email_body), from_email, to)
-#         email.attach_alternative(email_body, "text/html")
-#         email.send()
-#         return True
-#     except Exception as e:
-#         logger.error(f"Error sending email to {recipient_email}: {str(e)}")
-#         return False
-
 
 def send_order_email(
     recipient_name,
@@ -430,86 +427,6 @@ def send_order_email(
         logger.error(f"Error sending email to {recipient_email}: {str(e)}")
         return False
 
-
-# @login_required
-# def checkout_view(request):
-#     try:
-#         cart = Cart.objects.get(user=request.user)
-#     except Cart.DoesNotExist:
-#         messages.error(request, "Your cart is empty.")
-#         return redirect(
-#             "orders:cart"
-#         )  # Redirect to cart view if the cart is empty
-
-#     # Get or create a customer entry for the current user
-#     customer, created = Customer.objects.get_or_create(user=request.user)
-
-#     if request.method == "POST":
-#         form = CheckoutForm(request.POST)
-#         if form.is_valid():
-#             total_amount = cart.get_total_price()
-
-#             # Update the customer's information from the form
-#             customer.first_name = form.cleaned_data["first_name"]
-#             customer.last_name = form.cleaned_data["last_name"]
-#             customer.email = form.cleaned_data["email"]
-#             customer.mobile = form.cleaned_data["mobile"]
-#             customer.address = form.cleaned_data["address"]
-#             customer.save()  # Save the updated customer information
-
-#             # Create the order
-#             order = Order.objects.create(
-#                 customer=customer,
-#                 created_at=timezone.now(),
-#                 total_amount=total_amount,
-#                 status="Pending",  # Or set a default status
-#             )
-
-#             # Create OrderDetail entries for each item in the cart
-#             for item in cart.items.all():
-#                 product_volume = item.volume  # ProductVolume instance
-#                 discounted_price = product_volume.get_discounted_price()
-#                 # item.volume refers to the ProductVolume
-#                 OrderDetail.objects.create(
-#                     order=order,
-#                     product=item.product,
-#                     product_volume=item.volume,
-#                     quantity=item.quantity,
-#                     discounted_price=discounted_price,
-#                     price=item.volume.volume.price,  # Use price from ProductVolume
-#                 )
-
-#             # Clear the cart items after checkout
-#             cart.items.all().delete()
-
-#             # Send email to customer and retail (both using the same sender email)
-#             send_order_email(
-#                 customer.first_name, customer.email, order.id, is_customer=True
-#             )
-#             send_order_email(
-#                 "Jobell Inc", settings.EMAIL_HOST_USER, order.id, is_customer=False
-#             )
-
-#             # Optionally, redirect to an order confirmation page
-#             messages.success(
-#                 request,
-#                 f"Your order has been placed successfully! Order ID: {order.id}",
-#             )
-#             return redirect("orders:order_confirmation", order_id=order.id)
-
-#     else:
-#         # Prepopulate the form with existing customer data if available
-#         form = CheckoutForm(
-#             initial={
-#                 "first_name": customer.first_name,
-#                 "last_name": customer.last_name,
-#                 "email": customer.email,
-#                 "mobile": customer.mobile,
-#                 "address": customer.address,
-#             }
-#         )
-
-#     return render(request, "orders/checkout.html", {"form": form, "cart": cart})
 
 
 @login_required

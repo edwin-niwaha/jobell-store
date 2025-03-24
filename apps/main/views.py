@@ -14,8 +14,7 @@ from django.contrib import messages
 from django.db.models import Min, Max
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
-from apps.products.models import Product, Category, ProductVolume
-from .forms import ProductFilterForm
+from apps.products.models import Product, Category, Review
 from apps.sales.models import Sale, SaleDetail
 from apps.orders.models import Cart, CartItem, Order, Wishlist
 from apps.customers.models import Customer
@@ -23,6 +22,7 @@ from django.db.models import Sum
 
 from .models import Testimonial, Subscriber
 from .forms import TestimonialForm, NewsletterForm, EmailForm
+from apps.products.forms import ProductFilterForm
 
 from apps.authentication.decorators import (
     admin_or_manager_or_staff_required,
@@ -33,6 +33,7 @@ from .utils import (
 )
 
 
+
 # =================================== Home User view  ===================================
 def index(request):
     # Initialize the filter form
@@ -41,7 +42,7 @@ def index(request):
     # Start with all active products
     products = (
         Product.objects.prefetch_related("images", "productvolume_set")
-        .filter(status="ACTIVE")
+        .filter(status="ACTIVE", is_featured=True)
         .order_by("name")
     )
 
@@ -100,7 +101,7 @@ def index(request):
             products = products.filter(name__icontains=search_query)
 
     # Pagination setup
-    paginator = Paginator(products, 32)
+    paginator = Paginator(products, 16)
     page_number = request.GET.get("page", 1)
 
     try:
@@ -185,7 +186,6 @@ def index(request):
             "newsletter_form": newsletter_form,
         },
     )
-
 
 @login_required
 @admin_or_manager_or_staff_required
@@ -507,3 +507,39 @@ def send_bulk_email_view(request):
     }
 
     return render(request, "main/send_bulk_email.html", context)
+
+# =================================== Reviews ===================================
+def reviews_list_view(request):
+    reviews = Review.objects.all()  # Fetch all reviews
+    if request.method == 'POST':
+        review_id = request.POST.get('review_id')
+        action = request.POST.get('action')
+        review = get_object_or_404(Review, id=review_id)
+
+        if action == 'verify' and not review.is_verified:
+            review.is_verified = True
+            review.save()
+            messages.success(request, f'Review for {review.product.name} has been verified.', extra_tags="bg-success")
+
+        return redirect('reviews_list')  # Redirect to the reviews list page
+
+    return render(request, 'main/reviews_list.html', {'reviews': reviews})
+
+
+def toggle_is_verified(request, review_id):
+    # Fetch the review object based on the given ID
+    review = get_object_or_404(Review, id=review_id)
+
+    # Toggle the 'is_verified' status if it's not already verified
+    if not review.is_verified:
+        review.is_verified = True
+        review.save()
+
+    # Return a JSON response with the updated status
+    return JsonResponse({'is_verified': review.is_verified})
+
+def delete_review(request, review_id):
+    review = get_object_or_404(Review, id=review_id)
+    review.delete()
+    messages.success(request, "Review deleted successfully.", extra_tags="bg-danger")
+    return redirect('reviews_list')

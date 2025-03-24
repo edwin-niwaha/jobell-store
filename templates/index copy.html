@@ -3,71 +3,50 @@
 {% load humanize %}
 
 {% block content %}
-  <div class="container-fluid py-4">
-    <!-- Header Section -->
-    <div class="row mb-4 align-items-center">
-      <hr />
-      <div class="col-12 col-md-2 text-center text-md-start">
-        <!-- Logo -->
-        <a href="/"><img src="{% static 'images/file.png' %}" alt="Logo" class="img-fluid disable-right-click" style="max-height: 90px;" /></a>
+  <div class="container-fluid">
+    <div class="container-fluid position-relative" style="overflow: hidden; border-radius: 10px;">
+      <!-- Background Video -->
+      <video autoplay muted loop class="background-video w-100">
+        <source src="{% static 'videos/background.mp4' %}" type="video/mp4" />
+      </video>
+
+      <!-- Header Section -->
+      <div class="row mb-4 align-items-center">
+        <div class="col-12 text-center text-white">
+          <!-- Logo -->
+          <a href="/"><img src="{% static 'images/file.png' %}" alt="Logo" class="img-fluid disable-right-click" style="max-height: 100px;" /></a>
+          <h4 class="mt-2 fw-bold text-primary">Turn Your Dream Perfume into Reality</h4>
+        </div>
       </div>
-      <div class="col-12 col-md-4 text-center text-md-start">
-        <h5 class="mt-2 text-primary fw-bold">Turn your dream perfume into reality.</h5>
-      </div>
-      <div class="col-12 col-md-6">
-        <div class="hero text-center">
-          <div class="d-flex justify-content-center gap-3 flex-wrap">
-            <!-- Wishlist Icon -->
-            <a href="{% url 'orders:wishlist' %}" title="View wishlist">
-              <i class="mdi mdi-heart-outline fs-3"></i>
-              <span class="badge badge-pill badge-danger">{{ wishlist_count|default:0 }}</span>
-            </a>
-            <span class="arrow" style="color: green;">&#8594;</span>
-            <!-- Cart Icon -->
-            <a href="{% url 'orders:cart' %}" title="View Cart">
-              <i class="mdi mdi-cart fs-3"></i>
-              <span class="badge badge-pill badge-danger">{{ cart_count|default:0 }}</span>
-            </a>
-            <span class="arrow" style="color: green;">&#8594;</span>
-            <!-- Orders Icon -->
-            <a href="{% url 'orders:customer_order_history' %}" title="View Orders">
-              <i class="mdi mdi-receipt fs-3"></i>
-              <span class="badge badge-pill badge-danger">{{ order_count|default:0 }}</span>
-            </a>
+
+      <!-- Filters and Sorting -->
+      <form method="get" action="{% url 'users-home' %}" class="py-2">
+        <div class="row g-3">
+          <!-- Category Filter -->
+          <div class="col-12 col-sm-6 col-md-6">{{ form.category }}</div>
+          <!-- Search Filter -->
+          <div class="col-12 col-md-6 d-flex">
+            <div class="me-2 w-100">{{ form.search }}</div>
+            <button type="submit" class="btn btn-warning fw-bold"><i class="mdi mdi-filter-outline me-2"></i> Filter</button>
           </div>
         </div>
+      </form>
+
+      <!-- Welcome Message -->
+      <div class="container-fluid mt-3 mb-4 text-center">
+        <h2 class="display-4 mb-3 fw-bold text-primary">Welcome to Jobell Online Stores</h2>
+        <a href="#featured-products" class="btn btn-lg btn-warning fw-bold px-4 py-2">🛒 SHOP NOW</a>
       </div>
     </div>
-    <hr />
 
-    <!-- Filters and Sorting -->
-    <form method="get" action="{% url 'users-home' %}" class="py-2">
-      <div class="row g-3">
-        <!-- Category Filter -->
-        <div class="col-12 col-sm-6 col-md-6">{{ form.category }}</div>
-        <!-- Price Range Filters -->
-        {% comment %} <div class="col-6 col-md-2">{{ form.min_price }}</div>
-        <div class="col-6 col-md-2">{{ form.max_price }}</div> {% endcomment %}
-        <!-- Search Filter -->
-        <div class="col-12 col-md-6 d-flex">
-          <div class="me-2 w-100">{{ form.search }}</div>
-          <button type="submit" class="btn btn-primary"><i class="mdi mdi-filter-outline me-2"></i>Filter</button>
+    <!-- Featured Products -->
+    <div id="featured-products" class="row mt-4" id="search_list">
+      <div class="row text-center">
+        <div class="col-12">
+          <h2 class="display-4 mb-3 fw-bold" style="color: #926F34;"><i class="mdi mdi-arrow-down"></i> Featured Products <i class="mdi mdi-arrow-down"></i></h2>
+          <hr />
         </div>
       </div>
-    </form>
-
-    <hr />
-
-    <!-- Products Grid -->
-    <div class="row text-center py-3 bg-light">
-      <div class="col-12">
-        <h2 class="display-4 mb-3 fw-bold" style="color: #926F34;">🌟 Featured Products 🌟</h2>
-        <hr />
-        {% comment %} <p class="lead text-secondary">Discover our top-rated perfumes, handpicked for you. See what everyone is raving about!</p> {% endcomment %}
-      </div>
-    </div>
-
-    <div class="row mt-4" id="search_list">
       {% if products_with_images %}
         {% for product_info in products_with_images %}
           {% with product=product_info.product images=product_info.images min_price=product_info.min_price max_price=product_info.max_price %}
@@ -132,19 +111,18 @@
         {% endif %}
       </span>
     </div>
-    <!-- Welcome Audio Section -->
+
+    <!-- Welcome Audio Section (if any) -->
 
     <div class="mt-4 text-center">
       <audio id="welcome-audio" src="{% static 'audio/jobell_welcome.mp3' %}" preload="auto"></audio>
-      {% comment %} <button id="play-audio" class="btn btn-success">Play Welcome Message</button>
-      <button id="pause-audio" class="btn btn-danger">Pause</button> {% endcomment %}
     </div>
 
     <!-- Why Choose Us Section -->
-    <div class="container-fluid mt-5">
+    <div class="container-fluid mt-3">
       <div class="row text-center">
         <div class="col-12">
-          <h2 class="display-4 mb-3 fw-bold" style="color: #926F34;">Why Choose Us?</h2>
+          <h2 class="display-4 mb-3 fw-bold text-primary">Why Choose Us?</h2>
           <hr />
         </div>
       </div>
@@ -167,69 +145,130 @@
       </div>
     </div>
 
-    <!-- Customer Testimonials -->
-    <div class="container-fluid mt-5">
-      <div class="row text-center">
-        <div class="col-12">
-          <h2 class="display-4 mb-3 fw-bold" style="color: #926F34;">What Our Customers Say</h2>
-          <hr />
-          <div id="testimonial-carousel" class="carousel slide" data-bs-ride="carousel">
-            <div class="carousel-inner">
-              {% for testimonial in testimonials %}
-                <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                  <div class="testimonial-card p-5 bg-light shadow-sm rounded-3">
-                    <p class="testimonial-text fs-4 text-muted mb-3">"{{ testimonial.text }}"</p>
-                    <p class="testimonial-author fs-5 text-dark fw-bold">- {{ testimonial.author }}</p>
-                  </div>
-                </div>
-              {% endfor %}
+    <!-- Vision, Mission, and Values Section -->
+    <section class="container-fluid my-5 px-1 position-relative">
+      <div class="card shadow-lg border-0">
+        <div class="card-body">
+          <div class="row">
+            <!-- Mission Section -->
+            <div class="col-md-6 mb-4 mb-md-0">
+              <h3 class="text-primary fw-bold">Our Mission</h3>
+              <p class="text-muted">To provide customers with high-quality products at competitive prices, backed by exceptional customer service. We ensure a seamless shopping experience, from browsing to delivery.</p>
             </div>
-            <!-- Button to add a new testimonial -->
-            <div class="text-center mt-4">
-              <button type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#addTestimonialModal">Add Testimonial</button>
+
+            <!-- Vision Section -->
+            <div class="col-md-6">
+              <h3 class="text-primary fw-bold">Our Vision</h3>
+              <p class="text-muted">To be the leading online retailer, known for our commitment to quality, innovation, and customer satisfaction. We aim to expand our product range and improve our services continually.</p>
             </div>
-            <!-- Modal for adding testimonial -->
-            <div class="modal fade" id="addTestimonialModal" tabindex="-1" aria-labelledby="addTestimonialModalLabel" aria-hidden="true">
-              <div class="modal-dialog">
-                <div class="modal-content">
-                  <div class="modal-header">
-                    <h5 class="modal-title display-4 mb-3 fw-bold" id="addTestimonialModalLabel" style="color: #926F34;">Add Testimonial</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                  </div>
-                  <div class="modal-body">
-                    <form method="POST" action="{% url 'users-home' %}">
-                      {% csrf_token %}
-                      <div class="mb-3">
-                        <label for="id_text" class="form-label">Testimonial</label>
-                        {{ testimonial_form.text }}
-                      </div>
-                      <div class="mb-3">
-                        <label for="id_author" class="form-label">Author Name</label>
-                        {{ testimonial_form.author }}
-                      </div>
-                      <button type="submit" class="btn btn-primary">Submit Testimonial</button>
-                    </form>
-                  </div>
-                </div>
+          </div>
+
+          <!-- Values Section -->
+          <div class="row text-center mt-4">
+            <div class="col-md-12">
+              <h3 class="text-primary fw-bold">Our Values</h3>
+              <hr class="mx-auto w-25 border-2 border-success" />
+              <div class="mt-3">
+                <p class="text-muted">
+                  <i class="fas fa-check-circle text-success me-2"></i><strong>Customer First:</strong> We prioritize customer needs and strive to exceed expectations.
+                </p>
+                <p class="text-muted">
+                  <i class="fas fa-check-circle text-success me-2"></i><strong>Quality:</strong> We are committed to offering top-tier products.
+                </p>
+                <p class="text-muted">
+                  <i class="fas fa-check-circle text-success me-2"></i><strong>Integrity:</strong> We conduct business with honesty and transparency.
+                </p>
               </div>
             </div>
-            <!-- Carousel Controls -->
-            <button class="carousel-control-prev" type="button" data-bs-target="#testimonial-carousel" data-bs-slide="prev">
-              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-              <span class="visually-hidden">Previous</span>
-            </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#testimonial-carousel" data-bs-slide="next">
-              <span class="carousel-control-next-icon" aria-hidden="true"></span>
-              <span class="visually-hidden">Next</span>
-            </button>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Customer Testimonials -->
+    <div class="container-fluid mt-5 px-1 position-relative">
+      <div class="text-center">
+        <h2 class="display-5 fw-bold text-primary">What Our Customers Say</h2>
+        <hr class="w-50 mx-auto" />
+      </div>
+      <div id="testimonial-carousel" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-inner">
+          {% for testimonial in testimonials %}
+            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+              <div class="testimonial-card p-4 bg-light shadow rounded text-center">
+                <p class="fs-5 text-muted">"{{ testimonial.text }}"</p>
+                <p class="fs-6 text-dark fw-bold">- {{ testimonial.author }}</p>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+        <!-- Carousel Controls -->
+        <button class="carousel-control-prev" type="button" data-bs-target="#testimonial-carousel" data-bs-slide="prev"><span class="carousel-control-prev-icon"></span></button>
+        <button class="carousel-control-next" type="button" data-bs-target="#testimonial-carousel" data-bs-slide="next"><span class="carousel-control-next-icon"></span></button>
+      </div>
+      <!-- Add Testimonial Button -->
+      <div class="text-center mt-4">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTestimonialModal">Add Testimonial</button>
+      </div>
+    </div>
+
+    <!-- Add Testimonial Modal -->
+    <div class="modal fade" id="addTestimonialModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title text-primary">Add Testimonial</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form method="POST" action="{% url 'users-home' %}">
+              {% csrf_token %}
+              <div class="mb-3">
+                <label class="form-label">Testimonial</label>
+                {{ testimonial_form.text }}
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Author Name</label>
+                {{ testimonial_form.author }}
+              </div>
+              <button type="submit" class="btn btn-primary w-100">Submit</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Newsletter Section -->
+    <div class="container-fluid mt-5 mb-5 px-0 position-relative">
+      <div class="text-center">
+        <h2 class="display-5 fw-bold text-primary">Let’s Keep in Touch</h2>
+        <hr class="w-25 mx-auto" />
+      </div>
+      <div class="card shadow-lg border-0 mx-auto w-100" style="max-width: 600px;">
+        <div class="card-body text-center">
+          <p class="text-muted">Subscribe to get the latest updates and exclusive offers.</p>
+          <form method="POST" action="{% url 'users-home' %}" class="w-100">
+            {% csrf_token %}
+            <div class="input-group mb-3">{{ newsletter_form.email }}</div>
+            {% for error in newsletter_form.email.errors %}
+              <div class="invalid-feedback d-block">{{ error }}</div>
+            {% endfor %}
+            <div class="form-check mb-3">
+              {{ newsletter_form.consent }}
+              <label class="form-check-label" for="{{ newsletter_form.consent.id_for_label }}">I consent to receiving emails from Jobell Inc.</label>
+            </div>
+            {% for error in newsletter_form.consent.errors %}
+              <div class="invalid-feedback d-block">{{ error }}</div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary w-100">Subscribe</button>
+          </form>
         </div>
       </div>
     </div>
   </div>
   <!-- Link to External JavaScript File -->
   <script src="{% static 'js/welcome.js' %}"></script>
-  <!--  https://ttsmp3.com/ai 
-   https://any2text.com/files/1953151
-    -->
+  <!-- https://ttsmp3.com/ai -->
+  <!-- https://any2text.com/files/1953151 -->
+  <!-- https://www.tawk.to/ -->
 {% endblock %}

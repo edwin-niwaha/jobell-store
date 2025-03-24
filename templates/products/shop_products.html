@@ -1,0 +1,111 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block content %}
+  <div class="container-fluid">
+    <!-- Title Section -->
+    <div class="text-center my-0">
+      <h2 class="display-4 mb-4 fw-bold" style="color: #926F34; font-family: 'Roboto', sans-serif;">Our Products</h2>
+    </div>
+
+    <!-- Filters and Sorting -->
+    <form method="get" action="{% url 'products:shop_homepage' %}" class="py-4 px-3 bg-light rounded shadow-sm">
+      <div class="row g-4">
+        <!-- Category Filter -->
+        <div class="col-12 col-sm-6 col-md-6">
+          <label for="category" class="form-label fw-semibold text-muted">Category</label>
+          <div class="border p-2 rounded">{{ form.category }}</div>
+        </div>
+        <!-- Search Filter -->
+        <div class="col-12 col-md-6 d-flex">
+          <div class="me-3 w-100">
+            <label for="search" class="form-label fw-semibold text-muted">Search</label>
+            <div class="border p-2 rounded">{{ form.search }}</div>
+          </div>
+          <button type="submit" class="btn btn-warning fw-bold px-4 d-flex align-items-center justify-content-center"><i class="mdi mdi-filter-outline me-2"></i> Filter</button>
+        </div>
+      </div>
+    </form>
+
+    <!-- Featured Products -->
+    <div id="featured-products" class="row mt-4" id="search_list">
+      {% if products_with_images %}
+        {% for product_info in products_with_images %}
+          {% with product=product_info.product images=product_info.images min_price=product_info.min_price max_price=product_info.max_price %}
+            <div class="col-6 col-sm-4 col-md-3 mb-4 product-item">
+              <div class="card h-100 shadow-sm position-relative">
+                <!-- Carousel -->
+                <div id="carousel-{{ product.id }}" class="carousel slide" data-bs-ride="carousel">
+                  <div class="carousel-inner">
+                    {% if images %}
+                      {% for image in images %}
+                        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                          <img src="{{ image.image.url }}" class="d-block w-100 rounded img-fluid disable-right-click" style="max-height: 200px; object-fit: contain;" alt="{{ product.name }}" />
+                        </div>
+                      {% endfor %}
+                    {% else %}
+                      <div class="carousel-item active">
+                        <img src="{% static 'images/no-image.png' %}" class="d-block w-100 rounded img-fluid disable-right-click" style="max-height: 200px; object-fit: contain;" alt="No image available" />
+                      </div>
+                    {% endif %}
+                  </div>
+                </div>
+
+                <!-- Hover View Product Details -->
+                <div class="hover-overlay">
+                  <a class="badge bg-danger position-absolute top-0 end-0 translate-middle-y py-2 px-4" href="{% url 'orders:product_details_view' product.id %}">View Details</a>
+                  <a class="btn btn-primary btn-sm" href="{% url 'orders:product_detail' product.id %}">Shop Now</a>
+                </div>
+
+                <!-- Product Info -->
+                <div class="card-body text-center">
+                  <h5 class="card-title text-uppercase text-primary">{{ product.name }}</h5>
+                  <p class="card-text">{{ product.category }} - {{ product.gender }}</p>
+                  <p class="card-text">
+                    <strong>UGX:</strong>
+                    {% if min_price and max_price %}
+                      {{ min_price|floatformat:'2'|intcomma }} - {{ max_price|floatformat:'2'|intcomma }}
+                    {% else %}
+                      Price not available
+                    {% endif %}
+                  </p>
+                </div>
+              </div>
+            </div>
+          {% endwith %}
+        {% endfor %}
+      {% else %}
+        <p class="col-12 text-center">No products available.</p>
+      {% endif %}
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="pagination d-flex justify-content-center my-4">
+      <ul class="pagination">
+        {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?page=1&search={{ search_query }}">&laquo; First</a>
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}">Previous</a>
+          </li>
+        {% endif %}
+
+        <!-- Page Number Display -->
+        <li class="page-item disabled">
+          <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        </li>
+
+        {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ search_query }}">Next</a>
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&search={{ search_query }}">Last &raquo;</a>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+{% endblock %}

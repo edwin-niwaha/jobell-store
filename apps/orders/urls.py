@@ -54,4 +54,5 @@ urlpatterns = [
         name="confirm_payment",
     ),
     path("payment/flutter/", views.payment_flutter_view, name="payment_flutter"),
+
 ]

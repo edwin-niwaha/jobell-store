@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+  <div class="container-fluid">
+    <div class="row mb-3">
+      <div class="col-md-12 d-flex justify-content-between align-items-center">
+        <a href="{% url 'dashboard' %}">
+          <button type="button" class="btn btn-info font-weight-bold">
+            <i class="mdi mdi-arrow-left-bold mr-2"></i>
+            Go back
+          </button>
+        </a>
+      </div>
+    </div>
+
+    <!-- Reviews Table -->
+    <div id="printMe" class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h3>Reviews List</h3>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="my-table" id="dataTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Product</th>
+                <th>Author</th>
+                <th>Testimonial</th>
+                <th class="text-center print-hide">Status</th>
+                <th colspan="3" class="text-center print-hide">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if reviews %}
+                {% for review in reviews %}
+                  <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ review.product.name }}</td>
+                    <td>{{ review.user.username }}</td>
+                    <td>{{ review.review_text }}</td>
+                    <td>
+                      {% if review.is_verified %}
+                        <span class="badge bg-success">Verified</span>
+                      {% else %}
+                        <span class="badge bg-danger">Unverified</span>
+                      {% endif %}
+                    </td>
+                    {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
+                      <td class="text-center print-hide">
+                        {% if not review.is_verified %}
+                          <form method="post" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="review_id" value="{{ review.id }}" />
+                            <button type="submit" name="action" value="verify" class="btn btn-success btn-sm" title="Verify Review"><i class="fas fa-check"></i></button>
+                          </form>
+                        {% else %}
+                          <button class="btn btn-secondary btn-sm" disabled>Verified</button>
+                        {% endif %}
+                      </td>
+                      <td class="text-center print-hide">
+                        <form method="post" action="{% url 'delete_review' review.id %}" onsubmit="return confirm('Are you sure you want to delete this review?');">
+                          {% csrf_token %}
+                          <button type="submit" class="btn btn-danger btn-sm" title="Delete"><i class="mdi mdi-trash-can"></i></button>
+                        </form>
+                      </td>
+                    {% endif %}
+                  </tr>
+                {% endfor %}
+              {% else %}
+                <tr>
+                  <td colspan="6" class="text-center">No reviews available</td>
+                </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="d-flex justify-content-between align-items-center mt-3">
+          <div>Showing {{ reviews.start_index }} to {{ reviews.end_index }} of {{ reviews.paginator.count }} entries</div>
+          <nav>
+            <ul class="pagination">
+              {% if reviews.has_previous %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ reviews.previous_page_number }}" aria-label="Previous"><span aria-hidden="true">&laquo;</span></a>
+                </li>
+              {% else %}
+                <li class="page-item disabled">
+                  <span class="page-link">&laquo;</span>
+                </li>
+              {% endif %}
+
+              {% for page in reviews.paginator.page_range %}
+                {% if page == reviews.number %}
+                  <li class="page-item active">
+                    <span class="page-link">{{ page }}</span>
+                  </li>
+                {% else %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ page }}">{{ page }}</a>
+                  </li>
+                {% endif %}
+              {% endfor %}
+
+              {% if reviews.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ reviews.next_page_number }}" aria-label="Next"><span aria-hidden="true">&raquo;</span></a>
+                </li>
+              {% else %}
+                <li class="page-item disabled">
+                  <span class="page-link">&raquo;</span>
+                </li>
+              {% endif %}
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

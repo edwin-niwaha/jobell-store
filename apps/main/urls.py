@@ -31,4 +31,8 @@ urlpatterns = [
         name="delete_subscriber",
     ),
     path("send-email/", views.send_bulk_email_view, name="send_bulk_email"),
+
+    path('reviews/', views.reviews_list_view, name='reviews_list'),
+    path('review/<int:review_id>/toggle_verified/', views.toggle_is_verified, name='toggle_is_verified'),
+    path('reviews/delete/<int:review_id>/', views.delete_review, name='delete_review'),
 ]

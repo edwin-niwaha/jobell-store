@@ -7,7 +7,7 @@
     <div class="row">
       <!-- Product Image Carousel -->
       <div class="col-12 col-md-6 mb-4 product-item">
-        <div id="product-carousel" class="carousel slide" data-bs-ride="carousel" aria-label="Product Image Carousel">
+        <div id="product-carousel" class="carousel slide mb-3" data-bs-ride="carousel" aria-label="Product Image Carousel">
           <div class="carousel-inner">
             {% if product.images.exists %}
               {% for image in product.images.all %}
@@ -22,6 +22,22 @@
             {% endif %}
           </div>
         </div>
+
+        <!-- Featured Product Button new arrivals, bestsellers, promotions, or seasonal items -->
+        {% if user.is_authenticated %}
+          {% if user.profile.role == 'guest' %}
+            <!-- Hide section -->
+          {% else %}
+            <form method="POST" action="{% url 'orders:product_detail' product.id %}" style="display: inline;">
+              {% csrf_token %}
+              {% if not product.is_featured %}
+                <button type="submit" name="set_featured" class="btn btn-warning btn-lg w-100">Set as Featured</button>
+              {% else %}
+                <button type="submit" name="remove_featured" class="btn btn-danger btn-lg w-100">Remove from Featured</button>
+              {% endif %}
+            </form>
+          {% endif %}
+        {% endif %}
       </div>
 
       <!-- Product Details -->
@@ -62,7 +78,13 @@
                         
                         
                         
+                        
+                        
+                        
                         /staticfiles/images/no-image.png
+
+
+
 
 
 
@@ -82,11 +104,6 @@
                 </select>
               </td>
             </tr>
-
-            {% comment %} <tr>
-              <th scope="row">Description</th>
-              <td colspan="3">{{ product.description|safe }}</td>
-            </tr> {% endcomment %}
           </tbody>
         </table>
 
@@ -125,6 +142,89 @@
             {% static 'images/no-image.png' %}
           {% endif %}"
           alt="Product Image" />
+      </div>
+      <hr />
+    </div>
+
+    <!-- Reviews Section -->
+    <div class="row">
+      <div class="col-12 mt-4 mb-4">
+        <h3 class="text-primary mb-4">Customer Reviews</h3>
+
+        <!-- Verified Ratings Count -->
+        <div class="mb-3">
+          <strong>{{ verified_reviews_count }} Verified Ratings</strong>
+        </div>
+
+        <!-- Reviews List -->
+        {% if reviews %}
+          <div class="reviews-list bg-light p-4 rounded-3 shadow-sm">
+            {% for review in reviews %}
+              <div class="review mb-4 p-3 rounded-3 border border-secondary">
+                <h5 class="text-success">
+                  {{ review.user.username }}
+                  <span class="text-warning">{{ review.filled_stars }}{{ review.empty_stars }}</span>
+                </h5>
+                <p>{{ review.review_text }}</p>
+                <p class="text-muted">{{ review.created_at|date:'M d, Y' }}</p>
+              </div>
+            {% endfor %}
+          </div>
+
+          <!-- Pagination (if needed) -->
+          <div class="pagination-container text-center mt-3">
+            <nav aria-label="Reviews Pagination">
+              <ul class="pagination justify-content-center">
+                {% if reviews.has_previous %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page=1" aria-label="First"><span aria-hidden="true">&laquo;&laquo;</span></a>
+                  </li>
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ reviews.previous_page_number }}" aria-label="Previous"><span aria-hidden="true">&laquo;</span></a>
+                  </li>
+                {% endif %}
+
+                <!-- Current Page Info -->
+                <li class="page-item disabled">
+                  <span class="page-link">Page {{ reviews.number }} of {{ reviews.paginator.num_pages }}</span>
+                </li>
+
+                {% if reviews.has_next %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ reviews.next_page_number }}" aria-label="Next"><span aria-hidden="true">&raquo;</span></a>
+                  </li>
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ reviews.paginator.num_pages }}" aria-label="Last"><span aria-hidden="true">&raquo;&raquo;</span></a>
+                  </li>
+                {% endif %}
+              </ul>
+            </nav>
+          </div>
+        {% else %}
+          <div class="alert alert-info">No reviews yet. Be the first to review this product!</div>
+        {% endif %}
+
+        <!-- Review Submission Form -->
+        <h4 class="mt-5 text-primary">Leave a Review</h4>
+        <form method="POST" class="bg-white p-4 rounded-3 shadow-sm">
+          {% csrf_token %}
+          <div class="form-group mb-3">
+            <label for="rating" class="fw-bold">Rating</label>
+            <select name="rating" id="rating" class="form-control" required>
+              <option value="" disabled selected>Select a rating...</option>
+              <option value="1">1 Star</option>
+              <option value="2">2 Stars</option>
+              <option value="3">3 Stars</option>
+              <option value="4">4 Stars</option>
+              <option value="5">5 Stars</option>
+            </select>
+          </div>
+          <div class="form-group mb-3">
+            <label for="review_text" class="fw-bold">Your Review</label>
+            <textarea name="review_text" id="review_text" class="form-control" rows="2" required></textarea>
+          </div>
+          <button type="submit" name="submit_review" class="btn btn-primary mt-3 w-100" style="background-color: #b88a4b; border-color: #b88a4b; color: white; transition: all 0.3s ease;">Submit Review</button>
+        </form>
       </div>
     </div>
   </div>

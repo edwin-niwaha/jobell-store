@@ -27,7 +27,7 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <ul class="navbar-nav me-auto mb-2 mb-lg-0" style="font-family: 'Times New Roman', Times, serif">
             <li class="nav-item">
-              <a class="nav-link" href="/">Home</a>
+              <a class="nav-link" href="/">HOME</a>
             </li>
             {% if user.is_authenticated %}
               {% if user.profile.role == 'guest' %}
@@ -36,40 +36,43 @@
                 </li>
               {% else %}
                 <li class="nav-item">
-                  <a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a>
+                  <a class="nav-link" href="{% url 'dashboard' %}">DASHBOARD</a>
                 </li>
               {% endif %}
             {% endif %}
             <li class="nav-item">
-              <a class="nav-link" href="{% url 'orders:wishlist' %}">Wishlist</a>
+              <a class="nav-link" href="{% url 'orders:wishlist' %}">WISHLIST</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="{% url 'orders:customer_order_history' %}">Orders</a>
+              <a class="nav-link" href="{% url 'products:shop_homepage' %}">SHOP</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="{% url 'about_us' %}">About Us</a>
+              <a class="nav-link" href="{% url 'orders:customer_order_history' %}">ORDERS</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="{% url 'contact_us' %}">Contact Us</a>
+              <a class="nav-link" href="{% url 'about_us' %}">ABOUT US</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="{% url 'blog:blog_list' %}">Blog</a>
+              <a class="nav-link" href="{% url 'contact_us' %}">CONTACT US</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'blog:blog_list' %}">BLOG</a>
             </li>
           </ul>
           <ul class="navbar-nav ms-auto mb-2 mb-lg-0" style="font-family: 'Times New Roman', Times, serif">
             {% if user.is_authenticated %}
               <li>
-                <a href="{% url 'users-profile' %}" class="nav-item nav-link">My Profile</a>
+                <a href="{% url 'users-profile' %}" class="nav-item nav-link">MY PROFILE</a>
               </li>
               <li>
-                <a href="{% url 'logout' %}" class="nav-item nav-link" onclick="return confirm('Are you sure you want to logout?');">Logout</a>
+                <a href="{% url 'logout' %}" class="nav-item nav-link" onclick="return confirm('Are you sure you want to logout?');">LOGOUT</a>
               </li>
             {% else %}
               <li class="nav-item me-2">
-                <b><a href="{% url 'login' %}" class="nav-item nav-link">Log in</a></b>
+                <b><a href="{% url 'login' %}" class="nav-item nav-link">LOG IN</a></b>
               </li>
               <li class="nav-item">
-                <b><a class="nav-link" href="{% url 'users-register' %}">Register</a></b>
+                <b><a class="nav-link" href="{% url 'users-register' %}">REGISTER</a></b>
               </li>
             {% endif %}
             <!-- Cart Button with Icon -->

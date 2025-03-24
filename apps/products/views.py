@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db import IntegrityError
-from django.db.models import Sum, F, Q
+from django.db.models import Sum, F, Q, Min, Max
 from collections import defaultdict
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
@@ -19,6 +19,7 @@ from .forms import (
     ProductForm,
     ProductImageForm,
     VolumeSelectionForm,
+    ProductFilterForm,
 )
 
 
@@ -28,6 +29,103 @@ from apps.authentication.decorators import (
     admin_or_manager_required,
     admin_required,
 )
+
+
+def shop_homepage_view(request):
+    # Initialize the filter form
+    form = ProductFilterForm(request.GET)
+
+    # Start with all active products
+    products = (
+        Product.objects.prefetch_related("images", "productvolume_set")
+        .filter(status="ACTIVE")
+        .order_by("name")
+    )
+
+    # Apply filters if the form is valid
+    if form.is_valid():
+        category_filter = form.cleaned_data.get("category")
+        min_price = form.cleaned_data.get("min_price")
+        max_price = form.cleaned_data.get("max_price")
+        search_query = form.cleaned_data.get("search")
+
+        # Filter by category if selected
+        if category_filter:
+            products = products.filter(category=category_filter)
+
+        # Filter by price range if provided
+        if min_price is not None and max_price is not None:
+            products = products.filter(
+                productvolume__volume__price__gte=min_price,
+                productvolume__volume__price__lte=max_price,
+            ).distinct()
+        elif min_price is not None:
+            products = products.filter(
+                productvolume__volume__price__gte=min_price
+            ).distinct()
+        elif max_price is not None:
+            products = products.filter(
+                productvolume__volume__price__lte=max_price
+            ).distinct()
+
+        # Filter by search query if provided
+        if search_query:
+            products = products.filter(name__icontains=search_query)
+
+    # Pagination setup
+    paginator = Paginator(products, 32)
+    page_number = request.GET.get("page", 1)
+
+    try:
+        page_number = int(page_number)
+        if page_number < 1:
+            page_number = 1
+    except ValueError:
+        page_number = 1
+
+    try:
+        page_obj = paginator.page(page_number)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
+
+    # Prepare the products with images and volumes
+    products_with_images = []
+    for product in page_obj:
+        images = product.images.filter(is_default=True)
+        if not images.exists():
+            images = product.images.all()
+
+        volumes = product.productvolume_set.all()
+        if volumes.exists():
+            min_vol_price = volumes.aggregate(Min("volume__price"))[
+                "volume__price__min"
+            ]
+            max_vol_price = volumes.aggregate(Max("volume__price"))[
+                "volume__price__max"
+            ]
+        else:
+            min_vol_price = max_vol_price = None
+
+        products_with_images.append(
+            {
+                "product": product,
+                "images": images,
+                "min_price": min_vol_price,
+                "max_price": max_vol_price,
+            }
+        )
+
+
+    # Pass the form, filtered products, and pagination to the template
+    return render(
+        request,
+        "products/shop_products.html",
+        {
+            "form": form,
+            "products_with_images": products_with_images,
+            "page_obj": page_obj,
+        },
+    )
 
 
 @login_required

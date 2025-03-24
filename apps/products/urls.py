@@ -84,4 +84,7 @@ urlpatterns = [
     # ** Stock Alerts **
     path("stock-alerts/", views.stock_alerts_view, name="stock_alerts"),
     path("discounted/", views.discounted_product_list_view, name="discounted_products"),
+
+    path('shop-now', views.shop_homepage_view, name='shop_homepage'),
+    # Other URL patterns for product details
 ]

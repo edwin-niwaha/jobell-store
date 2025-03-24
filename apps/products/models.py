@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 from django.forms import model_to_dict
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
@@ -115,6 +116,7 @@ class Product(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created At")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated At")
+    is_featured = models.BooleanField(default=False, verbose_name="Is Featured")
 
     class Meta:
         db_table = "product"
@@ -241,3 +243,14 @@ class ProductImage(models.Model):
             )
             self.image = upload_result["url"]
         super().save(*args, **kwargs)
+
+class Review(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="reviews")
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    rating = models.PositiveIntegerField(choices=[(i, f"{i} Stars") for i in range(1, 6)])
+    review_text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_verified = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Review by {self.user} for {self.product.name}"
