@@ -9,19 +9,52 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('products', '0006_product_is_featured'),
+        ("products", "0006_product_is_featured"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Review',
+            name="Review",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('rating', models.PositiveIntegerField(choices=[(1, '1 Stars'), (2, '2 Stars'), (3, '3 Stars'), (4, '4 Stars'), (5, '5 Stars')])),
-                ('review_text', models.TextField()),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('product', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='reviews', to='products.product')),
-                ('user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "rating",
+                    models.PositiveIntegerField(
+                        choices=[
+                            (1, "1 Stars"),
+                            (2, "2 Stars"),
+                            (3, "3 Stars"),
+                            (4, "4 Stars"),
+                            (5, "5 Stars"),
+                        ]
+                    ),
+                ),
+                ("review_text", models.TextField()),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "product",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="reviews",
+                        to="products.product",
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
     ]

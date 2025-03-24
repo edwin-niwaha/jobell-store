@@ -1,8 +1,6 @@
 from django import forms
 from .models import Testimonial, Subscriber
-from apps.products.models import Category
 from ckeditor.widgets import CKEditorWidget
-
 
 
 class TestimonialForm(forms.ModelForm):

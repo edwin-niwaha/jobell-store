@@ -2,7 +2,6 @@ from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 from phonenumber_field.formfields import PhoneNumberField
-from phonenumber_field.formfields import PhoneNumberField
 from phonenumbers import phonenumberutil, parse, is_valid_number
 from django.core.exceptions import ValidationError
 from django.db import transaction

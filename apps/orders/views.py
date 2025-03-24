@@ -7,10 +7,9 @@ from django.conf import settings
 from django.contrib import messages
 import requests
 import uuid
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse
 import logging
 import base64
-from django.core.paginator import Paginator
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.decorators import login_required
@@ -34,42 +33,47 @@ logger = logging.getLogger(__name__)
 
 # =================================== Products Detail ===================================
 
+
 @login_required
 def product_detail(request, id):
     product = get_object_or_404(Product, id=id)
 
     # Handle review submission
-    if request.method == 'POST' and 'submit_review' in request.POST:
+    if request.method == "POST" and "submit_review" in request.POST:
         if Review.objects.filter(product=product, user=request.user).exists():
             # Add message for already reviewed
-            messages.info(request, "Oops! You've already reviewed this product.", extra_tags="bg-danger")
-            return redirect('orders:product_detail', id=id)
-        
-        review_text = request.POST.get('review_text')
-        rating = int(request.POST.get('rating'))
+            messages.info(
+                request,
+                "Oops! You've already reviewed this product.",
+                extra_tags="bg-danger",
+            )
+            return redirect("orders:product_detail", id=id)
+
+        review_text = request.POST.get("review_text")
+        rating = int(request.POST.get("rating"))
 
         if review_text and rating:
             Review.objects.create(
                 product=product,
                 user=request.user,
                 review_text=review_text,
-                rating=rating
+                rating=rating,
             )
 
         # Redirect to prevent re-posting the form if refreshed
-        return redirect('orders:product_detail', id=id)
+        return redirect("orders:product_detail", id=id)
 
     # Handle "Set as Featured" or "Remove from Featured" based on the POST request
-    if request.method == 'POST':
+    if request.method == "POST":
         # Check if we are toggling 'is_featured'
-        if 'set_featured' in request.POST:
+        if "set_featured" in request.POST:
             product.is_featured = True
-        elif 'remove_featured' in request.POST:
+        elif "remove_featured" in request.POST:
             product.is_featured = False
-        
+
         # Save the updated product
         product.save()
-        return redirect('orders:product_detail', id=id)
+        return redirect("orders:product_detail", id=id)
 
     # Continue fetching cart and product details
     cart, created = Cart.objects.get_or_create(user=request.user)
@@ -77,14 +81,18 @@ def product_detail(request, id):
     cart_count = sum(item.quantity for item in cart_items)
 
     # Fetch volumes specific to this product
-    product_volumes = ProductVolume.objects.filter(product=product).order_by("volume__ml")
+    product_volumes = ProductVolume.objects.filter(product=product).order_by(
+        "volume__ml"
+    )
 
     # Fetch reviews
-    reviews = Review.objects.filter(product=product, is_verified=True).order_by('-created_at')
+    reviews = Review.objects.filter(product=product, is_verified=True).order_by(
+        "-created_at"
+    )
 
     # Pagination
     paginator = Paginator(reviews, 5)  # Show 5 reviews per page
-    page_number = request.GET.get('page')
+    page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
     # Count of verified reviews (assuming there is an 'is_verified' field in your Review model)
@@ -92,8 +100,8 @@ def product_detail(request, id):
 
     # Process reviews to generate the filled and empty stars
     for review in page_obj:
-        review.filled_stars = '★' * review.rating
-        review.empty_stars = '☆' * (5 - review.rating)
+        review.filled_stars = "★" * review.rating
+        review.empty_stars = "☆" * (5 - review.rating)
 
     context = {
         "product": product,
@@ -104,6 +112,7 @@ def product_detail(request, id):
     }
 
     return render(request, "orders/product_detail.html", context)
+
 
 # =================================== Products Detail for quests not signed in ===================================
 
@@ -335,7 +344,6 @@ def remove_from_cart(request, item_id):
     return redirect("orders:cart")
 
 
-
 def send_order_email(
     recipient_name,
     recipient_email,
@@ -426,7 +434,6 @@ def send_order_email(
     except Exception as e:
         logger.error(f"Error sending email to {recipient_email}: {str(e)}")
         return False
-
 
 
 @login_required

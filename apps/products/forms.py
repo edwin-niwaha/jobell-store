@@ -239,10 +239,13 @@ class VolumeSelectionForm(forms.Form):
 
 # =================================== Product Review Form ===================================
 
+
 class ReviewForm(forms.ModelForm):
     class Meta:
         model = Review
-        fields = ['rating', 'review_text']
+        fields = ["rating", "review_text"]
 
     rating = forms.ChoiceField(choices=[(i, f"{i} Stars") for i in range(1, 6)])
-    review_text = forms.CharField(widget=forms.Textarea(attrs={'rows': 3}), required=True)
+    review_text = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 3}), required=True
+    )

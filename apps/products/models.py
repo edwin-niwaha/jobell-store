@@ -11,7 +11,7 @@ import cloudinary.uploader
 def validate_image_size(value):
     limit = 1500 * 1024  # 1,500 KB (1.5 MB)
     if value.size > limit:
-        raise ValidationError(f"Image size should not exceed 1.5 MB.")
+        raise ValidationError("Image size should not exceed 1.5 MB.")
 
 
 # Define choices for product status
@@ -244,10 +244,15 @@ class ProductImage(models.Model):
             self.image = upload_result["url"]
         super().save(*args, **kwargs)
 
+
 class Review(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="reviews")
+    product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, related_name="reviews"
+    )
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    rating = models.PositiveIntegerField(choices=[(i, f"{i} Stars") for i in range(1, 6)])
+    rating = models.PositiveIntegerField(
+        choices=[(i, f"{i} Stars") for i in range(1, 6)]
+    )
     review_text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     is_verified = models.BooleanField(default=False)

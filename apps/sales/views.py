@@ -1,13 +1,10 @@
 import json
 import logging
 from decimal import Decimal
-from collections import defaultdict
 from django.core.paginator import Paginator
-from django.db.models import Q, F
+from django.db.models import Q
 from django.db.models import Sum, Count
-from datetime import datetime, timedelta
 from django.db import transaction
-from django.db.models import Prefetch
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
@@ -15,7 +12,6 @@ from django.shortcuts import render, redirect, get_object_or_404
 from core.wsgi import *
 from xhtml2pdf import pisa
 from django.template.loader import get_template
-from django.db.models import Sum, Count
 from apps.customers.models import Customer
 from apps.inventory.models import Inventory
 from apps.products.models import Product, ProductVolume

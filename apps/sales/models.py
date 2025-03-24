@@ -1,5 +1,4 @@
 from django.db import models
-from decimal import Decimal
 import django.utils.timezone
 from apps.customers.models import Customer
 from apps.products.models import Product, ProductVolume

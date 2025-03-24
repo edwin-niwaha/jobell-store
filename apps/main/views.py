@@ -1,7 +1,6 @@
 import json
 from django.conf import settings
 from django.core.mail import send_mail
-from django.utils.html import strip_tags
 from django.http import JsonResponse
 from decimal import Decimal
 from datetime import date, timedelta
@@ -12,13 +11,11 @@ from django.db.models.functions import Coalesce
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.db.models import Min, Max
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.core.paginator import Paginator, EmptyPage
 
 from apps.products.models import Product, Category, Review
-from apps.sales.models import Sale, SaleDetail
+from apps.sales.models import Sale
 from apps.orders.models import Cart, CartItem, Order, Wishlist
-from apps.customers.models import Customer
-from django.db.models import Sum
 
 from .models import Testimonial, Subscriber
 from .forms import TestimonialForm, NewsletterForm, EmailForm
@@ -31,7 +28,6 @@ from apps.authentication.decorators import (
 from .utils import (
     get_top_selling_products,
 )
-
 
 
 # =================================== Home User view  ===================================
@@ -186,6 +182,7 @@ def index(request):
             "newsletter_form": newsletter_form,
         },
     )
+
 
 @login_required
 @admin_or_manager_or_staff_required
@@ -508,22 +505,27 @@ def send_bulk_email_view(request):
 
     return render(request, "main/send_bulk_email.html", context)
 
+
 # =================================== Reviews ===================================
 def reviews_list_view(request):
     reviews = Review.objects.all()  # Fetch all reviews
-    if request.method == 'POST':
-        review_id = request.POST.get('review_id')
-        action = request.POST.get('action')
+    if request.method == "POST":
+        review_id = request.POST.get("review_id")
+        action = request.POST.get("action")
         review = get_object_or_404(Review, id=review_id)
 
-        if action == 'verify' and not review.is_verified:
+        if action == "verify" and not review.is_verified:
             review.is_verified = True
             review.save()
-            messages.success(request, f'Review for {review.product.name} has been verified.', extra_tags="bg-success")
+            messages.success(
+                request,
+                f"Review for {review.product.name} has been verified.",
+                extra_tags="bg-success",
+            )
 
-        return redirect('reviews_list')  # Redirect to the reviews list page
+        return redirect("reviews_list")  # Redirect to the reviews list page
 
-    return render(request, 'main/reviews_list.html', {'reviews': reviews})
+    return render(request, "main/reviews_list.html", {"reviews": reviews})
 
 
 def toggle_is_verified(request, review_id):
@@ -536,10 +538,11 @@ def toggle_is_verified(request, review_id):
         review.save()
 
     # Return a JSON response with the updated status
-    return JsonResponse({'is_verified': review.is_verified})
+    return JsonResponse({"is_verified": review.is_verified})
+
 
 def delete_review(request, review_id):
     review = get_object_or_404(Review, id=review_id)
     review.delete()
     messages.success(request, "Review deleted successfully.", extra_tags="bg-danger")
-    return redirect('reviews_list')
+    return redirect("reviews_list")

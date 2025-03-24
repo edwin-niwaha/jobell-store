@@ -42,7 +42,11 @@ python -m venv .venv
 - Windows:
 ```bash
 source .venv/Scripts/activate
+  # Powershell
+    deactivate
+    .venv\Scripts\Activate
 ```
+
 
 ### 3. Install Required Python Packages
 ```bash

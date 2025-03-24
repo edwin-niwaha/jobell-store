@@ -4,7 +4,7 @@ from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Sum, F, Count, OuterRef, Subquery
+from django.db.models import Sum, F
 from django.db import transaction
 from datetime import date
 from openpyxl import load_workbook
@@ -15,8 +15,7 @@ from .forms import (
     TransactionFormSet,
     ImportCOAForm,
 )
-from apps.sales.models import SaleDetail, Sale
-from apps.products.models import ProductVolume
+from apps.sales.models import SaleDetail
 from .models import ChartOfAccounts, Transaction
 from apps.sales.forms import ReportPeriodForm
 
