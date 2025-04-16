@@ -1,50 +1,49 @@
 /* Banner Styling */
 .banner-popup {
     top: -100px;
-    /* Hidden above the viewport initially */
     left: -100%;
-    background: linear-gradient(to right, #00c6ff, #0072ff);
+    background: linear-gradient(to right, #FFD700, #FFA500);
+    /* Gold gradient */
     z-index: 1050;
     transition: top 0.8s ease-out, left 0.8s ease-out;
     margin-top: 45px;
-    /* Space above the banner */
     height: 85px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 20px;
-    /* Add padding for content spacing */
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    border-radius: 0 0 10px 10px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 /* Active state */
 .banner-popup.active {
     top: 0;
-    /* Slides down */
     left: 0;
-    /* Slides in from the left */
 }
 
 /* Banner content styling */
 .banner-content {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: white;
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: #fffdf5;
     flex: 1;
-    /* Allow content to grow and fill available space */
     text-align: center;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 /* Hover effect for link */
 .banner-link {
-    color: white;
+    color: #fff8dc;
     text-decoration: none;
+    transition: color 0.3s ease;
 }
 
 .banner-link:hover {
-    text-decoration: none;
-    color: #ffeb3b;
-    /* Yellow on hover for better visibility */
+    text-decoration: underline;
+    color: #ffecb3;
+    /* Soft pale gold */
 }
 
 /* Close Button Styling */
@@ -52,62 +51,21 @@
     background-color: transparent;
     border: none;
     font-size: 2rem;
-    color: white;
+    color: #fff8dc;
     position: absolute;
     top: 10px;
     right: 10px;
     cursor: pointer;
+    transition: transform 0.2s ease;
 }
 
-/* Navbar Margin Adjust */
+#closeBanner:hover {
+    transform: scale(1.1);
+    color: #ffeb3b;
+    /* Bright yellow on hover */
+}
+
+/* Navbar Margin Adjust (preserved from original) */
 .navbar {
-    transition: margin-top 0.5s ease-out;
-}
-
-.navbar.banner-closed {
-    margin-top: 0;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .banner-popup {
-        height: auto;
-        /* Allow height to adjust based on content */
-        padding: 10px;
-        /* Reduce padding */
-        flex-direction: column;
-        /* Stack content vertically */
-    }
-
-    .banner-content {
-        font-size: 1.2rem;
-        /* Adjust font size for smaller screens */
-        text-align: center;
-        /* Center text */
-    }
-
-    #closeBanner {
-        font-size: 1.5rem;
-        /* Reduce button size */
-        top: 5px;
-        /* Adjust position */
-        right: 5px;
-    }
-}
-
-@media (max-width: 480px) {
-    .banner-popup {
-        padding: 5px;
-        /* Further reduce padding for very small screens */
-    }
-
-    .banner-content {
-        font-size: 1rem;
-        /* Smaller font size for very small screens */
-    }
-
-    #closeBanner {
-        font-size: 1.2rem;
-        /* Adjust close button size */
-    }
+    transition: margin-top 0.3s ease;
 }

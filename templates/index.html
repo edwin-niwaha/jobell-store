@@ -44,8 +44,8 @@
     <div id="featured-products" class="row mt-4" id="search_list">
       <div class="row text-center">
         <div class="col-12">
-          <h2 class="display-5 fw-bold text-dark">Featured Products</h2>
-          <hr />
+          <h2 class="display-5 fw-bold text-warning" style="color: gold;">Featured Products</h2>
+          <hr style="border-color: gold;" />
         </div>
       </div>
       {% if products_with_images %}
@@ -114,30 +114,33 @@
     </div>
 
     <!-- Why Choose Us Section -->
-    <div class="container-fluid mt-5 px-0 position-relative" style="background-color: #f8f9fa;">
-      <div class="row text-center">
+    <div class="container-fluid mt-5 px-0 mb-4 rounded-4 position-relative" style="background: linear-gradient(to right, #127D61, #FFD700);">
+      <div class="row text-center py-5">
         <div class="col-12">
           <h2 class="display-4 mb-4 fw-bold text-dark">Why Choose Us?</h2>
-          <hr class="w-25 mx-auto" style="border-color: #007bff;" />
+          <hr class="w-25 mx-auto" style="border-color: #f7c600;" />
         </div>
       </div>
       <div class="row text-center">
-        <div class="col-md-4">
-          <div class="card p-4 shadow-sm border-0 rounded mb-4">
+        <!-- Premium Quality Card -->
+        <div class="col-md-4 mb-4">
+          <div class="card p-4 shadow-lg border-0 rounded-3">
             <i class="mdi mdi-star-circle-outline fs-1 text-primary"></i>
             <h4 class="mt-3 text-dark">Premium Quality</h4>
             <p class="text-muted">We use only the finest ingredients to craft luxurious and long-lasting perfumes.</p>
           </div>
         </div>
-        <div class="col-md-4">
-          <div class="card p-4 shadow-sm border-0 rounded mb-4">
+        <!-- Custom Blends Card -->
+        <div class="col-md-4 mb-4">
+          <div class="card p-4 shadow-lg border-0 rounded-3">
             <i class="mdi mdi-bottle-wine fs-1 text-success"></i>
             <h4 class="mt-3 text-dark">Custom Blends</h4>
             <p class="text-muted">Personalize your scent with our bespoke fragrance-making services.</p>
           </div>
         </div>
-        <div class="col-md-4">
-          <div class="card p-4 shadow-sm border-0 rounded mb-4">
+        <!-- Fast & Reliable Delivery Card -->
+        <div class="col-md-4 mb-4">
+          <div class="card p-4 shadow-lg border-0 rounded-3">
             <i class="mdi mdi-truck-fast-outline fs-1 text-warning"></i>
             <h4 class="mt-3 text-dark">Fast & Reliable Delivery</h4>
             <p class="text-muted">Enjoy quick and secure shipping right to your doorstep.</p>
@@ -147,52 +150,70 @@
     </div>
 
     <!-- Customer Testimonials -->
-    <div class="container-fluid mt-5 px-0 position-relative" style="background-color: #f1f5f8;">
-      <div class="text-center">
+    <div class="container-fluid py-5 px-3 mb-4 rounded-4 bg-light" style="background: linear-gradient(to right, #fff8e1, #f3e5ab);">
+      <!-- Section Heading -->
+      <div class="text-center mb-5">
         <h2 class="display-5 fw-bold text-dark">What Our Customers Say</h2>
-        <hr class="w-50 mx-auto" style="border-color: #007bff;" />
+        <hr class="w-50 mx-auto" style="border-top: 3px solid #b88a4b;" />
       </div>
-      <div id="testimonial-carousel" class="carousel slide" data-bs-ride="carousel">
+
+      <!-- Testimonials Carousel -->
+      <div id="testimonial-carousel" class="carousel slide mx-auto" data-bs-ride="carousel" style="max-width: 850px;">
         <div class="carousel-inner">
           {% for testimonial in testimonials %}
             <div class="carousel-item {% if forloop.first %}active{% endif %}">
-              <div class="testimonial-card p-4 bg-light shadow rounded text-center">
-                <p class="fs-5 text-muted">"{{ testimonial.text }}"</p>
-                <p class="fs-6 text-dark fw-bold">- {{ testimonial.author }}</p>
+              <div class="bg-white shadow-lg rounded-4 p-4 mx-3 text-center">
+                <p class="fs-5 fst-italic text-muted mb-3">"{{ testimonial.text }}"</p>
+                <p class="fs-6 fw-bold text-dark">– {{ testimonial.author }}</p>
               </div>
             </div>
           {% endfor %}
         </div>
+
         <!-- Carousel Controls -->
-        <button class="carousel-control-prev" type="button" data-bs-target="#testimonial-carousel" data-bs-slide="prev"><span class="carousel-control-prev-icon"></span></button>
-        <button class="carousel-control-next" type="button" data-bs-target="#testimonial-carousel" data-bs-slide="next"><span class="carousel-control-next-icon"></span></button>
+        <button class="carousel-control-prev" type="button" data-bs-target="#testimonial-carousel" data-bs-slide="prev">
+          <span class="carousel-control-prev-icon bg-dark rounded-circle p-2" aria-hidden="true"></span>
+          <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#testimonial-carousel" data-bs-slide="next">
+          <span class="carousel-control-next-icon bg-dark rounded-circle p-2" aria-hidden="true"></span>
+          <span class="visually-hidden">Next</span>
+        </button>
       </div>
       <!-- Add Testimonial Button -->
-      <div class="text-center mt-4">
-        <button class="btn mb-4 w-50" data-bs-toggle="modal" data-bs-target="#addTestimonialModal" style="background-color: #b88a4b; border-color: #b88a4b;">Add Testimonial</button>
+      <div class="text-center mt-5">
+        <button class="btn btn-lg text-white fw-semibold px-4 py-2 rounded-3" style="background: linear-gradient(to right, #FFD700, #DAA520); border: none; width: 50%;" data-bs-toggle="modal" data-bs-target="#addTestimonialModal">Add Your Testimonial</button>
       </div>
     </div>
-
     <!-- Add Testimonial Modal -->
     <div class="modal fade" id="addTestimonialModal" tabindex="-1">
       <div class="modal-dialog">
         <div class="modal-content">
+          <!-- Modal Header -->
           <div class="modal-header">
             <h5 class="modal-title text-primary">Add Testimonial</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
+
+          <!-- Modal Body -->
           <div class="modal-body">
             <form method="POST" action="{% url 'users-home' %}">
               {% csrf_token %}
+
+              <!-- Testimonial Text -->
               <div class="mb-3">
-                <label class="form-label">Testimonial</label>
+                <label class="form-label" for="{{ testimonial_form.text.id_for_label }}">Testimonial</label>
                 {{ testimonial_form.text }}
               </div>
+
+              <!-- Author Name -->
               <div class="mb-3">
-                <label class="form-label">Author Name</label>
+                <label class="form-label" for="{{ testimonial_form.author.id_for_label }}">Author Name</label>
                 {{ testimonial_form.author }}
               </div>
-              <button type="submit" class="btn w-100 py-3" style="background-color: #b88a4b; border-color: #b88a4b;">Submit</button>
+
+              <!-- Submit Button with Gold Gradient -->
+              <button type="submit" class="btn btn-lg w-100 py-3 text-white fw-semibold" style="background: linear-gradient(to right, #FFD700, #DAA520); border: none; border-radius: 12px;">Submit</button>
             </form>
           </div>
         </div>
@@ -200,37 +221,42 @@
     </div>
 
     <!-- Newsletter Section -->
-    <div class="container-fluid mt-5 mb-5 px-0 position-relative" style="background-color: #f8f9fa;">
-      <div class="text-center">
+    <div class="container-fluid py-5 px-3 rounded-4 bg-light" style="background: linear-gradient(to right, #f5e3a1, #d4af37);">
+      <div class="text-center mb-4">
         <h2 class="display-4 fw-bold text-dark">Let’s Keep in Touch</h2>
-        <hr class="w-25 mx-auto" style="border-color: #007bff;" />
+        <hr class="w-25 mx-auto" style="border-color: #b88a4b;" />
       </div>
-      <div class="card shadow-lg border-0 mx-auto w-100" style="max-width: 600px; border-radius: 10px;">
-        <div class="card-body text-center">
-          <p class="text-muted mb-4">Subscribe to get the latest updates and exclusive offers directly to your inbox.</p>
-          <form method="POST" action="{% url 'users-home' %}" class="w-100">
-            {% csrf_token %}
-            <div class="row mb-3">
-              <div class="col-12 col-md-8 mb-3 mb-md-0">
-                <!-- Textbox for Email (Full width on small screens) -->
-                <div class="input-group w-100">{{ newsletter_form.email }}</div>
+
+      <div class="mx-auto" style="max-width: 100%;">
+        <div class="card border-0 shadow-lg rounded-4">
+          <div class="card-body text-center">
+            <p class="text-muted mb-4">Subscribe to get the latest updates and exclusive offers directly to your inbox.</p>
+
+            <form method="POST" action="{% url 'users-home' %}">
+              {% csrf_token %}
+
+              <div class="row gx-2 mb-3">
+                <div class="col-12 col-md-8 mb-3 mb-md-0">
+                  <div class="input-group w-100">{{ newsletter_form.email }}</div>
+                </div>
+                <div class="col-12 col-md-4">
+                  <button class="btn btn-lg text-white fw-semibold w-100 px-4 py-2 rounded-3" style="background: linear-gradient(to right, #FFD700, #DAA520); border: none;">Subscribe</button>
+                </div>
               </div>
-              <div class="col-12 col-md-4">
-                <!-- Button (Full width on small screens) -->
-                <button type="submit" class="btn w-100" style="background-color: #b88a4b; border-color: #b88a4b;">Subscribe</button>
+
+              <div class="form-check mb-3 text-start">
+                {{ newsletter_form.consent }}
+                <label class="form-check-label" for="{{ newsletter_form.consent.id_for_label }}">I agree to receive emails from your team.</label>
               </div>
-            </div>
-            {% for error in newsletter_form.email.errors %}
-              <div class="invalid-feedback d-block">{{ error }}</div>
-            {% endfor %}
-            <div class="form-check mb-3">
-              {{ newsletter_form.consent }}
-              <label class="form-check-label" for="{{ newsletter_form.consent.id_for_label }}">I consent to receiving emails from Jobell Inc.</label>
-            </div>
-            {% for error in newsletter_form.consent.errors %}
-              <div class="invalid-feedback d-block">{{ error }}</div>
-            {% endfor %}
-          </form>
+
+              {% for error in newsletter_form.email.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+              {% endfor %}
+              {% for error in newsletter_form.consent.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+              {% endfor %}
+            </form>
+          </div>
         </div>
       </div>
     </div>

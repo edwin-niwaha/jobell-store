@@ -16,6 +16,8 @@
     <link href="{% static 'css/users.css' %}" rel="stylesheet" type="text/css" />
     <link href="{% static 'css/carousel.css' %}" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="{% static 'css/product_hoover.css' %}" />
+    <!-- Dynamic Banner CSS -->
+    <link href="{% static 'css/banner.css' %}" rel="stylesheet" />
 
     <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
@@ -70,6 +72,8 @@
     {% endblock %}
     <!-- ========== Topbar End ========== -->
 
+    {% include 'accounts/_partials/banner.html' %}
+
     <!-- =============== Messages Start ================= -->
     {% block messages %}
       {% include '_partials/messages.html' %}
@@ -112,6 +116,8 @@
       <script src="{% static 'js/print.js' %}"></script>
       <!-- JavaScript for Quantity Control -->
       <script src="{% static 'js/cart.js' %}"></script>
+      <!-- Custom JS -->
+      <script src="{% static 'js/banner.js' %}"></script>
 
       {% comment %} <script src="{% static 'js/cookies.js' %}"></script> {% endcomment %}
     {% endblock %}
