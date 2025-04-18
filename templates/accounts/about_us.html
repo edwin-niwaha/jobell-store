@@ -6,74 +6,68 @@
 {% endblock %}
 
 {% block content %}
-  <style>
-    .para-text {
-      line-height: 2rem;
-      text-align: justify;
-    }
-  </style>
   <!-- About Us Section -->
   <div class="container-fluid my-3">
-    <section class="section-content padding-y">
-      <div class="container-xl d-flex justify-content-center align-items-center">
-        <div class="row justify-content-center w-100">
-          <div class="container">
-            <div class="row">
-              <div class="col-md-12 text-center">
-                {% comment %} <h1 class="display-4 font-weight-bold text-primary mb-3">Jobell Inc.</h1> {% endcomment %}
-                <div class="about-logo mb-5" style="height: 250px; background-size: contain; background-repeat: no-repeat; background-position: center; background-image: url('{% static 'images/file.png' %}');"></div>
-                <hr />
-
-                <h2>About Us</h2>
-                <p class="para-text lead text-muted mb-5">Welcome to our website! We are dedicated to providing you with the best online shopping experience. Our journey began with a simple idea: to make shopping easy, accessible, and enjoyable for everyone. Over the years, we have grown into a trusted online retailer, offering a wide range of products to meet your needs.</p>
-              </div>
-            </div>
-
-            <div class="row mt-3">
-              <div class="col-md-6">
-                <h3>Our Mission</h3>
-                <p class="para-text">Our mission is to provide our customers with high-quality products at competitive prices, backed by exceptional customer service. We strive to create a seamless shopping experience, from browsing to delivery, ensuring that you receive the best value and satisfaction.</p>
-              </div>
-              <div class="col-md-6">
-                <h3>Our Vision</h3>
-                <p class="para-text">Our vision is to be the leading online retailer, known for our commitment to quality, innovation, and customer satisfaction. We aim to continuously expand our product range and improve our services to meet the evolving needs of our customers.</p>
-              </div>
-            </div>
-            <div class="row mt-3">
-              <div class="col-md-12">
-                <h3>Our Values</h3>
-                <i class="fas fa-check-circle" style="color: green; line-height: 2rem; text-align: justify"></i>
-                <strong>Customer First:</strong> We prioritize our customers' needs and strive to exceed their expectations with every interaction.
-                <br />
-
-                <i class="fas fa-check-circle" style="color: green; line-height: 2rem; text-align: justify"></i>
-                <strong>Quality:</strong> We are committed to offering products of the highest quality and stand behind everything we sell.
-                <br />
-                <i class="fas fa-check-circle" style="color: green; line-height: 2rem; text-align: justify"></i>
-                <strong>Integrity:</strong> We conduct our business with honesty and transparency
-              </div>
-            </div>
-            <div class="row mt-3">
-              <p class="para-text">
-                We hope you enjoy our products as much as we enjoy offering them to you. If you have any questions or comments, please don't hesitate to
-                <a href="{% url 'contact_us' %}">contact us.</a>
-              </p>
-            </div>
+    <section class="section-content">
+      <div class="container-xl text-center">
+        <div class="row">
+          <div class="col-md-12">
+            <div class="about-logo mb-5" style="height: 250px; background-size: contain; background-repeat: no-repeat; background-position: center; background-image: url('{% static 'images/file.png' %}');"></div>
+            <hr />
+            <h2 class="display-4 mb-2 fw-bold text-dark">About Us</h2>
+            <p class="lead text-muted mb-5">Welcome to our website! We are dedicated to providing you with the best online shopping experience. Our journey began with a simple idea: to make shopping easy, accessible, and enjoyable for everyone. Over the years, we have grown into a trusted online retailer, offering a wide range of products to meet your needs.</p>
           </div>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-md-6">
+            <h2 class="display-4 mb-2 fw-bold text-dark">Our Mission</h2>
+            <p>Our mission is to provide our customers with high-quality products at competitive prices, backed by exceptional customer service. We strive to create a seamless shopping experience, from browsing to delivery, ensuring that you receive the best value and satisfaction.</p>
+          </div>
+          <div class="col-md-6">
+            <h2 class="display-4 mb-2 fw-bold text-dark">Our Vision</h2>
+            <p>Our vision is to be the leading online retailer, known for our commitment to quality, innovation, and customer satisfaction. We aim to continuously expand our product range and improve our services to meet the evolving needs of our customers.</p>
+          </div>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-md-12">
+            <h2 class="display-4 mb-2 fw-bold text-dark">Our Values</h2>
+            <ul class="list-unstyled">
+              <li>
+                <i class="fas fa-check-circle" style="color: green;"></i> <strong>Customer First:</strong> We prioritize our customers' needs and strive to exceed their expectations with every interaction.
+              </li>
+              <li>
+                <i class="fas fa-check-circle" style="color: green;"></i> <strong>Quality:</strong> We are committed to offering products of the highest quality and stand behind everything we sell.
+              </li>
+              <li>
+                <i class="fas fa-check-circle" style="color: green;"></i> <strong>Integrity:</strong> We conduct our business with honesty and transparency.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="row mt-3">
+          <p class="para-text">
+            We hope you enjoy our products as much as we enjoy offering them to you. If you have any questions or comments, please don't hesitate to <a href="{% url 'contact_us' %}">contact us.</a>
+          </p>
         </div>
       </div>
     </section>
   </div>
+
   <!-- Our Team Section -->
-  <div class="container-fluid mt-5 px-0 mb-5">
-    <div class="row text-center py-3" style="background: linear-gradient(to right, #f5e3a1, #d4af37);">
+  <div class="container-fluid my-3">
+    <!-- Title and Background Gradient -->
+    <div class="row text-center py-3">
       <div class="col-12">
         <h2 class="display-4 mb-2 fw-bold text-dark">Meet Our Team</h2>
-        <hr class="w-25 mx-auto" style="border-color: #b88a4b;" />
+        <hr class="w-25 mx-auto" />
       </div>
     </div>
 
-    <div class="container mt-4">
+    <!-- Team Member Cards in a Container for Same Width -->
+    <div class="container my-3">
       <div class="row justify-content-center g-4">
         <!-- CEO -->
         <div class="col-12 col-sm-6 col-md-4 col-lg-3">
@@ -86,7 +80,7 @@
           </div>
         </div>
 
-        <!-- Accountant -->
+        <!-- Managing Director -->
         <div class="col-12 col-sm-6 col-md-4 col-lg-3">
           <div class="card border-0 shadow-lg rounded-4 text-center h-100">
             <img src="{% static 'team/md.jpeg' %}" class="rounded-circle mx-auto mt-4" alt="Accountant" style="width: 140px; height: 140px; object-fit: cover;" />
@@ -97,7 +91,7 @@
           </div>
         </div>
 
-        <!-- Programs Manager -->
+        <!-- IT Specialist -->
         <div class="col-12 col-sm-6 col-md-4 col-lg-3">
           <div class="card border-0 shadow-lg rounded-4 text-center h-100">
             <img src="{% static 'team/specialist.jpeg' %}" class="rounded-circle mx-auto mt-4" alt="Programs Manager" style="width: 140px; height: 140px; object-fit: cover;" />
@@ -108,7 +102,7 @@
           </div>
         </div>
 
-        <!-- Field Officer -->
+        <!-- Consultant -->
         <div class="col-12 col-sm-6 col-md-4 col-lg-3">
           <div class="card border-0 shadow-lg rounded-4 text-center h-100">
             <img src="{% static 'team/consultant.jpg' %}" class="rounded-circle mx-auto mt-4" alt="Field Officer" style="width: 140px; height: 140px; object-fit: cover;" />
@@ -121,4 +115,7 @@
       </div>
     </div>
   </div>
+
+  <!-- Add margin-bottom to create space between content and footer -->
+  <div class="mb-5"></div>
 {% endblock %}
