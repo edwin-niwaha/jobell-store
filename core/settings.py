@@ -63,8 +63,6 @@ INSTALLED_APPS = [
     "crispy_forms",
     "crispy_bootstrap5",
     "django.contrib.humanize",
-    "ckeditor",
-    "django_ckeditor_5",
     # Custom apps
     "apps.main",
     "apps.authentication",
@@ -135,16 +133,16 @@ WSGI_APPLICATION = "core.wsgi.application"
 
 ############################### LOCAL DATABASE CONFIGURATION ###############################
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         "NAME": os.environ.get("DB_NAME", "default_db_name"),
-#         "USER": os.environ.get("DB_USER", "default_user"),
-#         "PASSWORD": os.environ.get("DB_PASSWORD", "default_password"),
-#         "HOST": os.environ.get("DB_HOST", "localhost"),
-#         "PORT": os.environ.get("DB_PORT", "5432"),
-#     }
-# }
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ.get("DB_NAME", "default_db_name"),
+        "USER": os.environ.get("DB_USER", "default_user"),
+        "PASSWORD": os.environ.get("DB_PASSWORD", "default_password"),
+        "HOST": os.environ.get("DB_HOST", "localhost"),
+        "PORT": os.environ.get("DB_PORT", "5432"),
+    }
+}
 
 
 ############################### ONLINE DATABASE CONFIGURATION ###############################
@@ -331,27 +329,3 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Django Crispy Forms configuration
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
-
-CKEDITOR_CONFIGS = {
-    "default": {
-        "toolbar": "full",
-        "height": 300,  # You can adjust this value or set it to 'auto'
-        "width": "100%",  # Ensures the editor takes up 100% width of the container
-        "extraPlugins": ",".join(
-            [
-                "autolink",
-                "clipboard",
-                "codesnippet",
-                "image",
-                "justify",
-                "link",
-                "liststyle",
-                "table",
-                "undo",
-                "wysiwygarea",
-            ]
-        ),
-        "resize_enabled": True,  # Allow resizing of the CKEditor
-        "toolbarCanCollapse": True,  # Collapsing toolbar on mobile
-    }
-}

@@ -91,6 +91,8 @@
     <!-- ============== Footer ===================== -->
     {% block footer %}
       {% include '_partials/home_footer.html' %}
+      <!-- Chat Button -->
+      <button id="load-chat" style="position: fixed; bottom: 20px; right: 20px; padding: 12px 18px; background-color: #007bff; color: white; border: none; border-radius: 6px; z-index: 10000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">💬 Chat with us</button>
     {% endblock %}
     <!-- ============================================= -->
 
@@ -122,7 +124,7 @@
       {% comment %} <script src="{% static 'js/cookies.js' %}"></script> {% endcomment %}
     {% endblock %}
     <!-- Start of Tawk.to Script -->
-    <script type="text/javascript">
+    {% comment %} <script type="text/javascript">
       var Tawk_API = Tawk_API || {},
         Tawk_LoadStart = new Date()
       ;(function () {
@@ -134,7 +136,26 @@
         s1.setAttribute('crossorigin', '*')
         s0.parentNode.insertBefore(s1, s0)
       })()
+    </script> {% endcomment %}
+
+    <script>
+      document.getElementById('load-chat').addEventListener('click', function () {
+        if (!window.Tawk_API) {
+          window.Tawk_API = {}
+          window.Tawk_LoadStart = new Date()
+      
+          var s1 = document.createElement('script')
+          s1.async = true
+          s1.src = 'https://embed.tawk.to/67be2a6557476c190f8fff7a/1ikvdb7ot'
+          s1.charset = 'UTF-8'
+          s1.setAttribute('crossorigin', '*')
+      
+          var s0 = document.getElementsByTagName('script')[0]
+          s0.parentNode.insertBefore(s1, s0)
+        }
+      })
     </script>
+
     <!-- End of Tawk.to Script -->
   </body>
 </html>

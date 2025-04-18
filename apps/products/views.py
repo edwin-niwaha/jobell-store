@@ -869,7 +869,7 @@ def discounted_product_list_view(request):
     # Fetch products with at least one discounted volume
     discounted_products = Product.objects.filter(
         productvolume__discount_value__gt=0  # Filtering products that have at least one volume with discount
-    ).distinct()
+    ).distinct().order_by("name")
 
     # Paginate the discounted products (12 items per page)
     paginator = Paginator(
@@ -886,9 +886,13 @@ def discounted_product_list_view(request):
             product=product, is_default=True
         ).first()
         # Add discounted volumes to the product
+        # product.discounted_volumes = ProductVolume.objects.filter(
+        #     product=product, discount_value__gt=0
+        # )
         product.discounted_volumes = ProductVolume.objects.filter(
             product=product, discount_value__gt=0
-        )
+        ).order_by("volume__ml")
+
 
     # Pass the page object to the template
     context = {

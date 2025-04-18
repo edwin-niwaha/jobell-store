@@ -34,10 +34,8 @@
       <!-- Static Welcome Message (Ensures it stays on top) -->
       <div class="welcome-message text-center position-absolute top-50 start-50 translate-middle text-white" style="z-index: 10; width: 100%;">
         <h2 class="display-4 mb-4 fw-bold">Welcome to Jobell Inc. Online Stores</h2>
-        <a href="{% url 'products:shop_homepage' %}" class="btn btn-lg fw-bold px-5 py-3 shadow-lg rounded-pill text-white" style="background: linear-gradient(135deg, #FFC107, #FF5722); border: none; transition: all 0.3s ease-in-out;">🛒 SHOP NOW</a>
+        <a href="{% url 'products:shop_homepage' %}" class="btn btn-lg fw-bold px-5 py-3 shadow-lg text-white" style="background: linear-gradient(135deg, #FFC107, #FF5722); border: none; border-radius: 10px; transition: all 0.3s ease-in-out;">🛒 SHOP NOW</a>
       </div>
-
-      <!-- Add Bootstrap's hover effect and focus using classes -->
     </div>
 
     <!-- Featured Products -->
@@ -158,7 +156,7 @@
       </div>
 
       <!-- Testimonials Carousel -->
-      <div id="testimonial-carousel" class="carousel slide mx-auto" data-bs-ride="carousel" style="max-width: 850px;">
+      <div id="testimonial-carousel" class="carousel slide mx-auto" data-bs-ride="carousel">
         <div class="carousel-inner">
           {% for testimonial in testimonials %}
             <div class="carousel-item {% if forloop.first %}active{% endif %}">
@@ -180,9 +178,10 @@
           <span class="visually-hidden">Next</span>
         </button>
       </div>
+
       <!-- Add Testimonial Button -->
       <div class="text-center mt-5">
-        <button class="btn btn-lg text-white fw-semibold px-4 py-2 rounded-3" style="background: linear-gradient(to right, #FFD700, #DAA520); border: none; width: 50%;" data-bs-toggle="modal" data-bs-target="#addTestimonialModal">Add Your Testimonial</button>
+        <button class="btn btn-lg text-white fw-semibold px-4 py-2 rounded-3 w-100 w-sm-auto" style="background: linear-gradient(to right, #FFD700, #DAA520);" data-bs-toggle="modal" data-bs-target="#addTestimonialModal">Add Your Testimonial</button>
       </div>
     </div>
     <!-- Add Testimonial Modal -->
@@ -213,7 +212,7 @@
               </div>
 
               <!-- Submit Button with Gold Gradient -->
-              <button type="submit" class="btn btn-lg w-100 py-3 text-white fw-semibold" style="background: linear-gradient(to right, #FFD700, #DAA520); border: none; border-radius: 12px;">Submit</button>
+              <button type="submit" class="btn w-100 py-2 text-white fw-semibold" style="background: linear-gradient(to right, #FFD700, #DAA520); border: none; border-radius: 8px;">Submit</button>
             </form>
           </div>
         </div>
@@ -226,7 +225,6 @@
         <h2 class="display-4 fw-bold text-dark">Let’s Keep in Touch</h2>
         <hr class="w-25 mx-auto" style="border-color: #b88a4b;" />
       </div>
-
       <div class="mx-auto" style="max-width: 100%;">
         <div class="card border-0 shadow-lg rounded-4">
           <div class="card-body text-center">
@@ -262,7 +260,6 @@
     </div>
 
     <!-- Welcome Audio Section (if any) -->
-
     <div class="mt-4 text-center">
       <audio id="welcome-audio" src="{% static 'audio/jobell_welcome.mp3' %}" preload="auto"></audio>
     </div>

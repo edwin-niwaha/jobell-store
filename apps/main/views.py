@@ -492,7 +492,7 @@ def send_bulk_email_view(request):
     else:
         form = EmailForm()
 
-    subscribers = Subscriber.objects.all()
+    subscribers = Subscriber.objects.all().order_by("id")
     paginator = Paginator(subscribers, 10)
     page_number = request.GET.get("page")
     subscribers = paginator.get_page(page_number)

@@ -1,7 +1,5 @@
 from django import forms
 from .models import Testimonial, Subscriber
-from ckeditor.widgets import CKEditorWidget
-
 
 class TestimonialForm(forms.ModelForm):
     class Meta:
@@ -64,4 +62,6 @@ class EmailForm(forms.Form):
     subject = forms.CharField(
         max_length=255, widget=forms.TextInput(attrs={"class": "form-control"})
     )
-    message = forms.CharField(widget=CKEditorWidget())
+    message = forms.CharField(
+        widget=forms.Textarea(attrs={"class": "form-control"})
+    )

@@ -12,16 +12,16 @@
       text-align: justify;
     }
   </style>
+  <!-- About Us Section -->
   <div class="container-fluid my-3">
-    <hr />
     <section class="section-content padding-y">
       <div class="container-xl d-flex justify-content-center align-items-center">
         <div class="row justify-content-center w-100">
           <div class="container">
             <div class="row">
               <div class="col-md-12 text-center">
-                <h1 class="display-4 font-weight-bold text-primary mb-3">Jobell Inc.</h1>
-                {% comment %} <div class="about-logo mb-5" style="height: 250px; background-size: contain; background-repeat: no-repeat; background-position: center; background-image: url('{% static 'images/file.png' %}');"></div> {% endcomment %}
+                {% comment %} <h1 class="display-4 font-weight-bold text-primary mb-3">Jobell Inc.</h1> {% endcomment %}
+                <div class="about-logo mb-5" style="height: 250px; background-size: contain; background-repeat: no-repeat; background-position: center; background-image: url('{% static 'images/file.png' %}');"></div>
                 <hr />
 
                 <h2>About Us</h2>
@@ -63,5 +63,62 @@
         </div>
       </div>
     </section>
+  </div>
+  <!-- Our Team Section -->
+  <div class="container-fluid mt-5 px-0 mb-5">
+    <div class="row text-center py-3" style="background: linear-gradient(to right, #f5e3a1, #d4af37);">
+      <div class="col-12">
+        <h2 class="display-4 mb-2 fw-bold text-dark">Meet Our Team</h2>
+        <hr class="w-25 mx-auto" style="border-color: #b88a4b;" />
+      </div>
+    </div>
+
+    <div class="container mt-4">
+      <div class="row justify-content-center g-4">
+        <!-- CEO -->
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+          <div class="card border-0 shadow-lg rounded-4 text-center h-100">
+            <img src="{% static 'team/ceo.jpeg' %}" class="rounded-circle mx-auto mt-4" alt="CEO" style="width: 140px; height: 140px; object-fit: cover;" />
+            <div class="card-body">
+              <h5 class="card-title fw-semibold mb-1">Chirstbell Mujuni</h5>
+              <p class="card-text text-muted">Chief Executive Officer</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Accountant -->
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+          <div class="card border-0 shadow-lg rounded-4 text-center h-100">
+            <img src="{% static 'team/md.jpeg' %}" class="rounded-circle mx-auto mt-4" alt="Accountant" style="width: 140px; height: 140px; object-fit: cover;" />
+            <div class="card-body">
+              <h5 class="card-title fw-semibold mb-1">Jordan Mujuni</h5>
+              <p class="card-text text-muted">Managing Director</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Programs Manager -->
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+          <div class="card border-0 shadow-lg rounded-4 text-center h-100">
+            <img src="{% static 'team/specialist.jpeg' %}" class="rounded-circle mx-auto mt-4" alt="Programs Manager" style="width: 140px; height: 140px; object-fit: cover;" />
+            <div class="card-body">
+              <h5 class="card-title fw-semibold mb-1">Cronnie Owomugisha</h5>
+              <p class="card-text text-muted">IT Specialist</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Field Officer -->
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+          <div class="card border-0 shadow-lg rounded-4 text-center h-100">
+            <img src="{% static 'team/consultant.jpg' %}" class="rounded-circle mx-auto mt-4" alt="Field Officer" style="width: 140px; height: 140px; object-fit: cover;" />
+            <div class="card-body">
+              <h5 class="card-title fw-semibold mb-1">Edwin Niwaha</h5>
+              <p class="card-text text-muted">Consultant</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 {% endblock %}
