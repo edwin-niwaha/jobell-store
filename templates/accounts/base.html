@@ -72,7 +72,7 @@
     {% endblock %}
     <!-- ========== Topbar End ========== -->
 
-    {% include 'accounts/_partials/banner.html' %}
+    {% comment %} {% include 'accounts/_partials/banner.html' %} {% endcomment %}
 
     <!-- =============== Messages Start ================= -->
     {% block messages %}
@@ -119,7 +119,7 @@
       <!-- JavaScript for Quantity Control -->
       <script src="{% static 'js/cart.js' %}"></script>
       <!-- Custom JS -->
-      <script src="{% static 'js/banner.js' %}"></script>
+      {% comment %} <script src="{% static 'js/banner.js' %}"></script> {% endcomment %}
 
       {% comment %} <script src="{% static 'js/cookies.js' %}"></script> {% endcomment %}
     {% endblock %}
