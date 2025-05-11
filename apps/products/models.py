@@ -115,7 +115,6 @@ class Product(models.Model):
         verbose_name="Targeted Gender",
     )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created At")
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated At")
     is_featured = models.BooleanField(default=False, verbose_name="Is Featured")
 
     class Meta:
@@ -204,7 +203,6 @@ class ProductImage(models.Model):
     )
     is_default = models.BooleanField(default=False, verbose_name="Is Default")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated at")
 
     class Meta:
         db_table = "product_image"
