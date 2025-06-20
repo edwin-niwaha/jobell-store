@@ -2,25 +2,17 @@
 {% load static %}
 
 {% block content %}
-  <div class="container-fluid">
-    <hr />
-    <div class="row">
-      <div class="col-md-6 m-auto">
-        <div class="p-4">
-          <img src="{% static 'images/file1.png' %}" class="img-fluid mx-auto" alt="Background Image" />
-        </div>
-      </div>
-      <div class="col-md-6 m-auto">
-        <hr />
-        <!-- Logout Message Section -->
-        <h2 class="text-success">You have been successfully logged out</h2>
-        <p class="lead">Thank you for visiting. We hope to see you again soon!</p>
+  <div class="container-fluid min-vh-500 d-flex align-items-center bg-light">
+    <div class="row w-50 mx-auto">
+      <!-- Logout Message Section -->
+      <div class="col-lg-12 d-flex align-items-center justify-content-center p-4">
+        <div class="text-center">
+          <h2 class="display-5 fw-bold text-success mb-3 animate__animated animate__fadeInUp">Successfully Logged Out</h2>
+          <p class="lead text-muted mb-4 animate__animated animate__fadeInUp animate__delay-1s">Thank you for visiting! We can't wait to see you back.</p>
 
-        <!-- Redirect or Login Link -->
-        <div class="mt-4">
-          <a href="{% url 'login' %}" class="btn w-100 text-white" style="background-color: #b88a4b; border-color: #b88a4b;">Login Again</a>
+          <!-- Login Button -->
+          <a href="{% url 'login' %}" class="btn btn-lg w-100 text-white shadow-sm hover-scale" style="background-color: #b88a4b; border-color: #b88a4b; transition: transform 0.2s;">Login Again</a>
         </div>
-        <hr />
       </div>
     </div>
   </div>

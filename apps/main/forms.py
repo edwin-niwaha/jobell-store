@@ -1,6 +1,7 @@
 from django import forms
 from .models import Testimonial, Subscriber
 
+
 class TestimonialForm(forms.ModelForm):
     class Meta:
         model = Testimonial
@@ -62,6 +63,4 @@ class EmailForm(forms.Form):
     subject = forms.CharField(
         max_length=255, widget=forms.TextInput(attrs={"class": "form-control"})
     )
-    message = forms.CharField(
-        widget=forms.Textarea(attrs={"class": "form-control"})
-    )
+    message = forms.CharField(widget=forms.Textarea(attrs={"class": "form-control"}))
