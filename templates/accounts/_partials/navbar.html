@@ -88,11 +88,8 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg bg-dark navbar-dark fixed-top">
       <div class="container-fluid">
-        <a class="navbar-brand fw-bold text-white d-flex align-items-center" href="/" style="font-family: 'Times New Roman', Times, serif;">
-          <img src="{% static 'images/file.png' %}" alt="Jobell Logo" width="30" height="30" class="me-2" />
-          Inc.
-        </a>
-
+        {% load static %}
+        <a class="navbar-brand fw-bold text-white d-flex align-items-center" href="/" style="font-family: 'Times New Roman', Times, serif;"><img src="{% static 'images/file.png' %}" alt="Jobell Logo" width="80" height="50" class="me-2" /></a>
         <button class="navbar-toggler" type="button" data-mdb-toggle="collapse" data-mdb-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <ul class="navbar-nav me-auto mb-2 mb-lg-0" style="font-family: 'Times New Roman', Times, serif">
@@ -133,7 +130,7 @@
               </li>
             {% else %}
               <li class="nav-item me-2 login-tooltip-wrapper">
-                <a href="{% url 'login' %}" class="nav-link btn btn-primary text-white px-3">LOG IN</a>
+                <a href="{% url 'login' %}" class="nav-link btn btn-primary text-white px-3 mb-3">LOG IN</a>
                 <i class="fas fa-arrow-up login-arrow"></i>
                 <div class="login-tooltip">You must login to enjoy the shopping experience</div>
               </li>
