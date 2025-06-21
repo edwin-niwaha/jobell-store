@@ -82,3 +82,13 @@ textarea.form-control:focus {
     border-color: var(--gold);
     box-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
 }
+
+.btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
