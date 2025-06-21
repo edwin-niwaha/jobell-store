@@ -1,0 +1,84 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Lora:wght@400;500&display=swap');
+
+:root {
+    --gold: #FFD700;
+    --blush: #D81B60;
+    --emerald: #2E7D32;
+    --navy: #1A252F;
+    --ivory: #FFF8E1;
+}
+
+.hero-section .carousel-caption {
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
+}
+
+.bg-emerald {
+    background-color: var(--emerald);
+}
+
+.text-gold {
+    color: var(--gold);
+}
+
+.text-blush {
+    color: var(--blush);
+}
+
+.text-emerald {
+    color: var(--emerald);
+}
+
+.btn-primary,
+.btn-outline-dark {
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+}
+
+.btn-primary:hover,
+.btn-outline-dark:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
+}
+
+.card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+}
+
+.carousel-control-prev,
+.carousel-control-next {
+    width: 5%;
+    opacity: 0.8;
+}
+
+.carousel-control-prev:hover,
+.carousel-control-next:hover {
+    opacity: 1;
+}
+
+.pagination .page-link {
+    border-radius: 50px;
+    margin: 0 5px;
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+.pagination .page-link:hover {
+    background: var(--gold);
+    color: var(--navy);
+}
+
+input.form-control,
+textarea.form-control {
+    border-radius: 50px;
+    font-family: 'Lora', serif;
+    border: 1px solid var(--blush);
+}
+
+input.form-control:focus,
+textarea.form-control:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+}
