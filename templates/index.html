@@ -417,5 +417,12 @@
         </div>
       </div>
     </section>
+
+    <!-- Welcome Audio Section (if any) -->
+    <div class="mt-4 text-center">
+      <audio id="welcome-audio" src="{% static 'audio/jobell_welcome.mp3' %}" preload="auto"></audio>
+    </div>
   </div>
+  <!-- Link to External JavaScript File -->
+  <script src="{% static 'js/welcome.js' %}"></script>
 {% endblock %}
