@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.db.models.functions import TruncMonth
 from django.db.models.functions import ExtractYear
 from django.contrib.auth.decorators import login_required
-from django.db.models import Sum, FloatField, F, Q
+from django.db.models import Sum, FloatField, F, Q, Count
 from django.db.models.functions import Coalesce
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
@@ -18,9 +18,8 @@ from django.core.paginator import Paginator, EmptyPage
 from apps.products.models import Product, Category, Review
 from apps.sales.models import Sale
 from apps.orders.models import Cart, CartItem, Order, Wishlist
-from apps.finance.models import ChartOfAccounts, Transaction
+from apps.finance.models import ChartOfAccounts, Transaction, FinancialPeriod
 
-# FinancialPeriod, Branch
 
 from .models import Testimonial, Subscriber
 from .forms import TestimonialForm, NewsletterForm, EmailForm
@@ -449,15 +448,14 @@ def transactions_by_account_type(request):
 
 # 2. Pie Chart: Financial Period Status Distribution
 def financial_period_status(request):
-    # data = (
-    #     FinancialPeriod.objects.values('status')
-    #     .annotate(count=Count('id'))
-    #     .order_by('status')
-    # )
-    # labels = [item['status'].capitalize() for item in data]
-    # counts = [item['count'] for item in data]
-    # return JsonResponse({'labels': labels, 'counts': counts})
-    return ()
+    data = (
+        FinancialPeriod.objects.values('status')
+        .annotate(count=Count('id'))
+        .order_by('status')
+    )
+    labels = [item['status'].capitalize() for item in data]
+    counts = [item['count'] for item in data]
+    return JsonResponse({'labels': labels, 'counts': counts})
 
 
 # 3. Line Chart: Transaction Trends Over Time
