@@ -30,10 +30,37 @@ urlpatterns = [
         name="expense_add",
     ),
     path("multi-journal/", views.multi_journal_view, name="multi_journal"),
-    path("ledger_report/", views.ledger_report_view, name="ledger_report"),  # No ID
+    path("ledger_report/", views.ledger_report_view, name="ledger_report"),
     path(
         "ledger_report/<int:account_id>/",
         views.ledger_report_view,
         name="ledger_report_with_id",
-    ),  # With ID
+    ),
+    path(
+        "balance-sheet/<int:financial_period_id>/",
+        views.balance_sheet_pro_view,
+        name="balance_sheet_pro",
+    ),
+    path(
+        "balance-sheet/select-period/",
+        views.balance_sheet_select_period,
+        name="balance_sheet_select",
+    ),
+    path(
+        "cash-flow/select-period/",
+        views.cash_flow_select_period,
+        name="cash_flow_select_period",
+    ),
+    path(
+        "cash-flow/<int:period_id>/",
+        views.cash_flow_statement,
+        name="cash_flow_statement",
+    ),
+    path(
+        "trial-balance/select-period/",
+        views.trial_balance_select_period,
+        name="trial_balance_select_period",
+    ),
+    path("trial-balance/<int:period_id>/", views.trial_balance, name="trial_balance"),
+    path("audit-logs/", views.audit_log_view, name="audit_logs"),
 ]

@@ -15,7 +15,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Security settings
 SECRET_KEY = os.environ.get("SECRET_KEY", "default_secret_key")
 
-DEBUG = False  # Update to False in Production
+# DEBUG = True  # Update to False in Production
+DEBUG = os.getenv("DEBUG", "False") == "True"
 
 # Base domain and site configuration
 SITE_NAME = "Jobell Inc"
@@ -28,14 +29,14 @@ CSRF_TRUSTED_ORIGINS = ["https://jobellinc.com", "http://localhost", "http://127
 
 
 # Security settings --comment in dev
-SECURE_SSL_REDIRECT = True  # Redirect HTTP to HTTPS
-SECURE_PROXY_SSL_HEADER = (
-    "HTTP_X_FORWARDED_PROTO",
-    "https",
-)  # Trust proxy's HTTPS header
-CSRF_COOKIE_SECURE = True  # Secure CSRF cookies
-SESSION_COOKIE_DOMAIN = f".{BASE_DOMAIN}"  # Domain for session cookies
-CSRF_COOKIE_DOMAIN = f".{BASE_DOMAIN}"  # Domain for CSRF cookies
+# SECURE_SSL_REDIRECT = True  # Redirect HTTP to HTTPS
+# SECURE_PROXY_SSL_HEADER = (
+#     "HTTP_X_FORWARDED_PROTO",
+#     "https",
+# )  # Trust proxy's HTTPS header
+# CSRF_COOKIE_SECURE = True  # Secure CSRF cookies
+# SESSION_COOKIE_DOMAIN = f".{BASE_DOMAIN}"  # Domain for session cookies
+# CSRF_COOKIE_DOMAIN = f".{BASE_DOMAIN}"  # Domain for CSRF cookies
 
 # CORS configuration
 CORS_ALLOWED_ORIGINS = [SITE_URL]
@@ -87,6 +88,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "apps.finance.middleware.CurrentUserMiddleware",  # Add your middleware
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "social_django.middleware.SocialAuthExceptionMiddleware",  # Handles social auth exceptions
@@ -119,6 +121,7 @@ TEMPLATES = [
                 "apps.authentication.context_processors.low_stock_alerts_context",
                 "apps.authentication.context_processors.pending_orders_context",
                 "apps.authentication.context_processors.cart_count_user_context",
+                "apps.finance.context_processors.open_financial_periods",
             ],
         },
     },

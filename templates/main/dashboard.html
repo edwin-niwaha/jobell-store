@@ -5,7 +5,7 @@
   <!-- Horizontal Card Section -->
   <div class="container-fluid">
     <div class="page-header flex-wrap">
-      <h3 class="mb-0">Dashboard</h3>
+      <h3 class="mb-0 fw-bold text-dark">SALES DASHBOARD</h3>
     </div>
     <hr class="bg-info" style="height: 1px;" />
 
@@ -115,84 +115,33 @@
                     <div class="card h-100 border-light"
                       style="background-color: {% if forloop.counter0 == 0 %}
                         
-                        
-                        
-                        
-                        
-                         #d4edda
-
-
-
-
+                        #d4edda
 
                       {% elif forloop.counter0 == 1 %}
                         
-                        
-                        
-                        
-                        
-                         #cce5ff
-
-
-
-
+                        #cce5ff
 
                       {% elif forloop.counter0 == 2 %}
                         
-                        
-                        
-                        
-                        
-                         #fff3cd
-
-
-
-
+                        #fff3cd
 
                       {% elif forloop.counter0 == 3 %}
                         
-                        
-                        
-                        
-                        
-                         #f8d7da
-
-
-
-
+                        #f8d7da
 
                       {% elif forloop.counter0 == 4 %}
                         
-                        
-                        
-                        
-                        
-                         #f0f8ff
-
-
-
-
+                        #f0f8ff
 
                       {% else %}
                         
-                        
-                        
-                        
-                        
-                         #ffeeba
-
-
-
-
+                        #ffeeba
 
                       {% endif %};">
                       <div class="card-body">
                         <h5 class="card-title font-weight-bold">{{ product.name }}</h5>
                         <p class="card-text">
-                          <span class="badge badge-success">
-                            Total Sold:
-                            {{ product.total_quantity_sold|default:'0' }}
-                          </span>
+                          <span class="badge badge-success">Total Sold: {{ product.total_quantity_sold|default:'0' }}</span>
                         </p>
                         <p class="card-text">Total Sales Value: UgX:
                           {{ product.total_sales_value|floatformat:'2'|intcomma }}</p>

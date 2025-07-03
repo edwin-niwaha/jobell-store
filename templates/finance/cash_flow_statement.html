@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}
+  Cash Flow Statement - {{ financial_period.name }}
+{% endblock %}
+
+{% block content %}
+  <div class="container-fluid">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <a href="{% url 'dashboard' %}" class="btn btn-info font-weight-bold">
+        <i class="mdi mdi-arrow-left-bold mr-2"></i>
+        Go back
+      </a>
+      <button title="Print" type="button" class="btn btn-success ml-2" onclick="printDiv('printMe')"><i class="mdi mdi-printer btn-icon-prepend"></i></button>
+    </div>
+    <div id="printMe" class="row justify-content-center">
+      <div class="col-lg-12">
+        <div class="card shadow-lg border-0 rounded-4">
+          <div class="card-header bg-primary text-white text-center rounded-top-4 py-4">
+            <h1 class="display-5 mb-2">Cash Flow Statement</h1>
+            <h4 class="text-white-50 mb-3">{{ financial_period.name }}</h4>
+            <p class="mb-1">
+              <strong>Period:</strong> {{ financial_period.start_date|date:'Y-m-d' }} to {{ financial_period.end_date|date:'Y-m-d' }}
+            </p>
+            <p class="mb-0">
+              <strong>Generated on:</strong> {{ report_date|date:'Y-m-d' }}
+            </p>
+          </div>
+          <div class="card-body p-4 p-md-5">
+            <div class="table-responsive">
+              <table class="table table-bordered table-hover align-middle table-sm">
+                <thead class="table-light">
+                  <tr>
+                    <th scope="col" class="fw-semibold">Description</th>
+                    <th scope="col" class="fw-semibold text-end">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="table-dark text-white fw-bold fs-5 border-bottom border-2 border-primary">
+                    <td colspan="2">
+                      <i class="bi bi-arrow-right-circle-fill me-2"></i>Cash Flows from Operating Activities
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="ps-4">Net Cash from Operating Activities</td>
+                    <td class="text-right">{{ operating_cash_flow|floatformat:'2'|intcomma }}</td>
+                  </tr>
+                  <tr class="table-dark text-white fw-bold fs-5 border-bottom border-2 border-primary">
+                    <td colspan="2">
+                      <i class="bi bi-arrow-right-circle-fill me-2"></i>Cash Flows from Investing Activities
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="ps-4">Net Cash from Investing Activities</td>
+                    <td class="text-right">{{ investing_cash_flow|floatformat:'2'|intcomma }}</td>
+                  </tr>
+                  <tr class="table-dark text-white fw-bold fs-5 border-bottom border-2 border-primary">
+                    <td colspan="2">
+                      <i class="bi bi-arrow-right-circle-fill me-2"></i>Cash Flows from Financing Activities
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="ps-4">Net Cash from Financing Activities</td>
+                    <td class="text-right">{{ financing_cash_flow|floatformat:'2'|intcomma }}</td>
+                  </tr>
+                  <tr class="fw-bold border-top border-dark">
+                    <td>Net Increase (Decrease) in Cash</td>
+                    <td class="text-right">{{ net_cash_flow|floatformat:'2'|intcomma }}</td>
+                  </tr>
+                  <tr class="fw-bold table-primary">
+                    <td>Cash Balance at End of Period</td>
+                    <td class="text-right">{{ cash_balance|floatformat:'2'|intcomma }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

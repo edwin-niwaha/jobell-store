@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block content %}
+  <div class="container-fluid px-4 py-3">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3 class="mb-0 fw-bold text-dark">FINANCIAL DASHBOARD</h3>
+    </div>
+    <hr class="border-primary border-2 opacity-75 mb-5" />
+
+    <!-- Summary Cards -->
+    <div class="row g-4">
+      <!-- Other Cards -->
+      {% for key, value in summary.items %}
+        {% if key != 'NetIncome' %}
+          <div class="col-lg-3 col-md-6 col-sm-12 mb-4">
+            <div class="card h-100 shadow-sm border-0 
+            {% if key == 'Asset' %}bg-success{% endif %}
+            {% if key == 'Liability' %}bg-danger{% endif %}
+            {% if key == 'Revenue' %}bg-primary{% endif %}
+            {% if key == 'Expense' %}bg-warning{% endif %} text-white">
+              <div class="card-body d-flex justify-content-between align-items-center p-4">
+                <div>
+                  <h6 class="card-subtitle mb-2 text-white-50 text-uppercase">{{ key }} Total</h6>
+                  <h4 class="card-title mb-0 fw-bold">UgX {{ value|floatformat:'2'|intcomma }}</h4>
+                </div>
+                <div>
+                  <i class="mdi 
+                  {% if key == 'Asset' %}mdi-bank{% endif %}
+                  {% if key == 'Liability' %}mdi-scale-balance{% endif %}
+                  {% if key == 'Revenue' %}mdi-chart-line{% endif %}
+                  {% if key == 'Expense' %}mdi mdi-credit-card-minus{% endif %} fs-2" aria-hidden="true"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      {% endfor %}
+
+      <!-- Net Income Card (Stylish & Standard) -->
+      <div class="col-12">
+        <div class="card mx-auto border-0 shadow-lg rounded-4 bg-info text-white" style="width: 100%;">
+          <div class="card-body px-3 px-sm-5 py-3 py-sm-4">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <p class="text-uppercase text-white-50 mb-1 fw-semibold" style="font-size: clamp(0.75rem, 2.5vw, 0.875rem);">Net Income</p>
+                <h2 class="fw-bold mb-0" style="font-size: clamp(1.5rem, 5vw, 2rem);">UgX {{ summary.NetIncome|floatformat:'2'|intcomma }}</h2>
+              </div>
+              <div class="rounded-circle d-flex justify-content-center align-items-center" style="width: clamp(40px, 10vw, 50px); height: clamp(40px, 10vw, 50px);">
+                <i class="mdi mdi-trending-up text-white" style="font-size: clamp(1.5rem, 5vw, 2rem);"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Transactions Table -->
+    <div class="mt-5 mb-5">
+      <h5 class="fw-semibold text-dark mb-4">Recent Transactions</h5>
+      <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover table-bordered mb-0">
+              <thead class="table-dark">
+                <tr>
+                  <th scope="col" class="px-4 py-3">Date</th>
+                  <th scope="col" class="px-4 py-3">Reference</th>
+                  <th scope="col" class="px-4 py-3">Account</th>
+                  <th scope="col" class="px-4 py-3">Type</th>
+                  <th scope="col" class="px-4 py-3 text-right">Amount (UgX)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for transaction in recent_transactions %}
+                  <tr>
+                    <td class="px-4 py-3">{{ transaction.journal_entry.transaction_date|date:'M d, Y' }}</td>
+                    <td class="px-4 py-3">{{ transaction.journal_entry.reference_number|default:'N/A' }}</td>
+                    <td class="px-4 py-3">{{ transaction.account.account_name|default:'Unknown' }}</td>
+                    <td class="px-4 py-3">{{ transaction.transaction_type|title }}</td>
+                    <td class="px-4 py-3 text-right">{{ transaction.amount|floatformat:'2'|intcomma }}</td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="5" class="px-4 py-3 text-center text-muted">No recent transactions available.</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+      <!-- Bar Chart: Transaction Totals by Account Type -->
+      <div class="col-12 col-md-12 col-lg-12 mb-5">
+        <div class="card shadow-sm h-100">
+          <div class="card-header bg-primary text-white fw-semibold">Transaction Totals by Account Type</div>
+          <div class="card-body">
+            <div class="position-relative" style="height: 400px;">
+              <canvas id="accountTypeChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Line Chart: Transaction Trends Over Time -->
+      <div class="col-12 col-md-12 col-lg-12 mb-5">
+        <div class="card shadow-sm h-100">
+          <div class="card-header bg-primary text-white fw-semibold">Transaction Trends Over Time</div>
+          <div class="card-body">
+            <div class="position-relative" style="height: 400px;">
+              <canvas id="transactionTrendsChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Donut Chart: Top Accounts by Transaction Volume -->
+      <div class="col-12 col-md-12 col-lg-12 mb-5">
+        <div class="card shadow-sm h-100">
+          <div class="card-header bg-primary text-white fw-semibold">Top 5 Accounts by Transaction Volume</div>
+          <div class="card-body">
+            <div class="position-relative" style="height: 400px;">
+              <canvas id="topAccountsChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Pie Chart: Financial Period Status Distribution -->
+      <div class="col-12 col-md-12 col-lg-12 mb-5">
+        <div class="card shadow-sm h-100">
+          <div class="card-header bg-primary text-white fw-semibold">Financial Period Status</div>
+          <div class="card-body">
+            <div class="position-relative" style="height: 400px;">
+              <canvas id="periodStatusChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Line Chart: Income vs Expenses -->
+      <div class="col-12 col-md-12 col-lg-12 mb-5">
+        <div class="card shadow-sm h-100">
+          <div class="card-header bg-primary text-white fw-semibold">Income vs Expenses</div>
+          <div class="card-body">
+            <div class="position-relative" style="height: 400px;">
+              <canvas id="incomeVsExpensesChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

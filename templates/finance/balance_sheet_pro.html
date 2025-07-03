@@ -1,0 +1,163 @@
+{% load static %}
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Balance Sheet Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      .gradient-bg {
+        background: linear-gradient(135deg, #6b7280 0%, #1f2937 100%);
+      }
+      .table-row-hover {
+        transition: background-color 0.2s ease;
+      }
+      .table-row-hover:hover {
+        background-color: #eff6ff;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen gradient-bg font-sans">
+    <div class="container mx-auto p-4 sm:p-6 max-w-5xl" id="printMe">
+      <header class="text-center mb-8 bg-white rounded-2xl p-6 header-shadow">
+        <div class="mb-4">
+          <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-blue-800 mb-3">{{ company_name|default:'Jobell Inc' }}</h2>
+          <p class="text-gray-600 text-sm sm:text-base">{{ company_address|default:'Kampala, Uganda' }}</p>
+          <p class="text-gray-600 text-sm sm:text-base">{{ company_phone|default:'Phone: (+256) 777-337-491' }} | {{ company_email|default:'Email: jobellinc@gmail.com' }}</p>
+        </div>
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-4">
+          <h3 class="text-2xl sm:text-3xl font-bold text-blue-800">Statement of Financial Position</h3>
+          <div class="flex flex-wrap justify-center sm:justify-end gap-2 sm:gap-4">
+            <button title="Print" type="button" class="bg-gray-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center text-sm sm:text-base" onclick="printDiv('printMe')">
+              <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H7a2 2 0 00-2 2v4h12z"></path>
+              </svg>Print
+            </button>
+            <a href="{% url 'finance:balance_sheet_select' %}" class="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base">Back</a>
+          </div>
+        </div>
+        <p class="text-sm sm:text-lg text-gray-600">As of {{ date }}</p>
+        <p class="text-sm sm:text-lg text-gray-600">Financial Period: {{ financial_period.name }}</p>
+      </header>
+
+      <!-- Assets Section -->
+      <div class="mb-12">
+        <h2 class="text-2xl md:text-3xl font-semibold text-white mb-4">Assets</h2>
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+          <table class="w-full border-collapse">
+            <thead>
+              <tr class="bg-blue-100">
+                <th class="p-4 text-left font-medium text-gray-700">Account</th>
+                <th class="p-4 text-right font-medium text-gray-700">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for account in assets.accounts %}
+                <tr class="table-row-hover">
+                  <td class="border-t p-4 text-gray-800">{{ account.name }} ({{ account.number }})</td>
+                  <td class="border-t p-4 text-right text-gray-800">{{ account.balance|floatformat:'2'|intcomma }}</td>
+                </tr>
+                {% for sub_account in account.sub_accounts %}
+                  <tr class="table-row-hover">
+                    <td class="border-t p-4 pl-8 text-gray-600">↳ {{ sub_account.name }} ({{ sub_account.number }})</td>
+                    <td class="border-t p-4 text-right text-gray-600">{{ sub_account.balance|floatformat:'2'|intcomma }}</td>
+                  </tr>
+                {% endfor %}
+              {% empty %}
+                <tr>
+                  <td colspan="2" class="p-4 text-center text-gray-500">No asset accounts</td>
+                </tr>
+              {% endfor %}
+              <tr class="font-bold bg-blue-50">
+                <td class="border-t p-4 text-gray-800">Total Assets</td>
+                <td class="border-t p-4 text-right text-gray-800">{{ assets.total|floatformat:'2'|intcomma }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Liabilities Section -->
+      <div class="mb-12">
+        <h2 class="text-2xl md:text-3xl font-semibold text-white mb-4">Liabilities</h2>
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+          <table class="w-full border-collapse">
+            <thead>
+              <tr class="bg-blue-100">
+                <th class="p-4 text-left font-medium text-gray-700">Account</th>
+                <th class="p-4 text-right font-medium text-gray-700">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for account in liabilities.accounts %}
+                <tr class="table-row-hover">
+                  <td class="border-t p-4 text-gray-800">{{ account.name }} ({{ account.number }})</td>
+                  <td class="border-t p-4 text-right text-gray-800">{{ account.balance|floatformat:'2'|intcomma }}</td>
+                </tr>
+                {% for sub_account in account.sub_accounts %}
+                  <tr class="table-row-hover">
+                    <td class="border-t p-4 pl-8 text-gray-600">↳ {{ sub_account.name }} ({{ sub_account.number }})</td>
+                    <td class="border-t p-4 text-right text-gray-600">{{ sub_account.balance|floatformat:'2'|intcomma }}</td>
+                  </tr>
+                {% endfor %}
+              {% empty %}
+                <tr>
+                  <td colspan="2" class="p-4 text-center text-gray-500">No liability accounts</td>
+                </tr>
+              {% endfor %}
+              <tr class="font-bold bg-blue-50">
+                <td class="border-t p-4 text-gray-800">Total Liabilities</td>
+                <td class="border-t p-4 text-right text-gray-800">{{ liabilities.total|floatformat:'2'|intcomma }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Equity Section -->
+      <div class="mb-12">
+        <h2 class="text-2xl md:text-3xl font-semibold text-white mb-4">Equity</h2>
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+          <table class="w-full border-collapse">
+            <thead>
+              <tr class="bg-blue-100">
+                <th class="p-4 text-left font-medium text-gray-700">Account</th>
+                <th class="p-4 text-right font-medium text-gray-700">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for account in equity.accounts %}
+                <tr class="table-row-hover">
+                  <td class="border-t p-4 text-gray-800">{{ account.name }} ({{ account.number }})</td>
+                  <td class="border-t p-4 text-right text-gray-800">{{ account.balance|floatformat:'2'|intcomma }}</td>
+                </tr>
+                {% for sub_account in account.sub_accounts %}
+                  <tr class="table-row-hover">
+                    <td class="border-t p-4 pl-8 text-gray-600">↳ {{ sub_account.name }} ({{ sub_account.number }})</td>
+                    <td class="border-t p-4 text-right text-gray-600">{{ sub_account.balance|floatformat:'2'|intcomma }}</td>
+                  </tr>
+                {% endfor %}
+              {% empty %}
+                <tr>
+                  <td colspan="2" class="p-4 text-center text-gray-500">No equity accounts</td>
+                </tr>
+              {% endfor %}
+              <tr class="font-bold bg-blue-50">
+                <td class="border-t p-4 text-gray-800">Total Equity</td>
+                <td class="border-t p-4 text-right text-gray-800">{{ equity.total|floatformat:'2'|intcomma }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Total Liabilities and Equity -->
+      <div class="bg-white rounded-2xl shadow-xl p-6 text-right">
+        <p class="text-xl font-bold text-gray-800">Total Liabilities and Equity: {{ total_liabilities_and_equity|floatformat:'2'|intcomma }}</p>
+      </div>
+    </div>
+  </body>
+  <script src="{% static 'js/print.js' %}"></script>
+</html>

@@ -10,11 +10,10 @@ from django.core.exceptions import ValidationError
 
 from django.db import models
 from PIL import Image
+from apps.finance.models import Branch
 
 
 # =================================== Profile Model  ===================================
-
-
 class Profile(models.Model):
     ROLE_CHOICES = (
         ("administrator", "Administrator"),
@@ -40,6 +39,14 @@ class Profile(models.Model):
         blank=True,
         default="+12125552368",
         verbose_name="Mobile",
+    )
+    branch = models.ForeignKey(
+        Branch,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="profiles",
+        verbose_name="Branch",
     )
 
     def __str__(self):

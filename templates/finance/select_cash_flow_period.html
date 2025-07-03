@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+  Select Financial Period
+{% endblock %}
+
+{% block content %}
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="card shadow-lg border-0 rounded-4">
+          <div class="card-header bg-primary text-white text-center rounded-top-4">
+            <h2 class="mb-1">Cash Flow Statement</h2>
+            <p class="mb-0">Select a Financial Period to View Report</p>
+          </div>
+          <div class="card-body p-4">
+            {% if financial_periods %}
+              <form method="get" class="form-class">
+                <div class="mb-4">
+                  <label for="financial-period-select" class="form-label fw-semibold"><i class="bi bi-calendar2-week me-2"></i> Financial Year</label>
+                  <div class="input-group shadow-sm">
+                    <select id="financial-period-select" class="form-select form-select-lg rounded" style="cursor: pointer;">
+                      <option selected disabled>Select a financial period</option>
+                      {% for period in financial_periods %}
+                        <option value="{% url 'finance:cash_flow_statement' period_id=period.id %}">{{ period.name }} ({{ period.start_date|date:'Y-m-d' }} - {{ period.end_date|date:'Y-m-d' }})</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                </div>
+              </form>
+              <script>
+                document.getElementById('financial-period-select').addEventListener('change', function () {
+                  if (this.value) {
+                    window.location.href = this.value
+                  }
+                })
+              </script>
+            {% else %}
+              <div class="alert alert-warning text-center" role="alert">
+                <h5 class="alert-heading">No Financial Periods Available</h5>
+                <p>Please check back later or contact support for assistance.</p>
+                <a href="{% url 'admin:your_app_financialperiod_add' %}" class="btn btn-primary">Create a new period</a>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

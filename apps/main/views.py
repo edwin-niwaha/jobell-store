@@ -3,10 +3,12 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.http import JsonResponse
 from decimal import Decimal
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
+from django.utils import timezone
+from django.db.models.functions import TruncMonth
 from django.db.models.functions import ExtractYear
 from django.contrib.auth.decorators import login_required
-from django.db.models import Sum, FloatField, F
+from django.db.models import Sum, FloatField, F, Q
 from django.db.models.functions import Coalesce
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
@@ -16,6 +18,9 @@ from django.core.paginator import Paginator, EmptyPage
 from apps.products.models import Product, Category, Review
 from apps.sales.models import Sale
 from apps.orders.models import Cart, CartItem, Order, Wishlist
+from apps.finance.models import ChartOfAccounts, Transaction
+
+# FinancialPeriod, Branch
 
 from .models import Testimonial, Subscriber
 from .forms import TestimonialForm, NewsletterForm, EmailForm
@@ -184,6 +189,87 @@ def index(request):
     )
 
 
+# =================================== The finance dashboard view ===================================
+@login_required
+@admin_or_manager_or_staff_required
+def finance_dashboard(request):
+
+    def calculate_sales_profit():
+        """Calculate total profit from sales."""
+        total_profit = Decimal("0.00")
+        try:
+            sales = Sale.objects.prefetch_related("items__product_volume__volume")
+            for sale in sales:
+                for item in sale.items.all():
+                    if item.product_volume:
+                        cost = Decimal(item.product_volume.volume.cost or 0)
+                        price = Decimal(item.product_volume.volume.price or 0)
+                        total_profit += (price - cost) * Decimal(item.quantity or 0)
+        except Exception as e:
+            print(f"Error calculating sales profit: {e}")
+        return total_profit
+
+    def calculate_other_income():
+        """Calculate non-sales revenue."""
+        try:
+            return Transaction.objects.filter(account__account_type="revenue").exclude(
+                account__account_name="Sales Revenue"
+            ).aggregate(total_income=Sum("amount"))["total_income"] or Decimal("0.00")
+        except Exception as e:
+            print(f"Error calculating other income: {e}")
+            return Decimal("0.00")
+
+    def calculate_account_totals():
+        """Calculate totals for each account type."""
+        account_types = ["Asset", "Liability", "Revenue", "Expense", "NetIncome"]
+        summary = {}
+        try:
+            total_revenue = calculate_sales_profit() + calculate_other_income()
+            for account_type in account_types:
+                if account_type == "NetIncome":
+                    continue
+                if account_type == "Revenue":
+                    summary[account_type] = float(total_revenue)
+                    continue
+
+                total = Decimal("0.00")
+                accounts = ChartOfAccounts.objects.filter(
+                    account_type=account_type.lower()
+                )
+                for acc in accounts:
+                    transactions = Transaction.objects.filter(account=acc).aggregate(
+                        debit_sum=Sum("amount", filter=Q(transaction_type="debit")),
+                        credit_sum=Sum("amount", filter=Q(transaction_type="credit")),
+                    )
+                    debit = transactions["debit_sum"] or Decimal("0.00")
+                    credit = transactions["credit_sum"] or Decimal("0.00")
+                    total += (
+                        (debit - credit)
+                        if account_type.lower() in ["asset", "expense"]
+                        else (credit - debit)
+                    )
+                summary[account_type] = float(total)
+
+            # Calculate Net Income
+            summary["NetIncome"] = float(
+                summary.get("Revenue", 0) - summary.get("Expense", 0)
+            )
+        except Exception as e:
+            print(f"Error in account totals: {e}")
+            summary = {key: 0.0 for key in account_types}
+        return summary
+
+    # Prepare context
+    context = {
+        "summary": calculate_account_totals(),
+        "recent_transactions": Transaction.objects.select_related(
+            "journal_entry", "account"
+        ).order_by("-journal_entry__transaction_date")[:6],
+    }
+
+    return render(request, "main/fin_dashboard.html", context)
+
+
 @login_required
 @admin_or_manager_or_staff_required
 def get_total_sales_for_period(start_date, end_date):
@@ -282,6 +368,9 @@ def dashboard(request):
     return render(request, "main/dashboard.html", context)
 
 
+# =================================== Monthly Sales graph ===================================
+
+
 @login_required
 @admin_or_manager_or_staff_required
 def monthly_earnings_view(request):
@@ -344,9 +433,155 @@ def sales_data_api(request):
     return JsonResponse(data)
 
 
+# =================================== Finance graphs ===================================
+# 1. Bar Chart: Transaction Totals by Account Type
+def transactions_by_account_type(request):
+    data = (
+        Transaction.objects.select_related("account")
+        .values("account__account_type")
+        .annotate(total_amount=Sum("amount"))
+        .order_by("account__account_type")
+    )
+    labels = [item["account__account_type"].capitalize() for item in data]
+    amounts = [float(item["total_amount"]) for item in data]
+    return JsonResponse({"labels": labels, "amounts": amounts})
+
+
+# 2. Pie Chart: Financial Period Status Distribution
+def financial_period_status(request):
+    # data = (
+    #     FinancialPeriod.objects.values('status')
+    #     .annotate(count=Count('id'))
+    #     .order_by('status')
+    # )
+    # labels = [item['status'].capitalize() for item in data]
+    # counts = [item['count'] for item in data]
+    # return JsonResponse({'labels': labels, 'counts': counts})
+    return ()
+
+
+# 3. Line Chart: Transaction Trends Over Time
+def transaction_trends(request):
+    current_year = timezone.now().year  # 2025
+    start_date = datetime(current_year, 1, 1).date()
+    end_date = datetime(current_year, 12, 31).date()
+
+    # Aggregate transactions by month
+    data = (
+        Transaction.objects.select_related("journal_entry")
+        .filter(journal_entry__transaction_date__range=[start_date, end_date])
+        .annotate(month=TruncMonth("journal_entry__transaction_date"))
+        .values("month")
+        .annotate(total_amount=Sum("amount"))
+        .order_by("month")
+    )
+
+    # Define all months (Jan to Dec)
+    months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+    ]
+    amounts = [0] * 12
+
+    # Map data to months
+    for item in data:
+        month_index = item["month"].month - 1  # 1-based to 0-based
+        amounts[month_index] = float(item["total_amount"])
+
+    return JsonResponse({"labels": months, "amounts": amounts})
+
+
+# 4. Donut Chart: Top Accounts by Transaction Volume
+def top_accounts(request):
+    data = (
+        Transaction.objects.select_related("account")
+        .values("account__account_name")
+        .annotate(total_amount=Sum("amount"))
+        .order_by("-total_amount")[:5]
+    )
+    labels = [item["account__account_name"] for item in data]
+    amounts = [float(item["total_amount"]) for item in data]
+    return JsonResponse({"labels": labels, "amounts": amounts})
+
+
+# 5. Income Vs Expenses
+
+
+def income_vs_expenses(request):
+    current_year = timezone.now().year  # 2025
+    start_date = datetime(current_year, 1, 1).date()
+    end_date = datetime(current_year, 12, 31).date()
+
+    # Aggregate income by month
+    income_data = (
+        Transaction.objects.select_related("journal_entry")
+        .filter(
+            journal_entry__transaction_date__range=[start_date, end_date],
+            account__account_type="revenue",
+        )
+        .annotate(month=TruncMonth("journal_entry__transaction_date"))
+        .values("month")
+        .annotate(total_amount=Sum("amount"))
+        .order_by("month")
+    )
+
+    # Aggregate expenses by month
+    expense_data = (
+        Transaction.objects.select_related("journal_entry")
+        .filter(
+            journal_entry__transaction_date__range=[start_date, end_date],
+            account__account_type="expense",
+        )
+        .annotate(month=TruncMonth("journal_entry__transaction_date"))
+        .values("month")
+        .annotate(total_amount=Sum("amount"))
+        .order_by("month")
+    )
+
+    # Define all months (Jan to Dec)
+    months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+    ]
+    income_amounts = [0] * 12
+    expense_amounts = [0] * 12
+
+    # Map income data to months
+    for item in income_data:
+        month_index = item["month"].month - 1  # 1-based to 0-based
+        income_amounts[month_index] = float(item["total_amount"])
+
+    # Map expense data to months
+    for item in expense_data:
+        month_index = item["month"].month - 1  # 1-based to 0-based
+        expense_amounts[month_index] = float(item["total_amount"])
+
+    return JsonResponse(
+        {"labels": months, "income": income_amounts, "expenses": expense_amounts}
+    )
+
+
 # =================================== testimonials_view ===================================
-
-
 def testimonials_view(request):
     # Fetch all testimonials
     testimonials_list = Testimonial.objects.all()

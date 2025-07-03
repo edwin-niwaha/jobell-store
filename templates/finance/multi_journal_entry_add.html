@@ -1,140 +1,258 @@
 {% extends 'base.html' %}
-{% load crispy_forms_tags %}
 
 {% block content %}
-<div class="container-fluid">
+  <div class="container-fluid">
+    <!-- Back Button -->
     <div class="row mb-3">
-        <div class="col-md-12 d-flex justify-content-between align-items-center">
-            <a href="{% url 'dashboard' %}">
-                <button type="button" class="btn btn-info font-weight-bold">
-                    <i class="mdi mdi-arrow-left-bold mr-2"></i>
-                    Go back
-                </button>
-            </a>
-        </div>
+      <div class="col-12 d-flex justify-content-between align-items-center">
+        <a href="{% url 'dashboard' %}"><button type="button" class="btn btn-info"><span class="me-2">←</span> Go back</button></a>
+      </div>
     </div>
-    <div class="row">
-        <div class="col-12">
-            <div class="card card-secondary">
-                <div class="card-header">
-                    <h3>{{ form_title|upper }}</h3>
+
+    <!-- Form Card -->
+    <div class="row justify-content-center">
+      <div class="col-12 col-lg-12">
+        <div class="card border-0 shadow">
+          <div class="card-header bg-primary text-white py-3">
+            <h3 class="mb-0">New Journal Entry</h3>
+          </div>
+          <div class="card-body p-4 p-lg-5">
+            <form method="post" id="journal-form" class="needs-validation" novalidate>
+              {% csrf_token %}
+              {{ formset.management_form }}
+              {{ journal_form.as_hidden }}
+
+              <!-- Journal Entry Fields -->
+              <div class="mb-4 p-3 bg-light rounded-3">
+                <h4 class="text-muted mb-3">Journal Details</h4>
+                <div class="row g-3">
+                  <div class="col-md-12 mb-2">
+                    <label for="{{ journal_form.financial_period.id_for_label }}" class="form-label fw-medium">Finacial Period</label>
+                    {{ journal_form.financial_period }}
+                    {% if journal_form.financial_period.errors %}
+                      <div class="invalid-feedback d-block">
+                        {% for error in journal_form.financial_period.errors %}
+                          {{ error }}
+                        {% endfor %}
+                      </div>
+                    {% endif %}
+                  </div>
+                  <!-- Transaction Date -->
+                  <div class="col-md-6">
+                    <label for="{{ journal_form.transaction_date.id_for_label }}" class="form-label fw-medium">Transaction Date <span class="text-danger">*</span></label>
+                    {{ journal_form.transaction_date }}
+                    {% if journal_form.transaction_date.errors %}
+                      <div class="invalid-feedback d-block">
+                        {% for error in journal_form.transaction_date.errors %}
+                          {{ error }}
+                        {% endfor %}
+                      </div>
+                    {% endif %}
+                  </div>
+                  <!-- Reference Number -->
+                  <div class="col-md-6">
+                    <label for="{{ journal_form.reference_number.id_for_label }}" class="form-label fw-medium">Reference Number</label>
+                    {{ journal_form.reference_number }}
+                    {% if journal_form.reference_number.errors %}
+                      <div class="invalid-feedback d-block">
+                        {% for error in journal_form.reference_number.errors %}
+                          {{ error }}
+                        {% endfor %}
+                      </div>
+                    {% endif %}
+                  </div>
+                  <!-- Payment Method -->
+                  <div class="col-md-6 mt-3">
+                    <label for="{{ journal_form.payment_method.id_for_label }}" class="form-label fw-medium">Payment Method</label>
+                    {{ journal_form.payment_method }}
+                    {% if journal_form.payment_method.errors %}
+                      <div class="invalid-feedback d-block">
+                        {% for error in journal_form.payment_method.errors %}
+                          {{ error }}
+                        {% endfor %}
+                      </div>
+                    {% endif %}
+                  </div>
+                  <!-- Narration -->
+                  <div class="col-md-6">
+                    <label for="{{ journal_form.description.id_for_label }}" class="form-label fw-medium">Narration</label>
+                    {{ journal_form.description }}
+                    {% if journal_form.description.errors %}
+                      <div class="invalid-feedback d-block">
+                        {% for error in journal_form.description.errors %}
+                          {{ error }}
+                        {% endfor %}
+                      </div>
+                    {% endif %}
+                  </div>
                 </div>
-                <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
-                        {{ formset.management_form }}
+              </div>
 
-                        <!-- Single field for transaction date -->
-                        <div class="form-row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="transaction_date">Transaction Date</label>
-                                    <input type="date" name="transaction_date" id="transaction_date"
-                                        class="form-control" required>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Form header with labels (displayed only once) -->
-                        <div class="form-row font-weight-bold mb-2">
-                            {% for field in formset.forms.0 %}
-                            {% if field.name != "id" %}
-                            <!-- Skip the id field in the header -->
-                            <div class="col-md">{{ field.label }}</div>
-                            {% endif %}
-                            {% endfor %}
-                            <div class="col-md-1"></div> <!-- Empty column for the "Remove" button -->
-                        </div>
-
-                        <!-- Grid layout for formset fields -->
-                        <div id="formset-container">
-                            {% for form in formset %}
-                            <div class="form-row align-items-center mb-3">
-                                {% for field in form %}
-                                {% if field.name == "id" %}
-                                {{ field.as_hidden }}
-                                <!-- Render the id field as hidden -->
-                                {% else %}
-                                <div class="col-md">
-                                    <div class="form-group mb-0">
-                                        {{ field.as_widget }}
-                                        <!-- Render the visible form fields -->
-                                    </div>
-                                </div>
-                                {% endif %}
-                                {% endfor %}
-                                <div class="col-md-1 d-flex align-items-center">
-                                    <button type="button" class="btn btn-danger" onclick="removeForm(this)"><i
-                                            class="mdi mdi-close-circle-outline"></i></button>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                        <div class="form-group">
-                            <button type="button" class="btn btn-success" onclick="addForm()">Add Transaction</button>
-                        </div>
-                        <!-- Submit button -->
-                        <div class="form-row mt-4 mb-0">
-                            <div class="col-md-12">
-                                <button type="submit" class="btn btn-dark btn-block"
-                                    onclick="return confirm('Are you sure you want to proceed?')">
-                                    Post Transactions
-                                </button>
-                            </div>
-                        </div>
-                    </form>
+              <!-- Formset Header -->
+              <div class="mb-4 p-3 bg-light rounded-3">
+                <div class="row g-3 fw-bold bg-secondary bg-opacity-10 p-3 rounded-3 m-0">
+                  <div class="col-md-4">Account</div>
+                  <div class="col-md-3">Amount</div>
+                  <div class="col-md-3">Transaction Type</div>
+                  <div class="col-md-2 text-center">Actions</div>
                 </div>
-            </div>
+              </div>
+
+              <!-- Formset Container -->
+              <div id="formset-container" role="region" aria-label="Transaction entries">
+                {% for form in formset %}
+                  <div class="form-row row g-3 align-items-center mb-3 p-2 rounded-3 {% cycle 'bg-white' 'bg-light' %}" data-form-index="{{ forloop.counter0 }}">
+                    <!-- Account Field -->
+                    <div class="col-md-4">
+                      {{ form.account }}
+                      {% if form.account.errors %}
+                        <div class="invalid-feedback d-block">
+                          {% for error in form.account.errors %}
+                            {{ error }}
+                          {% endfor %}
+                        </div>
+                      {% endif %}
+                    </div>
+                    <!-- Amount Field -->
+                    <div class="col-md-3">
+                      <div class="input-group">
+                        <span class="input-group-text">UgX</span>
+                        {{ form.amount }}
+                      </div>
+                      {% if form.amount.errors %}
+                        <div class="invalid-feedback d-block">
+                          {% for error in form.amount.errors %}
+                            {{ error }}
+                          {% endfor %}
+                        </div>
+                      {% endif %}
+                    </div>
+                    <!-- Transaction Type Field -->
+                    <div class="col-md-3">
+                      {{ form.transaction_type }}
+                      {% if form.transaction_type.errors %}
+                        <div class="invalid-feedback d-block">
+                          {% for error in form.transaction_type.errors %}
+                            {{ error }}
+                          {% endfor %}
+                        </div>
+                      {% endif %}
+                    </div>
+                    <!-- Actions -->
+                    <div class="col-md-2 text-center">
+                      <button type="button" class="btn btn-danger btn-sm remove-form" aria-label="Remove transaction">Delete</button>
+                    </div>
+                    <!-- Hidden Fields -->
+                    {{ form.id.as_hidden }}
+                    {{ form.DELETE.as_hidden }}
+                  </div>
+                {% endfor %}
+              </div>
+
+              <!-- Add Transaction Button -->
+              <div class="mb-4">
+                <button type="button" class="btn btn-success btn-sm add-form">Add Transaction</button>
+              </div>
+
+              <!-- Submit Button -->
+              <div class="row">
+                <div class="col-12 d-flex justify-content-center">
+                  <button type="submit" class="btn btn-primary py-2 px-3 w-100 position-relative" id="submit-btn" onclick="return confirm('Are you sure you want to proceed?')">
+                    Post Transactions
+                    <span class="spinner-border spinner-border-sm position-absolute top-50 start-50 translate-middle d-none" role="status" aria-hidden="true"></span>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
         </div>
+      </div>
     </div>
-</div>
+  </div>
 
-<script>
-    function removeForm(button) {
-        const formRow = button.closest('.form-row');
-        const formset = document.querySelectorAll('.form-row');
-
-        if (formset.length > 1) {
-            formRow.remove();
-            document.querySelector('input[name="form-COUNT"]').value = formset.length - 1;
-        } else {
-            alert("You must have at least one form.");
-        }
-    }
-
-    // Clone and add new formset
-    function addForm() {
-        const formsetContainer = document.getElementById('formset-container');
-        const totalForms = document.querySelector('input[name="form-COUNT"]');
-        const currentFormCount = parseInt(totalForms.value);
-
-        // Clone the first form (you can adjust which form to clone if necessary)
-        const newForm = formsetContainer.children[0].cloneNode(true);
-
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const formsetContainer = document.getElementById('formset-container')
+      const totalFormsInput = document.querySelector('#id_form-TOTAL_FORMS')
+      const submitBtn = document.getElementById('submit-btn')
+      let formCount = parseInt(totalFormsInput.value)
+    
+      // Initialize Bootstrap tooltips
+      const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+      ;[...tooltipTriggerList].forEach((tooltipTriggerEl) => new bootstrap.Tooltip(tooltipTriggerEl))
+    
+      // Add new form
+      document.querySelector('.add-form').addEventListener('click', function () {
+        const newForm = formsetContainer.children[0].cloneNode(true)
+        const formIndex = formCount
+    
         // Clear input values
-        const inputs = newForm.querySelectorAll('input, select, textarea');
-        inputs.forEach(input => {
-            input.value = ''; // Clear the value
-        });
-
-        // Update names of the new form inputs
-        inputs.forEach(input => {
-            input.name = input.name.replace(/-\d+-/, `-${currentFormCount}-`);
-            // Update id for better accessibility
-            input.id = input.id.replace(/-\d+-/, `-${currentFormCount}-`);
-        });
-
-        // Update labels to match the new id
-        const labels = newForm.querySelectorAll('label');
-        labels.forEach(label => {
-            label.htmlFor = label.htmlFor.replace(/-\d+-/, `-${currentFormCount}-`);
-        });
-
-        // Append the new form to the container
-        formsetContainer.appendChild(newForm);
-
-        // Increment the total forms count
-        totalForms.value = currentFormCount + 1;
-    }
-</script>
-{% endblock content %}
+        newForm.querySelectorAll('input, select').forEach((input) => {
+          if (input.type !== 'hidden') {
+            input.value = ''
+            input.classList.remove('is-invalid')
+          }
+        })
+    
+        // Remove existing error messages
+        newForm.querySelectorAll('.invalid-feedback').forEach((error) => error.remove())
+    
+        // Update form attributes
+        newForm.setAttribute('data-form-index', formIndex)
+        newForm.querySelectorAll('[name], [id]').forEach((element) => {
+          if (element.name) {
+            element.name = element.name.replace(/form-\d+-/, `form-${formIndex}-`)
+          }
+          if (element.id) {
+            element.id = element.id.replace(/id_form-\d+-/, `id_form-${formIndex}-`)
+          }
+        })
+    
+        formsetContainer.appendChild(newForm)
+        totalFormsInput.value = ++formCount
+      })
+    
+      // Remove form
+      formsetContainer.addEventListener('click', function (e) {
+        if (e.target.closest('.remove-form')) {
+          const formRows = formsetContainer.querySelectorAll('.form-row')
+          if (formRows.length > 2) {
+            e.target.closest('.form-row').remove()
+            totalFormsInput.value = --formCount
+          } else {
+            alert('At least two transactions are required (one debit, one credit).')
+          }
+        }
+      })
+    
+      // Validate transaction date
+      document.querySelector('[name="transaction_date"]').addEventListener('change', function () {
+        const today = new Date()
+        today.setHours(0, 0, 0, 0) // Strip time to compare only the date
+    
+        const selectedDate = new Date(this.value)
+        selectedDate.setHours(0, 0, 0, 0) // Strip time here too
+    
+        if (selectedDate > today) {
+          this.setCustomValidity('Transaction date cannot be in the future.')
+          this.classList.add('is-invalid')
+        } else {
+          this.setCustomValidity('')
+          this.classList.remove('is-invalid')
+        }
+      })
+    
+      // Form submission with loading spinner
+      document.getElementById('journal-form').addEventListener('submit', function (e) {
+        if (!this.checkValidity()) {
+          e.preventDefault()
+          e.stopPropagation()
+          this.classList.add('was-validated')
+        } else {
+          submitBtn.querySelector('.spinner-border').classList.remove('d-none')
+          submitBtn.disabled = true
+        }
+      })
+    })
+  </script>
+{% endblock %}

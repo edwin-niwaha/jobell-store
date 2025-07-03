@@ -2,113 +2,98 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
-<div class="container-fluid">
+  <div class="container-fluid">
     <div class="row mb-3">
-        <div class="col-md-12 d-flex justify-content-between align-items-center">
-            <a href="{% url 'finance:add_chart_of_account' %}" class="btn btn-dark ml-2">
-                <i class="mdi mdi-plus mr-2"></i>
-                Add Account
-            </a>
-            <div class="d-flex">
-
-                <button title="Print" type="button" class="btn btn-success ml-2" onclick="printDiv('printMe')">
-                    <i class="mdi mdi-printer btn-icon-prepend"></i>
-                </button>
-            </div>
+      <div class="col-md-12 d-flex justify-content-between align-items-center">
+        <a href="{% url 'finance:add_chart_of_account' %}" class="btn btn-dark ml-2">
+          <i class="mdi mdi-plus mr-2"></i>
+          Add Account
+        </a>
+        <div class="d-flex">
+          <button title="Print" type="button" class="btn btn-success ml-2" onclick="printDiv('printMe')"><i class="mdi mdi-printer btn-icon-prepend"></i></button>
         </div>
+      </div>
     </div>
 
     <div class="row">
-        <div class="col-md-12">
-            <div id="printMe" class="card card-secondary">
-                <div class="card-header">
-                    <h3>{{ table_title|upper }}</h3>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        {% if accounts_by_type %}
-                        {% for account_type, grouped_accounts in accounts_by_type.items %}
-                        <h4 class="mt-4">{{ account_type }}</h4>
-                        <table class="table table-bordered my-table" id="dataTable">
-                            <thead class="thead-light">
-                                <tr>
-                                    <th style="width: 40%;">Account Name</th>
-                                    <th style="width: 20%;">Account Type</th>
-                                    <th style="width: 30%;">Description</th>
-                                    <th style="width: 5%;" class="text-center print-hide">Action</th>
-                                    <th style="width: 5%;" class="text-center print-hide">Delete</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for account in grouped_accounts %}
-                                <tr>
-                                    <td>{{ account.account_number }} - {{ account.account_name }}</td>
-                                    <td>{{ account.get_account_type_display }}</td>
-                                    <td>{{ account.description }}</td>
-                                    <td class="text-center print-hide">
-                                        <a href="{% url 'finance:chart_of_account_update' account.id %}"
-                                            class="text-decoration-none"
-                                            onclick="return confirm('Are you sure you want to update this record?');">
-                                            <button type="button" class="btn btn-warning btn-sm"
-                                                data-bs-toggle="tooltip" title="Update Account">
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-                                        </a>
-                                    </td>
-                                    <td class="text-center print-hide">
-                                        {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
-                                        <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal"
-                                            data-bs-target="#deleteModal{{ account.id }}" title="Delete Account">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
+      <div class="col-md-12">
+        <div id="printMe" class="card card-secondary">
+          <div class="card-header">
+            <h3>{{ table_title|upper }}</h3>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              {% if accounts_by_type %}
+                {% for account_type, grouped_accounts in accounts_by_type.items %}
+                  <h4 class="mt-4">{{ account_type }}</h4>
+                  <table class="my-table" id="dataTable">
+                    <thead class="thead-light">
+                      <tr>
+                        <th style="width: 40%;">Account Name</th>
+                        <th style="width: 20%;">Account Type</th>
+                        <th style="width: 10%;">Balance Type</th>
+                        <th style="width: 10%;">Status</th>
+                        <th style="width: 10%;">Parent Account</th>
+                        <th style="width: 10%;">Branch</th>
+                        <th style="width: 30%;">Description</th>
+                        <th style="width: 5%;" class="text-center print-hide">Action</th>
+                        <th style="width: 5%;" class="text-center print-hide">Delete</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for account in grouped_accounts %}
+                        <tr>
+                          <td>{{ account.account_number }} - {{ account.account_name }}</td>
+                          <td>{{ account.get_account_type_display }}</td>
+                          <td>{{ account.get_balance_type_display }}</td>
+                          <td>{{ account.get_status_display }}</td>
+                          <td>{{ account.parent_account|default:'None' }}</td>
+                          <td>{{ account.branch|default:'None' }}</td>
+                          <td>{{ account.description|default:'-' }}</td>
+                          <td class="text-center print-hide">
+                            <a href="{% url 'finance:chart_of_account_update' account.id %}" class="text-decoration-none" onclick="return confirm('Are you sure you want to update this record?');"><button type="button" class="btn btn-warning btn-sm" data-bs-toggle="tooltip" title="Update Account"><i class="bi bi-pencil"></i></button></a>
+                          </td>
+                          <td class="text-center print-hide">
+                            {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
+                              <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ account.id }}" title="Delete Account"><i class="bi bi-trash"></i></button>
 
-                                        <!-- Delete Modal -->
-                                        <div class="modal fade" id="deleteModal{{ account.id }}" tabindex="-1"
-                                            aria-labelledby="deleteModalLabel{{ account.id }}" aria-hidden="true">
-                                            <div class="modal-dialog">
-                                                <div class="modal-content">
-                                                    <div class="modal-header">
-                                                        <h5 class="modal-title" id="deleteModalLabel{{ account.id }}">
-                                                            Delete Account
-                                                        </h5>
-                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                            aria-label="Close">X</button>
-                                                    </div>
-                                                    <div class="modal-body">
-                                                        Are you sure you want to delete the account: <h3>
-                                                            {{ account.account_number }} - {{ account.account_name }}?
-                                                        </h3>
-                                                    </div>
-                                                    <div class="modal-footer">
-                                                        <button type="button" class="btn btn-secondary"
-                                                            data-bs-dismiss="modal">Cancel</button>
-                                                        <a href="{% url 'finance:chart_of_account_delete' account.id %}"
-                                                            class="text-decoration-none">
-                                                            <button type="button" class="btn btn-danger">Delete</button>
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="5">No accounts available under {{ account_type }}.</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                        <hr />
-                        {% endfor %}
-                        {% else %}
-                        <p>No accounts available.</p>
-                        {% endif %}
-                    </div>
-                </div>
+                              <!-- Delete Modal -->
+                              <div class="modal fade" id="deleteModal{{ account.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ account.id }}" aria-hidden="true">
+                                <div class="modal-dialog">
+                                  <div class="modal-content">
+                                    <div class="modal-header">
+                                      <h5 class="modal-title" id="deleteModalLabel{{ account.id }}">Delete Account</h5>
+                                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">X</button>
+                                    </div>
+                                    <div class="modal-body">
+                                      Are you sure you want to delete the account: <h3>{{ account.account_number }} - {{ account.account_name }}?</h3>
+                                    </div>
+                                    <div class="modal-footer">
+                                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                      <a href="{% url 'finance:chart_of_account_delete' account.id %}" class="text-decoration-none"><button type="button" class="btn btn-danger">Delete</button></a>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            {% endif %}
+                          </td>
+                        </tr>
+                      {% empty %}
+                        <tr>
+                          <td colspan="5">No accounts available under {{ account_type }}.</td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                  <hr />
+                {% endfor %}
+              {% else %}
+                <p>No accounts available.</p>
+              {% endif %}
             </div>
+          </div>
         </div>
+      </div>
     </div>
-</div>
-{% endblock content %}
+  </div>
+{% endblock %}

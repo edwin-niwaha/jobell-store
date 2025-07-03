@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Record Income Transactions</title>
+    <style>
+      .transaction-form {
+        margin-bottom: 20px;
+        border: 1px solid #ccc;
+        padding: 10px;
+      }
+      .form-control {
+        width: 100%;
+        padding: 5px;
+        margin: 5px 0;
+      }
+      .errorlist {
+        color: red;
+      }
+      button {
+        padding: 10px 20px;
+        margin-top: 10px;
+      }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  </head>
+  <body>
+    <h2>Record Income Transactions</h2>
+    <form method="post">
+      {% csrf_token %}
+      {{ journal_form.as_p }}
+      <h3>Income Transactions</h3>
+      {{ formset.management_form }}
+      {% for form in formset %}
+        <div class="transaction-form">
+          {{ form.as_p }}
+          {% if formset.can_delete %}
+            <input type="checkbox" name="{{ formset.prefix }}-{{ forloop.counter0 }}-DELETE" id="id_{{ formset.prefix }}-{{ forloop.counter0 }}-DELETE" />Delete
+          {% endif %}
+        </div>
+      {% endfor %}
+      <button type="button" id="add-form">Add Transaction</button>
+      <button type="submit">Save</button>
+    </form>
+    <script>
+      $(document).ready(function () {
+        $('#add-form').click(function () {
+          var formIdx = $('#id_form-TOTAL_FORMS').val()
+          var newForm = $('.transaction-form:first')
+            .clone(true)
+            .find('input, select, textarea')
+            .each(function () {
+              var newName = $(this)
+                .attr('name')
+                .replace('-0-', '-' + formIdx + '-')
+              var newId = $(this)
+                .attr('id')
+                .replace('-0-', '-' + formIdx + '-')
+              $(this).attr({ name: newName, id: newId }).val('')
+            })
+            .end()
+          newForm.find('input[type=checkbox]').prop('checked', false)
+          $('#id_form-TOTAL_FORMS').val(parseInt(formIdx) + 1)
+          $('.transaction-form:last').after(newForm)
+        })
+      })
+    </script>
+  </body>
+</html>

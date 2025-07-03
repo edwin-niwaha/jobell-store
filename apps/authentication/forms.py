@@ -257,9 +257,12 @@ class UpdateProfileAllForm(forms.ModelForm):
 
     class Meta:
         model = Profile
-        fields = ["role"]
+        fields = [
+            "role",
+        ]
         widgets = {
             "role": forms.Select(attrs={"class": "form-control", "required": True}),
+            # "branch": forms.Select(attrs={"class": "form-control", "required": True}),
         }
 
 

@@ -6,13 +6,36 @@ urlpatterns = [
     # Home
     path("", views.index, name="users-home"),
     # Dashboard
-    path("dashboard/", views.dashboard, name="dashboard"),
+    path("dashboard/sales", views.dashboard, name="dashboard"),
+    path("dashboard/finance/", views.finance_dashboard, name="fin_dashboard"),
+    # Chart data endpoints
     path(
         "dashboard/monthly_earnings/",
         views.monthly_earnings_view,
         name="monthly_earnings_view",
     ),
     path("dashboard/sales-data/", views.sales_data_api, name="sales-data-api"),
+    path(
+        "dashboard/transactions_by_account_type/",
+        views.transactions_by_account_type,
+        name="transactions_by_account_type",
+    ),
+    path(
+        "dashboard/financial_period_status/",
+        views.financial_period_status,
+        name="financial_period_status",
+    ),
+    path(
+        "dashboard/transaction_trends/",
+        views.transaction_trends,
+        name="transaction_trends",
+    ),
+    path("dashboard/top_accounts/", views.top_accounts, name="top_accounts"),
+    path(
+        "dashboard/income_vs_expenses/",
+        views.income_vs_expenses,
+        name="income_vs_expenses",
+    ),
     path("testimonials/", views.testimonials_view, name="testimonials"),
     path(
         "testimonial/update/<int:pk>/",

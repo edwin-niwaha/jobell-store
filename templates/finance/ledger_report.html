@@ -65,6 +65,7 @@
                     <thead class="thead-dark">
                         <tr>
                             <th>Date</th>
+                            <th>Ref No.</th>
                             <th>Description</th>
                             <th>Debits</th>
                             <th>Credits</th>
@@ -75,6 +76,7 @@
                         <!-- Opening balance row -->
                         <tr>
                             <td></td> <!-- Empty cell for date -->
+                            <td></td> <!-- Empty cell for ref -->
                             <td><strong>Opening Balance</strong></td>
                             <td class="text-right"></td> <!-- Empty cell for debits -->
                             <td class="text-right"></td> <!-- Empty cell for credits -->
@@ -85,7 +87,8 @@
                         <!-- Transaction rows -->
                         {% for item in ledger_data %}
                         <tr>
-                            <td>{{ item.transaction_date|date:"d/m/Y" }}</td>
+                            <td>{{ item.journal_entry.transaction_date|date:"d/m/Y" }}</td>
+                            <td>{{ item.journal_entry.reference_number }}</td>
                             <td>{{ item.description }}</td>
                             <td class="text-right">{{ item.debit|floatformat:"2"|intcomma }}</td>
                             <td class="text-right">{{ item.credit|floatformat:"2"|intcomma }}</td>
