@@ -449,13 +449,13 @@ def transactions_by_account_type(request):
 # 2. Pie Chart: Financial Period Status Distribution
 def financial_period_status(request):
     data = (
-        FinancialPeriod.objects.values('status')
-        .annotate(count=Count('id'))
-        .order_by('status')
+        FinancialPeriod.objects.values("status")
+        .annotate(count=Count("id"))
+        .order_by("status")
     )
-    labels = [item['status'].capitalize() for item in data]
-    counts = [item['count'] for item in data]
-    return JsonResponse({'labels': labels, 'counts': counts})
+    labels = [item["status"].capitalize() for item in data]
+    counts = [item["count"] for item in data]
+    return JsonResponse({"labels": labels, "counts": counts})
 
 
 # 3. Line Chart: Transaction Trends Over Time

@@ -64,22 +64,21 @@
                 <table class="my-table" id="dataTable">
                     <thead class="thead-dark">
                         <tr>
+                            <th>Jrnl_ID</th>
                             <th>Date</th>
                             <th>Ref No.</th>
                             <th>Description</th>
                             <th>Debits</th>
                             <th>Credits</th>
                             <th>Balance</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         <!-- Opening balance row -->
                         <tr>
-                            <td></td> <!-- Empty cell for date -->
-                            <td></td> <!-- Empty cell for ref -->
-                            <td><strong>Opening Balance</strong></td>
-                            <td class="text-right"></td> <!-- Empty cell for debits -->
-                            <td class="text-right"></td> <!-- Empty cell for credits -->
+                            <td colspan="4"></td>
+                            <td colspan="2"><strong>Opening Balance</strong></td>
                             <td class="text-right"><strong>{{ opening_balance|floatformat:"2"|intcomma }}</strong></td>
                             <!-- Opening balance -->
                         </tr>
@@ -87,12 +86,23 @@
                         <!-- Transaction rows -->
                         {% for item in ledger_data %}
                         <tr>
+                            <td>{{ item.journal_entry.id }}</td>
                             <td>{{ item.journal_entry.transaction_date|date:"d/m/Y" }}</td>
                             <td>{{ item.journal_entry.reference_number }}</td>
-                            <td>{{ item.description }}</td>
+                            <td>{{ item.journal_entry.description }}</td>
                             <td class="text-right">{{ item.debit|floatformat:"2"|intcomma }}</td>
                             <td class="text-right">{{ item.credit|floatformat:"2"|intcomma }}</td>
                             <td class="text-right">{{ item.running_balance|floatformat:"2"|intcomma }}</td>
+                            {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
+                            <td>
+                                <form method="POST" action="{% url 'finance:delete-transaction' item.id %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this transaction?');">
+                                        <i class="mdi mdi-delete"></i>
+                                    </button>
+                                </form>
+                            </td>
+                            {% endif %}                            
                         </tr>
                         {% empty %}
                         <tr>
@@ -102,7 +112,7 @@
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td colspan="2"><strong>Total</strong></td>
+                            <td colspan="4"><strong>Total</strong></td>
                             <td class="text-right"><strong>{{ total_debits|floatformat:"2"|intcomma }}</strong></td>
                             <td class="text-right"><strong>{{ total_credits|floatformat:"2"|intcomma }}</strong></td>
                             <td></td> <!-- Leave empty for running balance -->

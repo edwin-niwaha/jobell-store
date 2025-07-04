@@ -545,6 +545,35 @@ def ledger_report_view(request):
     )
 
 
+# =================================== Delete transaction ===================================
+@login_required
+@admin_or_manager_required
+@transaction.atomic
+def delete_transaction(request, transaction_id):
+    try:
+        transaction = get_object_or_404(Transaction, id=transaction_id)
+        journal_entry = transaction.journal_entry
+        journal_ref = journal_entry.reference_number
+        if journal_entry.financial_period.status != "open":
+            messages.error(
+                request,
+                "Cannot delete: Financial period closed.",
+                extra_tags="bg-danger",
+            )
+            return redirect("finance:ledger_report")
+        journal_entry.delete()
+        messages.success(
+            request, f"Journal Entry #{journal_ref} deleted!", extra_tags="bg-success"
+        )
+    except ValidationError as e:
+        messages.error(request, f"Validation error: {str(e)}", extra_tags="bg-danger")
+        print(e)
+    except Exception as e:
+        messages.error(request, "Deletion error!", extra_tags="bg-danger")
+        print(e)
+    return redirect("finance:ledger_report")
+
+
 # =================================== profit_and_loss_view ===================================
 @login_required
 @admin_or_manager_required

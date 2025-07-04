@@ -37,6 +37,11 @@ urlpatterns = [
         name="ledger_report_with_id",
     ),
     path(
+        "transaction/<int:transaction_id>/delete/",
+        views.delete_transaction,
+        name="delete-transaction",
+    ),
+    path(
         "balance-sheet/<int:financial_period_id>/",
         views.balance_sheet_pro_view,
         name="balance_sheet_pro",
