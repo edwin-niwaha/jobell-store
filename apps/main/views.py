@@ -18,7 +18,7 @@ from django.core.paginator import Paginator, EmptyPage
 from apps.products.models import Product, Category, Review
 from apps.sales.models import Sale
 from apps.orders.models import Cart, CartItem, Order, Wishlist
-from apps.finance.models import ChartOfAccounts, Transaction, FinancialPeriod
+from apps.finance.models import ChartOfAccounts, Transaction, FinancialPeriod, Branch
 
 
 from .models import Testimonial, Subscriber
@@ -189,6 +189,86 @@ def index(request):
 
 
 # =================================== The finance dashboard view ===================================
+# @login_required
+# @admin_or_manager_or_staff_required
+# def finance_dashboard(request):
+
+#     def calculate_sales_profit():
+#         """Calculate total profit from sales."""
+#         total_profit = Decimal("0.00")
+#         try:
+#             sales = Sale.objects.prefetch_related("items__product_volume__volume")
+#             for sale in sales:
+#                 for item in sale.items.all():
+#                     if item.product_volume:
+#                         cost = Decimal(item.product_volume.volume.cost or 0)
+#                         price = Decimal(item.product_volume.volume.price or 0)
+#                         total_profit += (price - cost) * Decimal(item.quantity or 0)
+#         except Exception as e:
+#             print(f"Error calculating sales profit: {e}")
+#         return total_profit
+
+#     def calculate_other_income():
+#         """Calculate non-sales revenue."""
+#         try:
+#             return Transaction.objects.filter(account__account_type="revenue").exclude(
+#                 account__account_name="Sales Revenue"
+#             ).aggregate(total_income=Sum("amount"))["total_income"] or Decimal("0.00")
+#         except Exception as e:
+#             print(f"Error calculating other income: {e}")
+#             return Decimal("0.00")
+
+#     def calculate_account_totals():
+#         """Calculate totals for each account type."""
+#         account_types = ["Asset", "Liability", "Revenue", "Expense", "NetIncome"]
+#         summary = {}
+#         try:
+#             total_revenue = calculate_sales_profit() + calculate_other_income()
+#             for account_type in account_types:
+#                 if account_type == "NetIncome":
+#                     continue
+#                 if account_type == "Revenue":
+#                     summary[account_type] = float(total_revenue)
+#                     continue
+
+#                 total = Decimal("0.00")
+#                 accounts = ChartOfAccounts.objects.filter(
+#                     account_type=account_type.lower()
+#                 )
+#                 for acc in accounts:
+#                     transactions = Transaction.objects.filter(account=acc).aggregate(
+#                         debit_sum=Sum("amount", filter=Q(transaction_type="debit")),
+#                         credit_sum=Sum("amount", filter=Q(transaction_type="credit")),
+#                     )
+#                     debit = transactions["debit_sum"] or Decimal("0.00")
+#                     credit = transactions["credit_sum"] or Decimal("0.00")
+#                     total += (
+#                         (debit - credit)
+#                         if account_type.lower() in ["asset", "expense"]
+#                         else (credit - debit)
+#                     )
+#                 summary[account_type] = float(total)
+
+#             # Calculate Net Income
+#             summary["NetIncome"] = float(
+#                 summary.get("Revenue", 0) - summary.get("Expense", 0)
+#             )
+#         except Exception as e:
+#             print(f"Error in account totals: {e}")
+#             summary = {key: 0.0 for key in account_types}
+#         return summary
+
+#     # Prepare context
+#     context = {
+#         "summary": calculate_account_totals(),
+#         "recent_transactions": Transaction.objects.select_related(
+#             "journal_entry", "account"
+#         ).order_by("-journal_entry__transaction_date")[:6],
+#     }
+
+#     return render(request, "main/fin_dashboard.html", context)
+
+
 @login_required
 @admin_or_manager_or_staff_required
 def finance_dashboard(request):
@@ -267,6 +347,7 @@ def finance_dashboard(request):
     }
 
     return render(request, "main/fin_dashboard.html", context)
+
 
 
 @login_required

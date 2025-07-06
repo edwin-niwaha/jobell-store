@@ -3,13 +3,15 @@ from datetime import datetime
 from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.db import models
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, FieldError
 from django.http import HttpResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Sum, F, Q
+from django.db.models.functions import Cast, Substr, Length
 from django.utils import timezone
 from django.db import transaction
 from datetime import date
@@ -24,8 +26,8 @@ from .forms import (
 )
 
 # IncomeTransactionFormSet, ExpenseTransactionFormSet
-from apps.sales.models import SaleDetail
-from .models import ChartOfAccounts, Transaction, Branch, FinancialPeriod
+from apps.sales.models import SaleDetail, Sale
+from .models import ChartOfAccounts, Transaction, JournalEntry, Branch, FinancialPeriod
 from apps.sales.forms import ReportPeriodForm
 
 from apps.authentication.decorators import (
@@ -726,307 +728,395 @@ def profit_and_loss_view(request):
     return render(request, "finance/profit_and_loss.html", context)
 
 
+# =================================== balance_sheet_view ===================================
+
+
+# @login_required
+# def balance_sheet_view(request):
+    # Get query parameters
+    branch_id = request.GET.get('branch_id')
+    period_id = request.GET.get('period_id')
+
+    # Initialize filters
+    branches = Branch.objects.all()
+    financial_periods = FinancialPeriod.objects.all()
+
+    # Default to current open period and all branches if not specified
+    selected_period = None
+    selected_branch = None
+    if period_id:
+        selected_period = FinancialPeriod.objects.filter(id=period_id).first()
+    else:
+        selected_period = FinancialPeriod.objects.filter(status='open').first()
+
+    if branch_id:
+        selected_branch = Branch.objects.filter(id=branch_id).first()
+
+    # Initialize balance sheet data with singular keys to match account_type
+    balance_sheet = {
+        'asset': {'total': Decimal('0.00'), 'accounts': []},
+        'liability': {'total': Decimal('0.00'), 'accounts': []},
+        'equity': {'total': Decimal('0.00'), 'accounts': []},
+    }
+
+    if selected_period:
+        # Define date range for cumulative data (up to the end of selected period)
+        end_date = selected_period.end_date
+        transactions = Transaction.objects.filter(
+            journal_entry__financial_period__end_date__lte=end_date,
+            journal_entry__financial_period__status__in=['open', 'closed']
+        )
+
+        if selected_branch:
+            transactions = transactions.filter(journal_entry__branch=selected_branch)
+
+        # Aggregate balances by account type
+        for account_type in ['asset', 'liability', 'equity']:
+            accounts = ChartOfAccounts.objects.filter(
+                account_type=account_type,
+                status='active',
+                is_deleted=False
+            )
+
+            if selected_branch:
+                accounts = accounts.filter(branch=selected_branch)
+
+            for account in accounts:
+                # Skip Retained Earnings in initial loop; handle it separately
+                if account.account_name.lower() == 'retained earnings':
+                    continue
+
+                # Calculate balance based on transaction type and balance type
+                debit_sum = transactions.filter(
+                    account=account,
+                    transaction_type='debit'
+                ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+
+                credit_sum = transactions.filter(
+                    account=account,
+                    transaction_type='credit'
+                ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+
+                # Determine balance based on account's balance type
+                balance = debit_sum - credit_sum if account.balance_type == 'debit' else credit_sum - debit_sum
+
+                # Adjust for contra-assets
+                if account.is_contra_asset:
+                    balance = -balance
+
+                if balance != 0:
+                    balance_sheet[account_type]['accounts'].append({
+                        'name': account.account_name,
+                        'balance': balance,
+                        'account_number': account.account_number,
+                    })
+                    balance_sheet[account_type]['total'] += balance
+
+        # Calculate Net Income (Revenue - Expenses) for all periods up to end_date
+        revenue_transactions = Transaction.objects.filter(
+            journal_entry__financial_period__end_date__lte=end_date,
+            journal_entry__financial_period__status__in=['open', 'closed'],
+            account__account_type='revenue',
+        )
+        if selected_branch:
+            revenue_transactions = revenue_transactions.filter(journal_entry__branch=selected_branch)
+
+        revenue_credit = revenue_transactions.filter(
+            transaction_type='credit'
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        revenue_debit = revenue_transactions.filter(
+            transaction_type='debit'
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        revenue_total = revenue_credit - revenue_debit  # Revenue is typically credit
+
+        expense_transactions = Transaction.objects.filter(
+            journal_entry__financial_period__end_date__lte=end_date,
+            journal_entry__financial_period__status__in=['open', 'closed'],
+            account__account_type='expense',
+        )
+        if selected_branch:
+            expense_transactions = expense_transactions.filter(journal_entry__branch=selected_branch)
+
+        expense_debit = expense_transactions.filter(
+            transaction_type='debit'
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        expense_credit = expense_transactions.filter(
+            transaction_type='credit'
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        expense_total = expense_debit - expense_credit  # Expenses are typically debit
+
+        net_income = revenue_total - expense_total
+
+        # Handle Retained Earnings
+        retained_earnings_account = ChartOfAccounts.objects.filter(
+            account_type='equity',
+            account_name__iexact='Retained Earnings',
+            status='active',
+            is_deleted=False
+        ).first()
+
+        retained_earnings_balance = net_income  # Start with net income
+        if retained_earnings_account:
+            # Add direct transactions to Retained Earnings
+            re_debit = transactions.filter(
+                account=retained_earnings_account,
+                transaction_type='debit'
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            re_credit = transactions.filter(
+                account=retained_earnings_account,
+                transaction_type='credit'
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            re_balance = re_credit - re_debit if retained_earnings_account.balance_type == 'credit' else re_debit - re_credit
+            retained_earnings_balance += re_balance
+
+        if retained_earnings_balance != 0:
+            balance_sheet['equity']['accounts'].append({
+                'name': retained_earnings_account.account_name if retained_earnings_account else 'Retained Earnings',
+                'balance': retained_earnings_balance,
+                'account_number': retained_earnings_account.account_number if retained_earnings_account else 'N/A',
+            })
+            balance_sheet['equity']['total'] += retained_earnings_balance
+
+    # Calculate total liabilities and equity
+    total_liabilities_equity = balance_sheet['liability']['total'] + balance_sheet['equity']['total']
+
+    # Verify balance
+    if abs(balance_sheet['asset']['total'] - total_liabilities_equity) > Decimal('0.01'):
+        return render(
+            request,
+            'finance/error.html',
+            {
+                'error': f"Balance sheet does not balance: Assets ({balance_sheet['asset']['total']}) ≠ Liabilities + Equity ({total_liabilities_equity})"
+            },
+        )
+
+    context = {
+        'balance_sheet': balance_sheet,
+        'branches': branches,
+        'financial_periods': financial_periods,
+        'selected_branch': selected_branch,
+        'selected_period': selected_period,
+        'total_liabilities_equity': total_liabilities_equity,
+        # 'current_date': selected_period.end_date if selected_period else timezone.now().date(),
+        'company_name': 'Jobell Inc',
+        'company_location': 'Kampala, Uganda',
+        'company_contact': 'Phone: (+256) 777-337-491 | Email: jobellinc@gmail.com',
+        'financial_period_name': selected_period.name if selected_period else 'Current Period',
+        'selected_branch_name': selected_branch.name if selected_branch else 'All Branches',
+    }
+
+    return render(request, 'finance/balance_sheet.html', context)
+
+
 @login_required
 @admin_or_manager_required
 def balance_sheet_view(request):
-    # Set the date range (start_date, end_date) based on user input or defaults
-    start_date = request.GET.get("start_date", datetime.today().strftime("%Y-%m-%d"))
-    end_date = request.GET.get("end_date", datetime.today().strftime("%Y-%m-%d"))
+    # Get query parameters
+    branch_id = request.GET.get("branch_id")
+    period_id = request.GET.get("period_id")
 
-    # Convert string dates to date objects
-    start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
-    end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+    # Initialize filters
+    branches = Branch.objects.all()
+    financial_periods = FinancialPeriod.objects.all()
 
-    # Fetch transactions for the selected date range
-    transactions = Transaction.objects.filter(
-        journal_entry__transaction_date__range=[start_date, end_date]
+    # Default to current open period and all branches if not specified
+    selected_period = None
+    selected_branch = None
+    if period_id:
+        selected_period = FinancialPeriod.objects.filter(id=period_id).first()
+    else:
+        selected_period = FinancialPeriod.objects.filter(status="open").first()
+
+    if branch_id:
+        selected_branch = Branch.objects.filter(id=branch_id).first()
+
+    # Initialize balance sheet data with singular keys to match account_type
+    balance_sheet = {
+        "asset": {"total": Decimal("0.00"), "accounts": []},
+        "liability": {"total": Decimal("0.00"), "accounts": []},
+        "equity": {"total": Decimal("0.00"), "accounts": []},
+    }
+
+    if selected_period:
+        # Define date range for cumulative data (up to the end of selected period)
+        end_date = selected_period.end_date
+        transactions = Transaction.objects.filter(
+            journal_entry__financial_period__end_date__lte=end_date,
+            journal_entry__financial_period__status__in=["open", "closed"],
+        )
+
+        if selected_branch:
+            transactions = transactions.filter(journal_entry__branch=selected_branch)
+
+        # Aggregate balances by account type
+        for account_type in ["asset", "liability", "equity"]:
+            accounts = ChartOfAccounts.objects.filter(
+                account_type=account_type, status="active", is_deleted=False
+            )
+
+            if selected_branch:
+                accounts = accounts.filter(branch=selected_branch)
+
+            for account in accounts:
+                # Skip Retained Earnings in initial loop; handle it separately
+                if account.account_name.lower() == "retained earnings":
+                    continue
+
+                # Calculate balance based on transaction type and balance type
+                debit_sum = transactions.filter(
+                    account=account, transaction_type="debit"
+                ).aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+
+                credit_sum = transactions.filter(
+                    account=account, transaction_type="credit"
+                ).aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+
+                # Determine balance based on account's balance type
+                balance = (
+                    debit_sum - credit_sum
+                    if account.balance_type == "debit"
+                    else credit_sum - debit_sum
+                )
+
+                # Adjust for contra-assets
+                if account.is_contra_asset:
+                    balance = -balance
+
+                if balance != 0:
+                    balance_sheet[account_type]["accounts"].append(
+                        {
+                            "name": account.account_name,
+                            "balance": balance,
+                            "account_number": account.account_number,
+                        }
+                    )
+                    balance_sheet[account_type]["total"] += balance
+
+        # Calculate Net Income (Revenue - Expenses) for all periods up to end_date
+        revenue_transactions = Transaction.objects.filter(
+            journal_entry__financial_period__end_date__lte=end_date,
+            journal_entry__financial_period__status__in=["open", "closed"],
+            account__account_type="revenue",
+        )
+        if selected_branch:
+            revenue_transactions = revenue_transactions.filter(
+                journal_entry__branch=selected_branch
+            )
+
+        revenue_credit = revenue_transactions.filter(
+            transaction_type="credit"
+        ).aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+        revenue_debit = revenue_transactions.filter(transaction_type="debit").aggregate(
+            total=Sum("amount")
+        )["total"] or Decimal("0.00")
+        revenue_total = revenue_credit - revenue_debit  # Revenue is typically credit
+
+        expense_transactions = Transaction.objects.filter(
+            journal_entry__financial_period__end_date__lte=end_date,
+            journal_entry__financial_period__status__in=["open", "closed"],
+            account__account_type="expense",
+        )
+        if selected_branch:
+            expense_transactions = expense_transactions.filter(
+                journal_entry__branch=selected_branch
+            )
+
+        expense_debit = expense_transactions.filter(transaction_type="debit").aggregate(
+            total=Sum("amount")
+        )["total"] or Decimal("0.00")
+        expense_credit = expense_transactions.filter(
+            transaction_type="credit"
+        ).aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+        expense_total = expense_debit - expense_credit  # Expenses are typically debit
+
+        net_income = revenue_total - expense_total
+
+        # Handle Retained Earnings
+        retained_earnings_account = ChartOfAccounts.objects.filter(
+            account_type="equity",
+            account_name__iexact="Retained Earnings",
+            status="active",
+            is_deleted=False,
+        ).first()
+
+        retained_earnings_balance = net_income  # Start with net income
+        if retained_earnings_account:
+            # Add direct transactions to Retained Earnings
+            re_debit = transactions.filter(
+                account=retained_earnings_account, transaction_type="debit"
+            ).aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+            re_credit = transactions.filter(
+                account=retained_earnings_account, transaction_type="credit"
+            ).aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+            re_balance = (
+                re_credit - re_debit
+                if retained_earnings_account.balance_type == "credit"
+                else re_debit - re_credit
+            )
+            retained_earnings_balance += re_balance
+
+        if retained_earnings_balance != 0:
+            balance_sheet["equity"]["accounts"].append(
+                {
+                    "name": (
+                        retained_earnings_account.account_name
+                        if retained_earnings_account
+                        else "Retained Earnings"
+                    ),
+                    "balance": retained_earnings_balance,
+                    "account_number": (
+                        retained_earnings_account.account_number
+                        if retained_earnings_account
+                        else "N/A"
+                    ),
+                }
+            )
+            balance_sheet["equity"]["total"] += retained_earnings_balance
+
+    # Calculate total liabilities and equity
+    total_liabilities_equity = (
+        balance_sheet["liability"]["total"] + balance_sheet["equity"]["total"]
     )
 
-    # Initialize the balances
-    assets = 0
-    liabilities = 0
-    equity = 0
-    revenue = 0
-    expenses = 0
-
-    # Calculate the balances based on account type
-    for account in ChartOfAccounts.objects.all():
-        account_transactions = transactions.filter(account=account)
-
-        # Calculate the net balance for the account
-        debit_total = (
-            account_transactions.filter(transaction_type="debit").aggregate(
-                Sum("amount")
-            )["amount__sum"]
-            or 0
+    # Verify balance
+    if abs(balance_sheet["asset"]["total"] - total_liabilities_equity) > Decimal(
+        "0.01"
+    ):
+        return render(
+            request,
+            "finance/error.html",
+            {
+                "error": f"Balance sheet does not balance: Assets ({balance_sheet['asset']['total']}) ≠ Liabilities + Equity ({total_liabilities_equity})"
+            },
         )
-        credit_total = (
-            account_transactions.filter(transaction_type="credit").aggregate(
-                Sum("amount")
-            )["amount__sum"]
-            or 0
-        )
-        net_balance = debit_total - credit_total
 
-        total_amount = account_transactions.aggregate(Sum("amount"))["amount__sum"] or 0
-
-        if account.account_type == "asset":
-            assets += net_balance
-        elif account.account_type == "liability":
-            liabilities += net_balance
-        elif account.account_type == "equity":
-            equity += total_amount
-        elif account.account_type == "revenue":
-            revenue += total_amount
-        elif account.account_type == "expense":
-            expenses += total_amount
-
-    # Fetch SaleDetails within the date range
-    sales_details = SaleDetail.objects.filter(
-        sale__trans_date__range=(start_date, end_date)
-    )
-
-    # Initialize sales revenue
-    sales_revenue = 0
-
-    # Loop through each SaleDetail and apply the discount logic
-    for sale_detail in sales_details:
-        # Get the corresponding Product instance
-        product = sale_detail.product
-        discounted_price = product.get_discounted_price()
-
-        # Accumulate revenue (discounted price * quantity)
-        sales_revenue += discounted_price * sale_detail.quantity
-
-    # Calculate Cost of Goods Sold (COGS) with discounts considered for prices
-    cogs = (
-        SaleDetail.objects.filter(sale__trans_date__range=[start_date, end_date])
-        .annotate(cogs=F("product_volume__volume__cost") * F("quantity"))
-        .aggregate(total_cogs=Sum("cogs"))
-    )["total_cogs"] or 0
-
-    # Calculate Gross Profit (Sales Revenue - COGS)
-    gross_profit = sales_revenue - cogs
-
-    # Calculate Net Profit (Gross Profit + Other Income - Operating Expenses)
-    net_income = gross_profit + revenue - expenses
-
-    # Calculate Retained Earnings: Retained Earnings = Net Income + Previous Retained Earnings
-    retained_earnings = equity + net_income
-
-    # Ensure assets = liabilities + equity
-    liabilities = assets - equity
-
-    # Return the result to the template
     context = {
-        "start_date": start_date,
-        "end_date": end_date,
-        "assets": assets,
-        "liabilities": liabilities,
-        "equity": equity,
-        "retained_earnings": retained_earnings,
-        "net_income": net_income,
-        "table_title": "Statement of Financial Position",
+        "balance_sheet": balance_sheet,
+        "branches": branches,
+        "financial_periods": financial_periods,
+        "selected_branch": selected_branch,
+        "selected_period": selected_period,
+        "total_liabilities_equity": total_liabilities_equity,
+        "current_date": (
+            selected_period.end_date if selected_period else timezone.now().date()
+        ),
+        "company_name": "Jobell Inc",
+        "company_location": "Kampala, Uganda",
+        "company_contact": "Phone: (+256) 777-337-491 | Email: jobellinc@gmail.com",
+        "financial_period_name": (
+            selected_period.name if selected_period else "Current Period"
+        ),
+        "selected_branch_name": (
+            selected_branch.name if selected_branch else "All Branches"
+        ),
     }
 
     return render(request, "finance/balance_sheet.html", context)
 
 
-# balance_sheet_select_period
-def balance_sheet_select_period(request):
-    financial_periods = FinancialPeriod.objects.filter(status="open")
-    return render(
-        request,
-        "finance/select_balance_sheet_pro_period.html",
-        {"financial_periods": financial_periods},
-    )
-
-
+# =================================== cash_flow_statement ===================================
 @login_required
-def balance_sheet_pro_view(request, financial_period_id=None):
-    # Default to current date if no financial period is provided
-    if financial_period_id:
-        financial_period = get_object_or_404(FinancialPeriod, id=financial_period_id)
-        if financial_period.status != "open":
-            return render(
-                request,
-                "finance/error.html",
-                {
-                    "error": "Cannot generate balance sheet for a closed financial period."
-                },
-            )
-        start_date = financial_period.start_date
-        end_date = financial_period.end_date
-    else:
-        start_date = request.GET.get(
-            "start_date", datetime.today().strftime("%Y-%m-%d")
-        )
-        end_date = request.GET.get("end_date", datetime.today().strftime("%Y-%m-%d"))
-        start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
-        end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
-        financial_period = None
-
-    # Initialize balance sheet sections
-    assets = {"total": Decimal("0.00"), "accounts": []}
-    liabilities = {"total": Decimal("0.00"), "accounts": []}
-    equity = {"total": Decimal("0.00"), "accounts": []}
-
-    # Fetch active accounts
-    accounts = ChartOfAccounts.objects.filter(status="active", is_deleted=False)
-
-    # Calculate account balances
-    for account in accounts:
-        transactions = Transaction.objects.filter(
-            journal_entry__transaction_date__range=[start_date, end_date],
-            journal_entry__financial_period=(
-                financial_period if financial_period else Q()
-            ),
-            account=account,
-        ).aggregate(
-            total_debit=Sum("amount", filter=Q(transaction_type="debit")),
-            total_credit=Sum("amount", filter=Q(transaction_type="credit")),
-        )
-
-        debit = transactions["total_debit"] or Decimal("0.00")
-        credit = transactions["total_credit"] or Decimal("0.00")
-        balance = debit - credit if account.balance_type == "debit" else credit - debit
-
-        if balance == 0:
-            continue
-
-        account_data = {
-            "name": account.account_name,
-            "number": account.account_number,
-            "balance": balance,
-            "sub_accounts": [],
-        }
-
-        # Handle sub-accounts
-        for sub_account in account.sub_accounts.filter(
-            status="active", is_deleted=False
-        ):
-            sub_transactions = Transaction.objects.filter(
-                journal_entry__transaction_date__range=[start_date, end_date],
-                journal_entry__financial_period=(
-                    financial_period if financial_period else Q()
-                ),
-                account=sub_account,
-            ).aggregate(
-                total_debit=Sum("amount", filter=Q(transaction_type="debit")),
-                total_credit=Sum("amount", filter=Q(transaction_type="credit")),
-            )
-            sub_debit = sub_transactions["total_debit"] or Decimal("0.00")
-            sub_credit = sub_transactions["total_credit"] or Decimal("0.00")
-            sub_balance = (
-                sub_debit - sub_credit
-                if sub_account.balance_type == "debit"
-                else sub_credit - sub_debit
-            )
-
-            if sub_balance != 0:
-                account_data["sub_accounts"].append(
-                    {
-                        "name": sub_account.account_name,
-                        "number": sub_account.account_number,
-                        "balance": sub_balance,
-                    }
-                )
-                balance += sub_balance
-
-        # Assign balance to appropriate section
-        if account.account_type == "asset":
-            if account.is_contra_asset:
-                assets["total"] -= balance
-            else:
-                assets["total"] += balance
-            assets["accounts"].append(account_data)
-        elif account.account_type == "liability":
-            liabilities["total"] += balance
-            liabilities["accounts"].append(account_data)
-        elif account.account_type == "equity":
-            equity["total"] += balance
-            equity["accounts"].append(account_data)
-
-    # Calculate net income from Transactions
-    revenue_transactions = Transaction.objects.filter(
-        journal_entry__transaction_date__range=[start_date, end_date],
-        journal_entry__financial_period=financial_period if financial_period else Q(),
-        account__account_type="revenue",
-    ).aggregate(
-        total_credit=Sum("amount", filter=Q(transaction_type="credit")),
-        total_debit=Sum("amount", filter=Q(transaction_type="debit")),
-    )
-    revenue = (revenue_transactions["total_credit"] or Decimal("0.00")) - (
-        revenue_transactions["total_debit"] or Decimal("0.00")
-    )
-
-    expense_transactions = Transaction.objects.filter(
-        journal_entry__transaction_date__range=[start_date, end_date],
-        journal_entry__financial_period=financial_period if financial_period else Q(),
-        account__account_type="expense",
-    ).aggregate(
-        total_debit=Sum("amount", filter=Q(transaction_type="debit")),
-        total_credit=Sum("amount", filter=Q(transaction_type="credit")),
-    )
-    expenses = (expense_transactions["total_debit"] or Decimal("0.00")) - (
-        expense_transactions["total_credit"] or Decimal("0.00")
-    )
-
-    net_income = revenue - expenses
-
-    # Update retained earnings in equity
-    retained_earnings_account = accounts.filter(
-        account_type="equity", account_name__icontains="retained earnings"
-    ).first()
-    if retained_earnings_account:
-        retained_earnings_data = next(
-            (
-                acc
-                for acc in equity["accounts"]
-                if acc["name"].lower() == "retained earnings"
-            ),
-            None,
-        )
-        if retained_earnings_data:
-            retained_earnings_data["balance"] += net_income
-        else:
-            equity["accounts"].append(
-                {
-                    "name": "Retained Earnings",
-                    "number": retained_earnings_account.account_number,
-                    "balance": net_income,
-                    "sub_accounts": [],
-                }
-            )
-        equity["total"] += net_income
-
-    # Verify balance
-    total_liabilities_and_equity = liabilities["total"] + equity["total"]
-    if abs(assets["total"] - total_liabilities_and_equity) > Decimal("0.01"):
-        return render(
-            request,
-            "finance/error.html",
-            {
-                "error": f'Balance sheet does not balance: Assets ({assets["total"]}) ≠ Liabilities + Equity ({total_liabilities_and_equity})'
-            },
-        )
-
-    context = {
-        "financial_period": financial_period,
-        "start_date": start_date,
-        "end_date": end_date,
-        "assets": assets,
-        "liabilities": liabilities,
-        "equity": equity,
-        "net_income": net_income,
-        "total_liabilities_and_equity": total_liabilities_and_equity,
-        "date": timezone.now().date(),
-        "table_title": "Statement of Financial Position",
-    }
-    return render(request, "finance/balance_sheet_pro.html", context)
-
-
-# @login_required
+@admin_or_manager_required
 def cash_flow_select_period(request):
     """Display a list of open financial periods for cash flow statement selection."""
     financial_periods = FinancialPeriod.objects.filter(status="open").order_by(
@@ -1040,6 +1130,7 @@ def cash_flow_select_period(request):
 
 
 @login_required
+@admin_or_manager_required
 def cash_flow_statement(request, period_id):
     """Generate the cash flow statement for a given financial period."""
     financial_period = get_object_or_404(FinancialPeriod, id=period_id)
@@ -1109,7 +1200,9 @@ def cash_flow_statement(request, period_id):
     return render(request, "finance/cash_flow_statement.html", context)
 
 
+# =================================== trial_balance ===================================
 @login_required
+@admin_or_manager_required
 def trial_balance_select_period(request):
     """Display a list of open financial periods for trial balance selection."""
     financial_periods = FinancialPeriod.objects.filter(status="open").order_by(
@@ -1123,6 +1216,7 @@ def trial_balance_select_period(request):
 
 
 @login_required
+@admin_or_manager_required
 def trial_balance(request, period_id):
     """Generate the trial balance for a given financial period."""
     financial_period = get_object_or_404(FinancialPeriod, id=period_id)
@@ -1279,7 +1373,9 @@ def generate_audit_log_report(start_date=None, end_date=None, user=None):
     return sorted(report_data, key=lambda x: x["timestamp"], reverse=True)
 
 
+# =================================== audit_log_view ===================================
 @login_required
+@admin_or_manager_required
 def audit_log_view(request):
     """Handle audit log display and CSV download with pagination."""
     start_date = request.GET.get("start_date")

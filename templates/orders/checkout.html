@@ -13,19 +13,35 @@
         <!-- Card for Checkout Form -->
         <div class="card shadow-sm">
           <div class="card-body p-4">
+            <!-- Display form errors -->
+            {% if form.errors %}
+              <div class="alert alert-danger">
+                <strong>Please correct the errors below:</strong>
+                <ul>
+                  {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                      <li>{{ field|title }}: {{ error }}</li>
+                    {% endfor %}
+                  {% endfor %}
+                </ul>
+              </div>
+            {% endif %}
             <form method="POST" class="p-4 border rounded shadow-sm bg-light">
               {% csrf_token %}
-              <!-- Render form with crispy forms -->
-              {% comment %} {{ form|crispy }} {% endcomment %}
-
               <div class="row mb-3">
                 <div class="col-md-6">
                   <label for="{{ form.first_name.id_for_label }}" class="form-label">First Name</label>
                   <input type="text" name="{{ form.first_name.name }}" value="{{ form.first_name.value|default:'' }}" class="form-control" id="first_name" placeholder="First Name" required />
+                  {% if form.first_name.errors %}
+                    <div class="text-danger">{{ form.first_name.errors }}</div>
+                  {% endif %}
                 </div>
                 <div class="col-md-6">
                   <label for="{{ form.last_name.id_for_label }}" class="form-label">Last Name</label>
                   <input type="text" name="{{ form.last_name.name }}" value="{{ form.last_name.value|default:'' }}" class="form-control" id="last_name" placeholder="Last Name (optional)" />
+                  {% if form.last_name.errors %}
+                    <div class="text-danger">{{ form.last_name.errors }}</div>
+                  {% endif %}
                 </div>
               </div>
 
@@ -33,10 +49,16 @@
                 <div class="col-md-6">
                   <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
                   <input type="email" name="{{ form.email.name }}" value="{{ form.email.value|default:'' }}" class="form-control" id="email" placeholder="Email (optional)" />
+                  {% if form.email.errors %}
+                    <div class="text-danger">{{ form.email.errors }}</div>
+                  {% endif %}
                 </div>
                 <div class="col-md-6">
                   <label for="{{ form.mobile.id_for_label }}" class="form-label">Mobile</label>
-                  <input type="text" name="{{ form.mobile.name }}" value="{{ form.mobile.value|default:'' }}" class="form-control" id="mobile" />
+                  <input type="text" name="{{ form.mobile.name }}" value="{{ form.mobile.value|default:'' }}" class="form-control" id="mobile" placeholder="Mobile (optional)" />
+                  {% if form.mobile.errors %}
+                    <div class="text-danger">{{ form.mobile.errors }}</div>
+                  {% endif %}
                   {% if form.mobile.help_text %}
                     <small class="form-text text-muted">{{ form.mobile.help_text }}</small>
                   {% endif %}
@@ -46,46 +68,53 @@
               <div class="mb-3">
                 <label for="{{ form.address.id_for_label }}" class="form-label">Address</label>
                 <textarea name="{{ form.address.name }}" class="form-control" rows="2" id="address" placeholder="Address" required>{{ form.address.value|default:'' }}</textarea>
+                {% if form.address.errors %}
+                  <div class="text-danger">{{ form.address.errors }}</div>
+                {% endif %}
               </div>
+
               <!-- Cart Summary -->
               <h3 class="mt-4 mb-3">Cart Summary</h3>
-
-              <ul class="list-group mb-3">
-                {% for item in cart.items.all %}
-                  <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <span>
-                      {% comment %} {{ item.product.name }} - {{ item.volume.volume.ml }}ML{% endcomment %}
-                      <h6 class="mb-1">
-                        <span class="text-primary fw-bold">{{ item.product.name }}</span> |
-                        <span class="text-success">{{ item.product.category }}</span> |
-                        <span class="text-info">{{ item.product.gender }}</span> |
-                        <span class="text-warning">{{ item.volume.product_type }}</span>
-                      </h6>
-                      {% comment %} {{ item.volume.volume.ml }}ML
-                      <small class="text-muted">(x{{ item.quantity }})</small> {% endcomment %}
-                      <small>
-                        {{ item.volume.volume.ml }}ML (x{{ item.quantity }}) @{% if item.volume.discount_value %}
-                          <del class="text-muted">UgX {{ item.volume.volume.price|floatformat:'2'|intcomma }}</del>
-                          <span class="text-danger">UgX {{ item.volume.get_discounted_price|floatformat:'2'|intcomma }}</span>
-                          ({{ item.volume.discount_value|floatformat:'2' }}% Off)
-                        {% else %}
-                          UgX {{ item.volume.volume.price|floatformat:'2'|intcomma }}
-                        {% endif %}each
-                      </small>
-                    </span>
-                    <span class="badge bg-primary rounded-pill">{{ item.get_total_price|floatformat:'2'|intcomma }}</span>
-                  </li>
-                {% endfor %}
-              </ul>
-
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <strong>Total Amount:</strong>
-                <h4 class="text-success">{{ cart.get_total_price|floatformat:'2'|intcomma }}</h4>
-              </div>
+              {% if cart.items.all %}
+                <ul class="list-group mb-3">
+                  {% for item in cart.items.all %}
+                    {% if item.product and item.volume and item.volume.volume %}
+                      <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>
+                          <h6 class="mb-1">
+                            <span class="text-primary fw-bold">{{ item.product.name }}</span> |
+                            <span class="text-success">{{ item.product.category }}</span> |
+                            <span class="text-info">{{ item.product.gender }}</span> |
+                            <span class="text-warning">{{ item.volume.product_type }}</span>
+                          </h6>
+                          <small>
+                            {{ item.volume.volume.ml }}ML (x{{ item.quantity }}) @{% if item.volume.discount_value %}
+                              <del class="text-muted">UgX {{ item.volume.volume.price|floatformat:'2'|intcomma }}</del>
+                              <span class="text-danger">UgX {{ item.volume.get_discounted_price|floatformat:'2'|intcomma }}</span>
+                              ({{ item.volume.discount_value|floatformat:'2' }}% Off)
+                            {% else %}
+                              UgX {{ item.volume.volume.price|floatformat:'2'|intcomma }}
+                            {% endif %}each
+                          </small>
+                        </span>
+                        <span class="badge bg-primary rounded-pill">{{ item.get_total_price|floatformat:'2'|intcomma }}</span>
+                      </li>
+                    {% else %}
+                      <li class="list-group-item text-danger">Invalid item in cart.</li>
+                    {% endif %}
+                  {% endfor %}
+                </ul>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <strong>Total Amount:</strong>
+                  <h4 class="text-success">{{ cart.get_total_price|floatformat:'2'|intcomma }}</h4>
+                </div>
+              {% else %}
+                <p class="text-muted">Your cart is empty.</p>
+              {% endif %}
 
               <!-- Submit Button -->
               <div class="text-center">
-                <button type="submit" class="btn btn-lg btn-success px-5" onclick="return confirm('Are you sure you want to proceed?') && validateForm()">Place Order</button>
+                <button type="submit" class="btn btn-lg btn-success px-5" onclick="return confirm('Are you sure you want to proceed?')">Place Order</button>
               </div>
             </form>
           </div>
@@ -93,13 +122,18 @@
       </div>
     </div>
   </div>
-  {% comment %} <script>
+
+  <script>
+    // Optional: Add client-side validation if needed
     document.addEventListener('DOMContentLoaded', function () {
-      document.querySelectorAll('input, textarea').forEach(function (field) {
-        if (field.value.trim() !== '') {
-          field.setAttribute('readonly', 'readonly')
-        }
-      })
+      // Example: Disable fields with existing values (uncomment if needed)
+      /*
+          document.querySelectorAll('input, textarea').forEach(function (field) {
+            if (field.value.trim() !== '') {
+              field.setAttribute('readonly', 'readonly');
+            }
+          });
+          */
     })
-  </script> {% endcomment %}
+  </script>
 {% endblock %}

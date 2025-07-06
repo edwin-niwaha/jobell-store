@@ -17,7 +17,7 @@ urlpatterns = [
     path("inventory/", include("apps.inventory.urls")),
     path("sales/", include("apps.sales.urls")),
     path("orders/", include("apps.orders.urls")),
-    path("finance/", include("apps.finance.urls")),
+    path("financials/", include("apps.finance.urls")),
     path("blog/", include("apps.blog.urls")),
     # Social Authentication
     re_path(r"^oauth/", include("social_django.urls", namespace="social")),
