@@ -5,9 +5,7 @@
 {% block content %}
   <!-- Main container for the page content, removing default padding on x-axis -->
   <div class="container-fluid px-0">
-    <!-- Hero Section with Standard Carousel -->
-
-    <section class="hero-section position-relative overflow-hidden">
+    <section class="hero-section position-relative overflow-hidden mb-3">
       <!-- Bootstrap carousel for hero images with fade effect and 6-second interval -->
       <div id="hero-carousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="6000">
         <div class="carousel-inner" style="border-radius: 15px; overflow: hidden;">
@@ -138,21 +136,20 @@
     </section>
 
     <!-- Welcome Section with Beautiful Background and Card -->
-    <section class="welcome-section py-5" style="background: linear-gradient(135deg, #FCE4EC, #E6E6FA); border-radius: 15px;">
-      <div class="container-fluid">
-        <div class="row justify-content-center">
-          <!-- Welcome message card with elegant design -->
-          <div class="col-lg-12 text-center px-0">
-            <div class="card border-0 shadow-sm animate__animated animate__fadeIn" style="background: #FFFFFF; border-radius: 25px; padding: 2.5rem; box-shadow: 0 10px 20px rgba(0,0,0,0.1);">
-              <h2 class="text-center fw-bold text-dark" style="font-family: 'Playfair Display', serif; font-size: 2.8rem; text-transform: uppercase; color: #1A252F; text-shadow: 1px 1px 3px rgba(0,0,0,0.1);">Your Journey Starts Here</h2>
-              <hr class="mx-auto" style="width: 100%; height: 4px; background-color: #127D61; border-radius: 5px; opacity: 0.8;" />
-              {% if user.is_authenticated %}
-                <!-- Personalized welcome for authenticated users -->
-                <p class="mb-4 text-dark" style="font-size: 1.1rem; line-height: 1.6; font-family: 'Lora', serif; text-shadow: 0.5px 0.5px 2px rgba(0,0,0,0.05);">
-                  Welcome back, <span class="fw-semibold" style="color: #D81B60;">{{ user.username|title }}</span>! Dive into the ultimate shopping experience!
-                </p>
-                <div class="d-flex justify-content-center my-4">
-                  <a href="{% url 'products:shop_homepage' %}" class="btn btn-lg px-5 py-3 fw-bold text-white shadow-sm animate__animated animate__pulse animate__infinite" style="
+    <section class="featured-products position-relative overflow-hidden mb-3" style="border-radius: 15px; overflow: hidden;">
+      <div class="row justify-content-center">
+        <!-- Welcome message card with elegant design -->
+        <div class="col-lg-12 text-center px-0">
+          <div class="card border-0 shadow-sm animate__animated animate__fadeIn" style="background: #FFFFFF; border-radius: 25px; padding: 2.5rem; box-shadow: 0 10px 20px rgba(0,0,0,0.1);">
+            <h2 class="text-center fw-bold text-dark" style="font-family: 'Playfair Display', serif; font-size: 2.8rem; text-transform: uppercase; color: #1A252F; text-shadow: 1px 1px 3px rgba(0,0,0,0.1);">Your Journey Starts Here</h2>
+            <hr class="mx-auto" style="width: 100%; height: 4px; background-color: #127D61; border-radius: 5px; opacity: 0.8;" />
+            {% if user.is_authenticated %}
+              <!-- Personalized welcome for authenticated users -->
+              <p class="mb-4 text-dark" style="font-size: 1.1rem; line-height: 1.6; font-family: 'Lora', serif; text-shadow: 0.5px 0.5px 2px rgba(0,0,0,0.05);">
+                Welcome back, <span class="fw-semibold" style="color: #D81B60;">{{ user.username|title }}</span>! Dive into the ultimate shopping experience!
+              </p>
+              <div class="d-flex justify-content-center my-4">
+                <a href="{% url 'products:shop_homepage' %}" class="btn btn-lg px-5 py-3 fw-bold text-white shadow-sm animate__animated animate__pulse animate__infinite" style="
                     background: linear-gradient(135deg, #127D61, #1BAF87);
                     border-radius: 10px;
                     transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -164,46 +161,46 @@
                     text-align: center;
                     font-family: 'Lora', serif;
                   ">Get Started</a>
-                </div>
-                <hr class="my-4 mx-auto" style="width: 100%; height: 4px; background-color: #B8860B; border-radius: 5px; opacity: 0.8;" />
-                <p class="text-dark" style="font-family: 'Lora', serif; font-size: 1rem;">Your ultimate destination for exquisite scents that elevate your spirit and enhance your unique identity.</p>
-              {% else %}
-                <!-- Welcome message for guests with sign-in/register prompts -->
-                <p class="mb-4 text-dark" style="font-size: 1.1rem; line-height: 1.6; font-family: 'Lora', serif;">
-                  Dear <span class="fw-semibold" style="color: #D81B60; text-shadow: 0.5px 0.5px 2px rgba(0,0,0,0.1);">
-                    {{ user.username|title|default:'Guest' }}
-                    {% if user.profile.role %}
-                      <small class="text-muted" style="font-size: 0.85rem;">({{ user.profile.get_role_display }})</small>
-                    {% endif %}
-                  </span>, Welcome to Jobell Inc.!
-                  <br /><span class="text-muted animate__animated animate__fadeInUp" style="font-size: 0.95rem;">We're thrilled to have you here. Create an account or log in to unlock the full shopping experience!</span>
-                </p>
-                <div class="d-flex flex-column align-items-center gap-3">
-                  <a href="{% url 'login' %}" class="btn btn-lg w-100 fw-bold text-white shadow-sm" style="background: linear-gradient(135deg, #FFD700, #E8B923); border-radius: 10px; max-width: 50%; transition: transform 0.3s ease, box-shadow 0.3s ease; font-family: 'Lora', serif;">Sign In</a>
-                  <span class="my-2 text-muted fw-semibold" style="font-family: 'Lora', serif;">OR</span>
-                  <a href="{% url 'users-register' %}" class="btn btn-lg w-100 fw-bold text-white shadow-sm" style="background: linear-gradient(135deg, #D81B60, #F06292); border-radius: 10px; max-width: 50%; transition: transform 0.3s ease, box-shadow 0.3s ease; font-family: 'Lora', serif;">Register</a>
-                </div>
-                <hr class="my-4 mx-auto" style="width: 100%; height: 4px; background-color: #FFD700; border-radius: 5px; opacity: 0.8;" />
-              {% endif %}
-            </div>
+              </div>
+              <hr class="my-4 mx-auto" style="width: 100%; height: 4px; background-color: #B8860B; border-radius: 5px; opacity: 0.8;" />
+              <p class="text-dark" style="font-family: 'Lora', serif; font-size: 1rem;">Your ultimate destination for exquisite scents that elevate your spirit and enhance your unique identity.</p>
+            {% else %}
+              <!-- Welcome message for guests with sign-in/register prompts -->
+              <p class="mb-4 text-dark" style="font-size: 1.1rem; line-height: 1.6; font-family: 'Lora', serif;">
+                Dear <span class="fw-semibold" style="color: #D81B60; text-shadow: 0.5px 0.5px 2px rgba(0,0,0,0.1);">
+                  {{ user.username|title|default:'Guest' }}
+                  {% if user.profile.role %}
+                    <small class="text-muted" style="font-size: 0.85rem;">({{ user.profile.get_role_display }})</small>
+                  {% endif %}
+                </span>, Welcome to Jobell Inc.!
+                <br /><span class="text-muted animate__animated animate__fadeInUp" style="font-size: 0.95rem;">We're thrilled to have you here. Create an account or log in to unlock the full shopping experience!</span>
+              </p>
+              <div class="d-flex flex-column align-items-center gap-3 p-3">
+                <a href="{% url 'login' %}" class="btn btn-lg btn-warning w-100 fw-bold text-white shadow-sm" style="max-width: 400px;">Sign In</a>
+                <span class="my-2 text-muted fw-semibold">OR</span>
+                <a href="{% url 'users-register' %}" class="btn btn-lg btn-danger w-100 fw-bold text-white shadow-sm" style="max-width: 400px;">Register</a>
+              </div>
+              <hr class="my-4 mx-auto" style="width: 100%; height: 4px; background-color: #FFD700; border-radius: 5px; opacity: 0.8;" />
+            {% endif %}
           </div>
         </div>
       </div>
     </section>
 
     <!-- Featured Products Section style="border-radius: 15px; overflow: hidden;" -->
-    <section class="featured-products py-5" style="background: linear-gradient(to bottom, #FFF8E1, #FCE4EC); border-radius: 15px;">
+    <section class="featured-products py-5 position-relative overflow-hidden mb-3" style="border-radius: 15px; overflow: hidden;">
       <div class="container-fluid">
         <!-- Section title -->
-        <h2 class="text-center fw-bold mb-5 text-dark" style="font-family: 'Playfair Display', serif; font-size: 2.8rem; text-transform: uppercase; color: #1A252F; text-shadow: 1px 1px 3px rgba(0,0,0,0.1);">Our Signature Collection</h2>
+        <h2 class="text-center fw-bold mb-5 text-dark text-uppercase">Our Signature Collection</h2>
+        <hr class="mx-auto" style="width: 100%; height: 4px; background-color: #127D61; border-radius: 5px; opacity: 0.8;" />
         <div class="row g-4">
           {% if products_with_images %}
             <!-- Loop through products with associated images -->
             {% for product_info in products_with_images %}
               {% with product=product_info.product images=product_info.images min_price=product_info.min_price max_price=product_info.max_price %}
                 <div class="col-6 col-md-4 col-lg-3">
-                  <!-- Product card with shadow and rounded corners -->
-                  <div class="card border-0 shadow-lg h-100 position-relative overflow-hidden animate__animated animate__fadeIn" style="border-radius: 20px; background: #FFFFFF; transition: transform 0.3s ease;">
+                  <!-- Product card -->
+                  <div class="card border-0 shadow-lg h-100 position-relative rounded-3">
                     <!-- Product image carousel -->
                     <div id="carousel-{{ product.id }}" class="carousel slide" data-bs-ride="carousel">
                       <div class="carousel-inner">
@@ -211,23 +208,32 @@
                           <!-- Loop through product images -->
                           {% for image in images %}
                             <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                              <img src="{{ image.image.url }}" class="d-block w-100" style="height: 300px; object-fit: cover; border-radius: 20px 20px 0 0;" alt="{{ product.name }}" />
+                              <img src="{{ image.image.url }}" class="d-block w-100 img-fluid rounded-top" alt="{{ product.name }}" />
                             </div>
                           {% endfor %}
                         {% else %}
                           <!-- Fallback image if no images are available -->
                           <div class="carousel-item active">
-                            <img src="{% static 'images/no-image.png' %}" class="d-block w-100" style="height: 300px; object-fit: cover; border-radius: 20px 20px 0 0;" alt="No image available" />
+                            <img src="{% static 'images/no-image.png' %}" class="d-block w-100 img-fluid rounded-top" alt="No image available" />
                           </div>
                         {% endif %}
                       </div>
+                      <!-- Carousel controls -->
+                      <button class="carousel-control-prev" type="button" data-bs-target="#carousel-{{ product.id }}" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Previous</span>
+                      </button>
+                      <button class="carousel-control-next" type="button" data-bs-target="#carousel-{{ product.id }}" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Next</span>
+                      </button>
                     </div>
                     <!-- Product details -->
-                    <div class="card-body text-center" style="font-family: 'Lora', serif;">
-                      <h5 class="card-title fw-semibold text-dark mb-2" style="font-size: 1.3rem;">{{ product.name }}</h5>
-                      <p class="text-muted mb-2" style="font-size: 0.95rem;">{{ product.category }} - {{ product.gender }}</p>
+                    <div class="card-body text-center">
+                      <h5 class="card-title fw-semibold mb-2">{{ product.name }}</h5>
+                      <p class="text-muted mb-2 small">{{ product.category }} - {{ product.gender }}</p>
                       <!-- Display price range or fallback message -->
-                      <p class="fw-bold mb-3" style="color: #127D61;">
+                      <p class="fw-bold mb-3 text-success">
                         {% if min_price and max_price %}
                           UGX {{ min_price|floatformat:'2'|intcomma }} - {{ max_price|floatformat:'2'|intcomma }}
                         {% else %}
@@ -235,11 +241,11 @@
                         {% endif %}
                       </p>
                       <!-- Link to product details page -->
-                      <a href="{% url 'orders:product_details_view' product.id %}" class="btn btn-sm btn-outline-dark" style="border-radius: 50px; font-family: 'Lora', serif; transition: background 0.3s ease, color 0.3s ease;">View Details</a>
+                      <a href="{% url 'orders:product_details_view' product.id %}" class="btn btn-sm btn-outline-dark rounded-pill">View Details</a>
                     </div>
-                    <!-- Shop Now button positioned at top-right -->
+                    <!-- Shop Now button -->
                     <div class="position-absolute top-0 end-0 p-2">
-                      <a href="{% url 'orders:product_detail' product.id %}" class="btn btn-sm btn-primary" style="background: #B8860B; border: none; border-radius: 50px; color: #FFFFFF; font-family: 'Lora', serif;">Shop Now</a>
+                      <a href="{% url 'orders:product_detail' product.id %}" class="btn btn-sm btn-primary rounded-pill">Shop Now</a>
                     </div>
                   </div>
                 </div>
@@ -248,7 +254,7 @@
           {% else %}
             <!-- Message when no products are available -->
             <div class="col-12 text-center">
-              <p class="text-muted" style="font-family: 'Lora', serif;">No fragrances available at the moment.</p>
+              <p class="text-muted">No fragrances available at the moment.</p>
             </div>
           {% endif %}
         </div>
@@ -259,23 +265,23 @@
               {% if page_obj.has_previous %}
                 <!-- First and Previous page links -->
                 <li class="page-item">
-                  <a class="page-link" href="?page=1&search={{ search_query }}" style="font-family: 'Lora', serif; color: #1A252F;">First</a>
+                  <a class="page-link" href="?page=1&search={{ search_query }}">First</a>
                 </li>
                 <li class="page-item">
-                  <a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}" style="font-family: 'Lora', serif; color: #1A252F;">Previous</a>
+                  <a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}">Previous</a>
                 </li>
               {% endif %}
               <!-- Current page indicator -->
               <li class="page-item disabled">
-                <span class="page-link" style="font-family: 'Lora', serif; color: #1A252F;">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
               </li>
               {% if page_obj.has_next %}
                 <!-- Next and Last page links -->
                 <li class="page-item">
-                  <a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ search_query }}" style="font-family: 'Lora', serif; color: #1A252F;">Next</a>
+                  <a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ search_query }}">Next</a>
                 </li>
                 <li class="page-item">
-                  <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&search={{ search_query }}" style="font-family: 'Lora', serif; color: #1A252F;">Last</a>
+                  <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&search={{ search_query }}">Last</a>
                 </li>
               {% endif %}
             </ul>
@@ -285,7 +291,7 @@
     </section>
 
     <!-- Why Choose Us Section -->
-    <section class="why-choose-us py-5" style="background: linear-gradient(135deg, #1A252F, #2E3B4E); border-radius: 15px;">
+    <section class="why-choose-us py-5 mb-3" style="background: linear-gradient(135deg, #1A252F, #2E3B4E); border-radius: 15px;">
       <div class="container">
         <!-- Section title -->
         <h2 class="text-center fw-bold mb-5 text-white" style="font-family: 'Playfair Display', serif; font-size: 2.8rem; text-transform: uppercase; text-shadow: 1px 1px 3px rgba(0,0,0,0.3);">Why Choose Jobell Inc.?</h2>
@@ -319,7 +325,7 @@
     </section>
 
     <!-- Testimonials Section -->
-    <section class="testimonials py-5" style="background: linear-gradient(to bottom, #FFF8E1, #FCE4EC); border-radius: 15px;">
+    <section class="testimonials py-5 mb-3" style="background: linear-gradient(to bottom, #FFF8E1, #FCE4EC); border-radius: 15px;">
       <div class="container">
         <!-- Section title -->
         <h2 class="text-center fw-bold mb-5 text-dark" style="font-family: 'Playfair Display', serif; font-size: 2.8rem; text-transform: uppercase; text-shadow: 1px 1px 3px rgba(0,0,0,0.1);">Voices of Our Community</h2>

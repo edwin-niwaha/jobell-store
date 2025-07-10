@@ -1,4 +1,5 @@
 {% load static %}
+{% load humanize %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -11,18 +12,23 @@
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" />
+
     <!-- Select2 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 
     <!-- jQuery (Required for Select2) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
+    <!-- Bootstrap JS (Bundle includes Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
     <!-- Select2 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-    <!-- CSS for Searchable dropdown -->
-    <link rel="stylesheet" href="{% static 'css/chosen.css' %}" /> 
-
+    <!-- Chosen CSS and JS -->
+    <link rel="stylesheet" href="{% static 'css/chosen.css' %}" />
+    <script src="{% static 'js/chosen.jquery.js' %}"></script>
   </head>
 
   <body>
@@ -60,16 +66,16 @@
                     <!-- Search Product -->
                     <div class="form-group">
                       <label for="searchbox_products">Search Product:</label>
-                      <select class="form-control" id="searchbox_products" name="searchbox_products">
+                      <select class="form-control select2" id="searchbox_products" name="searchbox_products">
                         <option value="" selected disabled hidden>Select a product</option>
                         {% for product in products %}
                           {% for product_volume in product.productvolume_set.all %}
                             {% if product_volume.discount_value %}
                               {% with discounted_price=product_volume.get_discounted_price %}
-                                <option value="{{ product.id }}-{{ product_volume.id }}" data-price="{{ discounted_price }}" data-cost="{{ product_volume.volume.cost }}" data-name="{{ product.name }}" data-volume="{{ product_volume.volume.ml }}" data-discount="{{ product_volume.discount_value }}">{{ product.name }} - {{ product_volume.volume.ml }}ML - Price: {{ product_volume.volume.price }} - {{ product_volume.product_type }} (Discount: {{ product_volume.discount_value }}% Off)</option>
+                                <option value="{{ product.id }}-{{ product_volume.id }}" data-product-id="{{ product.id }}" data-volume-id="{{ product_volume.id }}" data-price="{{ discounted_price }}" data-cost="{{ product_volume.volume.cost }}" data-name="{{ product.name }}" data-volume="{{ product_volume.volume.ml }}" data-discount="{{ product_volume.discount_value }}">{{ product.name }} - {{ product_volume.volume.ml }}ML - Price: {{ discounted_price|floatformat:'2'|intcomma }} ({{ product_volume.discount_value }}% Off) - {{ product_volume.product_type }}</option>
                               {% endwith %}
                             {% else %}
-                              <option value="{{ product.id }}-{{ product_volume.id }}" data-price="{{ product_volume.volume.price }}" data-cost="{{ product_volume.volume.cost }}" data-name="{{ product.name }}" data-volume="{{ product_volume.volume.ml }}">{{ product.name }} - {{ product_volume.volume.ml }}ML - Price: {{ product_volume.volume.price }} - {{ product_volume.product_type }}</option>
+                              <option value="{{ product.id }}-{{ product_volume.id }}" data-product-id="{{ product.id }}" data-volume-id="{{ product_volume.id }}" data-price="{{ product_volume.volume.price }}" data-cost="{{ product_volume.volume.cost }}" data-name="{{ product.name }}" data-volume="{{ product_volume.volume.ml }}">{{ product.name }} - {{ product_volume.volume.ml }}ML - Price: {{ product_volume.volume.price|floatformat:'2'|intcomma }} - {{ product_volume.product_type }}</option>
                             {% endif %}
                           {% endfor %}
                         {% endfor %}
@@ -137,11 +143,20 @@
                       <input name="grand_total" class="form-control" id="grand_total" type="number" readonly />
                     </div>
                     <div class="form-group">
-                      <label for="amount_payed">Amount Payed</label>
+                      <label for="amount_payed">Amount Paid</label>
                       <input name="amount_payed" class="form-control" id="amount_payed" type="number" required />
                     </div>
-
-                    <!-- Amount Change (Hidden) -->
+                    <div class="form-group mt-4">
+                      <label for="payment_method">Payment Method</label>
+                      <select name="payment_method" class="form-control select2" id="payment_method" required>
+                        <option value="" selected disabled hidden>Select payment method</option>
+                        {% for value, label in payment_methods %}
+                          <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                      </select>
+                      {{ form.payment_method.errors }}
+                    </div>
+                    <!-- Amount Change -->
                     <div class="form-group">
                       <label for="amount_change">Change</label>
                       <input name="amount_change" class="form-control" id="amount_change" type="number" readonly />
@@ -150,7 +165,7 @@
                     <!-- Submit Button -->
                     <div class="form-group mt-4 mb-0">
                       <button type="submit" class="btn btn-dark btn-block" onclick="return confirm('Are you sure you want to proceed?') && validateForm()">Create Sale</button>
-                  </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -161,156 +176,176 @@
     </div>
 
     <!-- Sales Add Script -->
-    {% comment %} <script src="{% static 'js/sales_add.js' %}"></script> {% endcomment %}
-  </body>
-  <script src="{% static 'js/chosen.jquery.js' %}"></script>
+<script>
+  $(document).ready(function () {
+    // Initialize Select2 for product and customer search boxes
+    $('#searchbox_products, #payment_method').select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Select an option',
+      allowClear: true,
+      width: '100%'
+    });
 
-  <script>
-    $(document).ready(function () {
-      // Initialize Select2 for the product select dropdown
-      $('#searchbox_products').select2({
-        placeholder: 'Search for a product...',
-        allowClear: true,
-        width: '100%'
-      });
-  
-      const $productSelect = $('#searchbox_products');
-      const $productTableBody = $('#table_products tbody');
-      const $subTotalInput = $('#sub_total');
-      const $taxPercentageInput = $('#tax_percentage');
-      const $taxAmountInput = $('#tax_amount');
-      const $grandTotalInput = $('#grand_total');
-      const $amountPayedInput = $('#amount_payed');
-      const $amountChangeInput = $('#amount_change');
-      const $form = $('.saleForm');
-  
-      let productIndex = 0;
-      let selectedProducts = [];
-  
-      // Handle product selection
-      function handleProductSelection() {
-        const $selectedOption = $productSelect.find('option:selected');
-        const productId = $selectedOption.val();
-        const productName = $selectedOption.data('name');
-        const productVolume = $selectedOption.data('volume');
-        const productPrice = parseFloat($selectedOption.data('price'));
-  
-        // Add product row to the table if it hasn't been added already
-        if (productId && !selectedProducts.includes(productId)) {
-          selectedProducts.push(productId);
-          addProductRow(productId, productName, productVolume, productPrice);
-          updateTotals();
-        }
-      }
-  
-      // Add new product row to the table
-      function addProductRow(productId, productName, productVolume, productPrice) {
+    $('#searchbox_customers').chosen({
+      allow_single_deselect: true,
+      width: '100%'
+    });
+
+    const productSelect = $('#searchbox_products');
+    const productTableBody = $('#table_products tbody');
+    const subTotalInput = $('#sub_total');
+    const taxPercentageInput = $('#tax_percentage');
+    const taxAmountInput = $('#tax_amount');
+    const grandTotalInput = $('#grand_total');
+    const amountPayedInput = $('#amount_payed');
+    const amountChangeInput = $('#amount_change');
+    const form = $('.saleForm');
+
+    let productIndex = 0;
+    let selectedProducts = [];
+
+    // Handle product selection using Select2's change event
+    productSelect.on('select2:select', function (e) {
+      const data = e.params.data;
+      const productId = data.element.dataset.productId;
+      const volumeId = data.element.dataset.volumeId;
+      const compositeId = data.id; // e.g., "1-2"
+      const productName = data.element.dataset.name;
+      const productVolume = data.element.dataset.volume;
+      const productPrice = parseFloat(data.element.dataset.price);
+      const productCost = parseFloat(data.element.dataset.cost); // Add cost
+
+      console.log('Selected product:', { compositeId, productId, volumeId, productName, productVolume, productPrice, productCost });
+
+      if (compositeId && !selectedProducts.includes(compositeId)) {
+        selectedProducts.push(compositeId);
+
+        // Add new row to the table
         const newRow = `
           <tr>
             <td>${++productIndex}</td>
             <td>${productName}</td>
-            <td>${productVolume}</td>
+            <td>${productVolume}ML</td>
             <td>${productPrice.toFixed(2)}</td>
-            <td><input type="number" class="form-control quantity-input" value="1" min="1" data-price="${productPrice}" data-product-id="${productId}"></td>
+            <td><input type="number" class="form-control quantity-input" value="1" min="1" data-price="${productPrice}" data-cost="${productCost}" data-product-id="${productId}" data-volume-id="${volumeId}" data-composite-id="${compositeId}"></td>
             <td class="product-total">${productPrice.toFixed(2)}</td>
-            <td class="text-center"><button type="button" class="btn btn-danger btn-sm delete-product" data-product-id="${productId}"><i class="fas fa-trash-alt"></i></button></td>
+            <td class="text-center"><button type="button" class="btn btn-danger btn-sm delete-product" data-composite-id="${compositeId}"><i class="mdi mdi-trash-can-outline"></i></button></td>
           </tr>
         `;
-        $productTableBody.append(newRow);
-      }
-  
-      // Update totals when quantity or tax percentage changes
-      function updateTotals() {
-        let subtotal = 0;
-        $('.product-total').each(function () {
-          subtotal += parseFloat($(this).text());
-        });
-        $subTotalInput.val(subtotal.toFixed(2));
-  
-        const taxPercentage = parseFloat($taxPercentageInput.val()) || 0;
-        const taxAmount = subtotal * (taxPercentage / 100);
-        $taxAmountInput.val(taxAmount.toFixed(2));
-  
-        const grandTotal = subtotal + taxAmount;
-        $grandTotalInput.val(grandTotal.toFixed(2));
-  
-        const amountPayed = parseFloat($amountPayedInput.val()) || 0;
-        const amountChange = amountPayed - grandTotal;
-        $amountChangeInput.val(amountChange.toFixed(2));
-      }
-  
-      // Update individual product total when quantity changes
-      function updateProductTotal($input) {
-        const price = parseFloat($input.data('price'));
-        const quantity = Math.max(parseInt($input.val()), 1); // Prevent invalid quantities
-        const productTotal = price * quantity;
-        $input.closest('tr').find('.product-total').text(productTotal.toFixed(2));
-      }
-  
-      // Remove product when delete button is clicked
-      function removeProduct(e) {
-        const $button = $(e.target).closest('.delete-product');
-        const productId = $button.data('product-id');
-        selectedProducts = selectedProducts.filter(id => id !== productId);
-        $button.closest('tr').remove();
+        productTableBody.append(newRow);
+        console.log('Row added to table:', newRow);
+
         updateTotals();
+        productSelect.val(null).trigger('change'); // Clear the select box
+      } else {
+        console.warn('Product already selected or invalid:', compositeId);
       }
-  
-      // Add hidden product data to the form on submit
-      function addProductDataToForm(event) {
-        const grandTotal = parseFloat($grandTotalInput.val());
-        const amountPayed = parseFloat($amountPayedInput.val()) || 0;
-  
-        // Prevent form submission if amount paid is less than grand total
-        if (amountPayed < grandTotal) {
-          event.preventDefault();
-          alert('The paid amount must be equal to or greater than the total amount.');
-          return false;
-        }
-  
-        // Remove existing hidden product inputs
-        $('input[name="products"]').remove();
-  
-        // Add new hidden inputs with product data
-        selectedProducts.forEach(productId => {
-          const $row = $productTableBody.find('tr').filter(function () {
-            return $(this).find('.delete-product').data('product-id') === productId;
-          });
-          const quantity = parseInt($row.find('.quantity-input').val());
-          const price = parseFloat($row.find('.product-total').text()) / quantity;
-          const totalProduct = parseFloat($row.find('.product-total').text());
-  
-          const input = $('<input>', {
-            type: 'hidden',
-            name: 'products',
-            value: JSON.stringify({
-              id: productId,
-              price: price,
-              quantity: quantity,
-              total_product: totalProduct
-            })
-          });
-          $form.append(input);
-        });
-      }
-  
-      // Event Listeners
-      $productSelect.on('change', handleProductSelection);
-      $productTableBody.on('input', '.quantity-input', function () {
-        updateProductTotal($(this));
-        updateTotals();
-      });
-      $productTableBody.on('click', '.delete-product', removeProduct);
-      $taxPercentageInput.on('input', updateTotals);
-      $amountPayedInput.on('keyup', updateTotals);
-      $form.on('submit', addProductDataToForm);
     });
-  </script>
-  <!-- Initialization for Chosen dropdown -->
-  <script type="text/javascript">
-    $('.chzn-select').chosen()
-    $('.chzn-select-deselect').chosen({
-      allow_single_deselect: true
-    })
-  </script>
+
+    // Update totals when quantity changes
+    productTableBody.on('input', '.quantity-input', function () {
+      updateProductTotal($(this));
+      updateTotals();
+    });
+
+    // Remove product when delete button is clicked
+    productTableBody.on('click', '.delete-product', function () {
+      const compositeId = $(this).data('compositeId');
+      selectedProducts = selectedProducts.filter(id => id !== compositeId);
+      $(this).closest('tr').remove();
+      productIndex--;
+      updateRowNumbers();
+      updateTotals();
+      console.log('Product removed:', compositeId);
+    });
+
+    // Update row numbers in the table
+    function updateRowNumbers() {
+      productTableBody.find('tr').each((index, row) => {
+        $(row).find('td:first').text(index + 1);
+      });
+    }
+
+    // Update the total for a specific product
+    function updateProductTotal(input) {
+      const price = parseFloat(input.data('price'));
+      const quantity = parseInt(input.val()) || 1;
+      const productTotal = price * quantity;
+      input.closest('tr').find('.product-total').text(productTotal.toFixed(2));
+      console.log('Updated product total:', productTotal);
+    }
+
+    // Update subtotal, tax amount, grand total, and amount change
+    function updateTotals() {
+      let subtotal = 0;
+      $('.product-total').each(function () {
+        subtotal += parseFloat($(this).text());
+      });
+      subTotalInput.val(subtotal.toFixed(2));
+
+      const taxPercentage = parseFloat(taxPercentageInput.val()) || 0;
+      const taxAmount = subtotal * (taxPercentage / 100);
+      taxAmountInput.val(taxAmount.toFixed(2));
+
+      const grandTotal = subtotal + taxAmount;
+      grandTotalInput.val(grandTotal.toFixed(2));
+
+      const amountPayed = parseFloat(amountPayedInput.val()) || 0;
+      const amountChange = amountPayed - grandTotal;
+      amountChangeInput.val(amountChange.toFixed(2));
+
+      console.log('Totals updated:', { subtotal, taxAmount, grandTotal, amountChange });
+    }
+
+    // Validate form and add hidden inputs before submission
+    window.validateForm = function () {
+      const grandTotal = parseFloat(grandTotalInput.val());
+      const amountPayed = parseFloat(amountPayedInput.val()) || 0;
+
+      if (amountPayed < grandTotal) {
+        alert('The paid amount must be equal to or greater than the total amount.');
+        return false;
+      }
+
+      // Remove existing hidden product inputs
+      $('input[name="products"]').remove();
+
+      // Add hidden inputs with product data
+      selectedProducts.forEach(compositeId => {
+        const row = productTableBody.find('tr').filter(function () {
+          return $(this).find('.delete-product').data('compositeId') === compositeId;
+        });
+        const quantity = parseInt(row.find('.quantity-input').val());
+        const price = parseFloat(row.find('.product-total').text()) / quantity;
+        const cost = parseFloat(row.find('.quantity-input').data('cost')); // Add cost
+        const totalProduct = parseFloat(row.find('.product-total').text());
+        const productId = row.find('.quantity-input').data('productId');
+        const volumeId = row.find('.quantity-input').data('volumeId');
+
+        const input = $('<input>', {
+          type: 'hidden',
+          name: 'products',
+          value: JSON.stringify({
+            product_id: productId,
+            volume_id: volumeId,
+            price: price,
+            cost: cost, // Include cost
+            quantity: quantity,
+            total_product: totalProduct
+          })
+        });
+        form.append(input);
+      });
+
+      console.log('Form validated, hidden inputs added:', selectedProducts);
+      return true;
+    };
+
+    // Event listeners for tax and amount paid
+    taxPercentageInput.on('input', updateTotals);
+    amountPayedInput.on('input', updateTotals);
+  });
+</script>
+
+  </body>
 </html>

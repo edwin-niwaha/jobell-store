@@ -6,13 +6,11 @@ from apps.orders.models import Order
 
 
 PAYMENT_METHOD_CHOICES = [
-    ("CREDIT_CARD", "Credit Card"),
-    ("DEBIT_CARD", "Debit Card"),
-    ("PAYPAL", "PayPal"),
-    ("BANK_TRANSFER", "Bank Transfer"),
-    ("CASH", "Cash"),
-    ("MTN_MOBILE_MONEY", "MTN Mobile Money"),
-    ("AIRTEL_MONEY", "Airtel Money"),
+    ("cash", "Cash"),
+    ("bank_transfer", "Bank Transfer"),
+    ("mobile_money", "Mobile Money"),
+    ("cheque", "Cheque"),
+    ("other", "Other"),
 ]
 
 SALE_TYPE_CHOICES = [

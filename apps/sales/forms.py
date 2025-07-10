@@ -15,6 +15,7 @@ class SaleForm(forms.ModelForm):
             "tax_percentage",
             "amount_payed",
             "amount_change",
+            "payment_method",
         ]
         widgets = {
             "trans_date": forms.DateInput(attrs={"type": "date", "required": True}),
@@ -38,6 +39,7 @@ class SaleForm(forms.ModelForm):
             "amount_change": forms.NumberInput(
                 attrs={"class": "form-control", "step": "0.01"}
             ),
+            "payment_method": forms.Select(attrs={"class": "form-control select2"}),
         }
 
 

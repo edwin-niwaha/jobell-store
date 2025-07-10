@@ -17,7 +17,7 @@ urlpatterns = [
         views.chart_of_account_delete_view,
         name="chart_of_account_delete",
     ),
-    path("profit-and-loss/", views.profit_and_loss_view, name="profit_and_loss"),
+    # path("profit-and-loss/", views.profit_and_loss_view, name="profit_and_loss"),
     path(
         "income/add/",
         views.income_transaction_create_view,
@@ -40,16 +40,9 @@ urlpatterns = [
         views.delete_transaction,
         name="delete-transaction",
     ),
-    # path(
-    #     "balance-sheet/<int:financial_period_id>/",
-    #     views.balance_sheet_pro_view,
-    #     name="balance_sheet_pro",
-    # ),
-    # path(
-    #     "balance-sheet/select-period/",
-    #     views.balance_sheet_select_period,
-    #     name="balance_sheet_select",
-    # ),
+    path(
+        "profit-loss/", views.profit_loss_statement_view, name="profit-loss-statement"
+    ),
     path("balance-sheet/", views.balance_sheet_view, name="balance-sheet"),
     path(
         "cash-flow/select-period/",

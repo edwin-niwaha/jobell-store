@@ -1,5 +1,6 @@
 import json
 import logging
+from django.utils import timezone
 from decimal import Decimal
 from django.core.paginator import Paginator
 from django.db.models import Q
@@ -16,8 +17,17 @@ from apps.customers.models import Customer
 from apps.inventory.models import Inventory
 from apps.products.models import Product, ProductVolume
 from .models import Sale, SaleDetail
-from .forms import ReportPeriodForm
+from apps.finance.middleware import get_current_user
+from .forms import ReportPeriodForm, SaleForm
 
+from apps.finance.models import (
+    JournalEntry,
+    Transaction,
+    ChartOfAccounts,
+    FinancialPeriod,
+    Branch,
+    PAYMENT_METHOD_CHOICES,
+)
 
 # Import custom decorators
 from apps.authentication.decorators import (
@@ -186,116 +196,374 @@ def sales_report_view(request):
 
 
 # =================================== Sale Add view ===================================
+# @admin_or_manager_or_staff_required
+# @login_required
+# def sales_add_view(request):
+#     # Fetch products with active status and related inventory and volumes
+#     products = (
+#         Product.objects.filter(status="ACTIVE")
+#         .select_related("inventory")
+#         .prefetch_related("productvolume_set__volume")  # Include volume relation
+#     )
+
+#     # Prepare context for rendering
+#     context = {
+#         "customers": [c.to_select2() for c in Customer.objects.all()],
+#         "products": products,
+#         "total_stock": sum(
+#             product.inventory.quantity if hasattr(product, "inventory") else 0
+#             for product in products
+#         ),
+#     }
+
+#     if request.method == "POST":
+#         try:
+#             logger.debug(f"POST data: {request.POST}")
+
+#             # Extract and process form data
+#             customer_id = int(request.POST.get("customer"))
+#             sale_attributes = {
+#                 "customer": Customer.objects.get(id=customer_id),
+#                 "trans_date": request.POST.get("trans_date"),
+#                 "sub_total": float(request.POST.get("sub_total", 0)),
+#                 "grand_total": float(request.POST.get("grand_total", 0)),
+#                 "tax_amount": float(request.POST.get("tax_amount", 0)),
+#                 "tax_percentage": float(request.POST.get("tax_percentage", 0)),
+#                 "amount_payed": float(request.POST.get("amount_payed", 0)),
+#                 "amount_change": float(request.POST.get("amount_change", 0)),
+#             }
+
+#             with transaction.atomic():
+#                 # Create the sale
+#                 new_sale = Sale.objects.create(**sale_attributes)
+#                 logger.info(f"Sale created successfully: {sale_attributes}")
+
+#                 # Extract product details from form data
+#                 products_data = request.POST.getlist("products")
+#                 for product_data_str in products_data:
+#                     product_data = json.loads(product_data_str)
+
+#                     # Parse combined product and volume IDs
+#                     product_id, volume_id = map(int, product_data["id"].split("-"))
+#                     product_obj = Product.objects.get(id=product_id)
+#                     product_volume = ProductVolume.objects.select_related("volume").get(
+#                         id=volume_id
+#                     )
+
+#                     # Fetch price and discount
+#                     original_price = product_volume.volume.price
+#                     discounted_price = (
+#                         product_volume.get_discounted_price()
+#                     )  # Apply discount if any
+
+#                     quantity_requested = int(product_data["quantity"])
+
+#                     # Check if the product's inventory has sufficient stock
+#                     if (
+#                         not hasattr(product_obj, "inventory")
+#                         or product_obj.inventory.quantity < quantity_requested
+#                     ):
+#                         raise ValueError(
+#                             f"Oops! Insufficient stock for {product_obj.name}"
+#                         )
+
+#                     # Update inventory stock at the product level
+#                     inventory_obj = product_obj.inventory
+#                     inventory_obj.quantity -= quantity_requested
+#                     inventory_obj.save()
+#                     logger.info(
+#                         f"Stock updated for {product_obj.name}: {inventory_obj.quantity}"
+#                     )
+
+#                     # Create sale detail
+#                     detail_attributes = {
+#                         "sale": new_sale,
+#                         "product": product_obj,
+#                         "product_volume": product_volume,
+#                         "price": discounted_price,  # Use discounted price
+#                         "quantity": quantity_requested,
+#                         "total_detail": discounted_price
+#                         * quantity_requested,  # Apply discount in total
+#                     }
+#                     SaleDetail.objects.create(**detail_attributes)
+#                     logger.info(f"Sale detail added: {detail_attributes}")
+
+#                 # Success message
+#                 messages.success(
+#                     request, "Sale created successfully!", extra_tags="bg-success"
+#                 )
+#                 return redirect("sales:sales_add")
+
+#         except ValueError as ve:
+#             logger.error(f"Stock error: {ve}")
+#             messages.error(request, str(ve), extra_tags="bg-danger")
+#         except Exception as e:
+#             logger.error(f"Error during sale creation: {e}")
+#             messages.error(
+#                 request,
+#                 f"There was an error during the creation! Error: {e}",
+#                 extra_tags="bg-danger",
+#             )
+
+#         return redirect("sales:sales_add")
+
+#     return render(request, "sales/sales_add.html", context=context)
+
+
+
 @admin_or_manager_or_staff_required
 @login_required
 def sales_add_view(request):
-    # Fetch products with active status and related inventory and volumes
+    # Fetch only active products with their inventory and volumes
     products = (
         Product.objects.filter(status="ACTIVE")
         .select_related("inventory")
-        .prefetch_related("productvolume_set__volume")  # Include volume relation
+        .prefetch_related("productvolume_set__volume")
     )
 
-    # Prepare context for rendering
+    # Initialize the form
+    form = SaleForm()
+
     context = {
+        "form": form,
         "customers": [c.to_select2() for c in Customer.objects.all()],
         "products": products,
         "total_stock": sum(
             product.inventory.quantity if hasattr(product, "inventory") else 0
             for product in products
         ),
+        "payment_methods": PAYMENT_METHOD_CHOICES,
     }
 
     if request.method == "POST":
-        try:
-            logger.debug(f"POST data: {request.POST}")
-
-            # Extract and process form data
-            customer_id = int(request.POST.get("customer"))
-            sale_attributes = {
-                "customer": Customer.objects.get(id=customer_id),
-                "trans_date": request.POST.get("trans_date"),
-                "sub_total": float(request.POST.get("sub_total", 0)),
-                "grand_total": float(request.POST.get("grand_total", 0)),
-                "tax_amount": float(request.POST.get("tax_amount", 0)),
-                "tax_percentage": float(request.POST.get("tax_percentage", 0)),
-                "amount_payed": float(request.POST.get("amount_payed", 0)),
-                "amount_change": float(request.POST.get("amount_change", 0)),
-            }
-
-            with transaction.atomic():
-                # Create the sale
-                new_sale = Sale.objects.create(**sale_attributes)
-                logger.info(f"Sale created successfully: {sale_attributes}")
+        form = SaleForm(request.POST)
+        if form.is_valid():
+            try:
+                logger.debug(f"POST data: {request.POST}")
 
                 # Extract product details from form data
                 products_data = request.POST.getlist("products")
-                for product_data_str in products_data:
-                    product_data = json.loads(product_data_str)
 
-                    # Parse combined product and volume IDs
-                    product_id, volume_id = map(int, product_data["id"].split("-"))
-                    product_obj = Product.objects.get(id=product_id)
-                    product_volume = ProductVolume.objects.select_related("volume").get(
-                        id=volume_id
-                    )
+                with transaction.atomic():
+                    # Create the sale
+                    new_sale = form.save(commit=False)
+                    new_sale.date_added = timezone.now()
+                    new_sale.save()
+                    logger.info(f"Sale created successfully: {new_sale}")
 
-                    # Fetch price and discount
-                    original_price = product_volume.volume.price
-                    discounted_price = (
-                        product_volume.get_discounted_price()
-                    )  # Apply discount if any
+                    # Process products and calculate COGS
+                    cogs_total = 0
+                    for product_data_str in products_data:
+                        product_data = json.loads(product_data_str)
+                        product_id = product_data["product_id"]
+                        volume_id = product_data.get("volume_id")
+                        quantity_requested = int(product_data["quantity"])
 
-                    quantity_requested = int(product_data["quantity"])
+                        # Convert IDs to integers, handling potential errors
+                        try:
+                            product_id = int(product_id)
+                        except (TypeError, ValueError):
+                            raise ValueError(f"Invalid product ID format: {product_id}")
+                        if volume_id is not None:
+                            try:
+                                volume_id = int(volume_id)
+                            except (TypeError, ValueError):
+                                raise ValueError(f"Invalid volume ID format: {volume_id}")
 
-                    # Check if the product's inventory has sufficient stock
-                    if (
-                        not hasattr(product_obj, "inventory")
-                        or product_obj.inventory.quantity < quantity_requested
-                    ):
-                        raise ValueError(
-                            f"Oops! Insufficient stock for {product_obj.name}"
+                        product_obj = Product.objects.get(id=product_id)
+
+                        # Fetch product volume if provided
+                        if volume_id:
+                            product_volume = product_obj.productvolume_set.get(id=volume_id)
+                            price = float(product_volume.volume.price)
+                            cost = float(product_volume.volume.cost)
+                        else:
+                            price = float(product_data["price"])
+                            cost = float(product_data.get("cost", 0))  # Fallback to 0 if cost not provided
+
+                        # Check if the product has inventory and stock is available
+                        if not hasattr(product_obj, "inventory"):
+                            raise ValueError(f"No inventory record for {product_obj.name}")
+                        if product_obj.inventory.quantity < quantity_requested:
+                            raise ValueError(
+                                f"Oops! Insufficient stock for {product_obj.name} (Available: {product_obj.inventory.quantity})"
+                            )
+
+                        # Calculate COGS for this product
+                        product_cost = cost * quantity_requested
+                        cogs_total += product_cost
+
+                        # Update inventory stock
+                        inventory_obj = product_obj.inventory
+                        inventory_obj.quantity -= quantity_requested
+                        inventory_obj.save()  # Triggers check_stock_alerts()
+                        logger.info(
+                            f"Stock updated for {product_obj.name}: {inventory_obj.quantity}"
                         )
 
-                    # Update inventory stock at the product level
-                    inventory_obj = product_obj.inventory
-                    inventory_obj.quantity -= quantity_requested
-                    inventory_obj.save()
+                        # Create sale detail
+                        detail_attributes = {
+                            "sale": new_sale,
+                            "product": product_obj,
+                            "price": price,
+                            "quantity": quantity_requested,
+                            "total_detail": float(product_data["total_product"]),
+                        }
+                        if volume_id:
+                            detail_attributes["product_volume"] = product_volume
+                        SaleDetail.objects.create(**detail_attributes)
+                        logger.info(f"Sale detail added: {detail_attributes}")
+
+                    # Create Journal Entry for the sale
+                    financial_period = FinancialPeriod.objects.filter(
+                        status="open"
+                    ).first()
+                    if not financial_period:
+                        raise ValueError(
+                            "No open financial period available for journal entry."
+                        )
+
+                    branch = Branch.objects.filter().first()
+                    if not branch:
+                        raise ValueError("No branch available for journal entry.")
+
+                    reference_number = new_sale.receipt_number or f"SALE-{new_sale.id}"
+
+                    journal_entry = JournalEntry.objects.create(
+                        reference_number=reference_number,
+                        transaction_date=new_sale.trans_date,
+                        description=f"Sale to {new_sale.customer.first_name if new_sale.customer else 'Customer'} (Sale ID: {new_sale.id})",
+                        payment_method=new_sale.payment_method,
+                        financial_period=financial_period,
+                        branch=branch,
+                        created_by=request.user,
+                    )
+                    logger.info(f"Journal Entry created: {journal_entry}")
+
+                    # Get Chart of Accounts entries
+                    try:
+                        cash_account = ChartOfAccounts.objects.get(account_number="1040")  # Cash at Hand
+                        receivables_account = ChartOfAccounts.objects.get(account_number="1060")  # Accounts Receivable
+                        sales_account = ChartOfAccounts.objects.get(account_number="4020")  # Sales Revenue
+                        tax_account = (
+                            ChartOfAccounts.objects.get(account_number="2070")
+                            if new_sale.tax_amount > 0
+                            else None
+                        )  # Tax Payable
+                        cogs_account = ChartOfAccounts.objects.get(account_number="5020")  # Cost of Goods Sold
+                        inventory_account = ChartOfAccounts.objects.get(account_number="1070")  # Inventory
+                    except ChartOfAccounts.DoesNotExist as e:
+                        raise ChartOfAccounts.DoesNotExist(f"Account not found: {e}")
+
+                    # Create Transactions for the Journal Entry
+                    # 1. Debit Cash or Receivables
+                    debit_account = (
+                        cash_account
+                        if new_sale.payment_method.lower() == "cash"
+                        else receivables_account
+                    )
+                    Transaction.objects.create(
+                        journal_entry=journal_entry,
+                        account=debit_account,
+                        amount=new_sale.grand_total,
+                        transaction_type="debit",
+                        created_by=request.user,
+                    )
                     logger.info(
-                        f"Stock updated for {product_obj.name}: {inventory_obj.quantity}"
+                        f"Debit transaction created: {debit_account.account_name} {new_sale.grand_total}"
                     )
 
-                    # Create sale detail
-                    detail_attributes = {
-                        "sale": new_sale,
-                        "product": product_obj,
-                        "product_volume": product_volume,
-                        "price": discounted_price,  # Use discounted price
-                        "quantity": quantity_requested,
-                        "total_detail": discounted_price
-                        * quantity_requested,  # Apply discount in total
-                    }
-                    SaleDetail.objects.create(**detail_attributes)
-                    logger.info(f"Sale detail added: {detail_attributes}")
+                    # 2. Credit Sales Revenue
+                    Transaction.objects.create(
+                        journal_entry=journal_entry,
+                        account=sales_account,
+                        amount=new_sale.sub_total,
+                        transaction_type="credit",
+                        created_by=request.user,
+                    )
+                    logger.info(
+                        f"Credit transaction created: {sales_account.account_name} {new_sale.sub_total}"
+                    )
 
-                # Success message
-                messages.success(
-                    request, "Sale created successfully!", extra_tags="bg-success"
+                    # 3. Credit Tax Payable (if applicable)
+                    if new_sale.tax_amount > 0 and tax_account:
+                        Transaction.objects.create(
+                            journal_entry=journal_entry,
+                            account=tax_account,
+                            amount=new_sale.tax_amount,
+                            transaction_type="credit",
+                            created_by=request.user,
+                        )
+                        logger.info(
+                            f"Credit transaction created: {tax_account.account_name} {new_sale.tax_amount}"
+                        )
+
+                    # 4. Debit COGS
+                    if cogs_total > 0:
+                        Transaction.objects.create(
+                            journal_entry=journal_entry,
+                            account=cogs_account,
+                            amount=cogs_total,
+                            transaction_type="debit",
+                            created_by=request.user,
+                        )
+                        logger.info(
+                            f"Debit transaction created: {cogs_account.account_name} {cogs_total}"
+                        )
+
+                    # 5. Credit Inventory
+                    if cogs_total > 0:
+                        Transaction.objects.create(
+                            journal_entry=journal_entry,
+                            account=inventory_account,
+                            amount=cogs_total,
+                            transaction_type="credit",
+                            created_by=request.user,
+                        )
+                        logger.info(
+                            f"Credit transaction created: {inventory_account.account_name} {cogs_total}"
+                        )
+
+                    messages.success(
+                        request,
+                        "Sale and journal entry created successfully!",
+                        extra_tags="bg-success",
+                    )
+                    return redirect("sales:sales_list")
+
+            except ValueError as ve:
+                logger.error(f"Stock or validation error: {ve}")
+                messages.error(request, str(ve), extra_tags="danger")
+            except Product.DoesNotExist:
+                logger.error(f"Product not found: {product_id}")
+                messages.error(
+                    request, f"Invalid product ID: {product_id}", extra_tags="danger"
                 )
-                return redirect("sales:sales_add")
-
-        except ValueError as ve:
-            logger.error(f"Stock error: {ve}")
-            messages.error(request, str(ve), extra_tags="bg-danger")
-        except Exception as e:
-            logger.error(f"Error during sale creation: {e}")
+            except ProductVolume.DoesNotExist:
+                logger.error(f"Volume not found: {volume_id}")
+                messages.error(
+                    request, f"Invalid volume ID: {volume_id}", extra_tags="danger"
+                )
+            except ChartOfAccounts.DoesNotExist as e:
+                logger.error(f"Account not found: {e}")
+                messages.error(
+                    request, f"Required account not found: {e}", extra_tags="danger"
+                )
+            except Exception as e:
+                logger.error(f"Error during sale or journal entry creation: {e}")
+                messages.error(
+                    request,
+                    f"There was an error during the creation! Error: {e}",
+                    extra_tags="danger",
+                )
+        else:
+            logger.error(f"Form validation errors: {form.errors}")
             messages.error(
-                request,
-                f"There was an error during the creation! Error: {e}",
-                extra_tags="bg-danger",
+                request, "Please correct the errors in the form.", extra_tags="danger"
             )
+            context["form"] = form
 
-        return redirect("sales:sales_add")
+        return render(request, "sales/sales_add.html", context=context)
 
     return render(request, "sales/sales_add.html", context=context)
 
