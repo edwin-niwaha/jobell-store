@@ -907,6 +907,7 @@ def delete_transaction(request, transaction_id):
 
 #     return render(request, 'finance/balance_sheet.html', context)
 
+
 # =================================== profit_and_loss_view pro ===================================
 @login_required
 @admin_or_manager_required
@@ -1066,6 +1067,7 @@ def profit_loss_statement_view(request):
 
 
 # =================================== balance_sheet_view ===================================
+
 
 @login_required
 @admin_or_manager_required

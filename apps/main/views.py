@@ -349,7 +349,6 @@ def finance_dashboard(request):
     return render(request, "main/fin_dashboard.html", context)
 
 
-
 @login_required
 @admin_or_manager_or_staff_required
 def get_total_sales_for_period(start_date, end_date):

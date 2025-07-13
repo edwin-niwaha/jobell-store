@@ -310,7 +310,6 @@ def sales_report_view(request):
 #     return render(request, "sales/sales_add.html", context=context)
 
 
-
 @admin_or_manager_or_staff_required
 @login_required
 def sales_add_view(request):
@@ -368,22 +367,30 @@ def sales_add_view(request):
                             try:
                                 volume_id = int(volume_id)
                             except (TypeError, ValueError):
-                                raise ValueError(f"Invalid volume ID format: {volume_id}")
+                                raise ValueError(
+                                    f"Invalid volume ID format: {volume_id}"
+                                )
 
                         product_obj = Product.objects.get(id=product_id)
 
                         # Fetch product volume if provided
                         if volume_id:
-                            product_volume = product_obj.productvolume_set.get(id=volume_id)
+                            product_volume = product_obj.productvolume_set.get(
+                                id=volume_id
+                            )
                             price = float(product_volume.volume.price)
                             cost = float(product_volume.volume.cost)
                         else:
                             price = float(product_data["price"])
-                            cost = float(product_data.get("cost", 0))  # Fallback to 0 if cost not provided
+                            cost = float(
+                                product_data.get("cost", 0)
+                            )  # Fallback to 0 if cost not provided
 
                         # Check if the product has inventory and stock is available
                         if not hasattr(product_obj, "inventory"):
-                            raise ValueError(f"No inventory record for {product_obj.name}")
+                            raise ValueError(
+                                f"No inventory record for {product_obj.name}"
+                            )
                         if product_obj.inventory.quantity < quantity_requested:
                             raise ValueError(
                                 f"Oops! Insufficient stock for {product_obj.name} (Available: {product_obj.inventory.quantity})"
@@ -442,16 +449,26 @@ def sales_add_view(request):
 
                     # Get Chart of Accounts entries
                     try:
-                        cash_account = ChartOfAccounts.objects.get(account_number="1040")  # Cash at Hand
-                        receivables_account = ChartOfAccounts.objects.get(account_number="1060")  # Accounts Receivable
-                        sales_account = ChartOfAccounts.objects.get(account_number="4020")  # Sales Revenue
+                        cash_account = ChartOfAccounts.objects.get(
+                            account_number="1040"
+                        )  # Cash at Hand
+                        receivables_account = ChartOfAccounts.objects.get(
+                            account_number="1060"
+                        )  # Accounts Receivable
+                        sales_account = ChartOfAccounts.objects.get(
+                            account_number="4020"
+                        )  # Sales Revenue
                         tax_account = (
                             ChartOfAccounts.objects.get(account_number="2070")
                             if new_sale.tax_amount > 0
                             else None
                         )  # Tax Payable
-                        cogs_account = ChartOfAccounts.objects.get(account_number="5020")  # Cost of Goods Sold
-                        inventory_account = ChartOfAccounts.objects.get(account_number="1070")  # Inventory
+                        cogs_account = ChartOfAccounts.objects.get(
+                            account_number="5020"
+                        )  # Cost of Goods Sold
+                        inventory_account = ChartOfAccounts.objects.get(
+                            account_number="1070"
+                        )  # Inventory
                     except ChartOfAccounts.DoesNotExist as e:
                         raise ChartOfAccounts.DoesNotExist(f"Account not found: {e}")
 

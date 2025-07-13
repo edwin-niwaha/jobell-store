@@ -8,25 +8,24 @@
     <div class="text-center mb-5">
       <h2 class="display-4 fw-bolder text-warning" style="background: linear-gradient(90deg, #ffd700, #ff8c00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase; letter-spacing: 2px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); transition: transform 0.3s ease-in-out;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">Our Signature Scents</h2>
     </div>
-    <div class="rounded-xl" style="background-color: #2DD4BF; border-radius: 15px;">
-      <form method="get" action="{% url 'products:shop_homepage' %}" class="py-6 px-4 rounded-xl shadow-xl bg-gradient-to-r from-teal-600 to-teal-400 transition-all duration-300">
-        <div class="row g-4">
-          <!-- Category Filter -->
-          <div class="col-12 col-sm-6 col-md-6">
-            <label for="category" class="form-label fw-semibold text-white">Category</label>
-            <div class="border-0 p-3 rounded-lg bg-white/90 backdrop-blur-sm transition-all duration-200 hover:shadow-md">{{ form.category }}</div>
-          </div>
-          <!-- Search Filter -->
-          <div class="col-12 col-md-6 d-flex align-items-end mb-5">
-            <div class="me-3 w-100">
-              <label for="search" class="form-label fw-semibold text-white">Search</label>
-              <div class="border-0 p-3 rounded-lg bg-white/90 backdrop-blur-sm transition-all duration-200 hover:shadow-md">{{ form.search }}</div>
-            </div>
-            <button type="submit" class="btn fw-bold py-3 px-5 rounded-lg shadow-md d-flex align-items-center text-white hover:scale-105 transition-transform duration-200" style="background: linear-gradient(45deg, #FFD700, #FFA500); border: none;"><i class="mdi mdi-magnify" style="font-size: 1.4rem;"></i> Search</button>
-          </div>
+    <!-- Filters and Sorting -->
+    <form method="get" action="{% url 'products:shop_homepage' %}" class="py-5 px-3 bg-white rounded shadow-lg">
+      <div class="row g-4">
+        <!-- Category Filter -->
+        <div class="col-12 col-sm-6 col-md-6">
+          <label for="category" class="form-label fw-semibold text-muted">Category</label>
+          <div class="border p-2 rounded">{{ form.category }}</div>
         </div>
-      </form>
-    </div>
+        <!-- Search Filter -->
+        <div class="col-12 col-md-6 d-flex">
+          <div class="me-3 w-100">
+            <label for="search" class="form-label fw-semibold text-muted">Search</label>
+            <div class="border p-2 rounded">{{ form.search }}</div>
+          </div>
+          <button type="submit" class="btn fw-bold py-2 px-4 rounded shadow-sm d-flex align-items-center" style="background-color: #FFD700; color: #212529; border: none;"><i class="mdi mdi-magnify me-2" style="font-size: 1.2rem;"></i> Search</button>
+        </div>
+      </div>
+    </form>
 
     <!-- Featured Products -->
     <div id="featured-products" class="row mt-4" id="search_list">
