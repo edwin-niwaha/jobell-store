@@ -343,7 +343,7 @@ def finance_dashboard(request):
         "summary": calculate_account_totals(),
         "recent_transactions": Transaction.objects.select_related(
             "journal_entry", "account"
-        ).order_by("-journal_entry__transaction_date")[:6],
+        ).order_by("-journal_entry__transaction_date")[:8],
     }
 
     return render(request, "main/fin_dashboard.html", context)
