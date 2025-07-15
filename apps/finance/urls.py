@@ -41,6 +41,11 @@ urlpatterns = [
         name="delete-transaction",
     ),
     path(
+        "trans/<int:transaction_id>/delete/",
+        views.delete_transaction_detailed,
+        name="delete-trans",
+    ),
+    path(
         "profit-loss/", views.profit_loss_statement_view, name="profit-loss-statement"
     ),
     path("balance-sheet/", views.balance_sheet_view, name="balance-sheet"),
@@ -60,5 +65,15 @@ urlpatterns = [
         name="trial_balance_select_period",
     ),
     path("trial-balance/<int:period_id>/", views.trial_balance, name="trial_balance"),
+    path(
+        "ledger-report/select-period/",
+        views.ledger_select_period,
+        name="ledger_select_period",
+    ),
+    path(
+        "ledger-report/<int:period_id>/",
+        views.ledger_report_detailed,
+        name="ledger_report_detailed",
+    ),
     path("audit-logs/", views.audit_log_view, name="audit_logs"),
 ]

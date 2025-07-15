@@ -25,13 +25,19 @@ class Inventory(models.Model):
 
     def send_low_stock_alert(self):
         """Send an alert for low stock."""
-        print(f"Low stock alert for {self.product.name}. Current stock: {self.quantity}")
+        print(
+            f"Low stock alert for {self.product.name}. Current stock: {self.quantity}"
+        )
 
     def save(self, *args, **kwargs):
-        logger.info(f"Before save - created_at: {self.created_at}, updated_at: {self.updated_at}")
+        logger.info(
+            f"Before save - created_at: {self.created_at}, updated_at: {self.updated_at}"
+        )
         self.check_stock_alerts()
         super().save(*args, **kwargs)
-        logger.info(f"After save - created_at: {self.created_at}, updated_at: {self.updated_at}")
+        logger.info(
+            f"After save - created_at: {self.created_at}, updated_at: {self.updated_at}"
+        )
 
     def __str__(self):
         return f"{self.product.name} - Stock: {self.quantity}"

@@ -455,7 +455,7 @@ def multi_journal_view(request):
     )
 
 
-# =================================== ledger_report ist view ===================================
+# =================================== ledger_report view ===================================
 def get_financial_year_dates():
     """Returns the start and end dates for the current financial year."""
     today = date.today()
@@ -545,6 +545,131 @@ def ledger_report_view(request):
             "opening_balance": opening_balance,  # Pass opening balance to template
         },
     )
+
+
+# =================================== ledger_report detailed view ===================================
+@login_required
+@admin_or_manager_required
+def ledger_select_period(request):
+    """Display a list of open financial periods for ledger report selection."""
+    financial_periods = FinancialPeriod.objects.filter(status="open").order_by(
+        "-start_date"
+    )
+    return render(
+        request,
+        "finance/select_ledger_period.html",
+        {"financial_periods": financial_periods},
+    )
+
+
+@login_required
+@admin_or_manager_required
+def ledger_report_detailed(request, period_id):
+    """Generate ledger report for the selected financial period."""
+    ledger_data = []
+    accounts = ChartOfAccounts.objects.all().order_by(
+        "account_number"
+    )  # Sort accounts by account_number
+    total_debits = 0
+    total_credits = 0
+
+    # Get the selected financial period
+    financial_period = get_object_or_404(FinancialPeriod, id=period_id, status="open")
+    start_date = financial_period.start_date
+    end_date = financial_period.end_date
+
+    # Get all transactions within the financial period, sorted by account_number
+    ledger_data = (
+        Transaction.objects.filter(
+            journal_entry__transaction_date__range=[start_date, end_date]
+        )
+        .select_related("account")
+        .order_by("account__account_number", "journal_entry__transaction_date")
+    )
+
+    # Calculate opening balance for each account
+    opening_balances = {}
+    opening_balance_queryset = Transaction.objects.filter(
+        journal_entry__transaction_date__lt=start_date
+    ).select_related("account")
+
+    for transaction in opening_balance_queryset:
+        account_id = transaction.account.id
+        if account_id not in opening_balances:
+            opening_balances[account_id] = 0
+        if transaction.transaction_type == "debit":
+            opening_balances[account_id] += transaction.amount
+        elif transaction.transaction_type == "credit":
+            opening_balances[account_id] -= transaction.amount
+
+    # Calculate debits, credits, and running balance
+    running_balances = {
+        account_id: balance for account_id, balance in opening_balances.items()
+    }
+    for transaction in ledger_data:
+        account_id = transaction.account.id
+        if account_id not in running_balances:
+            running_balances[account_id] = opening_balances.get(account_id, 0)
+
+        if transaction.transaction_type == "debit":
+            transaction.debit = transaction.amount
+            transaction.credit = 0
+            total_debits += transaction.amount
+        elif transaction.transaction_type == "credit":
+            transaction.debit = 0
+            transaction.credit = transaction.amount
+            total_credits += transaction.amount
+        else:
+            transaction.debit = 0
+            transaction.credit = 0
+
+        # Update running balance
+        running_balances[account_id] += transaction.debit - transaction.credit
+        transaction.running_balance = running_balances[account_id]
+
+    return render(
+        request,
+        "finance/ledger_report_detailed.html",
+        {
+            "ledger_data": ledger_data,
+            "accounts": accounts,
+            "financial_period": financial_period,
+            "start_date": start_date,
+            "end_date": end_date,
+            "total_debits": total_debits,
+            "total_credits": total_credits,
+            "opening_balances": opening_balances,
+        },
+    )
+
+
+# =================================== Delete detailed transaction ===================================
+@login_required
+@admin_or_manager_required
+@transaction.atomic
+def delete_transaction_detailed(request, transaction_id):
+    try:
+        transaction = get_object_or_404(Transaction, id=transaction_id)
+        journal_entry = transaction.journal_entry
+        journal_ref = journal_entry.reference_number
+        if journal_entry.financial_period.status != "open":
+            messages.error(
+                request,
+                "Cannot delete: Financial period closed.",
+                extra_tags="bg-danger",
+            )
+            return redirect("finance:ledger_select_period")
+        journal_entry.delete()
+        messages.success(
+            request, f"Journal Entry #{journal_ref} deleted!", extra_tags="bg-success"
+        )
+    except ValidationError as e:
+        messages.error(request, f"Validation error: {str(e)}", extra_tags="bg-danger")
+        print(e)
+    except Exception as e:
+        messages.error(request, "Deletion error!", extra_tags="bg-danger")
+        print(e)
+    return redirect("finance:ledger_select_period")
 
 
 # =================================== Delete transaction ===================================

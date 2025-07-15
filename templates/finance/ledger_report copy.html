@@ -3,21 +3,21 @@
 {% load humanize %}
 
 {% block content %}
-<div class="container-fluid px-2 px-md-4">
+<div class="container-fluid">
     <div class="card shadow-sm">
-        <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-3">
-            <a href="{% url 'dashboard' %}" class="btn btn-info fw-bold">
-                <i class="mdi mdi-arrow-left-bold me-2"></i>
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <a href="{% url 'dashboard' %}" class="btn btn-info font-weight-bold">
+                <i class="mdi mdi-arrow-left-bold mr-2"></i>
                 Go back
             </a>
-            <button title="Print" type="button" class="btn btn-success" onclick="printDiv('printMe')">
+            <button title="Print" type="button" class="btn btn-success ml-2" onclick="printDiv('printMe')">
                 <i class="mdi mdi-printer btn-icon-prepend"></i>
             </button>
-            <form method="GET" action="{% url 'finance:ledger_report' %}" class="col-12 col-md-auto">
+            <form method="GET" action="{% url 'finance:ledger_report' %}">
                 {% csrf_token %}
-                <div class="row g-2 align-items-center">
-                    <div class="col-12 col-md-3">
-                        <label for="account_id" class="visually-hidden">Select Account</label>
+                <div class="form-row d-flex align-items-center">
+                    <div class="form-group mb-0 mr-3">
+                        <label for="account_id" class="sr-only">Select Account</label>
                         <select name="account_id" id="account_id" class="form-control" required>
                             <option value="" disabled selected>-- Select Account --</option>
                             {% for account in accounts %}
@@ -28,32 +28,32 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="col-12 col-md-3">
-                        <label for="start_date" class="visually-hidden">Start Date</label>
+                    <div class="form-group mb-0 mr-3">
+                        <label for="start_date" class="sr-only">Start Date</label>
                         <input type="date" name="start_date" id="start_date" class="form-control"
                             value="{{ start_date }}" required>
                     </div>
-                    <div class="col-12 col-md-3">
-                        <label for="end_date" class="visually-hidden">End Date</label>
+                    <div class="form-group mb-0 mr-3">
+                        <label for="end_date" class="sr-only">End Date</label>
                         <input type="date" name="end_date" id="end_date" class="form-control" value="{{ end_date }}"
                             required>
                     </div>
-                    <div class="col-12 col-md-3">
-                        <label for="end_date">👉<a href="{% url 'finance:ledger_select_period' %}" class="btn btn-link"> Detailed Report</a></label>
-                        <button type="submit" class="btn btn-primary w-100">Generate</button>
-                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        Generate Report
+                    </button>
                 </div>
             </form>
         </div>
 
         <div id="printMe" class="card-body">
-            <div class="report-header text-center my-3">
-                <h3 class="fw-bold">
+            <!-- Report Header -->
+            <div class="report-header text-center my-2">
+                <h3>
                     {% if selected_account %}
-                    <span class="text-primary">{{ selected_account.account_number }} - {{ selected_account.account_name }}</span>
-                    <br class="d-md-none">
-                    Ledger report from <span class="text-primary">{{ start_date }}</span> to
-                    <span class="text-primary">{{ end_date }}</span>
+                    <span class="text-primary">{{selected_account.account_number}} -
+                        {{ selected_account.account_name }}</span>
+                    Ledger report from <span class="text-primary">{{ start_date }}</span> to <span
+                        class="text-primary">{{ end_date }}</span>
                     {% else %}
                     <span class="text-secondary">.../.../.....</span>
                     {% endif %}
@@ -64,10 +64,10 @@
                 <table class="my-table" id="dataTable">
                     <thead class="thead-dark">
                         <tr>
-                            <th>Id</th>
+                            <th>Jrnl_ID</th>
                             <th>Date</th>
                             <th>Ref No.</th>
-                            <th>Narration</th>
+                            <th>Description</th>
                             <th>Debits</th>
                             <th>Credits</th>
                             <th>Balance</th>
