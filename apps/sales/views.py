@@ -89,12 +89,119 @@ def sales_list_view(request):
 
 
 # =================================== sales_report_view view ===================================
+# def sales_report_view(request):
+#     # Initialize the form with GET data
+#     form = ReportPeriodForm(request.GET)
+#     start_date = None
+#     end_date = None
+
+#     if form.is_valid():
+#         start_date = form.cleaned_data["start_date"]
+#         end_date = form.cleaned_data["end_date"]
+
+#     # Filter sales by date range and prefetch related data
+#     sales = Sale.objects.filter(
+#         trans_date__range=[start_date, end_date]
+#     ).prefetch_related("items__product_volume__volume", "items__product")
+
+#     # Aggregate totals
+#     total_sales = sales.aggregate(
+#         total_revenue=Sum("items__total_detail"),  # Calculate directly from items
+#         total_items_sold=Sum("items__quantity"),
+#         total_transactions=Count("id"),
+#     )
+
+#     cogs = 0
+#     for sale in sales:
+#         for item in sale.items.all():
+#             product_volume = item.product_volume
+#             if product_volume and product_volume.volume:
+#                 cogs += product_volume.volume.cost * item.quantity
+
+#     # Calculate stock balance
+#     stock_balance = (
+#         Inventory.objects.aggregate(total_stock=Sum("quantity"))["total_stock"] or 0
+#     )
+
+#     # Prepare detailed sales data
+#     sale_details = []
+#     total_profit_after_sales = 0
+
+#     for sale in sales:
+#         sale_profit = 0
+#         item_details = []
+
+#         for item in sale.items.all():
+#             product = item.product
+#             product_volume = item.product_volume
+#             # Get the original price from the ProductVolume (before discount)
+#             original_price = (
+#                 product_volume.volume.price if product_volume else product.price
+#             )
+
+#             # Apply discount if exists (use price from SaleDetail)
+#             discounted_price = item.price  # Use the price from SaleDetail directly
+#             item_profit = (
+#                 (Decimal(discounted_price) - product_volume.volume.cost) * item.quantity
+#                 if product_volume
+#                 else 0
+#             )
+#             sale_profit += item_profit
+#             total_profit_after_sales += item_profit
+
+#             item_details.append(
+#                 {
+#                     "product": product.name,
+#                     "volume": product_volume.volume.ml if product_volume else None,
+#                     "original_price": original_price,  # Add original price
+#                     "price": discounted_price,  # Use price from SaleDetail
+#                     "cost": (
+#                         product_volume.volume.cost if product_volume else 0
+#                     ),  # Use cost from ProductVolume
+#                     "quantity": item.quantity,
+#                     "total": item.total_detail,
+#                 }
+#             )
+
+#         sale_details.append(
+#             {
+#                 "trans_date": sale.trans_date,
+#                 "customer": (
+#                     f"{sale.customer.first_name} {sale.customer.last_name}"
+#                     if sale.customer
+#                     else "N/A"
+#                 ),
+#                 "grand_total": sale.grand_total,
+#                 "profit": sale_profit,
+#                 "payment_method": sale.payment_method,
+#                 "item_details": item_details,
+#             }
+#         )
+
+#     context = {
+#         "form": form,
+#         "start_date": start_date,
+#         "end_date": end_date,
+#         "total_revenue": total_sales["total_revenue"],
+#         "total_items_sold": total_sales["total_items_sold"],
+#         "total_transactions": total_sales["total_transactions"],
+#         "total_cogs": cogs,
+#         "sales": sale_details,
+#         "stock_balance": stock_balance,
+#         "total_profit_after_sales": total_profit_after_sales,
+#         "table_title": "Sales Report",
+#     }
+
+#     return render(request, "sales/sales_report.html", context)
+
+
 def sales_report_view(request):
     # Initialize the form with GET data
     form = ReportPeriodForm(request.GET)
     start_date = None
     end_date = None
 
+    # Validate form and extract date range
     if form.is_valid():
         start_date = form.cleaned_data["start_date"]
         end_date = form.cleaned_data["end_date"]
@@ -104,13 +211,19 @@ def sales_report_view(request):
         trans_date__range=[start_date, end_date]
     ).prefetch_related("items__product_volume__volume", "items__product")
 
-    # Aggregate totals
+    # Aggregate totals for revenue, items sold, and transactions
     total_sales = sales.aggregate(
-        total_revenue=Sum("items__total_detail"),  # Calculate directly from items
+        total_revenue=Sum("items__total_detail"),
         total_items_sold=Sum("items__quantity"),
         total_transactions=Count("id"),
     )
 
+    # Initialize totals with safe defaults
+    total_revenue = total_sales["total_revenue"] or 0
+    total_items_sold = total_sales["total_items_sold"] or 0
+    total_transactions = total_sales["total_transactions"] or 0
+
+    # Calculate Cost of Goods Sold (COGS)
     cogs = 0
     for sale in sales:
         for item in sale.items.all():
@@ -129,35 +242,42 @@ def sales_report_view(request):
 
     for sale in sales:
         sale_profit = 0
+        sale_cost = 0  # Initialize per-sale cost
         item_details = []
 
         for item in sale.items.all():
             product = item.product
             product_volume = item.product_volume
-            # Get the original price from the ProductVolume (before discount)
+            # Get original price from ProductVolume or fallback to product price
             original_price = (
                 product_volume.volume.price if product_volume else product.price
             )
 
-            # Apply discount if exists (use price from SaleDetail)
-            discounted_price = item.price  # Use the price from SaleDetail directly
+            # Use discounted price from SaleDetail
+            discounted_price = item.price
+            # Calculate profit for the item
             item_profit = (
                 (Decimal(discounted_price) - product_volume.volume.cost) * item.quantity
-                if product_volume
+                if product_volume and product_volume.volume
+                else 0
+            )
+            # Calculate cost for the item
+            item_cost = (
+                product_volume.volume.cost * item.quantity
+                if product_volume and product_volume.volume
                 else 0
             )
             sale_profit += item_profit
+            sale_cost += item_cost  # Accumulate cost for the sale
             total_profit_after_sales += item_profit
 
             item_details.append(
                 {
                     "product": product.name,
                     "volume": product_volume.volume.ml if product_volume else None,
-                    "original_price": original_price,  # Add original price
-                    "price": discounted_price,  # Use price from SaleDetail
-                    "cost": (
-                        product_volume.volume.cost if product_volume else 0
-                    ),  # Use cost from ProductVolume
+                    "original_price": original_price,
+                    "price": discounted_price,
+                    "cost": product_volume.volume.cost if product_volume else 0,
                     "quantity": item.quantity,
                     "total": item.total_detail,
                 }
@@ -172,6 +292,7 @@ def sales_report_view(request):
                     else "N/A"
                 ),
                 "grand_total": sale.grand_total,
+                "cost": sale_cost,  # Add per-sale cost
                 "profit": sale_profit,
                 "payment_method": sale.payment_method,
                 "item_details": item_details,
@@ -182,9 +303,9 @@ def sales_report_view(request):
         "form": form,
         "start_date": start_date,
         "end_date": end_date,
-        "total_revenue": total_sales["total_revenue"],
-        "total_items_sold": total_sales["total_items_sold"],
-        "total_transactions": total_sales["total_transactions"],
+        "total_revenue": total_revenue,
+        "total_items_sold": total_items_sold,
+        "total_transactions": total_transactions,
         "total_cogs": cogs,
         "sales": sale_details,
         "stock_balance": stock_balance,
@@ -194,121 +315,7 @@ def sales_report_view(request):
 
     return render(request, "sales/sales_report.html", context)
 
-
 # =================================== Sale Add view ===================================
-# @admin_or_manager_or_staff_required
-# @login_required
-# def sales_add_view(request):
-#     # Fetch products with active status and related inventory and volumes
-#     products = (
-#         Product.objects.filter(status="ACTIVE")
-#         .select_related("inventory")
-#         .prefetch_related("productvolume_set__volume")  # Include volume relation
-#     )
-
-#     # Prepare context for rendering
-#     context = {
-#         "customers": [c.to_select2() for c in Customer.objects.all()],
-#         "products": products,
-#         "total_stock": sum(
-#             product.inventory.quantity if hasattr(product, "inventory") else 0
-#             for product in products
-#         ),
-#     }
-
-#     if request.method == "POST":
-#         try:
-#             logger.debug(f"POST data: {request.POST}")
-
-#             # Extract and process form data
-#             customer_id = int(request.POST.get("customer"))
-#             sale_attributes = {
-#                 "customer": Customer.objects.get(id=customer_id),
-#                 "trans_date": request.POST.get("trans_date"),
-#                 "sub_total": float(request.POST.get("sub_total", 0)),
-#                 "grand_total": float(request.POST.get("grand_total", 0)),
-#                 "tax_amount": float(request.POST.get("tax_amount", 0)),
-#                 "tax_percentage": float(request.POST.get("tax_percentage", 0)),
-#                 "amount_payed": float(request.POST.get("amount_payed", 0)),
-#                 "amount_change": float(request.POST.get("amount_change", 0)),
-#             }
-
-#             with transaction.atomic():
-#                 # Create the sale
-#                 new_sale = Sale.objects.create(**sale_attributes)
-#                 logger.info(f"Sale created successfully: {sale_attributes}")
-
-#                 # Extract product details from form data
-#                 products_data = request.POST.getlist("products")
-#                 for product_data_str in products_data:
-#                     product_data = json.loads(product_data_str)
-
-#                     # Parse combined product and volume IDs
-#                     product_id, volume_id = map(int, product_data["id"].split("-"))
-#                     product_obj = Product.objects.get(id=product_id)
-#                     product_volume = ProductVolume.objects.select_related("volume").get(
-#                         id=volume_id
-#                     )
-
-#                     # Fetch price and discount
-#                     original_price = product_volume.volume.price
-#                     discounted_price = (
-#                         product_volume.get_discounted_price()
-#                     )  # Apply discount if any
-
-#                     quantity_requested = int(product_data["quantity"])
-
-#                     # Check if the product's inventory has sufficient stock
-#                     if (
-#                         not hasattr(product_obj, "inventory")
-#                         or product_obj.inventory.quantity < quantity_requested
-#                     ):
-#                         raise ValueError(
-#                             f"Oops! Insufficient stock for {product_obj.name}"
-#                         )
-
-#                     # Update inventory stock at the product level
-#                     inventory_obj = product_obj.inventory
-#                     inventory_obj.quantity -= quantity_requested
-#                     inventory_obj.save()
-#                     logger.info(
-#                         f"Stock updated for {product_obj.name}: {inventory_obj.quantity}"
-#                     )
-
-#                     # Create sale detail
-#                     detail_attributes = {
-#                         "sale": new_sale,
-#                         "product": product_obj,
-#                         "product_volume": product_volume,
-#                         "price": discounted_price,  # Use discounted price
-#                         "quantity": quantity_requested,
-#                         "total_detail": discounted_price
-#                         * quantity_requested,  # Apply discount in total
-#                     }
-#                     SaleDetail.objects.create(**detail_attributes)
-#                     logger.info(f"Sale detail added: {detail_attributes}")
-
-#                 # Success message
-#                 messages.success(
-#                     request, "Sale created successfully!", extra_tags="bg-success"
-#                 )
-#                 return redirect("sales:sales_add")
-
-#         except ValueError as ve:
-#             logger.error(f"Stock error: {ve}")
-#             messages.error(request, str(ve), extra_tags="bg-danger")
-#         except Exception as e:
-#             logger.error(f"Error during sale creation: {e}")
-#             messages.error(
-#                 request,
-#                 f"There was an error during the creation! Error: {e}",
-#                 extra_tags="bg-danger",
-#             )
-
-#         return redirect("sales:sales_add")
-
-#     return render(request, "sales/sales_add.html", context=context)
-
 
 @admin_or_manager_or_staff_required
 @login_required
