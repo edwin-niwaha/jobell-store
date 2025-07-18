@@ -315,7 +315,9 @@ def sales_report_view(request):
 
     return render(request, "sales/sales_report.html", context)
 
+
 # =================================== Sale Add view ===================================
+
 
 @admin_or_manager_or_staff_required
 @login_required
