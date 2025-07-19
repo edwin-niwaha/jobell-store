@@ -27,7 +27,7 @@
       </div>
     </form>
 
-    <!-- Featured Products -->
+    <!-- All Products -->
     <div id="featured-products" class="row mt-4" id="search_list">
       {% if products_with_images %}
         {% for product_info in products_with_images %}
@@ -67,6 +67,25 @@
                       {{ min_price|floatformat:'2'|intcomma }} - {{ max_price|floatformat:'2'|intcomma }}
                     {% else %}
                       Price not available
+                    {% endif %}
+                  </p>
+                  <!-- Display Average Rating -->
+                  <p class="card-text">
+                    <strong>Rating:</strong>
+                    {% if product_info.avg_rating %}
+                      <span class="text-warning">
+                        {% for i in '12345'|make_list %}
+                          {% if forloop.counter0|add:0.5 <= product_info.avg_rating %}
+                            <i class="fas fa-star"></i>
+                          {% elif forloop.counter0|add:0 <= product_info.avg_rating %}
+                            <i class="fas fa-star-half-alt"></i>
+                          {% else %}
+                            <i class="far fa-star"></i>
+                          {% endif %}
+                        {% endfor %}({{ product_info.avg_rating }} / 5)
+                      </span>
+                    {% else %}
+                      No ratings yet
                     {% endif %}
                   </p>
                 </div>

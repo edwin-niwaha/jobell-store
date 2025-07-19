@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db import IntegrityError
-from django.db.models import Sum, F, Q, Min, Max
+from django.db.models import Sum, F, Q, Min, Max, Avg
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
 from django.urls import reverse
@@ -105,12 +105,17 @@ def shop_homepage_view(request):
         else:
             min_vol_price = max_vol_price = None
 
+        # Calculate the average rating
+        avg_rating = product.reviews.aggregate(Avg("rating"))["rating__avg"]
+        avg_rating = round(avg_rating, 1) if avg_rating else None
+
         products_with_images.append(
             {
                 "product": product,
                 "images": images,
                 "min_price": min_vol_price,
                 "max_price": max_vol_price,
+                "avg_rating": avg_rating,
             }
         )
 

@@ -12,7 +12,7 @@ from django.db.models import Sum, FloatField, F, Q, Count
 from django.db.models.functions import Coalesce
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.db.models import Min, Max
+from django.db.models import Min, Max, Avg
 from django.core.paginator import Paginator, EmptyPage
 
 from apps.products.models import Product, Category, Review
@@ -134,12 +134,17 @@ def index(request):
         else:
             min_vol_price = max_vol_price = None
 
+        # Calculate the average rating
+        avg_rating = product.reviews.aggregate(Avg("rating"))["rating__avg"]
+        avg_rating = round(avg_rating, 1) if avg_rating else None
+
         products_with_images.append(
             {
                 "product": product,
                 "images": images,
                 "min_price": min_vol_price,
                 "max_price": max_vol_price,
+                "avg_rating": avg_rating,  # Add average rating
             }
         )
 
