@@ -3,61 +3,74 @@
 {% load humanize %}
 
 {% block content %}
-  <div class="container-fluid">
-    <div class="card shadow border-0 rounded-lg">
-      <div class="card-header text-center bg-warning text-white">
-        <h3 class="font-weight-light mb-0">Your Cart</h3>
+  <div class="container py-4">
+    <div class="card shadow-lg border-0 rounded-3">
+      <div class="card-header text-center bg-primary text-white py-3">
+        <h3 class="fw-light mb-0">🛒 Your Shopping Cart</h3>
       </div>
-      <div class="card-body">
+      <div class="card-body p-4">
         {% if cart.items.exists %}
           <div class="mb-4">
-            <h5 class="text-primary">Cart Items</h5>
-            <ul class="list-group">
+            <h5 class="text-secondary mb-3">Items in Your Cart</h5>
+            <ul class="list-group list-group-flush">
               {% for item in cart.items.all %}
-                <li class="list-group-item d-flex flex-column flex-md-row justify-content-between align-items-center">
-                  <div class="text-center text-md-start">
+                <li class="list-group-item d-flex flex-column flex-md-row align-items-md-center justify-content-between py-3 px-0">
+                  <div class="flex-grow-1 text-center text-md-start mb-2 mb-md-0">
                     <h6 class="mb-1 text-break">
-                      <span class="text-primary fw-bold">{{ item.product.name }}</span> |
-                      <span class="text-success">{{ item.product.category }}</span> |
-                      <span class="text-info">{{ item.product.gender }}</span> |
+                      <a href="{% url 'orders:product_detail' item.product.id %}" class="text-decoration-none text-primary fw-bold">{{ item.product.name }}</a>
+                      <span class="text-muted mx-1">|</span>
+                      <span class="text-success">{{ item.product.category }}</span>
+                      <span class="text-muted mx-1">|</span>
+                      <span class="text-info">{{ item.product.gender }}</span>
+                      <span class="text-muted mx-1">|</span>
                       <span class="text-warning">{{ item.volume.product_type }}</span>
                     </h6>
-
-                    <small class="text-break">
-                      {{ item.volume.volume.ml }}ML (x{{ item.quantity }}) @{% if item.volume.discount_value %}
-                        <del class="text-muted">UgX {{ item.volume.volume.price|floatformat:'2'|intcomma }}</del>
-                        <span class="text-danger">UgX {{ item.volume.get_discounted_price|floatformat:'2'|intcomma }}</span>
-                        ({{ item.volume.discount_value|floatformat:'2' }}% Off)
+                    <small class="text-muted text-break d-block">
+                      {{ item.volume.volume.ml }}ML (Qty: {{ item.quantity }}) @{% if item.volume.discount_value %}
+                        <del class="text-danger">UGX {{ item.volume.volume.price|floatformat:'0'|intcomma }}</del>
+                        <span class="fw-bold text-primary">UGX {{ item.volume.get_discounted_price|floatformat:'0'|intcomma }}</span>
+                        <span class="badge bg-success ms-1">{{ item.volume.discount_value|floatformat:'0' }}% Off</span>
                       {% else %}
-                        UgX {{ item.volume.volume.price|floatformat:'2'|intcomma }}
+                        <span class="fw-bold text-primary">UGX {{ item.volume.volume.price|floatformat:'0'|intcomma }}</span>
                       {% endif %}each
                     </small>
                   </div>
 
-                  <div class="d-flex flex-wrap align-items-center gap-2 mt-2 mt-md-0">
+                  <div class="d-flex flex-wrap justify-content-center justify-content-md-end align-items-center gap-2 w-100 w-md-auto">
                     <form method="post" action="{% url 'orders:update_cart' item.id %}" class="d-flex align-items-center flex-nowrap">
                       {% csrf_token %}
-                      <input type="number" name="quantity" value="{{ item.quantity }}" min="1" class="form-control form-control-sm w-auto" style="max-width: 60px;" />
-                      <button title="Update Cart" type="submit" class="btn btn-primary btn-sm ms-2">Update</button>
+                      <label for="quantity-{{ item.id }}" class="visually-hidden">Quantity for {{ item.product.name }}</label>
+                      <input type="number" name="quantity" id="quantity-{{ item.id }}" value="{{ item.quantity }}" min="1" class="form-control form-control-sm text-center" style="width: 70px;" aria-label="Update quantity" />
+                      <button title="Update Quantity" type="submit" class="btn btn-outline-secondary btn-sm ms-2">Update</button>
                     </form>
 
-                    <a title="Remove Item" href="{% url 'orders:remove_from_cart' item.id %}" class="btn btn-danger btn-sm ms-2" onclick="return confirm('Are you sure you want to remove this item?');">Remove</a>
+                    <a title="Remove Item" href="{% url 'orders:remove_from_cart' item.id %}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure you want to remove this item from your cart?');"><i class="fas fa-trash-alt"></i> Remove</a>
                   </div>
 
-                  <span class="badge bg-primary rounded-pill mt-2 mt-md-0">UgX {{ item.get_total_price|floatformat:'2'|intcomma }}</span>
+                  <div class="mt-2 mt-md-0 ms-md-3 text-center text-md-end">
+                    <span class="badge bg-primary fs-6 py-2 px-3">Subtotal: UGX {{ item.get_total_price|floatformat:'0'|intcomma }}</span>
+                  </div>
                 </li>
               {% endfor %}
             </ul>
           </div>
 
-          <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center mb-4">
-            <strong>Total Price:</strong>
-            <h5 class="text-primary mb-2 mb-sm-0">UgX {{ total_price|floatformat:'2'|intcomma }}</h5>
+          <hr class="my-4" />
+
+          <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 p-3 bg-light rounded-3 shadow-sm">
+            <strong class="text-muted fs-5 mb-2 mb-sm-0">Grand Total:</strong>
+            <h4 class="text-primary fw-bold mb-0">UGX {{ total_price|floatformat:'0'|intcomma }}</h4>
           </div>
 
-          <a href="{% url 'orders:checkout' %}" class="btn btn-success btn-lg w-100"><i class="bi bi-credit-card"></i> Proceed to Checkout</a>
+          <div class="d-grid gap-2">
+            <a href="{% url 'orders:checkout' %}" class="btn btn-success btn-lg"><i class="bi bi-credit-card me-2"></i> Proceed to Checkout</a>
+            <a href="{% url 'products:shop_homepage' %}" class="btn btn-outline-secondary btn-lg"><i class="bi bi-arrow-left me-2"></i> Continue Shopping</a>
+          </div>
         {% else %}
-          <div class="alert alert-info text-center" role="alert">Your cart is empty.</div>
+          <div class="alert alert-info text-center py-4" role="alert">
+            <p class="mb-3 fs-5">Your cart is currently empty. 🙁</p>
+            <a href="{% url 'products:shop_homepage' %}" class="btn btn-primary btn-lg">Start Shopping Now!</a>
+          </div>
         {% endif %}
       </div>
     </div>

@@ -3,77 +3,78 @@
 {% load humanize %}
 
 {% block content %}
-  <div class="container-fluid">
-    <!-- Title Section -->
+  <div class="container-fluid py-5">
     <div class="text-center mb-5">
-      <h2 class="display-4 fw-bolder text-warning" style="background: linear-gradient(90deg, #ffd700, #ff8c00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase; letter-spacing: 2px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); transition: transform 0.3s ease-in-out;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">Our Signature Scents</h2>
+      <h1 class="display-3 fw-bolder text-warning" style="background: linear-gradient(90deg, #FFD700, #FFA500); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase; letter-spacing: 3px; text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4); transform: scale(1); transition: transform 0.3s ease-in-out;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">Discover Our Exquisite Scents</h1>
+      <p class="lead text-muted mt-3">Find your perfect fragrance from our curated collection.</p>
     </div>
-    <!-- Filters and Sorting -->
-    <form method="get" action="{% url 'products:shop_homepage' %}" class="py-5 px-3 bg-white rounded shadow-lg">
-      <div class="row g-4">
-        <!-- Category Filter -->
-        <div class="col-12 col-sm-6 col-md-6">
-          <label for="category" class="form-label fw-semibold text-muted">Category</label>
-          <div class="border p-2 rounded">{{ form.category }}</div>
+
+    <form method="get" action="{% url 'products:shop_homepage' %}" class="py-4 px-3 bg-white rounded shadow-lg mb-5">
+      <div class="row g-4 align-items-end">
+        <div class="col-12 col-sm-6 col-md-4">
+          <label for="id_category" class="form-label fw-semibold text-dark">Category</label>
+          {{ form.category }}
         </div>
-        <!-- Search Filter -->
-        <div class="col-12 col-md-6 d-flex">
-          <div class="me-3 w-100">
-            <label for="search" class="form-label fw-semibold text-muted">Search</label>
-            <div class="border p-2 rounded">{{ form.search }}</div>
-          </div>
-          <button type="submit" class="btn fw-bold py-2 px-4 rounded shadow-sm d-flex align-items-center" style="background-color: #FFD700; color: #212529; border: none;"><i class="mdi mdi-magnify me-2" style="font-size: 1.2rem;"></i> Search</button>
+        <div class="col-12 col-sm-6 col-md-5">
+          <label for="id_search" class="form-label fw-semibold text-dark">Search by Name</label>
+          <div class="input-group">{{ form.search }}</div>
+        </div>
+        <div class="col-12 col-md-3 d-grid">
+          <button type="submit" class="btn btn-warning fw-bold py-2 px-4 rounded shadow-sm d-flex align-items-center justify-content-center"><i class="fas fa-search me-2"></i> Search</button>
         </div>
       </div>
     </form>
 
-    <!-- All Products -->
-    <div id="featured-products" class="row mt-4" id="search_list">
+    <div id="product-list" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
       {% if products_with_images %}
         {% for product_info in products_with_images %}
           {% with product=product_info.product images=product_info.images min_price=product_info.min_price max_price=product_info.max_price %}
-            <div class="col-6 col-sm-4 col-md-3 mb-4 product-item">
-              <div class="card h-100 shadow-sm position-relative">
-                <!-- Carousel -->
-                <div id="carousel-{{ product.id }}" class="carousel slide" data-bs-ride="carousel">
+            <div class="col product-item">
+              <div class="card h-100 shadow-sm border-0 rounded-3 overflow-hidden">
+                <div id="carousel-{{ product.id }}" class="carousel slide" data-bs-ride="carousel" data-bs-interval="false">
                   <div class="carousel-inner">
                     {% if images %}
                       {% for image in images %}
                         <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                          <img src="{{ image.image.url }}" class="d-block w-100 rounded img-fluid disable-right-click" style="max-height: 200px; object-fit: contain;" alt="{{ product.name }}" />
+                          <div class="ratio ratio-4x3">
+                            <img src="{{ image.image.url }}" class="d-block w-100 h-100 object-fit-cover rounded-top disable-right-click" alt="{{ product.name }}" />
+                          </div>
                         </div>
                       {% endfor %}
                     {% else %}
                       <div class="carousel-item active">
-                        <img src="{% static 'images/no-image.png' %}" class="d-block w-100 rounded img-fluid disable-right-click" style="max-height: 200px; object-fit: contain;" alt="No image available" />
+                        <div class="ratio ratio-4x3">
+                          <img src="{% static 'images/no-image.png' %}" class="d-block w-100 h-100 object-fit-cover rounded-top disable-right-click" alt="No image available" />
+                        </div>
                       </div>
                     {% endif %}
                   </div>
+                  {% if images.count > 1 %}
+                    <button class="carousel-control-prev" type="button" data-bs-target="#carousel-{{ product.id }}" data-bs-slide="prev">
+                      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                      <span class="visually-hidden">Previous</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#carousel-{{ product.id }}" data-bs-slide="next">
+                      <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                      <span class="visually-hidden">Next</span>
+                    </button>
+                  {% endif %}
                 </div>
 
-                <!-- Hover View Product Details -->
-                <div class="hover-overlay">
-                  <a class="badge bg-danger position-absolute top-0 end-0 translate-middle-y py-2 px-4" href="{% url 'orders:product_details_view' product.id %}">View Details</a>
-                  <a class="btn btn-primary btn-sm" href="{% url 'orders:product_detail' product.id %}">Shop Now</a>
-                </div>
-
-                <!-- Product Info -->
-                <div class="card-body text-center">
-                  <h5 class="card-title text-uppercase text-primary">{{ product.name }}</h5>
-                  <p class="card-text">{{ product.category }} - {{ product.gender }}</p>
-                  <p class="card-text">
-                    <strong>UGX:</strong>
-                    {% if min_price and max_price %}
-                      {{ min_price|floatformat:'2'|intcomma }} - {{ max_price|floatformat:'2'|intcomma }}
+                <div class="card-body d-flex flex-column justify-content-between p-3">
+                  <h5 class="card-title text-uppercase text-primary fw-bold mb-1">{{ product.name }}</h5>
+                  <p class="card-text text-muted small mb-2">{{ product.category }} - {{ product.gender }}</p>
+                  <p class="card-text fw-bold text-dark mb-2">
+                    <span class="text-secondary">Price:</span> UGX{% if min_price and max_price %}
+                      {{ min_price|floatformat:'0'|intcomma }} - {{ max_price|floatformat:'0'|intcomma }}
                     {% else %}
                       Price not available
                     {% endif %}
                   </p>
-                  <!-- Display Average Rating -->
-                  <p class="card-text">
-                    <strong>Rating:</strong>
-                    {% if product_info.avg_rating %}
-                      <span class="text-warning">
+                  <div class="d-flex align-items-center mb-3">
+                    <strong class="text-secondary me-2">Rating:</strong>
+                    <div class="text-warning">
+                      {% if product_info.avg_rating %}
                         {% for i in '12345'|make_list %}
                           {% if forloop.counter0|add:0.5 <= product_info.avg_rating %}
                             <i class="fas fa-star"></i>
@@ -82,48 +83,66 @@
                           {% else %}
                             <i class="far fa-star"></i>
                           {% endif %}
-                        {% endfor %}({{ product_info.avg_rating }} / 5)
-                      </span>
-                    {% else %}
-                      No ratings yet
-                    {% endif %}
-                  </p>
+                        {% endfor %}
+                        <span class="ms-1 small text-muted">({{ product_info.avg_rating|floatformat:1 }} / 5)</span>
+                      {% else %}
+                        <span class="small text-muted">No ratings yet</span>
+                      {% endif %}
+                    </div>
+                  </div>
+                  <div class="d-grid gap-2 mt-auto">
+                    <a href="{% url 'orders:product_details_view' product.id %}" class="btn btn-outline-primary btn-sm fw-semibold"><i class="fas fa-info-circle me-1"></i> View Details</a>
+                    <a href="{% url 'orders:product_detail' product.id %}" class="btn btn-success btn-sm fw-semibold"><i class="fas fa-shopping-cart me-1"></i> Shop Now</a>
+                  </div>
                 </div>
               </div>
             </div>
           {% endwith %}
         {% endfor %}
       {% else %}
-        <p class="col-12 text-center">No products available.</p>
+        <div class="col-12 text-center py-5">
+          <p class="lead text-muted">No products found matching your criteria. Please try a different search or filter.</p>
+          <a href="{% url 'products:shop_homepage' %}" class="btn btn-outline-secondary mt-3"><i class="fas fa-redo me-2"></i>Reset Filters</a>
+        </div>
       {% endif %}
     </div>
 
-    <!-- Pagination Controls -->
-    <div class="pagination d-flex justify-content-center my-4">
-      <ul class="pagination">
-        {% if page_obj.has_previous %}
-          <li class="page-item">
-            <a class="page-link" href="?page=1&search={{ search_query }}">&laquo; First</a>
-          </li>
-          <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}">Previous</a>
-          </li>
-        {% endif %}
+    {% if page_obj.paginator.num_pages > 1 %}
+      <nav aria-label="Product page navigation" class="d-flex justify-content-center my-5">
+        <ul class="pagination">
+          {% if page_obj.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?page=1&search={{ request.GET.search|default:'' }}&category={{ request.GET.category|default:'' }}" aria-label="First"><span aria-hidden="true">&laquo; First</span></a>
+            </li>
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ request.GET.search|default:'' }}&category={{ request.GET.category|default:'' }}" aria-label="Previous"><span aria-hidden="true">Previous</span></a>
+            </li>
+          {% endif %}
 
-        <!-- Page Number Display -->
-        <li class="page-item disabled">
-          <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-        </li>
+          {% for i in page_obj.paginator.page_range %}
+            {% if page_obj.number == i %}
+              <li class="page-item active" aria-current="page">
+                <span class="page-link">{{ i }}</span>
+              </li>
+            {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ i }}&search={{ request.GET.search|default:'' }}&category={{ request.GET.category|default:'' }}">{{ i }}</a>
+              </li>
+            {% endif %}
+          {% endfor %}
 
-        {% if page_obj.has_next %}
-          <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ search_query }}">Next</a>
-          </li>
-          <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&search={{ search_query }}">Last &raquo;</a>
-          </li>
-        {% endif %}
-      </ul>
-    </div>
+          {% if page_obj.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ request.GET.search|default:'' }}&category={{ request.GET.category|default:'' }}" aria-label="Next"><span aria-hidden="true">Next</span></a>
+            </li>
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&search={{ request.GET.search|default:'' }}&category={{ request.GET.category|default:'' }}" aria-label="Last"><span aria-hidden="true">Last &raquo;</span></a>
+            </li>
+          {% endif %}
+        </ul>
+      </nav>
+    {% endif %}
   </div>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
 {% endblock %}
