@@ -161,31 +161,24 @@ def product_detail(request, id):
 
 def product_details_view(request, id):
     try:
-        # Fetch the product and related ProductVolume details
         product = Product.objects.get(id=id)
         product_volumes = ProductVolume.objects.filter(product=product).order_by(
             "volume__ml"
         )
-
-        # Fetch reviews
         reviews = Review.objects.filter(product=product, is_verified=True).order_by(
             "-created_at"
         )
 
-        # Pagination
-        paginator = Paginator(reviews, 5)  # Show 5 reviews per page
+        paginator = Paginator(reviews, 5)
         page_number = request.GET.get("page")
         page_obj = paginator.get_page(page_number)
 
-        # Count of verified reviews
-        verified_reviews_count = reviews.filter(is_verified=True).count()
-
-        # Process reviews to generate the filled and empty stars
         for review in page_obj:
             review.filled_stars = "★" * review.rating
             review.empty_stars = "☆" * (5 - review.rating)
 
-        # Prepare context with product and volume details
+        verified_reviews_count = reviews.filter(is_verified=True).count()
+
         context = {
             "product_id": product.id,
             "name": product.name,
@@ -193,23 +186,26 @@ def product_details_view(request, id):
             "description": product.description,
             "category": product.category.name if product.category else "N/A",
             "volumes": [],
-            "reviews": page_obj,  # Add paginated reviews
-            "verified_reviews_count": verified_reviews_count,  # Add review count
+            "reviews": page_obj,
+            "verified_reviews_count": verified_reviews_count,
         }
 
-        # Loop through ProductVolume instances to gather the volume details
         for product_volume in product_volumes:
-            volume = product_volume.volume  # Get the related Volume object
+            volume = product_volume.volume
             discount_value = product_volume.discount_value or 0
+            # Use static placeholder if image is missing
+            image_url = (
+                volume.image.url if volume.image else "/static/images/placeholder.png"
+            )
             volume_data = {
+                "id": volume.id,  # Add volume ID for select options
                 "ml": volume.ml,
-                "price": volume.price,
-                "image": volume.image.url if volume.image else "",
+                "price": float(volume.price),  # Ensure float for template
+                "image": image_url,
                 "product_type": product_volume.product_type,
-                "discount_value": discount_value,
-                "discounted_price": product_volume.get_discounted_price(),
+                "discount_value": float(discount_value),
+                "discounted_price": float(product_volume.get_discounted_price()),
             }
-
             context["volumes"].append(volume_data)
 
         return render(request, "orders/product_detail_partial.html", context)
