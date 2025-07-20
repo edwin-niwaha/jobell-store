@@ -117,6 +117,48 @@ def product_detail(request, id):
 # =================================== Products Detail for quests not signed in ===================================
 
 
+# def product_details_view(request, id):
+#     try:
+#         # Fetch the product and related ProductVolume details
+#         product = Product.objects.get(id=id)
+#         product_volumes = ProductVolume.objects.filter(product=product).order_by(
+#             "volume__ml"
+#         )
+
+#         # Prepare context with product and volume details
+#         context = {
+#             "product_id": product.id,
+#             "name": product.name,
+#             "gender": product.gender,
+#             "description": product.description,
+#             "category": product.category.name if product.category else "N/A",
+#             "volumes": [],
+#         }
+
+#         # Loop through ProductVolume instances to gather the volume details
+#         for product_volume in product_volumes:
+#             volume = product_volume.volume  # Get the related Volume object
+#             discount_value = product_volume.discount_value or 0
+#             volume_data = {
+#                 "ml": volume.ml,
+#                 "price": volume.price,
+#                 "image": volume.image.url if volume.image else "",
+#                 "product_type": product_volume.product_type,  # Include the product type if needed
+#                 "discount_value": discount_value,
+#                 "discounted_price": product_volume.get_discounted_price(),  # Apply any discount
+#             }
+
+#             context["volumes"].append(volume_data)
+
+#         return render(request, "orders/product_detail_partial.html", context)
+#     except Product.DoesNotExist:
+#         return render(
+#             request,
+#             "orders/product_detail_partial.html",
+#             {"error": "Product not found"},
+#         )
+
+
 def product_details_view(request, id):
     try:
         # Fetch the product and related ProductVolume details
@@ -124,6 +166,24 @@ def product_details_view(request, id):
         product_volumes = ProductVolume.objects.filter(product=product).order_by(
             "volume__ml"
         )
+
+        # Fetch reviews
+        reviews = Review.objects.filter(product=product, is_verified=True).order_by(
+            "-created_at"
+        )
+
+        # Pagination
+        paginator = Paginator(reviews, 5)  # Show 5 reviews per page
+        page_number = request.GET.get("page")
+        page_obj = paginator.get_page(page_number)
+
+        # Count of verified reviews
+        verified_reviews_count = reviews.filter(is_verified=True).count()
+
+        # Process reviews to generate the filled and empty stars
+        for review in page_obj:
+            review.filled_stars = "★" * review.rating
+            review.empty_stars = "☆" * (5 - review.rating)
 
         # Prepare context with product and volume details
         context = {
@@ -133,6 +193,8 @@ def product_details_view(request, id):
             "description": product.description,
             "category": product.category.name if product.category else "N/A",
             "volumes": [],
+            "reviews": page_obj,  # Add paginated reviews
+            "verified_reviews_count": verified_reviews_count,  # Add review count
         }
 
         # Loop through ProductVolume instances to gather the volume details
@@ -143,10 +205,11 @@ def product_details_view(request, id):
                 "ml": volume.ml,
                 "price": volume.price,
                 "image": volume.image.url if volume.image else "",
-                "product_type": product_volume.product_type,  # Include the product type if needed
+                "product_type": product_volume.product_type,
                 "discount_value": discount_value,
-                "discounted_price": product_volume.get_discounted_price(),  # Apply any discount
+                "discounted_price": product_volume.get_discounted_price(),
             }
+
             context["volumes"].append(volume_data)
 
         return render(request, "orders/product_detail_partial.html", context)

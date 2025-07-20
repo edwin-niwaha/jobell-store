@@ -1,5 +1,8 @@
-{% extends 'accounts/base.html' %} {% load static %} {% load humanize %} {% block content %}
-  <div class="container-fluid my-2">
+{% extends 'accounts/base.html' %}
+{% load static %}
+{% load humanize %}
+{% block content %}
+  <div class="container-fluid my-2 mb-5">
     <div class="card shadow-lg border-0">
       <div class="card-header bg-primary text-white">
         <h2 class="mb-0 text-center">Order Details - #{{ order.id }}</h2>
@@ -83,13 +86,21 @@
                     {% if order.status == status %}
                     
                     
+                    
+                    
                    bg-success 
+
+
 
 
                   {% else %}
                     
                     
+                    
+                    
                    bg-secondary 
+
+
 
 
                   {% endif %}"

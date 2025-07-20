@@ -3,80 +3,222 @@
 {% load humanize %}
 
 {% block content %}
-  <div class="container-fluid py-5">
-    <div class="row">
-      <!-- Product Heading and Shop Now Button -->
-      <div class="d-flex justify-content-between align-items-center">
-        <h1>
-          <span style="color: gold;">{{ name }}</span>
-          <strong style="color: black;">|</strong>
-          <span style="color: blue;">{{ category }}</span>
-          <strong style="color: black;">|</strong>
-          <span style="color: crimson;">{{ gender }}</span>
-        </h1>
+  <div class="container">
+    <h2 class="text-center text-primary mb-5 display-4 fw-bold animate__animated animate__fadeInDown">Product Details ✨</h2>
 
-        <a href="{% url 'products:shop_homepage' %}" class="btn btn-warning text-uppercase fw-bold">Shop Now</a>
-      </div>
-      <hr />
-      <!-- Product Description Section inside Bootstrap Card -->
-      <div class="card mt-2">
-        <div class="card-body">
-          <h3 class="text-primary">Description</h3>
-          <p class="lead">{{ description }}</p>
-        </div>
-      </div>
-      <hr />
-
-      <!-- Available Volumes Section -->
-      <h2 class="text-center text-warning mb-4">Available Volumes</h2>
-      {% if volumes %}
-        <div class="row justify-content-center">
-          {% for volume in volumes %}
-            <div class="col-md-3 col-sm-6 col-12 mb-4">
-              <div class="card text-center h-100 shadow-lg">
-                <!-- Add h-100 class to make card fill available height -->
-                <div class="card-body d-flex flex-column">
-                  <h5 class="card-title">{{ volume.ml }} ML</h5>
-
-                  {% if volume.discount_value %}
-                    <!-- Discount badge -->
-                    <span class="badge bg-danger position-absolute top-0 end-0 translate-middle-y py-2 px-4">-{{ volume.discount_value }}%</span>
-                  {% endif %}
-
-                  {% if volume.image %}
-                    <!-- Volume Image -->
-                    <img src="{{ volume.image }}" alt="{{ volume.ml }} ML Image" class="img-fluid rounded mb-3" style="max-width: 100px; height: auto;" />
-                  {% endif %}
-
-                  <p class="card-text">
-                    {% if volume.discount_value %}
-                      <!-- Discounted Price -->
-                      <strong>Original Price:</strong> <span class="text-muted text-decoration-line-through">UgX{{ volume.price|floatformat:'2'|intcomma }}</span><br />
-                      <strong>Discounted Price:</strong> <span class="text-success">UgX{{ volume.discounted_price|floatformat:'2'|intcomma }}</span>
-                    {% else %}
-                      <!-- Regular Price without cancellation -->
-                      <strong>Price:</strong> <span class="text-success">UgX{{ volume.price|floatformat:'2'|intcomma }}</span>
-                    {% endif %}
+    {% if volumes %}
+      <div class="row justify-content-center mb-5">
+        <div class="col-lg-12 col-md-12">
+          <div class="card shadow-lg border-0 rounded-4 overflow-hidden animate__animated animate__fadeInUp">
+            <div class="card-body p-lg-5 p-md-4 p-3">
+              <div class="row g-4 align-items-center">
+                <div class="col-md-6 order-md-1 order-2">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h1 class="text-dark display-5 fw-bold mb-0">{{ name }}</h1>
+                    <a href="{% url 'orders:product_detail' product_id %}" class="btn btn-success btn-lg text-uppercase fw-bold shadow-lg animate__animated animate__bounceInRight"><i class="bi bi-bag-fill me-2"></i> Shop Now</a>
+                  </div>
+                  <p class="fs-5 text-secondary mb-2">
+                    <span class="fw-semibold">Category:</span> <span class="badge bg-info-subtle text-info">{{ category }}</span>
+                    |
+                    <span class="fw-semibold">Gender:</span> <span class="badge bg-danger-subtle text-danger">{{ gender }}</span>
                   </p>
 
-                  <p class="card-text mb-0">
-                    <strong>Type:</strong> {{ volume.product_type }}
-                  </p>
+                  <div class="mb-4">
+                    <label for="volumeSelect" class="form-label fw-bold fs-5 text-dark">Select Volume:</label>
+                    <select id="volumeSelect" class="form-select form-select-lg shadow-sm border-primary" onchange="updateVolumeDetails()">
+                      {% for volume in volumes %}
+                        <option value="{{ volume.id }}"
+                          data-ml="{{ volume.ml }}"
+                          data-price="{{ volume.price|floatformat:'2' }}"
+                          data-discounted-price="{% if volume.discount_value %}
+                            {{ volume.discounted_price|floatformat:'2' }}
+                          {% else %}
+                            
+                            
+                            
+                            
+                            
+                            
+                            0
 
-                  <!-- Flex grow to ensure the card stretches evenly -->
-                  <div class="mt-auto"></div>
+
+
+
+
+
+                          {% endif %}"
+                          data-discount-value="{{ volume.discount_value|default:'0' }}"
+                          data-image="{% if volume.image %}
+                            {{ volume.image.url }}
+                          {% else %}
+                            {% static 'images/placeholder.png' %}
+                          {% endif %}"
+                          data-type="{{ volume.product_type }}">{{ volume.ml }} ML</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+
+                  <div id="volumeDetails" class="mt-4 p-3 border rounded-3 bg-light animate__animated animate__fadeIn">
+                    {% with volume=volumes.0 %}
+                      <p id="volumeType" class="card-text mb-2 fs-5">
+                        <strong class="text-dark">Type:</strong> <span class="text-info">{{ volume.product_type }}</span>
+                      </p>
+                      <p id="volumePrice" class="card-text mb-0 fs-3 fw-bold">
+                        {% if volume.discount_value %}
+                          <span class="text-muted text-decoration-line-through me-2 small">UgX{{ volume.price|floatformat:'2'|intcomma }}</span>
+                          <span class="text-success">UgX{{ volume.discounted_price|floatformat:'2'|intcomma }}</span>
+                          <span class="badge bg-danger ms-2 animate__animated animate__pulse animate__infinite">-{{ volume.discount_value }}%</span>
+                        {% else %}
+                          <span class="text-success">UgX{{ volume.price|floatformat:'2'|intcomma }}</span>
+                        {% endif %}
+                      </p>
+                    {% endwith %}
+                  </div>
+
+                  <h3 class="card-title text-primary mb-3 fw-bold border-bottom pb-2 py-2">Description</h3>
+                  <p class="lead text-dark-emphasis mb-4">{{ description }}</p>
+                </div>
+
+                <div class="col-md-6 order-md-2 order-1 text-center animate__animated animate__zoomIn">
+                  <div id="volumeImageContainer" class="mb-4 p-3 bg-light rounded-4 shadow-sm">
+                    <img id="volumeImage"
+                      src="{% if volumes.0.image %}
+                        {{ volumes.0.image.url }}
+                      {% else %}
+                        {% static 'images/placeholder.png' %}
+                      {% endif %}"
+                      alt="{{ volumes.0.ml }} ML Image"
+                      class="img-fluid rounded-3 shadow-sm product-image" />
+                  </div>
                 </div>
               </div>
             </div>
-          {% endfor %}
+          </div>
         </div>
-      {% else %}
-        <p class="text-center text-danger">No volumes available for this product.</p>
-      {% endif %}
+      </div>
+      <hr class="my-5" />
 
-      {% if error %}
-        <p class="text-center text-danger">{{ error }}</p>
-      {% endif %}
-    </div>
+      <div class="row">
+        <div class="col-12">
+          <h2 class="text-primary mb-4">Customer Reviews & Ratings ✨</h2>
+
+          {% if reviews %}
+            <div class="mb-4">
+              <p class="fs-5">
+                <strong>{{ verified_reviews_count }} Verified Ratings</strong>
+              </p>
+            </div>
+
+            <div class="reviews-list bg-light p-4 rounded-3 shadow-sm mb-4">
+              {% for review in reviews %}
+                <div class="card mb-3 review-card border-0 shadow-sm">
+                  <div class="card-body">
+                    <h5 class="card-title text-success mb-2">
+                      {{ review.user.username }}
+                      <span class="text-warning ms-2">
+                        {% for _ in review.filled_stars %}
+                          ⭐
+                        {% endfor %}
+                        {% for _ in review.empty_stars %}
+                          ☆
+                        {% endfor %}
+                      </span>
+                    </h5>
+                    <p class="card-text">{{ review.review_text }}</p>
+                    <p class="card-subtitle text-muted mt-2">Reviewed on {{ review.created_at|date:'M d, Y' }}</p>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+
+            {% if reviews.paginator.num_pages > 1 %}
+              <nav aria-label="Reviews Pagination" class="d-flex justify-content-center mt-4">
+                <ul class="pagination">
+                  {% if reviews.has_previous %}
+                    <li class="page-item">
+                      <a class="page-link" href="?page=1" aria-label="First"><span aria-hidden="true">&laquo;&laquo;</span></a>
+                    </li>
+                    <li class="page-item">
+                      <a class="page-link" href="?page={{ reviews.previous_page_number }}" aria-label="Previous"><span aria-hidden="true">&laquo;</span></a>
+                    </li>
+                  {% endif %}
+
+                  <li class="page-item disabled">
+                    <span class="page-link">Page {{ reviews.number }} of {{ reviews.paginator.num_pages }}</span>
+                  </li>
+
+                  {% if reviews.has_next %}
+                    <li class="page-item">
+                      <a class="page-link" href="?page={{ reviews.next_page_number }}" aria-label="Next"><span aria-hidden="true">&raquo;</span></a>
+                    </li>
+                    <li class="page-item">
+                      <a class="page-link" href="?page={{ reviews.paginator.num_pages }}" aria-label="Last"><span aria-hidden="true">&raquo;&raquo;</span></a>
+                    </li>
+                  {% endif %}
+                </ul>
+              </nav>
+            {% endif %}
+          {% else %}
+            <div class="alert alert-info" role="alert">No reviews yet for this product. Be the first to share your thoughts! 🚀</div>
+          {% endif %}
+        </div>
+      </div>
+    {% else %}
+      <div class="alert alert-warning text-center mt-5 shadow-sm animate__animated animate__fadeIn" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2 fs-4"></i>
+        <h4 class="alert-heading">No Volumes Available!</h4>
+        <p class="mb-0">It looks like there are no volumes available for this product at the moment. Please check back later.</p>
+      </div>
+    {% endif %}
+
+    {% if error %}
+      <div class="alert alert-danger text-center mt-4 shadow-sm animate__animated animate__shakeX" role="alert">
+        <i class="bi bi-x-circle-fill me-2 fs-4"></i> {{ error }}
+      </div>
+    {% endif %}
   </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      updateVolumeDetails() // Call on page load to set initial state
+    })
+    
+    function updateVolumeDetails() {
+      const select = document.getElementById('volumeSelect')
+      const selectedOption = select.options[select.selectedIndex]
+      const volumeImage = document.getElementById('volumeImage')
+      const volumeType = document.getElementById('volumeType')
+      const volumePrice = document.getElementById('volumePrice')
+    
+      const ml = selectedOption.getAttribute('data-ml')
+      const price = parseFloat(selectedOption.getAttribute('data-price')).toLocaleString('en-US', { minimumFractionDigits: 2 })
+      const discountedPrice = parseFloat(selectedOption.getAttribute('data-discounted-price')).toLocaleString('en-US', { minimumFractionDigits: 2 })
+      const discountValue = selectedOption.getAttribute('data-discount-value')
+      const image = selectedOption.getAttribute('data-image')
+      const type = selectedOption.getAttribute('data-type')
+    
+      // Update image source and alt text
+      if (image) {
+        volumeImage.src = image
+        volumeImage.alt = `${ml} ML Image`
+      } else {
+        volumeImage.src = '{% static "images/placeholder.png" %}'
+        volumeImage.alt = 'No Image Available'
+      }
+    
+      // Update type
+      volumeType.innerHTML = `<strong class="text-dark">Type:</strong> <span class="text-info">${type}</span>`
+    
+      // Update price
+      if (discountValue !== '0') {
+        volumePrice.innerHTML = `
+                                                                                                                                                      <span class="text-muted text-decoration-line-through me-2 small">UgX${price}</span>
+                                                                                                                                                      <span class="text-success">UgX${discountedPrice}</span>
+                                                                                                                                                      <span class="badge bg-danger ms-2 animate__animated animate__pulse animate__infinite">-${discountValue}%</span>
+                                                                                                                                                    `
+      } else {
+        volumePrice.innerHTML = `<span class="text-success">UgX${price}</span>`
+      }
+    }
+  </script>
 {% endblock %}

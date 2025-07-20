@@ -3,10 +3,9 @@
 {% load humanize %}
 
 {% block content %}
-  <div class="container-fluid py-5">
-    <div class="text-center mb-5">
+  <div class="container-fluid">
+    <div class="text-center mb-4">
       <h1 class="display-3 fw-bolder text-warning" style="background: linear-gradient(90deg, #FFD700, #FFA500); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase; letter-spacing: 3px; text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4); transform: scale(1); transition: transform 0.3s ease-in-out;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">Discover Our Exquisite Scents</h1>
-      <p class="lead text-muted mt-3">Find your perfect fragrance from our curated collection.</p>
     </div>
 
     <form method="get" action="{% url 'products:shop_homepage' %}" class="py-4 px-3 bg-white rounded shadow-lg mb-5">
@@ -25,7 +24,7 @@
       </div>
     </form>
 
-    <div id="product-list" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+    <div id="product-list" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 mb-5">
       {% if products_with_images %}
         {% for product_info in products_with_images %}
           {% with product=product_info.product images=product_info.images min_price=product_info.min_price max_price=product_info.max_price %}

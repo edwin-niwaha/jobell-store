@@ -3,35 +3,35 @@
 {% load humanize %}
 
 {% block content %}
-  <div class="container-fluid mb-5">
-    <div class="card shadow-lg border-0 rounded-4">
-      <div class="card-header bg-primary text-white text-center py-3 rounded-top-4">
-        <h2 class="mb-0 text-uppercase fw-bold">🛒 Your Order History</h2>
+  <div class="container-fluid">
+    <div class="card shadow-sm border-0 rounded-3">
+      <div class="card-header bg-primary text-white text-center">
+        <h2 class="mb-0 text-uppercase">Order History</h2>
       </div>
-      <div class="card-body p-4">
+      <div class="card-body">
         {% if orders %}
           <div class="table-responsive">
-            <table class="table table-striped table-hover table-bordered align-middle text-nowrap">
+            <table class="table table-striped table-hover table-bordered align-middle">
               <thead class="bg-secondary text-white">
                 <tr>
-                  <th scope="col">Order ID</th>
-                  <th scope="col">Order Date</th>
-                  <th scope="col">Order Status</th>
-                  {% comment %} <th scope="col">Payment Status</th> {% endcomment %}
-                  <th scope="col">Customer Name</th>
-                  <th scope="col">Contact Tel.</th>
-                  <th scope="col" class="text-end">Total Amount (UgX)</th>
-                  <th scope="col" class="text-center" colspan="2">Actions</th>
+                  <th>Order ID</th>
+                  <th>Order Date</th>
+                  <th>Order - Status</th>
+                  {% comment %} <th>Payment - Status</th> {% endcomment %}
+                  <th>Customer</th>
+                  <th>Tel. Contact</th>
+                  <th class="text-end">Total Amount (UgX)</th>
+                  <th colspan="2" class="text-center">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {% for order in orders %}
                   <tr>
                     <td>{{ order.id }}</td>
-                    <td>{{ order.created_at|date:'d M Y' }}</td>
+                    <td>{{ order.created_at|date:'d/m/Y' }}</td>
                     <td>
                       {% if order.status == 'Pending' %}
-                        <span class="badge bg-warning text-dark">Pending</span>
+                        <span class="badge bg-warning">Pending</span>
                       {% elif order.status == 'Out for Delivery' %}
                         <span class="badge bg-info text-dark">Out for Delivery</span>
                       {% elif order.status == 'Delivered' %}
@@ -56,27 +56,16 @@
                     <td>{{ order.customer.first_name }} {{ order.customer.last_name }}</td>
                     <td>{{ order.customer.mobile }}</td>
                     <td class="text-end">{{ order.total_amount|floatformat:'2'|intcomma }}</td>
-                    {% comment %} <td class="text-center">
-                      {% if order.payment_status != 'paid' %}
-                        <button type="button" class="btn btn-success btn-sm" onclick="makePayment('{{ order.id }}', '{{ order.total_amount }}', '{{ order.customer.email }}', '{{ order.customer.mobile }}', '{{ order.customer.first_name }} {{ order.customer.last_name }}')" aria-label="Pay now for order {{ order.id }}">Pay Now</button>
-                      {% else %}
-                        <button type="button" class="btn btn-secondary btn-sm" disabled>Paid</button>
-                      {% endif %}
+                    {% comment %} <td>
+                      <a href="{% url 'orders:payment_flutter' %}" class="btn btn-success btn-sm">Pay Now</a>
                     </td> {% endcomment %}
                     <td class="text-center">
-                      <a href="{% url 'orders:order_detail_view' order.id %}" class="btn btn-info btn-sm" aria-label="View details for order {{ order.id }}"><i class="mdi mdi-eye me-1"></i> Details</a>
+                      <a href="{% url 'orders:order_detail_view' order.id %}" class="btn btn-info btn-sm"><i class="mdi mdi-eye"></i> Details</a>
                     </td>
                   </tr>
                 {% empty %}
                   <tr>
-                    <td colspan="9" class="text-center py-4">
-                      <div class="alert alert-info" role="alert">
-                        <h4 class="alert-heading">No Orders Found! 😟</h4>
-                        <p>It looks like you haven't placed any orders yet. Start shopping to see your order history here.</p>
-                        <hr />
-                        <p class="mb-0">Explore our amazing products and place your first order!</p>
-                      </div>
-                    </td>
+                    <td colspan="8" class="text-center text-muted">No orders found.</td>
                   </tr>
                 {% endfor %}
               </tbody>
@@ -84,18 +73,16 @@
           </div>
         {% else %}
           <div class="text-center py-5">
-            <p class="fs-4 text-muted">You haven't placed any orders yet. Start by exploring our products!</p>
-            <i class="mdi mdi-cart-off mdi-48px text-muted d-block my-3"></i>
+            <p class="fs-4 text-muted">You haven't placed any orders yet.</p>
           </div>
         {% endif %}
 
         <div class="d-flex justify-content-end mt-4">
-          <a href="/" class="btn btn-lg btn-primary shadow-sm" aria-label="Continue shopping"><i class="mdi mdi-cart-outline me-2"></i> Continue Shopping</a>
+          <a href="/" class="btn btn-lg btn-primary btn-sm"><i class="mdi mdi-cart-outline"></i> Continue Shopping</a>
         </div>
       </div>
     </div>
   </div>
-
   <script>
     function makePayment(orderId, amount, email, phone, fullName) {
       const logoUrl = '{% static "images/file.png" %}'
