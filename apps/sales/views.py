@@ -17,7 +17,6 @@ from apps.customers.models import Customer
 from apps.inventory.models import Inventory
 from apps.products.models import Product, ProductVolume
 from .models import Sale, SaleDetail
-from apps.finance.middleware import get_current_user
 from .forms import ReportPeriodForm, SaleForm
 
 from apps.finance.models import (

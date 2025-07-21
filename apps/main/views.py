@@ -18,7 +18,7 @@ from django.core.paginator import Paginator, EmptyPage
 from apps.products.models import Product, Category, Review
 from apps.sales.models import Sale
 from apps.orders.models import Cart, CartItem, Order, Wishlist
-from apps.finance.models import ChartOfAccounts, Transaction, FinancialPeriod, Branch
+from apps.finance.models import ChartOfAccounts, Transaction, FinancialPeriod
 
 
 from .models import Testimonial, Subscriber
@@ -32,6 +32,11 @@ from apps.authentication.decorators import (
 from .utils import (
     get_top_selling_products,
 )
+
+import logging
+
+# Set up logging
+logger = logging.getLogger(__name__)
 
 
 # =================================== Home User view  ===================================
@@ -197,7 +202,6 @@ def index(request):
 # @login_required
 # @admin_or_manager_or_staff_required
 # def finance_dashboard(request):
-
 #     def calculate_sales_profit():
 #         """Calculate total profit from sales."""
 #         total_profit = Decimal("0.00")
@@ -268,7 +272,7 @@ def index(request):
 #         "summary": calculate_account_totals(),
 #         "recent_transactions": Transaction.objects.select_related(
 #             "journal_entry", "account"
-#         ).order_by("-journal_entry__transaction_date")[:6],
+#         ).order_by("-journal_entry__transaction_date")[:8],
 #     }
 
 #     return render(request, "main/fin_dashboard.html", context)
@@ -277,30 +281,37 @@ def index(request):
 @login_required
 @admin_or_manager_or_staff_required
 def finance_dashboard(request):
-
-    def calculate_sales_profit():
-        """Calculate total profit from sales."""
-        total_profit = Decimal("0.00")
+    def calculate_revenue():
+        """Calculate total revenue from transactions."""
         try:
-            sales = Sale.objects.prefetch_related("items__product_volume__volume")
-            for sale in sales:
-                for item in sale.items.all():
-                    if item.product_volume:
-                        cost = Decimal(item.product_volume.volume.cost or 0)
-                        price = Decimal(item.product_volume.volume.price or 0)
-                        total_profit += (price - cost) * Decimal(item.quantity or 0)
-        except Exception as e:
-            print(f"Error calculating sales profit: {e}")
-        return total_profit
+            transaction_filter = {
+                "account__account_type": "revenue",
+                "transaction_type": "credit",
+                "account__is_deleted": False,
+            }
 
-    def calculate_other_income():
-        """Calculate non-sales revenue."""
-        try:
-            return Transaction.objects.filter(account__account_type="revenue").exclude(
-                account__account_name="Sales Revenue"
-            ).aggregate(total_income=Sum("amount"))["total_income"] or Decimal("0.00")
+            revenue_transactions = Transaction.objects.filter(**transaction_filter)
+            total_revenue = revenue_transactions.aggregate(total=Sum("amount"))[
+                "total"
+            ] or Decimal("0.00")
+            logger.info(f"Total Revenue (from Transactions): {total_revenue}")
+
+            # Log revenue by account for debugging
+            revenue_categories = (
+                revenue_transactions.values(
+                    "account__account_name", "account__account_number"
+                )
+                .annotate(balance=Sum("amount"))
+                .order_by("account__account_number")
+            )
+            for category in revenue_categories:
+                logger.debug(
+                    f"Revenue Account {category['account__account_name']} ({category['account__account_number']}): {category['balance']}"
+                )
+
+            return total_revenue
         except Exception as e:
-            print(f"Error calculating other income: {e}")
+            logger.error(f"Error calculating revenue: {e}")
             return Decimal("0.00")
 
     def calculate_account_totals():
@@ -308,14 +319,12 @@ def finance_dashboard(request):
         account_types = ["Asset", "Liability", "Revenue", "Expense", "NetIncome"]
         summary = {}
         try:
-            total_revenue = calculate_sales_profit() + calculate_other_income()
+            # Calculate revenue separately
+            total_revenue = calculate_revenue()
+
             for account_type in account_types:
                 if account_type == "NetIncome":
                     continue
-                if account_type == "Revenue":
-                    summary[account_type] = float(total_revenue)
-                    continue
-
                 total = Decimal("0.00")
                 accounts = ChartOfAccounts.objects.filter(
                     account_type=account_type.lower()
@@ -332,15 +341,23 @@ def finance_dashboard(request):
                         if account_type.lower() in ["asset", "expense"]
                         else (credit - debit)
                     )
-                summary[account_type] = float(total)
+                    logger.debug(
+                        f"Account {acc.account_name} ({acc.account_number}): Debit = {debit}, Credit = {credit}, Total = {total}"
+                    )
+                # Use calculated revenue for Revenue account type
+                if account_type == "Revenue":
+                    total = total_revenue
+                summary[account_type] = total
+                logger.info(f"{account_type} Total: {total}")
 
             # Calculate Net Income
-            summary["NetIncome"] = float(
-                summary.get("Revenue", 0) - summary.get("Expense", 0)
-            )
+            summary["NetIncome"] = summary.get(
+                "Revenue", Decimal("0.00")
+            ) - summary.get("Expense", Decimal("0.00"))
+            logger.info(f"Net Income: {summary['NetIncome']}")
         except Exception as e:
-            print(f"Error in account totals: {e}")
-            summary = {key: 0.0 for key in account_types}
+            logger.error(f"Error in account totals: {e}")
+            summary = {key: Decimal("0.00") for key in account_types}
         return summary
 
     # Prepare context
@@ -350,6 +367,7 @@ def finance_dashboard(request):
             "journal_entry", "account"
         ).order_by("-journal_entry__transaction_date")[:8],
     }
+    logger.debug(f"Summary before rendering: {context['summary']}")
 
     return render(request, "main/fin_dashboard.html", context)
 
