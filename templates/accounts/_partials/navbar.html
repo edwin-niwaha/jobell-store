@@ -34,14 +34,14 @@
                 <li class="nav-item">
                   <a class="nav-link" href="{% url 'dashboard' %}">DASHBOARD</a>
                 </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="{% url 'orders:wishlist' %}">WISHLIST</a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="{% url 'orders:customer_order_history' %}">ORDERS</a>
-                </li>
               {% endif %}
             {% endif %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'orders:wishlist' %}">WISHLIST</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'orders:customer_order_history' %}">ORDERS</a>
+            </li>
             <li class="nav-item">
               <a class="nav-link" href="{% url 'about_us' %}">ABOUT US</a>
             </li>
