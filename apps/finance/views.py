@@ -558,6 +558,87 @@ def ledger_select_period(request):
     )
 
 
+# @login_required
+# @admin_or_manager_required
+# def ledger_report_detailed(request, period_id):
+#     """Generate ledger report for the selected financial period."""
+#     ledger_data = []
+#     accounts = ChartOfAccounts.objects.all().order_by(
+#         "account_number"
+#     )  # Sort accounts by account_number
+#     total_debits = 0
+#     total_credits = 0
+
+#     # Get the selected financial period
+#     financial_period = get_object_or_404(FinancialPeriod, id=period_id, status="open")
+#     start_date = financial_period.start_date
+#     end_date = financial_period.end_date
+
+#     # Get all transactions within the financial period, sorted by account_number
+#     ledger_data = (
+#         Transaction.objects.filter(
+#             journal_entry__transaction_date__range=[start_date, end_date]
+#         )
+#         .select_related("account")
+#         .order_by("account__account_number", "journal_entry__transaction_date")
+#     )
+
+#     # Calculate opening balance for each account
+#     opening_balances = {}
+#     opening_balance_queryset = Transaction.objects.filter(
+#         journal_entry__transaction_date__lt=start_date
+#     ).select_related("account")
+
+#     for transaction in opening_balance_queryset:
+#         account_id = transaction.account.id
+#         if account_id not in opening_balances:
+#             opening_balances[account_id] = 0
+#         if transaction.transaction_type == "debit":
+#             opening_balances[account_id] += transaction.amount
+#         elif transaction.transaction_type == "credit":
+#             opening_balances[account_id] -= transaction.amount
+
+#     # Calculate debits, credits, and running balance
+#     running_balances = {
+#         account_id: balance for account_id, balance in opening_balances.items()
+#     }
+#     for transaction in ledger_data:
+#         account_id = transaction.account.id
+#         if account_id not in running_balances:
+#             running_balances[account_id] = opening_balances.get(account_id, 0)
+
+#         if transaction.transaction_type == "debit":
+#             transaction.debit = transaction.amount
+#             transaction.credit = 0
+#             total_debits += transaction.amount
+#         elif transaction.transaction_type == "credit":
+#             transaction.debit = 0
+#             transaction.credit = transaction.amount
+#             total_credits += transaction.amount
+#         else:
+#             transaction.debit = 0
+#             transaction.credit = 0
+
+#         # Update running balance
+#         running_balances[account_id] += transaction.debit - transaction.credit
+#         transaction.running_balance = running_balances[account_id]
+
+#     return render(
+#         request,
+#         "finance/ledger_report_detailed.html",
+#         {
+#             "ledger_data": ledger_data,
+#             "accounts": accounts,
+#             "financial_period": financial_period,
+#             "start_date": start_date,
+#             "end_date": end_date,
+#             "total_debits": total_debits,
+#             "total_credits": total_credits,
+#             "opening_balances": opening_balances,
+#         },
+#     )
+
+
 @login_required
 @admin_or_manager_required
 def ledger_report_detailed(request, period_id):
@@ -583,6 +664,11 @@ def ledger_report_detailed(request, period_id):
         .order_by("account__account_number", "journal_entry__transaction_date")
     )
 
+    # Pagination
+    paginator = Paginator(ledger_data, 25)  # Show 25 transactions per page
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
     # Calculate opening balance for each account
     opening_balances = {}
     opening_balance_queryset = Transaction.objects.filter(
@@ -602,7 +688,7 @@ def ledger_report_detailed(request, period_id):
     running_balances = {
         account_id: balance for account_id, balance in opening_balances.items()
     }
-    for transaction in ledger_data:
+    for transaction in page_obj:  # Process only transactions on current page
         account_id = transaction.account.id
         if account_id not in running_balances:
             running_balances[account_id] = opening_balances.get(account_id, 0)
@@ -627,7 +713,7 @@ def ledger_report_detailed(request, period_id):
         request,
         "finance/ledger_report_detailed.html",
         {
-            "ledger_data": ledger_data,
+            "ledger_data": page_obj,  # Pass paginated data
             "accounts": accounts,
             "financial_period": financial_period,
             "start_date": start_date,
@@ -635,6 +721,7 @@ def ledger_report_detailed(request, period_id):
             "total_debits": total_debits,
             "total_credits": total_credits,
             "opening_balances": opening_balances,
+            "page_obj": page_obj,  # For pagination controls
         },
     )
 
