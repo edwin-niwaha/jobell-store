@@ -228,8 +228,8 @@
 
                 <!-- Hover View Product Details -->
                 <div class="hover-overlay">
-                  <a class="badge bg-danger position-absolute top-0 end-0 translate-middle-y py-2 px-4" href="{% url 'orders:product_details_view' product.id %}">View Details</a>
-                  <a class="btn btn-primary btn-sm" href="{% url 'orders:product_detail' product.id %}">Shop Now</a>
+                  <a class="badge bg-danger position-absolute top-0 end-0 translate-middle-y py-2 px-4" href="{% url 'orders:product_details_view' product.uuid %}">View Details</a>
+                  <a class="btn btn-primary btn-sm" href="{% url 'orders:product_detail' product.uuid %}">Shop Now</a>
                 </div>
 
                 <!-- Product Info -->

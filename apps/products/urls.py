@@ -67,11 +67,21 @@ urlpatterns = [
     path("all", views.products_list_all, name="products_list_all"),
     path("", views.products_list_view, name="products_list"),
     path("add/", views.products_add_view, name="products_add"),
+    # path(
+    #     "update/<str:product_id>/", views.products_update_view, name="products_update"
+    # ),
+    # path(
+    #     "delete/<str:product_id>/", views.products_delete_view, name="products_delete"
+    # ),
     path(
-        "update/<str:product_id>/", views.products_update_view, name="products_update"
+        "update/<uuid:product_uuid>/",
+        views.products_update_view,
+        name="products_update",
     ),
     path(
-        "delete/<str:product_id>/", views.products_delete_view, name="products_delete"
+        "delete/<uuid:product_uuid>/",
+        views.products_delete_view,
+        name="products_delete",
     ),
     # ** Product Image URLs **
     path("product-image/", views.update_product_image, name="update_product_image"),

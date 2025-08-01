@@ -3,7 +3,7 @@
 {% load humanize %}
 
 {% block content %}
-  <div class="container py-4">
+  <div class="container-fluid py-4">
     <div class="card shadow-lg border-0 rounded-3">
       <div class="card-header text-center bg-primary text-white py-3">
         <h3 class="fw-light mb-0">🛒 Your Shopping Cart</h3>
@@ -17,7 +17,7 @@
                 <li class="list-group-item d-flex flex-column flex-md-row align-items-md-center justify-content-between py-3 px-0">
                   <div class="flex-grow-1 text-center text-md-start mb-2 mb-md-0">
                     <h6 class="mb-1 text-break">
-                      <a href="{% url 'orders:product_detail' item.product.id %}" class="text-decoration-none text-primary fw-bold">{{ item.product.name }}</a>
+                      <a href="{% url 'orders:product_detail' item.product.uuid %}" class="text-decoration-none text-primary fw-bold">{{ item.product.name }}</a>
                       <span class="text-muted mx-1">|</span>
                       <span class="text-success">{{ item.product.category }}</span>
                       <span class="text-muted mx-1">|</span>

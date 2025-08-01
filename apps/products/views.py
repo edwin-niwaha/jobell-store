@@ -213,7 +213,6 @@ def categories_add_view(request):
 @admin_or_manager_required
 @transaction.atomic
 def categories_update_view(request, category_id):
-
     # Get the category or return a 404 error if not found
     category = get_object_or_404(Category, id=category_id)
 
@@ -260,7 +259,6 @@ def categories_update_view(request, category_id):
 @admin_required
 @transaction.atomic
 def categories_delete_view(request, category_id):
-
     try:
         # Get the category to delete
         category = Category.objects.get(id=category_id)
@@ -672,9 +670,9 @@ def products_add_view(request):
 @login_required
 @admin_or_manager_or_staff_required
 @transaction.atomic
-def products_update_view(request, product_id):
+def products_update_view(request, product_uuid):
     # Get the product or return 404 if not found
-    product = get_object_or_404(Product, id=product_id)
+    product = get_object_or_404(Product, uuid=product_uuid)
 
     context = {
         "table_title": "Update Product",
@@ -688,13 +686,13 @@ def products_update_view(request, product_id):
         if form.is_valid():
             # Check if a product with the same attributes exists, excluding the current product
             attributes = form.cleaned_data
-            if Product.objects.filter(**attributes).exclude(id=product_id).exists():
+            if Product.objects.filter(**attributes).exclude(uuid=product_uuid).exists():
                 messages.error(
                     request,
                     "Product with the same attributes already exists!",
                     extra_tags="warning",
                 )
-                return redirect("products:products_update", product_id=product_id)
+                return redirect("products:products_update", product_uuid=product_uuid)
 
             try:
                 form.save()
@@ -711,7 +709,7 @@ def products_update_view(request, product_id):
                     extra_tags="bg-danger",
                 )
                 print(e)
-                return redirect("products:products_update", product_id=product_id)
+                return redirect("products:products_update", product_uuid=product_uuid)
         else:
             messages.error(
                 request,
@@ -729,10 +727,10 @@ def products_update_view(request, product_id):
 @login_required
 @admin_required
 @transaction.atomic
-def products_delete_view(request, product_id):
+def products_delete_view(request, product_uuid):
     try:
         # Get the product to delete
-        product = Product.objects.get(id=product_id)
+        product = Product.objects.get(uuid=product_uuid)
         product.delete()
         messages.success(
             request, "¡Product: " + product.name + " deleted!", extra_tags="bg-success"
@@ -754,7 +752,8 @@ def products_delete_view(request, product_id):
 def stock_alerts_view(request):
     # Fetch all products with inventory details
     low_stock_products = Inventory.objects.filter(
-        quantity__lte=F("low_stock_threshold"), quantity__gt=0  # Low stock but not 0
+        quantity__lte=F("low_stock_threshold"),
+        quantity__gt=0,  # Low stock but not 0
     ).select_related(
         "product"
     )  # Ensures related product data is fetched

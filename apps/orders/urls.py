@@ -3,13 +3,23 @@ from . import views
 
 app_name = "orders"
 urlpatterns = [
+    # path(
+    #     "product/<int:id>/", views.product_details_view, name="product_details_view"
+    # ),  # This is the first view
+    # path(
+    #     "product/detail/<int:id>/", views.product_detail, name="product_detail"
+    # ),  # This is the second detailed view
     path(
-        "product/<int:id>/", views.product_details_view, name="product_details_view"
-    ),  # This is the first view
+        "product/<uuid:product_uuid>/",
+        views.product_details_view,
+        name="product_details_view",
+    ),
     path(
-        "product/detail/<int:id>/", views.product_detail, name="product_detail"
-    ),  # This is the second detailed view
-    path("wishlist/add/<int:product_id>/", views.wishlist_add, name="wishlist_add"),
+        "product/detail/<uuid:product_uuid>/",
+        views.product_detail,
+        name="product_detail",
+    ),
+    path("wishlist/add/<uuid:product_uuid>/", views.wishlist_add, name="wishlist_add"),
     path("wishlist/", views.wishlist_view, name="wishlist"),
     path(
         "wishlist/remove/<int:wishlist_item_id>/",
@@ -17,7 +27,7 @@ urlpatterns = [
         name="remove_from_wishlist",
     ),
     # cart
-    path("add-to-cart/<int:product_id>/", views.add_to_cart, name="add_to_cart"),
+    path("add-to-cart/<uuid:product_uuid>/", views.add_to_cart, name="add_to_cart"),
     path("cart/", views.cart_view, name="cart"),
     path("cart/update/<int:item_id>/", views.update_cart, name="update_cart"),
     path("cart/remove/<int:item_id>/", views.remove_from_cart, name="remove_from_cart"),

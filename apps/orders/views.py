@@ -35,8 +35,8 @@ logger = logging.getLogger(__name__)
 
 
 @login_required
-def product_detail(request, id):
-    product = get_object_or_404(Product, id=id)
+def product_detail(request, product_uuid):
+    product = get_object_or_404(Product, uuid=product_uuid)
 
     # Handle review submission
     if request.method == "POST" and "submit_review" in request.POST:
@@ -47,7 +47,7 @@ def product_detail(request, id):
                 "Oops! You've already reviewed this product.",
                 extra_tags="bg-danger",
             )
-            return redirect("orders:product_detail", id=id)
+            return redirect("orders:product_detail", product_uuid=product_uuid)
 
         review_text = request.POST.get("review_text")
         rating = int(request.POST.get("rating"))
@@ -61,7 +61,7 @@ def product_detail(request, id):
             )
 
         # Redirect to prevent re-posting the form if refreshed
-        return redirect("orders:product_detail", id=id)
+        return redirect("orders:product_detail", product_uuid=product_uuid)
 
     # Handle "Set as Featured" or "Remove from Featured" based on the POST request
     if request.method == "POST":
@@ -73,7 +73,7 @@ def product_detail(request, id):
 
         # Save the updated product
         product.save()
-        return redirect("orders:product_detail", id=id)
+        return redirect("orders:product_detail", product_uuid=product_uuid)
 
     # Continue fetching cart and product details
     cart, created = Cart.objects.get_or_create(user=request.user)
@@ -115,53 +115,9 @@ def product_detail(request, id):
 
 
 # =================================== Products Detail for quests not signed in ===================================
-
-
-# def product_details_view(request, id):
-#     try:
-#         # Fetch the product and related ProductVolume details
-#         product = Product.objects.get(id=id)
-#         product_volumes = ProductVolume.objects.filter(product=product).order_by(
-#             "volume__ml"
-#         )
-
-#         # Prepare context with product and volume details
-#         context = {
-#             "product_id": product.id,
-#             "name": product.name,
-#             "gender": product.gender,
-#             "description": product.description,
-#             "category": product.category.name if product.category else "N/A",
-#             "volumes": [],
-#         }
-
-#         # Loop through ProductVolume instances to gather the volume details
-#         for product_volume in product_volumes:
-#             volume = product_volume.volume  # Get the related Volume object
-#             discount_value = product_volume.discount_value or 0
-#             volume_data = {
-#                 "ml": volume.ml,
-#                 "price": volume.price,
-#                 "image": volume.image.url if volume.image else "",
-#                 "product_type": product_volume.product_type,  # Include the product type if needed
-#                 "discount_value": discount_value,
-#                 "discounted_price": product_volume.get_discounted_price(),  # Apply any discount
-#             }
-
-#             context["volumes"].append(volume_data)
-
-#         return render(request, "orders/product_detail_partial.html", context)
-#     except Product.DoesNotExist:
-#         return render(
-#             request,
-#             "orders/product_detail_partial.html",
-#             {"error": "Product not found"},
-#         )
-
-
-def product_details_view(request, id):
+def product_details_view(request, product_uuid):
     try:
-        product = Product.objects.get(id=id)
+        product = Product.objects.get(uuid=product_uuid)
         product_volumes = ProductVolume.objects.filter(product=product).order_by(
             "volume__ml"
         )
@@ -188,6 +144,7 @@ def product_details_view(request, id):
             "volumes": [],
             "reviews": page_obj,
             "verified_reviews_count": verified_reviews_count,
+            "product_uuid": str(product_uuid),
         }
 
         for product_volume in product_volumes:
@@ -217,11 +174,11 @@ def product_details_view(request, id):
         )
 
 
-# =================================== Products Wishlist ===================================
+# ================================ Products Wishlist ===================================
 @login_required
-def wishlist_add(request, product_id):
+def wishlist_add(request, product_uuid):
     # Get the product object
-    product = get_object_or_404(Product, id=product_id)
+    product = get_object_or_404(Product, uuid=product_uuid)
 
     # Check if the product is already in the user's wishlist
     wishlist_item, created = Wishlist.objects.get_or_create(
@@ -244,7 +201,7 @@ def wishlist_add(request, product_id):
         )
 
     # Redirect back to the product detail page
-    return redirect("orders:product_detail", id=product.id)
+    return redirect("orders:product_detail", product_uuid=product.uuid)
 
 
 # =================================== wishlist_view ===================================
@@ -300,8 +257,8 @@ def remove_from_wishlist(request, wishlist_item_id):
 
 # =================================== add_to_cart ===================================
 @login_required
-def add_to_cart(request, product_id):
-    product = get_object_or_404(Product, id=product_id)
+def add_to_cart(request, product_uuid):
+    product = get_object_or_404(Product, uuid=product_uuid)
     cart, created = Cart.objects.get_or_create(user=request.user)
     quantity = int(request.POST.get("quantity", 1))
     volume_id = request.POST.get("volume_id")
@@ -309,7 +266,7 @@ def add_to_cart(request, product_id):
     # Validate the volume
     if not volume_id:
         messages.error(request, "Please select a product volume.")
-        return redirect("orders:product_detail", id=product_id)
+        return redirect("orders:product_detail", product_uuid=product_uuid)
 
     # Fetch the selected volume
     volume = get_object_or_404(ProductVolume, id=volume_id)
@@ -321,7 +278,7 @@ def add_to_cart(request, product_id):
             "Invalid quantity. It must be greater than zero.",
             extra_tags="bg-danger text-white",
         )
-        return redirect("orders:product_detail", id=product_id)
+        return redirect("orders:product_detail", product_uuid=product_uuid)
 
     try:
         # Add volume to the CartItem creation or retrieval
@@ -352,7 +309,7 @@ def add_to_cart(request, product_id):
             extra_tags="bg-success text-white",
         )
 
-    return redirect("orders:product_detail", id=product_id)
+    return redirect("orders:product_detail", product_uuid=product_uuid)
 
 
 # =================================== cart_view ===================================
@@ -960,7 +917,6 @@ def order_process_view(request, order_id):
 
 # Send email to customer when the order changes
 def send_order_status_email(recipient_name, recipient_email, order_status):
-
     # Send a stylish email to the customer when their order status is updated.
     subject = f"Your Order Status Has Been Updated: {order_status}"
 

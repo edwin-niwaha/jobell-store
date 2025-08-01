@@ -25,7 +25,7 @@
                 <h5 class="card-title text-truncate" title="{{ item.product.name }}">{{ item.product.name }}</h5>
 
                 <!-- View Product Details Button with Icon -->
-                <a href="{% url 'orders:product_detail' item.product.id %}" title="View Product details" class="btn btn-primary btn-sm me-3"><i class="mdi mdi-eye me-2 fs-4"></i> View</a>
+                <a href="{% url 'orders:product_detail' item.product.uuid %}" title="View Product details" class="btn btn-primary btn-sm me-3"><i class="mdi mdi-eye me-2 fs-4"></i> View</a>
 
                 <!-- Remove from Wishlist Button with Icon -->
                 <button type="button" class="btn btn-danger btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#removeModal{{ item.id }}" title="Remove from Wishlist"><i class="mdi mdi-delete me-2 fs-4"></i> Remove</button>

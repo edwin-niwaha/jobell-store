@@ -52,7 +52,7 @@
               {% if products %}
                 {% for product in products %}
                   <tr>
-                    <td>{{ forloop.counter }}</td>
+                    <td>{{ product.prefixed_id }}</td>
                     <td>{{ product.name }}</td>
                     <td>{{ product.category }}</td>
                     <td>{{ product.gender }}</td>
@@ -65,7 +65,7 @@
                       {% endif %}
                     </td>
                     <td class="text-center print-hide">
-                      <a href="{% url 'products:products_update' product.id %}" class="text-decoration-none" onclick="return confirm('Are you sure you want to update this record?');"><button type="button" class="btn btn-warning btn-sm" data-bs-toggle="tooltip" title="Update product"><i class="bi bi-pencil"></i></button></a>
+                      <a href="{% url 'products:products_update' product.uuid %}" class="text-decoration-none" onclick="return confirm('Are you sure you want to update this record?');"><button type="button" class="btn btn-warning btn-sm" data-bs-toggle="tooltip" title="Update product"><i class="bi bi-pencil"></i></button></a>
                     </td>
                     <td class="text-center print-hide">
                       <a href="{% url 'products:product_volume_list' product.id %}" class="text-decoration-none"><button type="button" class="btn btn-info btn-sm" data-bs-toggle="tooltip" title="Manage Volumes"><i class="bi bi-box"></i></button></a>
@@ -74,11 +74,11 @@
                       <td class="text-center print-hide">
                         <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ product.id }}" title="Delete product"><i class="bi bi-trash"></i></button>
 
-                        <div class="modal fade" id="deleteModal{{ product.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ product.id }}" aria-hidden="true">
+                        <div class="modal fade" id="deleteModal{{ product.uuid }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ product.id }}" aria-hidden="true">
                           <div class="modal-dialog">
                             <div class="modal-content">
                               <div class="modal-header">
-                                <h5 class="modal-title" id="deleteModalLabel{{ product.id }}">Delete Product</h5>
+                                <h5 class="modal-title" id="deleteModalLabel{{ product.uuid }}">Delete Product</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">X</button>
                               </div>
                               <div class="modal-body">
@@ -86,7 +86,7 @@
                               </div>
                               <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <a href="{% url 'products:products_delete' product.id %}" class="text-decoration-none"><button type="button" class="btn btn-danger">Delete</button></a>
+                                <a href="{% url 'products:products_delete' product.uuid %}" class="text-decoration-none"><button type="button" class="btn btn-danger">Delete</button></a>
                               </div>
                             </div>
                           </div>

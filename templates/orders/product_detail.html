@@ -3,156 +3,164 @@
 {% load humanize %}
 
 {% block content %}
-  <div class="container py-4">
-    <div class="row g-4">
-      <div class="col-12 col-md-6 product-gallery">
-        <div id="product-carousel" class="carousel slide shadow-sm rounded-3 overflow-hidden" data-bs-ride="carousel" aria-label="Product Image Carousel">
-          <div class="carousel-inner">
+  <!-- Include Bootstrap 5 and Font Awesome CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <div class="container py-3">
+    <div class="row gx-lg-5 d-flex align-items-lg-stretch">
+      <div class="col-12 col-lg-6 mb-4 mb-lg-0">
+        <div id="product-carousel" class="carousel slide shadow-lg rounded-4 overflow-hidden border border-light-subtle" data-bs-ride="carousel" aria-label="Product Image Carousel" style="max-height: 550px;">
+          <div class="carousel-inner" style="max-height: 550px;">
             {% if product.images.exists %}
               {% for image in product.images.all %}
-                <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                  <img src="{{ image.image.url }}" class="d-block w-100 img-fluid product-image disable-right-click" style="max-height: 90vh; object-fit: contain;" alt="{{ product.name }} image {{ forloop.counter }}" loading="lazy" />
+                <div class="carousel-item {% if forloop.first %}active{% endif %}" style="max-height: 550px;">
+                  <img src="{{ image.image.url }}" class="d-block w-100 img-fluid disable-right-click" style="object-fit: cover; max-height: 550px;" alt="{{ product.name }} image {{ forloop.counter }}" loading="lazy" />
                 </div>
               {% endfor %}
             {% else %}
-              <div class="carousel-item active">
-                <img src="{% static 'images/no-image.png' %}" class="d-block w-100 img-fluid product-image disable-right-click" style="max-height: 90vh; object-fit: contain;" alt="No image available" loading="lazy" />
+              <div class="carousel-item active" style="max-height: 550px;">
+                <img src="{% static 'images/no-image.png' %}" class="d-block w-100 img-fluid disable-right-click" style="object-fit: cover; max-height: 550px;" alt="No image available" loading="lazy" />
               </div>
             {% endif %}
           </div>
           {% if product.images.count > 1 %}
             <button class="carousel-control-prev" type="button" data-bs-target="#product-carousel" data-bs-slide="prev">
-              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="carousel-control-prev-icon bg-dark bg-opacity-50 rounded-circle" aria-hidden="true"></span>
               <span class="visually-hidden">Previous</span>
             </button>
             <button class="carousel-control-next" type="button" data-bs-target="#product-carousel" data-bs-slide="next">
-              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="carousel-control-next-icon bg-dark bg-opacity-50 rounded-circle" aria-hidden="true"></span>
               <span class="visually-hidden">Next</span>
             </button>
           {% endif %}
         </div>
-
-        {% if user.is_authenticated and user.profile.role != 'guest' %}
-          <form method="POST" action="{% url 'orders:product_detail' product.id %}" class="mt-3">
-            {% csrf_token %}
-            {% if not product.is_featured %}
-              <button type="submit" name="set_featured" class="btn btn-warning btn-lg w-100">Set as Featured ✨</button>
-            {% else %}
-              <button type="submit" name="remove_featured" class="btn btn-danger btn-lg w-100">Remove from Featured 🚫</button>
-            {% endif %}
-          </form>
-        {% endif %}
       </div>
 
-      <div class="col-12 col-md-6 product-details">
-        <h1 class="mb-3 text-primary">{{ product.name }}</h1>
-        <table class="table table-striped table-hover rounded-3 overflow-hidden shadow-sm">
-          <thead class="bg-primary text-white">
-            <tr>
-              <th scope="col" colspan="2" class="fs-5">Product Information</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <th scope="row">Category</th>
-              <td>{{ product.category }}</td>
-            </tr>
-            <tr>
-              <th scope="row">Gender</th>
-              <td>{{ product.gender }}</td>
-            </tr>
-            <tr>
-              <th scope="row">Available Options</th>
-              <td>
-                <select name="volume_id" id="volume-select" form="add-to-cart-form" class="form-select" required aria-label="Select product volume and type">
-                  <option value="" disabled selected>Choose a type and volume...</option>
-                  {% for product_volume in product_volumes %}
-                    <option value="{{ product_volume.id }}"
-                      data-image-url="{% if product_volume.volume.image %}
-                        {{ product_volume.volume.image.url }}
-                      {% else %}
-                        {% static 'images/no-image.png' %}
-                      {% endif %}">
-                      {{ product_volume.product_type }} - {{ product_volume.volume.ml }} ML -{% if product_volume.discount_value %}
-                        <del class="text-muted">UGX {{ product_volume.volume.price|floatformat:'0'|intcomma }}</del>
-                        <span class="text-danger fw-bold">UGX {{ product_volume.get_discounted_price|floatformat:'0'|intcomma }}</span>
-                        <span class="badge bg-success ms-2">{{ product_volume.discount_value|floatformat:'0' }}% Off</span>
-                      {% else %}
-                        <span class="fw-bold">UGX {{ product_volume.volume.price|floatformat:'0'|intcomma }}</span>
-                      {% endif %}
-                    </option>
-                  {% endfor %}
-                </select>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="col-12 col-lg-6">
+        <div class="product-details p-4 rounded-4 bg-light-subtle shadow-lg d-flex flex-column" style="max-height: 550px;">
+          <div class="d-flex align-items-center gap-3 mb-2">
+            <img id="volume-image"
+              class="rounded-circle shadow-sm"
+              style="width: 60px; height: 60px; object-fit: cover;"
+              src="{% if product_volumes and product_volumes.0.volume.image %}
+                {{ product_volumes.0.volume.image.url }}
+              {% else %}
+                {% static 'images/no-image.png' %}
+              {% endif %}"
+              alt="Selected Product Volume Image"
+              loading="lazy" />
+            <h1 class="mb-0 fw-bold text-primary">{{ product.name }}</h1>
+            <span class="text-muted lead">({{ product.category }} - {{ product.gender }})</span>
+          </div>
+          <hr />
+          <h4 class="mb-2">Available Options</h4>
+          <div class="table-responsive">
+            <table class="table table-striped table-hover rounded-3 overflow-hidden shadow-sm">
+              <tbody>
+                <tr>
+                  <th scope="row" class="align-middle">Select Volume</th>
+                  <td class="align-middle">
+                    <select name="volume_id" id="volume-select" form="add-to-cart-form" class="form-select" required aria-label="Select product volume and type">
+                      <option value="" disabled selected>Choose a type and volume...</option>
+                      {% for product_volume in product_volumes %}
+                        <option value="{{ product_volume.id }}"
+                          data-image-url="{% if product_volume.volume.image %}
+                            {{ product_volume.volume.image.url }}
+                          {% else %}
+                            {% static 'images/no-image.png' %}
+                          {% endif %}">
+                          {{ product_volume.product_type }} - {{ product_volume.volume.ml }} ML{% if product_volume.discount_value %}
+                            -<del class="text-muted">UGX {{ product_volume.volume.price|floatformat:'0'|intcomma }}</del>
+                            <span class="text-danger fw-bold">UGX {{ product_volume.get_discounted_price|floatformat:'0'|intcomma }}</span>
+                            <span class="badge bg-success ms-2">{{ product_volume.discount_value|floatformat:'0' }}% Off</span>
+                          {% else %}
+                            - <span class="fw-bold text-success">UGX {{ product_volume.volume.price|floatformat:'0'|intcomma }}</span>
+                          {% endif %}
+                        </option>
+                      {% endfor %}
+                    </select>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-        <div class="d-flex flex-column flex-sm-row align-items-center justify-content-center justify-content-sm-start gap-3 mt-4">
-          <form id="add-to-cart-form" action="{% url 'orders:add_to_cart' product.id %}" method="post" class="d-flex align-items-center gap-2">
-            {% csrf_token %}
-            <div class="input-group">
-              <label for="quantity-input" class="visually-hidden">Quantity</label>
-              <input type="number" name="quantity" id="quantity-input" class="form-control text-center" value="1" min="1" aria-label="Product quantity" style="max-width: 100px;" />
+          <div class="d-flex flex-column flex-sm-row align-items-center justify-content-start gap-3 mt-4">
+            <form id="add-to-cart-form" action="{% url 'orders:add_to_cart' product.uuid %}" method="post" class="d-flex align-items-center gap-2">
+              {% csrf_token %}
+              <div class="input-group">
+                <label for="quantity-input" class="visually-hidden">Quantity</label>
+                <input type="number" name="quantity" id="quantity-input" class="form-control text-center" value="1" min="1" aria-label="Product quantity" style="max-width: 100px;" />
+              </div>
+              <button type="submit" class="btn btn-primary btn-lg fw-bold"><i class="fas fa-shopping-cart me-2"></i>Add to Cart</button>
+            </form>
+            <form method="POST" action="{% url 'orders:wishlist_add' product.uuid %}">
+              {% csrf_token %}
+              <button title="Add to Wishlist" type="submit" class="btn btn-outline-danger btn-lg fw-bold"><i class="fas fa-heart me-2"></i>Wishlist</button>
+            </form>
+          </div>
+
+          <!-- Featured Section for Authenticated Non-Guest Users -->
+          {% if user.is_authenticated and user.profile.role != 'guest' %}
+            <form method="POST" action="{% url 'orders:product_detail' product.uuid %}" class="mt-3">
+              {% csrf_token %}
+              {% if not product.is_featured %}
+                <button type="submit" name="set_featured" class="btn btn-outline-warning btn-lg w-100 fw-bold rounded-3"><i class="fas fa-star me-2"></i>Set as Featured ✨</button>
+              {% else %}
+                <button type="submit" name="remove_featured" class="btn btn-outline-danger btn-lg w-100 fw-bold rounded-3"><i class="fas fa-times me-2"></i>Remove from Featured 🚫</button>
+              {% endif %}
+            </form>
+          {% endif %}
+
+          {% if user.is_authenticated %}
+            <div class="alert alert-info mt-4 d-flex align-items-center justify-content-between shadow-sm" role="alert">
+              <div>
+                <i class="fas fa-info-circle me-2"></i> Items in your cart: <strong class="badge bg-primary rounded-pill">{{ cart_count|default:0 }}</strong>
+              </div>
+              <a href="{% url 'orders:cart' %}" class="btn btn-outline-primary btn-sm">View Cart <i class="fas fa-cart-shopping"></i></a>
             </div>
-            <button type="submit" class="btn btn-primary btn-lg">🛒 Add to Cart</button>
-          </form>
-
-          <form method="POST" action="{% url 'orders:wishlist_add' product.id %}">
-            {% csrf_token %}
-            <button title="Add to Wishlist" type="submit" class="btn btn-outline-danger btn-lg"><i class="fas fa-heart"></i> Add to Wishlist</button>
-          </form>
-        </div>
-
-        {% if user.is_authenticated %}
-          <div class="alert alert-info mt-3 d-flex align-items-center justify-content-between" role="alert">
-            <span>Items in cart: <strong class="badge bg-primary rounded-pill">{{ cart_count|default:0 }}</strong></span>
-            <a href="{% url 'orders:cart' %}" class="btn btn-outline-primary btn-sm">View Cart <i class="mdi mdi-cart"></i></a>
-          </div>
-        {% else %}
-          <div class="alert alert-warning mt-3" role="alert">
-            <strong>Please log in to add items to your cart or wishlist!</strong>
-            <a href="{% url 'account_login' %}" class="alert-link ms-2">Log In Here</a>
-          </div>
-        {% endif %}
-
-        <div class="text-center my-4">
-          <img id="volume-image"
-            class="d-block mx-auto img-fluid rounded shadow-sm disable-right-click"
-            style="max-height: 40vh; object-fit: contain;"
-            src="{% if product_volumes and product_volumes.0.volume.image %}
-              {{ product_volumes.0.volume.image.url }}
-            {% else %}
-              {% static 'images/no-image.png' %}
-            {% endif %}"
-            alt="Selected Product Volume Image"
-            loading="lazy" />
+          {% else %}
+            <div class="alert alert-warning mt-4 shadow-sm" role="alert">
+              <i class="fas fa-exclamation-triangle me-2"></i><strong>Please log in to add items to your cart or wishlist!</strong>
+              <a href="{% url 'account_login' %}" class="alert-link ms-2 fw-bold">Log In Here</a>
+            </div>
+          {% endif %}
         </div>
       </div>
-      <h3 class="card-title text-primary mb-3 fw-bold border-bottom pb-2 py-2">Product Description</h3>
-      <p class="lead text-dark-emphasis mb-4">{{ product.description|default:'No description available.' }}</p>
     </div>
 
     <hr class="my-5" />
 
     <div class="row">
       <div class="col-12">
-        <h2 class="text-primary mb-4">Customer Reviews & Ratings ✨</h2>
+        <div class="bg-light p-4 rounded-4 shadow-sm">
+          <h3 class="card-title text-primary mb-3 fw-bold border-bottom pb-2">Product Description</h3>
+          <p class="lead text-dark-emphasis mb-0">{{ product.description|default:'No description available.' }}</p>
+        </div>
+      </div>
+    </div>
+
+    <hr class="my-5" />
+
+    <div class="row">
+      <div class="col-12">
+        <h2 class="text-primary mb-4 fw-bold">Customer Reviews & Ratings ✨</h2>
 
         {% if reviews %}
-          <div class="mb-4">
-            <p class="fs-5">
+          <div class="reviews-summary d-flex align-items-center gap-3 mb-4">
+            <p class="fs-4 mb-0 text-success">
               <strong>{{ verified_reviews_count }} Verified Ratings</strong>
             </p>
           </div>
 
-          <div class="reviews-list bg-light p-4 rounded-3 shadow-sm mb-4">
+          <div class="reviews-list p-4 rounded-4 shadow-sm mb-4">
             {% for review in reviews %}
-              <div class="card mb-3 review-card border-0 shadow-sm">
+              <div class="card mb-3 review-card border-0 shadow-sm bg-white">
                 <div class="card-body">
-                  <h5 class="card-title text-success mb-2">
-                    {{ review.user.username }}
-                    <span class="text-warning ms-2">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="card-title mb-0 text-success fw-bold">{{ review.user.username }}</h5>
+                    <span class="text-warning fs-5">
                       {% for _ in review.filled_stars %}
                         ⭐
                       {% endfor %}
@@ -160,9 +168,9 @@
                         ☆
                       {% endfor %}
                     </span>
-                  </h5>
-                  <p class="card-text">{{ review.review_text }}</p>
-                  <p class="card-subtitle text-muted mt-2">Reviewed on {{ review.created_at|date:'M d, Y' }}</p>
+                  </div>
+                  <p class="card-text text-dark">{{ review.review_text }}</p>
+                  <small class="card-subtitle text-muted d-block mt-2">Reviewed on {{ review.created_at|date:'M d, Y' }}</small>
                 </div>
               </div>
             {% endfor %}
@@ -170,7 +178,7 @@
 
           {% if reviews.paginator.num_pages > 1 %}
             <nav aria-label="Reviews Pagination" class="d-flex justify-content-center mt-4">
-              <ul class="pagination">
+              <ul class="pagination shadow-sm">
                 {% if reviews.has_previous %}
                   <li class="page-item">
                     <a class="page-link" href="?page=1" aria-label="First"><span aria-hidden="true">&laquo;&laquo;</span></a>
@@ -179,11 +187,9 @@
                     <a class="page-link" href="?page={{ reviews.previous_page_number }}" aria-label="Previous"><span aria-hidden="true">&laquo;</span></a>
                   </li>
                 {% endif %}
-
                 <li class="page-item disabled">
                   <span class="page-link">Page {{ reviews.number }} of {{ reviews.paginator.num_pages }}</span>
                 </li>
-
                 {% if reviews.has_next %}
                   <li class="page-item">
                     <a class="page-link" href="?page={{ reviews.next_page_number }}" aria-label="Next"><span aria-hidden="true">&raquo;</span></a>
@@ -196,12 +202,14 @@
             </nav>
           {% endif %}
         {% else %}
-          <div class="alert alert-info" role="alert">No reviews yet for this product. Be the first to share your thoughts! 🚀</div>
+          <div class="alert alert-info alert-dismissible fade show shadow-sm" role="alert">
+            <i class="fas fa-star me-2"></i>No reviews yet for this product. Be the first to share your thoughts!
+          </div>
         {% endif %}
 
-        <div class="card mt-5 shadow-lg border-0">
-          <div class="card-header bg-primary text-white py-3">
-            <h4 class="mb-0">Leave a Review</h4>
+        <div class="card mt-5 shadow-lg border-0 rounded-4">
+          <div class="card-header bg-primary text-white py-3 rounded-top-4">
+            <h4 class="mb-0 fw-bold">Leave a Review</h4>
           </div>
           <div class="card-body">
             <form method="POST">
@@ -221,7 +229,7 @@
                 <label for="review_text" class="form-label fw-bold">Your Review <span class="text-danger">*</span></label>
                 <textarea name="review_text" id="review_text" class="form-control" rows="4" placeholder="Share your experience with this product..." required></textarea>
               </div>
-              <button type="submit" name="submit_review" class="btn btn-warning btn-lg w-100 text-white fw-bold shadow-sm" style="background-color: #b88a4b; border-color: #b88a4b;">Submit Review</button>
+              <button type="submit" name="submit_review" class="btn btn-warning btn-lg w-100 text-white fw-bold shadow-sm" style="background-color: #b88a4b; border-color: #b88a4b;"><i class="fas fa-paper-plane me-2"></i>Submit Review</button>
             </form>
           </div>
         </div>
@@ -244,7 +252,6 @@
           if (imageUrl) {
             volumeImage.src = imageUrl
           } else {
-            // Fallback to a default image if data-image-url is empty or not found
             volumeImage.src = "{% static 'images/no-image.png' %}"
           }
         })
@@ -279,7 +286,7 @@
           return false
         }
     
-        return confirm('Are you sure you want to add this to your cart?')
+        return true
       }
     
       // Prevent default form submission if validation fails
@@ -292,4 +299,7 @@
       }
     })
   </script>
+
+  <!-- Include Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 {% endblock %}

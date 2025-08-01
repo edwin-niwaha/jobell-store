@@ -6,6 +6,7 @@ from django.core.validators import FileExtensionValidator
 from apps.supplier.models import Supplier
 from cloudinary.models import CloudinaryField
 import cloudinary.uploader
+import uuid
 
 
 def validate_image_size(value):
@@ -84,6 +85,9 @@ class Volume(models.Model):
 
 
 class Product(models.Model):
+    uuid = models.UUIDField(
+        default=uuid.uuid4, editable=False, unique=True, db_index=True
+    )
     name = models.CharField(max_length=256, verbose_name="Product Name")
     description = models.TextField(verbose_name="Product Description")
     status = models.CharField(

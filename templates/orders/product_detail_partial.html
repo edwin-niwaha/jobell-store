@@ -37,7 +37,21 @@
                             
                             
                             
+                            
+                            
+                            
+                            
+                            
+                            
+                            
                             0
+
+
+
+
+
+
+
 
 
 
@@ -76,7 +90,7 @@
             <div class="col-md-6">
               <div class="card shadow-lg border-0 rounded-4 overflow-hidden animate__animated animate__fadeInUp h-100">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                  <a href="{% url 'orders:product_detail' product_id %}" class="btn btn-success btn-lg text-uppercase fw-bold shadow-lg animate__animated animate__bounceInRight"><i class="bi bi-bag-fill me-2"></i> Shop Now</a>
+                  <a href="{% url 'orders:product_detail' product_uuid %}" class="btn btn-success btn-lg text-uppercase fw-bold shadow-lg animate__animated animate__bounceInRight"><i class="bi bi-bag-fill me-2"></i> Shop Now</a>
                 </div>
                 <div class="card-body p-lg-5 p-md-4 p-3 text-center">
                   <div id="volumeImageContainer" class="mb-4">
@@ -226,10 +240,10 @@
       // Update price
       if (discountValue !== '0') {
         volumePrice.innerHTML = `
-                                          <span class="text-muted text-decoration-line-through me-2 small">UgX${price}</span>
-                                          <span class="text-success">UgX${discountedPrice}</span>
-                                          <span class="badge bg-danger ms-2 animate__animated animate__pulse animate__infinite">-${discountValue}%</span>
-                                        `
+                                                                      <span class="text-muted text-decoration-line-through me-2 small">UgX${price}</span>
+                                                                      <span class="text-success">UgX${discountedPrice}</span>
+                                                                      <span class="badge bg-danger ms-2 animate__animated animate__pulse animate__infinite">-${discountValue}%</span>
+                                                                    `
       } else {
         volumePrice.innerHTML = `<span class="text-success">UgX${price}</span>`
       }
