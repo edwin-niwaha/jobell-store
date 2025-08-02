@@ -34,71 +34,166 @@ logger = logging.getLogger(__name__)
 # =================================== Products Detail ===================================
 
 
-@login_required
+# @login_required
+# def product_detail(request, product_uuid):
+#     product = get_object_or_404(Product, uuid=product_uuid)
+
+#     # Handle review submission
+#     if request.method == "POST" and "submit_review" in request.POST:
+#         if Review.objects.filter(product=product, user=request.user).exists():
+#             # Add message for already reviewed
+#             messages.info(
+#                 request,
+#                 "Oops! You've already reviewed this product.",
+#                 extra_tags="bg-danger",
+#             )
+#             return redirect("orders:product_detail", product_uuid=product_uuid)
+
+#         review_text = request.POST.get("review_text")
+#         rating = int(request.POST.get("rating"))
+
+#         if review_text and rating:
+#             Review.objects.create(
+#                 product=product,
+#                 user=request.user,
+#                 review_text=review_text,
+#                 rating=rating,
+#             )
+
+#         # Redirect to prevent re-posting the form if refreshed
+#         return redirect("orders:product_detail", product_uuid=product_uuid)
+
+#     # Handle "Set as Featured" or "Remove from Featured" based on the POST request
+#     if request.method == "POST":
+#         # Check if we are toggling 'is_featured'
+#         if "set_featured" in request.POST:
+#             product.is_featured = True
+#         elif "remove_featured" in request.POST:
+#             product.is_featured = False
+
+#         # Save the updated product
+#         product.save()
+#         return redirect("orders:product_detail", product_uuid=product_uuid)
+
+#     # Continue fetching cart and product details
+#     cart, created = Cart.objects.get_or_create(user=request.user)
+#     cart_items = CartItem.objects.filter(cart=cart)
+#     cart_count = sum(item.quantity for item in cart_items)
+
+#     # Fetch volumes specific to this product
+#     product_volumes = ProductVolume.objects.filter(product=product).order_by(
+#         "volume__ml"
+#     )
+
+#     # Fetch reviews
+#     reviews = Review.objects.filter(product=product, is_verified=True).order_by(
+#         "-created_at"
+#     )
+
+#     # Pagination
+#     paginator = Paginator(reviews, 5)  # Show 5 reviews per page
+#     page_number = request.GET.get("page")
+#     page_obj = paginator.get_page(page_number)
+
+#     # Count of verified reviews (assuming there is an 'is_verified' field in your Review model)
+#     verified_reviews_count = reviews.filter(is_verified=True).count()
+
+#     # Process reviews to generate the filled and empty stars
+#     for review in page_obj:
+#         review.filled_stars = "★" * review.rating
+#         review.empty_stars = "☆" * (5 - review.rating)
+
+#     context = {
+#         "product": product,
+#         "product_volumes": product_volumes,
+#         "cart_count": cart_count,
+#         "reviews": page_obj,  # Pass paginated reviews
+#         "verified_reviews_count": verified_reviews_count,  # Add verified reviews count
+#     }
+
+#     return render(request, "orders/product_detail.html", context)
+
+
 def product_detail(request, product_uuid):
     product = get_object_or_404(Product, uuid=product_uuid)
 
     # Handle review submission
     if request.method == "POST" and "submit_review" in request.POST:
+        if not request.user.is_authenticated:
+            messages.error(request, "Please log in to submit a review.")
+            return redirect("orders:product_detail", product_uuid=product_uuid)
         if Review.objects.filter(product=product, user=request.user).exists():
-            # Add message for already reviewed
             messages.info(
-                request,
-                "Oops! You've already reviewed this product.",
-                extra_tags="bg-danger",
+                request, "You've already reviewed this product.", extra_tags="bg-danger"
             )
             return redirect("orders:product_detail", product_uuid=product_uuid)
-
         review_text = request.POST.get("review_text")
-        rating = int(request.POST.get("rating"))
-
-        if review_text and rating:
+        rating = int(request.POST.get("rating", 0))
+        if review_text and 1 <= rating <= 5:
             Review.objects.create(
                 product=product,
                 user=request.user,
                 review_text=review_text,
                 rating=rating,
+                is_verified=True,
             )
-
-        # Redirect to prevent re-posting the form if refreshed
+            messages.success(
+                request,
+                "Review submitted successfully.",
+                extra_tags="bg-success text-white",
+            )
+        else:
+            messages.error(
+                request, "Invalid review data.", extra_tags="bg-danger text-white"
+            )
         return redirect("orders:product_detail", product_uuid=product_uuid)
 
-    # Handle "Set as Featured" or "Remove from Featured" based on the POST request
-    if request.method == "POST":
-        # Check if we are toggling 'is_featured'
-        if "set_featured" in request.POST:
-            product.is_featured = True
-        elif "remove_featured" in request.POST:
-            product.is_featured = False
-
-        # Save the updated product
-        product.save()
+    # Handle featured toggle
+    if request.method == "POST" and (
+        "set_featured" in request.POST or "remove_featured" in request.POST
+    ):
+        if request.user.has_perm("orders.change_product"):
+            product.is_featured = "set_featured" in request.POST
+            product.save()
+            messages.success(
+                request,
+                f"Product {'featured' if product.is_featured else 'unfeatured'}.",
+                extra_tags="bg-success text-white",
+            )
+        else:
+            messages.error(
+                request, "Permission denied.", extra_tags="bg-danger text-white"
+            )
         return redirect("orders:product_detail", product_uuid=product_uuid)
 
-    # Continue fetching cart and product details
-    cart, created = Cart.objects.get_or_create(user=request.user)
+    # Get or create cart
+    if request.user.is_authenticated:
+        cart, _ = Cart.objects.get_or_create(user=request.user)
+    else:
+        cart_id = request.session.get("cart_id")
+        if cart_id:
+            cart = get_object_or_404(Cart, id=cart_id, user=None)
+        else:
+            cart = Cart.objects.create(user=None)
+            request.session["cart_id"] = cart.id
+            request.session.modified = True
+
     cart_items = CartItem.objects.filter(cart=cart)
     cart_count = sum(item.quantity for item in cart_items)
 
-    # Fetch volumes specific to this product
+    # Fetch product volumes
     product_volumes = ProductVolume.objects.filter(product=product).order_by(
         "volume__ml"
     )
 
-    # Fetch reviews
+    # Fetch and paginate reviews
     reviews = Review.objects.filter(product=product, is_verified=True).order_by(
         "-created_at"
     )
-
-    # Pagination
-    paginator = Paginator(reviews, 5)  # Show 5 reviews per page
+    paginator = Paginator(reviews, 5)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
-    # Count of verified reviews (assuming there is an 'is_verified' field in your Review model)
-    verified_reviews_count = reviews.filter(is_verified=True).count()
-
-    # Process reviews to generate the filled and empty stars
     for review in page_obj:
         review.filled_stars = "★" * review.rating
         review.empty_stars = "☆" * (5 - review.rating)
@@ -107,10 +202,9 @@ def product_detail(request, product_uuid):
         "product": product,
         "product_volumes": product_volumes,
         "cart_count": cart_count,
-        "reviews": page_obj,  # Pass paginated reviews
-        "verified_reviews_count": verified_reviews_count,  # Add verified reviews count
+        "reviews": page_obj,
+        "verified_reviews_count": reviews.count(),
     }
-
     return render(request, "orders/product_detail.html", context)
 
 
@@ -256,66 +350,258 @@ def remove_from_wishlist(request, wishlist_item_id):
 
 
 # =================================== add_to_cart ===================================
-@login_required
+# @login_required
+# def add_to_cart(request, product_uuid):
+#     product = get_object_or_404(Product, uuid=product_uuid)
+#     cart, created = Cart.objects.get_or_create(user=request.user)
+#     quantity = int(request.POST.get("quantity", 1))
+#     volume_id = request.POST.get("volume_id")
+
+#     # Validate the volume
+#     if not volume_id:
+#         messages.error(request, "Please select a product volume.")
+#         return redirect("orders:product_detail", product_uuid=product_uuid)
+
+#     # Fetch the selected volume
+#     volume = get_object_or_404(ProductVolume, id=volume_id)
+
+#     if quantity <= 0:
+#         messages.add_message(
+#             request,
+#             messages.ERROR,
+#             "Invalid quantity. It must be greater than zero.",
+#             extra_tags="bg-danger text-white",
+#         )
+#         return redirect("orders:product_detail", product_uuid=product_uuid)
+
+#     try:
+#         # Add volume to the CartItem creation or retrieval
+#         cart_item, created = CartItem.objects.get_or_create(
+#             cart=cart, product=product, volume=volume
+#         )
+#     except MultipleObjectsReturned:
+#         cart_item = CartItem.objects.filter(
+#             cart=cart, product=product, volume=volume
+#         ).first()
+
+#     if not created:
+#         cart_item.quantity += quantity
+#         cart_item.save()
+#         messages.add_message(
+#             request,
+#             messages.INFO,
+#             f"Increased quantity of {product.name} ({volume.volume.ml} ML) to {cart_item.quantity} in your cart.",
+#             extra_tags="bg-info text-white",
+#         )
+#     else:
+#         cart_item.quantity = quantity
+#         cart_item.save()
+#         messages.add_message(
+#             request,
+#             messages.SUCCESS,
+#             f"{product.name} ({volume.volume.ml} ML) has been added to your cart with quantity {quantity}.",
+#             extra_tags="bg-success text-white",
+#         )
+
+#     return redirect("orders:product_detail", product_uuid=product_uuid)
+
+
+# def add_to_cart(request, product_uuid):
+#     product = get_object_or_404(Product, uuid=product_uuid)
+#     quantity = int(request.POST.get("quantity", 1))
+#     volume_id = request.POST.get("volume_id")
+
+#     # Validate volume
+#     if not volume_id:
+#         messages.error(request, "Please select a product volume.")
+#         return redirect("orders:product_detail", product_uuid=product_uuid)
+
+#     volume = get_object_or_404(ProductVolume, id=volume_id)
+
+#     # Validate quantity
+#     if quantity <= 0:
+#         messages.error(
+#             request,
+#             "Quantity must be greater than zero.",
+#             extra_tags="bg-danger text-white",
+#         )
+#         return redirect("orders:product_detail", product_uuid=product_uuid)
+
+#     # Check stock (assuming ProductVolume has a stock field)
+#     if hasattr(volume, "stock") and volume.stock < quantity:
+#         messages.error(
+#             request,
+#             f"Only {volume.stock} units available.",
+#             extra_tags="bg-danger text-white",
+#         )
+#         return redirect("orders:product_detail", product_uuid=product_uuid)
+
+#     # Get or create cart
+#     if request.user.is_authenticated:
+#         cart, _ = Cart.objects.get_or_create(user=request.user)
+#     else:
+#         cart_id = request.session.get("cart_id")
+#         if cart_id:
+#             cart = get_object_or_404(Cart, id=cart_id, user=None)
+#         else:
+#             cart = Cart.objects.create(user=None)
+#             request.session["cart_id"] = cart.id
+#             request.session.modified = True
+
+#     # Add or update cart item
+#     cart_item, created = CartItem.objects.get_or_create(
+#         cart=cart, product=product, volume=volume
+#     )
+#     if not created:
+#         new_quantity = cart_item.quantity + quantity
+#         if hasattr(volume, "stock") and new_quantity > volume.stock:
+#             messages.error(
+#                 request,
+#                 f"Cannot add {new_quantity} units. Only {volume.stock} available.",
+#                 extra_tags="bg-danger text-white",
+#             )
+#             return redirect("orders:product_detail", product_uuid=product_uuid)
+#         cart_item.quantity = new_quantity
+#         messages.info(
+#             request,
+#             f"Increased {product.name} ({volume.volume.ml}ml) to {new_quantity} in cart.",
+#             extra_tags="bg-info text-white",
+#         )
+#     else:
+#         cart_item.quantity = quantity
+#         messages.success(
+#             request,
+#             f"Added {quantity} x {product.name} ({volume.volume.ml}ml) to cart.",
+#             extra_tags="bg-success text-white",
+#         )
+#     cart_item.save()
+
+#     return redirect("orders:product_detail", product_uuid=product_uuid)
+
+
 def add_to_cart(request, product_uuid):
     product = get_object_or_404(Product, uuid=product_uuid)
-    cart, created = Cart.objects.get_or_create(user=request.user)
     quantity = int(request.POST.get("quantity", 1))
     volume_id = request.POST.get("volume_id")
 
-    # Validate the volume
+    # Validate volume
     if not volume_id:
         messages.error(request, "Please select a product volume.")
         return redirect("orders:product_detail", product_uuid=product_uuid)
 
-    # Fetch the selected volume
     volume = get_object_or_404(ProductVolume, id=volume_id)
 
+    # Validate quantity
     if quantity <= 0:
-        messages.add_message(
+        messages.error(
             request,
-            messages.ERROR,
-            "Invalid quantity. It must be greater than zero.",
+            "Quantity must be greater than zero.",
             extra_tags="bg-danger text-white",
         )
         return redirect("orders:product_detail", product_uuid=product_uuid)
 
-    try:
-        # Add volume to the CartItem creation or retrieval
-        cart_item, created = CartItem.objects.get_or_create(
-            cart=cart, product=product, volume=volume
-        )
-    except MultipleObjectsReturned:
-        cart_item = CartItem.objects.filter(
-            cart=cart, product=product, volume=volume
-        ).first()
-
-    if not created:
-        cart_item.quantity += quantity
-        cart_item.save()
-        messages.add_message(
+    # Check stock (assuming ProductVolume has a stock field)
+    if hasattr(volume, "stock") and volume.stock < quantity:
+        messages.error(
             request,
-            messages.INFO,
-            f"Increased quantity of {product.name} ({volume.volume.ml} ML) to {cart_item.quantity} in your cart.",
+            f"Only {volume.stock} units available.",
+            extra_tags="bg-danger text-white",
+        )
+        return redirect("orders:product_detail", product_uuid=product_uuid)
+
+    # Get or create cart
+    if request.user.is_authenticated:
+        cart, _ = Cart.objects.get_or_create(user=request.user, session_key=None)
+    else:
+        session_key = request.session.session_key
+        if not session_key:
+            request.session.create()  # Ensure session exists
+            session_key = request.session.session_key
+        cart, _ = Cart.objects.get_or_create(session_key=session_key, user=None)
+        request.session["session_key"] = session_key
+        request.session.modified = True
+
+    # Add or update cart item
+    cart_item, created = CartItem.objects.get_or_create(
+        cart=cart, product=product, volume=volume
+    )
+    if not created:
+        new_quantity = cart_item.quantity + quantity
+        if hasattr(volume, "stock") and new_quantity > volume.stock:
+            messages.error(
+                request,
+                f"Cannot add {new_quantity} units. Only {volume.stock} available.",
+                extra_tags="bg-danger text-white",
+            )
+            return redirect("orders:product_detail", product_uuid=product_uuid)
+        cart_item.quantity = new_quantity
+        messages.info(
+            request,
+            f"Increased {product.name} ({volume.volume.ml}ml) to {new_quantity} in cart.",
             extra_tags="bg-info text-white",
         )
     else:
         cart_item.quantity = quantity
-        cart_item.save()
-        messages.add_message(
+        messages.success(
             request,
-            messages.SUCCESS,
-            f"{product.name} ({volume.volume.ml} ML) has been added to your cart with quantity {quantity}.",
+            f"Added {quantity} x {product.name} ({volume.volume.ml}ml) to cart.",
             extra_tags="bg-success text-white",
         )
+    cart_item.save()
 
     return redirect("orders:product_detail", product_uuid=product_uuid)
 
 
 # =================================== cart_view ===================================
-@login_required
+# @login_required
+# def cart_view(request):
+#     cart, created = Cart.objects.get_or_create(user=request.user)
+
+#     total_price = sum(item.get_total_price() for item in cart.items.all())
+
+#     context = {
+#         "cart": cart,
+#         "total_price": total_price,
+#     }
+
+#     return render(request, "orders/cart.html", context)
+
+
+# def cart_view(request):
+#     # Get or create cart
+#     if request.user.is_authenticated:
+#         cart, created = Cart.objects.get_or_create(user=request.user)
+#     else:
+#         cart_id = request.session.get("cart_id")
+#         if cart_id:
+#             cart = get_object_or_404(Cart, id=cart_id, user=None)
+#         else:
+#             cart = Cart.objects.create(user=None)
+#             request.session["cart_id"] = cart.id
+#             request.session.modified = True
+
+#     total_price = sum(item.get_total_price() for item in cart.items.all())
+
+#     context = {
+#         "cart": cart,
+#         "total_price": total_price,
+#     }
+
+#     return render(request, "orders/cart.html", context)
+
+
 def cart_view(request):
-    cart, created = Cart.objects.get_or_create(user=request.user)
+    # Get or create cart
+    if request.user.is_authenticated:
+        cart, created = Cart.objects.get_or_create(user=request.user, session_key=None)
+    else:
+        session_key = request.session.session_key
+        if not session_key:
+            request.session.create()  # Ensure session exists
+            session_key = request.session.session_key
+        cart, created = Cart.objects.get_or_create(session_key=session_key, user=None)
+        request.session["session_key"] = session_key
+        request.session.modified = True
 
     total_price = sum(item.get_total_price() for item in cart.items.all())
 
@@ -327,35 +613,174 @@ def cart_view(request):
     return render(request, "orders/cart.html", context)
 
 
-@login_required
+# @login_required
+# def update_cart(request, item_id):
+#     cart = get_object_or_404(Cart, user=request.user)
+#     item = get_object_or_404(CartItem, id=item_id, cart=cart)
+
+#     if request.method == "POST":
+#         quantity = int(request.POST.get("quantity", 1))
+
+#         if quantity > 0:
+#             item.quantity = quantity
+#             item.save()
+#             messages.success(
+#                 request, "Cart updated successfully.", extra_tags="bg-success"
+#             )
+#         else:
+#             messages.error(
+#                 request, "Quantity must be at least 1.", extra_tags="bg-danger"
+#             )
+
+#     return redirect("orders:cart")
+
+# @login_required
+# def remove_from_cart(request, item_id):
+#     cart = get_object_or_404(Cart, user=request.user)
+#     item = get_object_or_404(CartItem, id=item_id, cart=cart)
+
+#     item.delete()
+#     messages.success(request, "Item removed from cart.", extra_tags="bg-success")
+
+#     return redirect("orders:cart")
+
+
+# def update_cart(request, item_id):
+#     # Get the cart
+#     if request.user.is_authenticated:
+#         cart = get_object_or_404(Cart, user=request.user)
+#     else:
+#         cart_id = request.session.get("cart_id")
+#         if not cart_id:
+#             messages.error(request, "No cart found.", extra_tags="bg-danger text-white")
+#             return redirect("orders:cart")
+#         cart = get_object_or_404(Cart, id=cart_id, user=None)
+
+#     # Get the cart item and verify ownership
+#     item = get_object_or_404(CartItem, id=item_id, cart=cart)
+
+#     if request.method == "POST":
+#         quantity = int(request.POST.get("quantity", 1))
+
+#         # Validate stock (assuming ProductVolume has a stock field)
+#         if hasattr(item.volume, "stock") and quantity > item.volume.stock:
+#             messages.error(
+#                 request,
+#                 f"Cannot update to {quantity} units. Only {item.volume.stock} available.",
+#                 extra_tags="bg-danger text-white",
+#             )
+#         elif quantity > 0:
+#             item.quantity = quantity
+#             item.save()
+#             messages.success(
+#                 request,
+#                 f"Updated {item.product.name} quantity to {quantity}.",
+#                 extra_tags="bg-success text-white",
+#             )
+#         else:
+#             item.delete()
+#             messages.success(
+#                 request,
+#                 f"Removed {item.product.name} from cart.",
+#                 extra_tags="bg-success text-white",
+#             )
+
+#     return redirect("orders:cart")
+
+
+# def remove_from_cart(request, item_id):
+#     # Get the cart
+#     if request.user.is_authenticated:
+#         cart = get_object_or_404(Cart, user=request.user)
+#     else:
+#         cart_id = request.session.get("cart_id")
+#         if not cart_id:
+#             messages.error(request, "No cart found.", extra_tags="bg-danger text-white")
+#             return redirect("orders:cart")
+#         cart = get_object_or_404(Cart, id=cart_id, user=None)
+
+#     # Get the cart item and verify ownership
+#     item = get_object_or_404(CartItem, id=item_id, cart=cart)
+
+#     product_name = item.product.name
+#     item.delete()
+#     messages.success(
+#         request,
+#         f"Removed {product_name} from cart.",
+#         extra_tags="bg-success text-white",
+#     )
+
+#     return redirect("orders:cart")
+
+
 def update_cart(request, item_id):
-    cart = get_object_or_404(Cart, user=request.user)
+    # Get or create cart
+    if request.user.is_authenticated:
+        cart, created = Cart.objects.get_or_create(user=request.user, session_key=None)
+    else:
+        session_key = request.session.session_key
+        if not session_key:
+            request.session.create()  # Ensure session exists
+            session_key = request.session.session_key
+        cart, created = Cart.objects.get_or_create(session_key=session_key, user=None)
+        request.session["session_key"] = session_key
+        request.session.modified = True
+
+    # Get the cart item and verify ownership
     item = get_object_or_404(CartItem, id=item_id, cart=cart)
 
     if request.method == "POST":
         quantity = int(request.POST.get("quantity", 1))
 
-        if quantity > 0:
+        # Validate stock (assuming ProductVolume has a stock field)
+        if hasattr(item.volume, "stock") and quantity > item.volume.stock:
+            messages.error(
+                request,
+                f"Cannot update to {quantity} units. Only {item.volume.stock} available.",
+                extra_tags="bg-danger text-white",
+            )
+        elif quantity > 0:
             item.quantity = quantity
             item.save()
             messages.success(
-                request, "Cart updated successfully.", extra_tags="bg-success"
+                request,
+                f"Updated {item.product.name} quantity to {quantity}.",
+                extra_tags="bg-success text-white",
             )
         else:
-            messages.error(
-                request, "Quantity must be at least 1.", extra_tags="bg-danger"
+            item.delete()
+            messages.success(
+                request,
+                f"Removed {item.product.name} from cart.",
+                extra_tags="bg-success text-white",
             )
 
     return redirect("orders:cart")
 
 
-@login_required
 def remove_from_cart(request, item_id):
-    cart = get_object_or_404(Cart, user=request.user)
+    # Get or create cart
+    if request.user.is_authenticated:
+        cart, created = Cart.objects.get_or_create(user=request.user, session_key=None)
+    else:
+        session_key = request.session.session_key
+        if not session_key:
+            request.session.create()  # Ensure session exists
+            session_key = request.session.session_key
+        cart, created = Cart.objects.get_or_create(session_key=session_key, user=None)
+        request.session["session_key"] = session_key
+        request.session.modified = True
+
+    # Get the cart item and verify ownership
     item = get_object_or_404(CartItem, id=item_id, cart=cart)
 
+    product_name = item.product.name
     item.delete()
-    messages.success(request, "Item removed from cart.", extra_tags="bg-success")
+    messages.success(
+        request,
+        f"Removed {product_name} from cart.",
+        extra_tags="bg-success text-white",
+    )
 
     return redirect("orders:cart")
 

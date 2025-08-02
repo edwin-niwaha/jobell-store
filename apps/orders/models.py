@@ -7,18 +7,77 @@ from django.contrib.auth.models import User
 from django.utils.functional import cached_property
 
 
+# class Cart(models.Model):
+#     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
+
+#     def __str__(self):
+#         return f"Cart of {self.user.username}"
+
+#     def get_total_price(self):
+#         return sum(item.get_total_price() for item in self.items.all())
+
+#     def checkout(self, payment_method, total_amount):
+#         order = Order.objects.create(
+#             user=self.user,
+#             total_amount=total_amount,
+#             payment_method=payment_method,
+#             status="Pending",
+#         )
+#         for item in self.items.all():
+#             OrderDetail.objects.create(
+#                 order=order,
+#                 product=item.product,
+#                 quantity=item.quantity,
+#                 price=item.volume.price,
+#             )
+#         self.items.all().delete()  # Clear the cart after checkout
+#         return order
+
+
 class Cart(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="carts",
+    )
+    session_key = models.CharField(
+        max_length=32,
+        null=True,
+        blank=True,
+        help_text="Session key for anonymous users",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user"],
+                condition=models.Q(user__isnull=False),
+                name="unique_cart_per_user",
+            ),
+            models.UniqueConstraint(
+                fields=["session_key"],
+                condition=models.Q(session_key__isnull=False),
+                name="unique_cart_per_session",
+            ),
+        ]
+
     def __str__(self):
-        return f"Cart of {self.user.username}"
+        if self.user:
+            return f"Cart of {self.user.username}"
+        return f"Anonymous Cart ({self.session_key})"
 
     def get_total_price(self):
         return sum(item.get_total_price() for item in self.items.all())
 
     def checkout(self, payment_method, total_amount):
+        if not self.user:
+            raise ValueError("Cannot checkout an anonymous cart. Please log in.")
         order = Order.objects.create(
             user=self.user,
             total_amount=total_amount,

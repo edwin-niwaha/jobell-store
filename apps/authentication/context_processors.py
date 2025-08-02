@@ -2,6 +2,7 @@ from apps.authentication.models import Profile, Contact
 from apps.products.models import Product
 from apps.orders.models import Order, Cart, CartItem
 from django.db.models import F, Sum
+from django.shortcuts import get_object_or_404
 
 
 def guest_profiles_context(request):
@@ -65,11 +66,63 @@ def pending_orders_context(request):
     }
 
 
+# def cart_count_user_context(request):
+#     cart_count_user = 0
+
+#     if request.user.is_authenticated:
+#         cart, _ = Cart.objects.get_or_create(user=request.user)
+#         cart_count_user = (
+#             CartItem.objects.filter(cart=cart).aggregate(
+#                 total_quantity=Sum("quantity")
+#             )["total_quantity"]
+#             or 0
+#         )
+
+#     return {
+#         "cart_count_user": cart_count_user,
+#     }
+
+
+# def cart_count_user_context(request):
+#     cart_count_user = 0
+
+#     if request.user.is_authenticated:
+#         cart, _ = Cart.objects.get_or_create(user=request.user)
+#     else:
+#         cart_id = request.session.get("cart_id")
+#         if cart_id:
+#             cart = get_object_or_404(Cart, id=cart_id, user=None)
+#         else:
+#             cart = None  # No cart for anonymous user yet
+
+#     if cart:
+#         cart_count_user = (
+#             CartItem.objects.filter(cart=cart).aggregate(
+#                 total_quantity=Sum("quantity")
+#             )["total_quantity"]
+#             or 0
+#         )
+
+#     return {
+#         "cart_count_user": cart_count_user,
+#     }
+
+
 def cart_count_user_context(request):
     cart_count_user = 0
 
     if request.user.is_authenticated:
-        cart, _ = Cart.objects.get_or_create(user=request.user)
+        cart, _ = Cart.objects.get_or_create(user=request.user, session_key=None)
+    else:
+        session_key = request.session.session_key
+        if not session_key:
+            request.session.create()  # Ensure session exists
+            session_key = request.session.session_key
+        cart, _ = Cart.objects.get_or_create(session_key=session_key, user=None)
+        request.session["session_key"] = session_key
+        request.session.modified = True
+
+    if cart:
         cart_count_user = (
             CartItem.objects.filter(cart=cart).aggregate(
                 total_quantity=Sum("quantity")

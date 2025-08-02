@@ -71,7 +71,7 @@ INSTALLED_APPS = [
     "apps.products",
     "apps.inventory",
     "apps.customers",
-    "apps.orders",
+    "apps.orders.apps.OrdersConfig",
     "apps.sales",
     "apps.finance",
     "apps.blog",
@@ -282,7 +282,9 @@ LOGIN_REDIRECT_URL = "/"
 LOGIN_URL = "login"
 
 
-SESSION_COOKIE_AGE = 3600  # 60 * 60 seconds = 1 hour
+# SESSION_COOKIE_AGE = 3600  # 60 * 60 seconds = 1 hour
+SESSION_COOKIE_AGE = 1209600  # 2 weeks
+
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Close session when browser closes
 
 ############################### SOCIAL AUTHENTICATION SETTINGS ###############################
