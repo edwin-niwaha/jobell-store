@@ -54,10 +54,9 @@
             <table class="table table-striped table-hover rounded-3 overflow-hidden shadow-sm">
               <tbody>
                 <tr>
-                  <th scope="row" class="align-middle">Select Volume</th>
-                  <td class="align-middle">
+                  <td colspan="2" class="align-middle">
                     <select name="volume_id" id="volume-select" form="add-to-cart-form" class="form-select" required aria-label="Select product volume and type">
-                      <option value="" disabled selected>Choose a type and volume...</option>
+                      <option value="" disabled selected>Choose product type and volume</option>
                       {% for product_volume in product_volumes %}
                         <option value="{{ product_volume.id }}"
                           data-image-url="{% if product_volume.volume.image %}
