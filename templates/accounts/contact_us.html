@@ -5,47 +5,42 @@
   Contact Us
 {% endblock %}
 {% block content %}
-  <div class="form-content my-3">
-    <hr />
-    <section class="section-content padding-bottom">
-      <div class="mx-auto" style="max-width: 85rem; margin-top: 50px">
-        <div class="container-fluid">
-          <div class="row">
-            <div class="col-md-5 mr-auto">
-              <h2 style="text-align: left">Contact Us</h2>
-              <p class="mb-5" style="margin-top: revert; text-align: justify; line-height: 2rem">Have questions or need help with your order? Our dedicated support team is here to assist you with any inquiries you may have. Whether you need help tracking an order, have questions about a product, or need assistance with a return, we're here to help. Don't hesitate to reach out to us anytime!</p>
-              <ul class="contact-info list-unstyled pl-md-5 mb-5">
-                <li class="d-flex text-black mb-2">
-                  <span class="mr-3"><i class="fas fa-map-marker-alt"></i></span>
-                  Makerere
-                </li>
-                <li class="d-flex text-black mb-2">
-                  <span class="mr-3"><i class="fas fa-phone"></i></span>
-                  +256 777-337-491
-                </li>
-                <li class="d-flex text-black">
-                  <span class="mr-3"><i class="fas fa-envelope"></i></span>
-                  <a href="mailto:jobellinc@gmail.com">jobellinc@gmail.com</a>
-                </li>
-              </ul>
+  <section class="section-content py-5">
+    <div class="container" style="max-width: 85rem;">
+      <div class="row align-items-center">
+        <div class="col-lg-5 mb-4 mb-lg-0">
+          <h2 class="display-4 fw-bold text-dark mb-4">Get in Touch</h2>
+          <p class="lead text-muted mb-5" style="line-height: 1.8;">We're here to help with any questions or concerns! Whether it's about tracking an order, product details, or returns, our team is ready to assist you. Reach out anytime!</p>
+          <ul class="list-unstyled mb-0">
+            <li class="d-flex align-items-center mb-3">
+              <i class="fas fa-map-marker-alt fa-2x text-primary me-3"></i>
+              <span class="text-dark">Makerere</span>
+            </li>
+            <li class="d-flex align-items-center mb-3">
+              <i class="fas fa-phone fa-2x text-primary me-3"></i>
+              <span class="text-dark">+256 777-337-491</span>
+            </li>
+            <li class="d-flex align-items-center mb-3">
+              <i class="fab fa-whatsapp fa-2x text-primary me-3"></i>
+              <a href="https://wa.me/256777337491" target="_blank" class="text-dark text-decoration-none">+256 777-337-491</a>
+            </li>
+            <li class="d-flex align-items-center">
+              <i class="fas fa-envelope fa-2x text-primary me-3"></i>
+              <a href="mailto:jobellinc@gmail.com" class="text-dark text-decoration-none">jobellinc@gmail.com</a>
+            </li>
+          </ul>
+        </div>
+        <div class="col-lg-6 offset-lg-1">
+          <h3 class="fw-semibold mb-4 text-center">Send Us a Message</h3>
+          <form id="contact-form" method="post" action="{% url 'contact_us' %}">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <div class="d-grid mt-4">
+              <button type="submit" class="btn btn-primary btn-lg rounded-pill" onclick="return confirm('Are you sure you want to proceed?') && validateForm()">Send Message</button>
             </div>
-            <div class="col-md-6">
-              <form id="contact-form" method="post" action="{% url 'contact_us' %}">
-                {% csrf_token %}
-                {{ form|crispy }}
-                <div class="form-row">
-                  <div class="col-md-12">
-                    <div class="form-group mt-0 mb-1">
-                      <button type="submit" class="col-md-12 btn btn-dark" onclick="return confirm('Are you sure you want to proceed?') && validateForm()">Send Message</button>
-                    </div>
-                  </div>
-                </div>
-              </form>
-            </div>
-          </div>
+          </form>
         </div>
       </div>
-    </section>
-    <hr />
-  </div>
+    </div>
+  </section>
 {% endblock %}

@@ -47,14 +47,14 @@
               alt="Selected Product Volume Image"
               loading="lazy" />
             <h1 class="mb-0 fw-bold text-primary fs-2">{{ product.name }}</h1>
-            <span class="text-muted fs-5">({{ product.category }} - {{ product.gender }})</span>
           </div>
+          <span class="text-muted mb-3">{{ product.category }} | {{ product.gender }}</span>
           <h4 class="fw-semibold mb-3">Available Options</h4>
-          <div class="table-responsive flex-grow-1">
-            <table class="table table-striped table-hover rounded-3 overflow-hidden shadow-sm">
+          <div class="table-responsive mb-4">
+            <table class="table table-striped table-hover rounded-3 overflow-hidden">
               <tbody>
                 <tr>
-                  <td colspan="2" class="align-middle">
+                  <td class="align-middle">
                     <select name="volume_id" id="volume-select" form="add-to-cart-form" class="form-select" required aria-label="Select product volume and type">
                       <option value="" disabled selected>Choose product type and volume</option>
                       {% for product_volume in product_volumes %}

@@ -6,48 +6,56 @@
 {% endblock %}
 
 {% block content %}
-  <div class="container-fluid mt-4">
-    <hr />
-    <h2 class="text-center wishlist-heading mb-4"><i class="fas fa-heart text-danger"></i> Your Wishlist</h2>
-    <hr />
+  <div class="container mt-2">
+    <div class="row">
+      <div class="col-12 text-center mb-4">
+        <h1 class="display-5 fw-bold text-dark"><i class="fas fa-heart text-danger me-2"></i>Your Wishlist</h1>
+        <hr class="w-25 mx-auto border-3 border-primary" />
+      </div>
+    </div>
 
     {% if page_obj %}
-      <div class="row">
+      <div class="row g-4">
         {% for item in page_obj %}
-          <div class="col-md-3 col-sm-6 mb-4">
-            <div class="card shadow-sm border-light rounded">
-              {% if item.default_image %}
-                <img src="{{ item.default_image.image.url }}" class="card-img-top" alt="{{ item.product.name }}" style="height: 200px; object-fit: cover;" />
-              {% else %}
-                <img src="{% static 'images/default-product.jpg' %}" class="card-img-top" alt="Default Product Image" style="height: 200px; object-fit: cover;" />
-              {% endif %}
+          <div class="col-lg-3 col-md-4 col-sm-6">
+            <div class="card h-100 border-0 shadow-sm rounded-3 overflow-hidden transition-hover">
+              <div class="position-relative">
+                {% if item.default_image %}
+                  <img src="{{ item.default_image.image.url }}" class="card-img-top" alt="{{ item.product.name }}" style="height: 220px; object-fit: cover; transition: transform 0.3s ease;" />
+                {% else %}
+                  <img src="{% static 'images/default-product.jpg' %}" class="card-img-top" alt="Default Product Image" style="height: 220px; object-fit: cover; transition: transform 0.3s ease;" />
+                {% endif %}
+                <div class="position-absolute top-0 end-0 p-2">
+                  <button type="button" class="btn btn-sm btn-danger rounded-circle shadow" data-bs-toggle="modal" data-bs-target="#removeModal{{ item.id }}" title="Remove from Wish Wishlist" aria-label="Remove from Wishlist"><i class="fas fa-times"></i></button>
+                </div>
+              </div>
               <div class="card-body">
-                <h5 class="card-title text-truncate" title="{{ item.product.name }}">{{ item.product.name }}</h5>
+                <h5 class="card-title fw-semibold text-dark text-truncate" title="{{ item.product.name }}">{{ item.product.name }}</h5>
+                <div class="d-flex gap-2 mt-3">
+                  <a href="{% url 'orders:product_detail' item.product.uuid %}" class="btn btn-outline-primary btn-sm w-100"><i class="fas fa-eye me-2"></i>View Details</a>
+                  <button type="button" class="btn btn-outline-danger btn-sm w-100" data-bs-toggle="modal" data-bs-target="#removeModal{{ item.id }}"><i class="fas fa-trash-alt me-2"></i>Remove</button>
+                </div>
+              </div>
 
-                <!-- View Product Details Button with Icon -->
-                <a href="{% url 'orders:product_detail' item.product.uuid %}" title="View Product details" class="btn btn-primary btn-sm me-3"><i class="mdi mdi-eye me-2 fs-4"></i> View</a>
-
-                <!-- Remove from Wishlist Button with Icon -->
-                <button type="button" class="btn btn-danger btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#removeModal{{ item.id }}" title="Remove from Wishlist"><i class="mdi mdi-delete me-2 fs-4"></i> Remove</button>
-
-                <!-- Modal -->
-                <div class="modal fade" id="removeModal{{ item.id }}" tabindex="-1" aria-labelledby="removeModalLabel{{ item.id }}" aria-hidden="true">
-                  <div class="modal-dialog">
-                    <div class="modal-content">
-                      <div class="modal-header">
-                        <h5 class="modal-title" id="removeModalLabel{{ item.id }}">Confirm Removal</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                      </div>
-                      <div class="modal-body">
-                        Are you sure you want to delete the product: <h3 class="text-danger">{{ item.product.name }}</h3>?
-                      </div>
-                      <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <form action="{% url 'orders:remove_from_wishlist' item.id %}" method="post">
-                          {% csrf_token %}
-                          <button type="submit" class="btn btn-danger btn-sm w-100 w-md-auto">Remove</button>
-                        </form>
-                      </div>
+              <!-- Modal -->
+              <div class="modal fade" id="removeModal{{ item.id }}" tabindex="-1" aria-labelledby="removeModalLabel{{ item.id }}" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content rounded-3 shadow-lg">
+                    <div class="modal-header border-0 bg-light">
+                      <h5 class="modal-title fw-bold" id="removeModalLabel{{ item.id }}">Confirm Removal</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <p>
+                        Are you sure you want to remove <strong class="text-danger">{{ item.product.name }}</strong> from your wishlist?
+                      </p>
+                    </div>
+                    <div class="modal-footer border-0">
+                      <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                      <form action="{% url 'orders:remove_from_wishlist' item.id %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Remove</button>
+                      </form>
                     </div>
                   </div>
                 </div>
@@ -57,28 +65,60 @@
         {% endfor %}
       </div>
 
-      <!-- Pagination Controls -->
-      <div class="d-flex justify-content-center mt-4">
-        <div class="pagination">
-          <span class="page-link">
-            {% if page_obj.has_previous %}
-              <a href="?page=1">&laquo; First</a>
-              <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
-            {% endif %}
-          </span>
+      <!-- Pagination -->
+      <nav aria-label="Wishlist pagination" class="mt-5">
+        <ul class="pagination justify-content-center gap-1">
+          {% if page_obj.has_previous %}
+            <li class="page-item">
+              <a class="page-link rounded-pill px-3" href="?page=1">&laquo; First</a>
+            </li>
+            <li class="page-item">
+              <a class="page-link rounded-pill px-3" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled">
+              <span class="page-link rounded-pill px-3">&laquo; First</span>
+            </li>
+            <li class="page-item disabled">
+              <span class="page-link rounded-pill px-3">Previous</span>
+            </li>
+          {% endif %}
 
-          <span class="page-link">
-            {% if page_obj.has_next %}
-              <a href="?page={{ page_obj.next_page_number }}">Next</a>
-              <a href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+          {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+              <li class="page-item active">
+                <span class="page-link rounded-pill px-3">{{ num }}</span>
+              </li>
+            {% else %}
+              <li class="page-item">
+                <a class="page-link rounded-pill px-3" href="?page={{ num }}">{{ num }}</a>
+              </li>
             {% endif %}
-          </span>
-        </div>
-      </div>
+          {% endfor %}
+
+          {% if page_obj.has_next %}
+            <li class="page-item">
+              <a class="page-link rounded-pill px-3" href="?page={{ page_obj.next_page_number }}">Next</a>
+            </li>
+            <li class="page-item">
+              <a class="page-link rounded-pill px-3" href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled">
+              <span class="page-link rounded-pill px-3">Next</span>
+            </li>
+            <li class="page-item disabled">
+              <span class="page-link rounded-pill px-3">Last &raquo;</span>
+            </li>
+          {% endif %}
+        </ul>
+      </nav>
     {% else %}
-      <p class="text-center mt-4">
-        Your wishlist is empty. <a href="/" class="btn btn-link">Start adding products!</a>
-      </p>
+      <div class="text-center py-5">
+        <i class="fas fa-heart-broken fa-3x text-muted mb-3"></i>
+        <p class="lead text-muted">Your wishlist is empty</p>
+        <a href="/" class="btn btn-primary rounded-pill px-4">Start Shopping</a>
+      </div>
     {% endif %}
   </div>
 {% endblock %}
