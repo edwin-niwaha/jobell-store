@@ -37,7 +37,7 @@
             <div class="col product-item">
               <div class="card h-100 border-0 rounded-3 overflow-hidden shadow-sm transition-transform" style="transition: transform 0.3s ease, box-shadow 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 10px 20px rgba(0,0,0,0.15)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.1)';">
                 <!-- Product Carousel -->
-                <div id="carousel-{{ product.id }}" class="carousel slide" data-bs-ride="carousel" data-bs-interval="false">
+                <div id="carousel-{{ product.id }}" class="carousel slide" data-bs-ride="carousel" data-bs-interval="5000">
                   <div class="carousel-inner">
                     {% if images %}
                       {% for image in images %}

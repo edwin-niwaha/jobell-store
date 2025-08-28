@@ -2,7 +2,7 @@ import json
 import logging
 from django.utils import timezone
 from decimal import Decimal
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q
 from django.db.models import Sum, Count
 from django.db import transaction
@@ -54,18 +54,18 @@ def sales_list_view(request):
             )
             .select_related("customer")
             .prefetch_related("items__product__productvolume_set__volume")
-            .order_by("id")
+            .order_by("-trans_date")
         )
     else:
         sales = (
             Sale.objects.all()
             .select_related("customer")
             .prefetch_related("items__product__productvolume_set__volume")
-            .order_by("id")
+            .order_by("-trans_date")
         )
 
     # Paginate the sales (10 sales per page)
-    paginator = Paginator(sales, 10)
+    paginator = Paginator(sales, 25)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
@@ -94,22 +94,31 @@ def sales_list_view(request):
 #     start_date = None
 #     end_date = None
 
+#     # Validate form and extract date range
 #     if form.is_valid():
 #         start_date = form.cleaned_data["start_date"]
 #         end_date = form.cleaned_data["end_date"]
 
 #     # Filter sales by date range and prefetch related data
-#     sales = Sale.objects.filter(
-#         trans_date__range=[start_date, end_date]
-#     ).prefetch_related("items__product_volume__volume", "items__product")
+#     sales = (
+#         Sale.objects.filter(trans_date__range=[start_date, end_date])
+#         .prefetch_related("items__product_volume__volume", "items__product")
+#         .order_by("-trans_date")
+#     )
 
-#     # Aggregate totals
+#     # Aggregate totals for revenue, items sold, and transactions
 #     total_sales = sales.aggregate(
-#         total_revenue=Sum("items__total_detail"),  # Calculate directly from items
+#         total_revenue=Sum("items__total_detail"),
 #         total_items_sold=Sum("items__quantity"),
 #         total_transactions=Count("id"),
 #     )
 
+#     # Initialize totals with safe defaults
+#     total_revenue = total_sales["total_revenue"] or 0
+#     total_items_sold = total_sales["total_items_sold"] or 0
+#     total_transactions = total_sales["total_transactions"] or 0
+
+#     # Calculate Cost of Goods Sold (COGS)
 #     cogs = 0
 #     for sale in sales:
 #         for item in sale.items.all():
@@ -128,35 +137,42 @@ def sales_list_view(request):
 
 #     for sale in sales:
 #         sale_profit = 0
+#         sale_cost = 0  # Initialize per-sale cost
 #         item_details = []
 
 #         for item in sale.items.all():
 #             product = item.product
 #             product_volume = item.product_volume
-#             # Get the original price from the ProductVolume (before discount)
+#             # Get original price from ProductVolume or fallback to product price
 #             original_price = (
 #                 product_volume.volume.price if product_volume else product.price
 #             )
 
-#             # Apply discount if exists (use price from SaleDetail)
-#             discounted_price = item.price  # Use the price from SaleDetail directly
+#             # Use discounted price from SaleDetail
+#             discounted_price = item.price
+#             # Calculate profit for the item
 #             item_profit = (
 #                 (Decimal(discounted_price) - product_volume.volume.cost) * item.quantity
-#                 if product_volume
+#                 if product_volume and product_volume.volume
+#                 else 0
+#             )
+#             # Calculate cost for the item
+#             item_cost = (
+#                 product_volume.volume.cost * item.quantity
+#                 if product_volume and product_volume.volume
 #                 else 0
 #             )
 #             sale_profit += item_profit
+#             sale_cost += item_cost  # Accumulate cost for the sale
 #             total_profit_after_sales += item_profit
 
 #             item_details.append(
 #                 {
 #                     "product": product.name,
 #                     "volume": product_volume.volume.ml if product_volume else None,
-#                     "original_price": original_price,  # Add original price
-#                     "price": discounted_price,  # Use price from SaleDetail
-#                     "cost": (
-#                         product_volume.volume.cost if product_volume else 0
-#                     ),  # Use cost from ProductVolume
+#                     "original_price": original_price,
+#                     "price": discounted_price,
+#                     "cost": product_volume.volume.cost if product_volume else 0,
 #                     "quantity": item.quantity,
 #                     "total": item.total_detail,
 #                 }
@@ -171,6 +187,7 @@ def sales_list_view(request):
 #                     else "N/A"
 #                 ),
 #                 "grand_total": sale.grand_total,
+#                 "cost": sale_cost,  # Add per-sale cost
 #                 "profit": sale_profit,
 #                 "payment_method": sale.payment_method,
 #                 "item_details": item_details,
@@ -181,9 +198,9 @@ def sales_list_view(request):
 #         "form": form,
 #         "start_date": start_date,
 #         "end_date": end_date,
-#         "total_revenue": total_sales["total_revenue"],
-#         "total_items_sold": total_sales["total_items_sold"],
-#         "total_transactions": total_sales["total_transactions"],
+#         "total_revenue": total_revenue,
+#         "total_items_sold": total_items_sold,
+#         "total_transactions": total_transactions,
 #         "total_cogs": cogs,
 #         "sales": sale_details,
 #         "stock_balance": stock_balance,
@@ -206,9 +223,23 @@ def sales_report_view(request):
         end_date = form.cleaned_data["end_date"]
 
     # Filter sales by date range and prefetch related data
-    sales = Sale.objects.filter(
-        trans_date__range=[start_date, end_date]
-    ).prefetch_related("items__product_volume__volume", "items__product")
+    sales = (
+        Sale.objects.filter(trans_date__range=[start_date, end_date])
+        .prefetch_related("items__product_volume__volume", "items__product")
+        .order_by("-trans_date")
+    )
+
+    # Pagination
+    paginator = Paginator(sales, 25)
+    page_number = request.GET.get("page")  # Get the page number from query parameters
+    try:
+        sales_page = paginator.page(page_number)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page
+        sales_page = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range, deliver last page
+        sales_page = paginator.page(paginator.num_pages)
 
     # Aggregate totals for revenue, items sold, and transactions
     total_sales = sales.aggregate(
@@ -235,39 +266,34 @@ def sales_report_view(request):
         Inventory.objects.aggregate(total_stock=Sum("quantity"))["total_stock"] or 0
     )
 
-    # Prepare detailed sales data
+    # Prepare detailed sales data for the paginated sales
     sale_details = []
     total_profit_after_sales = 0
 
-    for sale in sales:
+    for sale in sales_page:  # Use paginated sales_page instead of sales
         sale_profit = 0
-        sale_cost = 0  # Initialize per-sale cost
+        sale_cost = 0
         item_details = []
 
         for item in sale.items.all():
             product = item.product
             product_volume = item.product_volume
-            # Get original price from ProductVolume or fallback to product price
             original_price = (
                 product_volume.volume.price if product_volume else product.price
             )
-
-            # Use discounted price from SaleDetail
             discounted_price = item.price
-            # Calculate profit for the item
             item_profit = (
                 (Decimal(discounted_price) - product_volume.volume.cost) * item.quantity
                 if product_volume and product_volume.volume
                 else 0
             )
-            # Calculate cost for the item
             item_cost = (
                 product_volume.volume.cost * item.quantity
                 if product_volume and product_volume.volume
                 else 0
             )
             sale_profit += item_profit
-            sale_cost += item_cost  # Accumulate cost for the sale
+            sale_cost += item_cost
             total_profit_after_sales += item_profit
 
             item_details.append(
@@ -291,7 +317,7 @@ def sales_report_view(request):
                     else "N/A"
                 ),
                 "grand_total": sale.grand_total,
-                "cost": sale_cost,  # Add per-sale cost
+                "cost": sale_cost,
                 "profit": sale_profit,
                 "payment_method": sale.payment_method,
                 "item_details": item_details,
@@ -310,6 +336,7 @@ def sales_report_view(request):
         "stock_balance": stock_balance,
         "total_profit_after_sales": total_profit_after_sales,
         "table_title": "Sales Report",
+        "page_obj": sales_page,  # Pass paginated page object to template
     }
 
     return render(request, "sales/sales_report.html", context)
