@@ -4,24 +4,38 @@
   <div class="text-center sidebar-brand-wrapper d-flex align-items-center py-4">
     <a class="sidebar-brand brand-logo" href="/" style="color: #127D61;"><img src="{% static 'images/file.png' %}" height="50" width="40" alt="Jobell Logo" loading="lazy" /></a>
   </div>
-  <!-- Divider -->
-  <li>
-    <hr class="sidebar-divider my-3" />
-  </li>
 
   <ul class="nav flex-column">
+    <!-- Divider -->
+    <li>
+      <hr class="sidebar-divider my-3" />
+    </li>
+
+    <!-- Dashboards -->
     <li class="nav-item">
-      <a class="nav-link" href="{% url 'dashboard' %}">
+      <a class="nav-link" data-bs-toggle="collapse" href="#dashboardsMenu" aria-expanded="false" aria-controls="dashboardsMenu">
         <i class="mdi mdi-view-dashboard menu-icon"></i>
-        <span class="menu-title">Sales Dashboard</span>
+        <span class="menu-title">Dashboards</span>
+        <i class="menu-arrow"></i>
       </a>
+      <div class="collapse" id="dashboardsMenu">
+        <ul class="nav flex-column sub-menu">
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'dashboard' %}">
+              <i class="mdi mdi-view-dashboard menu-icon"></i>
+              SALES
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'fin_dashboard' %}">
+              <i class="mdi mdi-bank menu-icon"></i>
+              FINANCIALS
+            </a>
+          </li>
+        </ul>
+      </div>
     </li>
-    <li class="nav-item">
-      <a class="nav-link" href="{% url 'fin_dashboard' %}">
-        <i class="mdi mdi-bank menu-icon"></i>
-        <span class="menu-title">Financial Dashboard</span>
-      </a>
-    </li>
+
     <!-- Divider -->
     <li>
       <hr class="sidebar-divider my-3" />
@@ -29,11 +43,42 @@
 
     <!-- Business Operations -->
     <li class="nav-item">
-      <a class="nav-link" href="{% url 'supplier:supplier_list' %}">
-        <i class="mdi mdi-factory menu-icon"></i>
-        <span class="menu-title">Suppliers</span>
+      <a class="nav-link" data-bs-toggle="collapse" href="#operationsMenu" aria-expanded="false" aria-controls="operationsMenu">
+        <i class="mdi mdi-briefcase menu-icon"></i>
+        <span class="menu-title">Operations</span>
+        <i class="menu-arrow"></i>
       </a>
+      <div class="collapse" id="operationsMenu">
+        <ul class="nav flex-column sub-menu">
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'orders:orders_to_be_processed' %}">
+              <i class="mdi mdi-cart menu-icon"></i>
+              Orders
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'sales:sales_list' %}">
+              <i class="mdi mdi-trending-up menu-icon"></i>
+              Sales
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'customers:customers_list' %}">
+              <i class="mdi mdi-account-multiple menu-icon"></i>
+              Customers
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'supplier:supplier_list' %}">
+              <i class="mdi mdi-factory menu-icon"></i>
+              Suppliers
+            </a>
+          </li>
+        </ul>
+      </div>
     </li>
+
+    <!-- Products -->
     <li class="nav-item">
       <a class="nav-link" data-bs-toggle="collapse" href="#productsMenu" aria-expanded="false" aria-controls="productsMenu">
         <i class="mdi mdi-package menu-icon"></i>
@@ -43,15 +88,15 @@
       <div class="collapse" id="productsMenu">
         <ul class="nav flex-column sub-menu">
           <li class="nav-item">
-            <a class="nav-link" href="{% url 'products:categories_list' %}">
-              <i class="mdi mdi-tag-multiple menu-icon"></i>
-              Categories
-            </a>
-          </li>
-          <li class="nav-item">
             <a class="nav-link" href="{% url 'products:products_list' %}">
               <i class="mdi mdi-package menu-icon"></i>
               Product List
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'products:categories_list' %}">
+              <i class="mdi mdi-tag-multiple menu-icon"></i>
+              Categories
             </a>
           </li>
           <li class="nav-item">
@@ -69,6 +114,8 @@
         </ul>
       </div>
     </li>
+
+    <!-- Inventory -->
     <li class="nav-item">
       <a class="nav-link" data-bs-toggle="collapse" href="#inventoryMenu" aria-expanded="false" aria-controls="inventoryMenu">
         <i class="mdi mdi-warehouse menu-icon"></i>
@@ -92,28 +139,15 @@
         </ul>
       </div>
     </li>
-    <li class="nav-item">
-      <a class="nav-link" href="{% url 'orders:orders_to_be_processed' %}">
-        <i class="mdi mdi-cart menu-icon"></i>
-        <span class="menu-title">Orders</span>
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="{% url 'sales:sales_list' %}">
-        <i class="mdi mdi-trending-up menu-icon"></i>
-        <span class="menu-title">Sales</span>
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="{% url 'customers:customers_list' %}">
-        <i class="mdi mdi-account-multiple menu-icon"></i>
-        <span class="menu-title">Customers</span>
-      </a>
+
+    <!-- Divider -->
+    <li>
+      <hr class="sidebar-divider my-3" />
     </li>
 
     <!-- Finance (Admin Only) -->
-    {% if user.profile.role == 'administrator' %}
-      <li class="nav-item">
+    <li class="nav-item">
+      {% if user.profile.role == 'administrator' %}
         <a class="nav-link" data-bs-toggle="collapse" href="#financeMenu" aria-expanded="false" aria-controls="financeMenu">
           <i class="mdi mdi-bank menu-icon"></i>
           <span class="menu-title">Finance</span>
@@ -159,24 +193,17 @@
             </li>
           </ul>
         </div>
-      </li>
-    {% else %}
-      <li class="nav-item">
+      {% else %}
         <a class="nav-link" href="#" onclick="showMessageSettings(event)">
           <i class="mdi mdi-bank menu-icon"></i>
           <span class="menu-title">Finance</span>
         </a>
-      </li>
-    {% endif %}
-
-    <!-- Divider -->
-    <li>
-      <hr class="sidebar-divider my-3" />
+      {% endif %}
     </li>
 
     <!-- Reports (Admin Only) -->
-    {% if user.profile.role == 'administrator' %}
-      <li class="nav-item">
+    <li class="nav-item">
+      {% if user.profile.role == 'administrator' %}
         <a class="nav-link" data-bs-toggle="collapse" href="#reportsMenu" aria-expanded="false" aria-controls="reportsMenu">
           <i class="mdi mdi-chart-bar menu-icon"></i>
           <span class="menu-title">Reports</span>
@@ -196,14 +223,11 @@
                 Sales Report
               </a>
             </li>
-            {% comment %} <li class="nav-item">
-              <a class="nav-link" href="{% url 'finance:profit_and_loss' %}">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'finance:profit-loss-statement' %}" target="_self">
                 <i class="mdi mdi-chart-bar menu-icon"></i>
                 Profit & Loss
               </a>
-            </li> {% endcomment %}
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'finance:profit-loss-statement' %}" target="_self"><i class="mdi mdi-chart-bar menu-icon"></i> Profit & Loss</a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="{% url 'finance:balance-sheet' %}">
@@ -231,19 +255,53 @@
             </li>
           </ul>
         </div>
-      </li>
-    {% else %}
-      <li class="nav-item">
+      {% else %}
         <a class="nav-link" href="#" onclick="showMessageSettings(event)">
           <i class="mdi mdi-chart-bar menu-icon"></i>
           <span class="menu-title">Reports</span>
         </a>
-      </li>
-    {% endif %}
+      {% endif %}
+    </li>
+
+    <!-- Blog -->
+    <li class="nav-item">
+      <a class="nav-link" data-bs-toggle="collapse" href="#blogMenu" aria-expanded="false" aria-controls="blogMenu">
+        <i class="mdi mdi-book-open-page-variant menu-icon"></i>
+        <span class="menu-title">Blog</span>
+        <i class="menu-arrow"></i>
+      </a>
+      <div class="collapse" id="blogMenu">
+        <ul class="nav flex-column sub-menu">
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'blog:blog_list' %}">
+              <i class="mdi mdi-format-list-bulleted menu-icon"></i>
+              Blog List
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'blog:blog_create' %}">
+              <i class="mdi mdi-pencil menu-icon"></i>
+              Add Blog
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'blog:blog_category_add' %}">
+              <i class="mdi mdi-tag-multiple menu-icon"></i>
+              Blog Categories
+            </a>
+          </li>
+        </ul>
+      </div>
+    </li>
+
+    <!-- Divider -->
+    <li>
+      <hr class="sidebar-divider my-3" />
+    </li>
 
     <!-- Settings (Admin Only) -->
-    {% if user.profile.role == 'administrator' %}
-      <li class="nav-item">
+    <li class="nav-item">
+      {% if user.profile.role == 'administrator' %}
         <a class="nav-link" data-bs-toggle="collapse" href="#settingsMenu" aria-expanded="false" aria-controls="settingsMenu">
           <i class="mdi mdi-settings menu-icon"></i>
           <span class="menu-title">Settings</span>
@@ -276,49 +334,24 @@
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="{% url 'finance:audit_logs' %}"><i class="mdi mdi-file-document-outline text-danger me-3 menu-icon"></i> Audit Logs</a>
+              <a class="nav-link" href="{% url 'finance:audit_logs' %}">
+                <i class="mdi mdi-file-document-outline text-danger menu-icon"></i>
+                Audit Logs
+              </a>
             </li>
           </ul>
         </div>
-      </li>
-    {% else %}
-      <li class="nav-item">
+      {% else %}
         <a class="nav-link" href="#" onclick="showMessageSettings(event)">
           <i class="mdi mdi-settings menu-icon"></i>
           <span class="menu-title">Settings</span>
         </a>
-      </li>
-    {% endif %}
+      {% endif %}
+    </li>
 
-    <!-- Blog Section -->
-    <li class="nav-item">
-      <a class="nav-link" data-bs-toggle="collapse" href="#blogMenu" aria-expanded="false" aria-controls="blogMenu">
-        <i class="mdi mdi-book-open-page-variant menu-icon"></i>
-        <span class="menu-title">Blog</span>
-        <i class="menu-arrow"></i>
-      </a>
-      <div class="collapse" id="blogMenu">
-        <ul class mime-type="text/html" class="nav flex-column sub-menu">
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'blog:blog_list' %}">
-              <i class="mdi mdi-format-list-bulleted menu-icon"></i>
-              Blog List
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'blog:blog_create' %}">
-              <i class="mdi mdi-pencil menu-icon"></i>
-              Add Blog
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'blog:blog_category_add' %}">
-              <i class="mdi mdi-tag-multiple menu-icon"></i>
-              Blog Categories
-            </a>
-          </li>
-        </ul>
-      </div>
+    <!-- Divider -->
+    <li>
+      <hr class="sidebar-divider my-3" />
     </li>
   </ul>
 </nav>

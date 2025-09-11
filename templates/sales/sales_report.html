@@ -16,7 +16,7 @@
   </head>
 
   <body>
-    <div class="container" style="margin-top: 80px;">
+    <div class="container-fluid" style="margin-top: 80px;">
       <!-- Topbar -->
       {% include 'accounts/_partials/navbar_1.html' %}
       <!-- Header Section -->
@@ -174,6 +174,7 @@
           {% if page_obj.has_other_pages %}
             <nav aria-label="Page navigation">
               <ul class="pagination justify-content-center mt-4">
+                {# Previous button #}
                 {% if page_obj.has_previous %}
                   <li class="page-item">
                     <a class="page-link"
@@ -196,29 +197,37 @@
                   </li>
                 {% endif %}
 
+                {# Page numbers with ellipses #}
                 {% for num in page_obj.paginator.page_range %}
-                  {% if page_obj.number == num %}
-                    <li class="page-item active">
-                      <span class="page-link">{{ num }}</span>
-                    </li>
-                  {% elif num > page_obj.number|add:- 3 and num < page_obj.number|add:3 %}
-                    <li class="page-item">
-                      <a class="page-link"
-                        href="?page={{ num }}{% if request.GET.start_date %}
-                          
-                          
-                          &start_date={{ request.GET.start_date }}
-                        {% endif %}{% if request.GET.end_date %}
-                          
-                          
-                          &end_date={{ request.GET.end_date }}
-                        {% endif %}">
-                        {{ num }}
-                      </a>
+                  {% if num == 1 or num == page_obj.paginator.num_pages or num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}
+                    {% if num == page_obj.number %}
+                      <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                      </li>
+                    {% else %}
+                      <li class="page-item">
+                        <a class="page-link"
+                          href="?page={{ num }}{% if request.GET.start_date %}
+                            
+                            
+                            &start_date={{ request.GET.start_date }}
+                          {% endif %}{% if request.GET.end_date %}
+                            
+                            
+                            &end_date={{ request.GET.end_date }}
+                          {% endif %}">
+                          {{ num }}
+                        </a>
+                      </li>
+                    {% endif %}
+                  {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
+                    <li class="page-item disabled">
+                      <span class="page-link">…</span>
                     </li>
                   {% endif %}
                 {% endfor %}
 
+                {# Next button #}
                 {% if page_obj.has_next %}
                   <li class="page-item">
                     <a class="page-link"

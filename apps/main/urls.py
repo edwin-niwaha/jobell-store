@@ -6,7 +6,7 @@ urlpatterns = [
     # Home
     path("", views.index, name="users-home"),
     # Dashboard
-    path("dashboard/sales", views.dashboard, name="dashboard"),
+    path("dashboard/sales-analytics/", views.dashboard, name="dashboard"),
     path("dashboard/finance/", views.finance_dashboard, name="fin_dashboard"),
     # Chart data endpoints
     path(
