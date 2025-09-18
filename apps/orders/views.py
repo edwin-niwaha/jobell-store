@@ -871,12 +871,16 @@ def send_order_email(
         email = EmailMultiAlternatives(subject, strip_tags(email_body), from_email, to)
         email.attach_alternative(email_body, "text/html")
         email.send()
+        logger.info(
+            f"Order email sent successfully to {recipient_email} for Order #{order_id}"
+        )
         return True
     except Exception as e:
         logger.error(f"Error sending email to {recipient_email}: {str(e)}")
         return False
 
 
+# =================================== checkout_view ===================================
 @login_required
 def checkout_view(request):
     try:

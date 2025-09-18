@@ -205,9 +205,6 @@ SIMPLE_JWT = {
 
 ############################### EMAIL CONFIGURATION ###############################
 
-# Email backend (console for development)
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-
 # Email configuration (for production)
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
