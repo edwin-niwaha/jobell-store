@@ -133,7 +133,8 @@ class Order(models.Model):
         ("Returned", "Returned"),
     ]
     PAYMENT_METHOD_CHOICES = [
-        ("Mobile Money", "Mobile Money"),
+        ("cod", "Cash on Delivery"),
+        ("mobile", "Mobile Money"),
     ]
     PAYMENT_STATUS_CHOICES = [
         ("pending", "Pending"),
@@ -146,7 +147,7 @@ class Order(models.Model):
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=20, choices=ORDER_STATUS_CHOICES)
     payment_method = models.CharField(
-        max_length=20, choices=PAYMENT_METHOD_CHOICES, default="MTN MOMO"
+        max_length=20, choices=PAYMENT_METHOD_CHOICES, default="cod"
     )
     tax_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     tax_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0)

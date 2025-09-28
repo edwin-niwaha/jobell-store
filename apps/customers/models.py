@@ -18,7 +18,7 @@ class Customer(models.Model):
         max_length=255,
         blank=True,
         null=True,
-        verbose_name="Address",  # Increased address length
+        verbose_name="Shipping Address",  # Increased address length
     )
     email = models.EmailField(
         max_length=100,

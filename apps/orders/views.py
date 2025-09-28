@@ -17,7 +17,8 @@ from django.utils import timezone
 from django.db import transaction
 from .models import Cart, CartItem, Order, OrderDetail, Wishlist
 from apps.products.models import Product, ProductVolume, ProductImage
-from django.core.exceptions import MultipleObjectsReturned
+
+# from django.core.exceptions import MultipleObjectsReturned
 from .forms import CheckoutForm, OrderStatusForm
 from apps.customers.models import Customer
 from apps.products.models import Review
@@ -785,102 +786,216 @@ def remove_from_cart(request, item_id):
     return redirect("orders:cart")
 
 
-def send_order_email(
-    recipient_name,
-    recipient_email,
-    order_id,
-    order_details,
-    order_status,
-    total_price,
-    is_customer=True,
-):
-    customer_order_history_url = "https://jobellinc.com/orders/order-history/"
-    orders_to_be_processed_url = "https://jobellinc.com/orders/to-be-processed/"
-    subject = "Your Order has been Placed" if is_customer else "New Order to Process"
+# def send_order_email(
+#     recipient_name,
+#     recipient_email,
+#     order_id,
+#     order_details,
+#     order_status,
+#     total_price,
+#     is_customer=True,
+# ):
+#     customer_order_history_url = "https://jobellinc.com/orders/order-history/"
+#     orders_to_be_processed_url = "https://jobellinc.com/orders/to-be-processed/"
+#     subject = "Your Order has been Placed" if is_customer else "New Order to Process"
 
-    if is_customer:
-        email_body = f"""
-        <html>
-            <body style="font-family: Arial, sans-serif; color: #333;">
-                <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #f9f9f9;">
-                    <h2 style="color: #2E86C1; text-align: center;">Thank You for Your Purchase!</h2>
-                    <p>Dear <strong>{recipient_name}</strong>,</p>
-                    <p>Thank you for placing your order with us! We appreciate your trust in our products and services. Your order has been successfully received and is being processed. Here are the details of your order:</p>
+#     if is_customer:
+#         email_body = f"""
+#         <html>
+#             <body style="font-family: Arial, sans-serif; color: #333;">
+#                 <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #f9f9f9;">
+#                     <h2 style="color: #2E86C1; text-align: center;">Thank You for Your Purchase!</h2>
+#                     <p>Dear <strong>{recipient_name}</strong>,</p>
+#                     <p>Thank you for placing your order with us! We appreciate your trust in our products and services. Your order has been successfully received and is being processed. Here are the details of your order:</p>
 
-                    <h4>Order ID: <strong>{order_id}</strong> | Status: <span style="color: #FF5733;">{order_status}</span></h4>
-                    
-                    <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-                        <tr style="background-color: #f2f2f2;">
-                            <th style="padding: 10px; border: 1px solid #ddd;">Product</th>
-                            <th style="padding: 10px; border: 1px solid #ddd;">Volume</th>
-                            <th style="padding: 10px; border: 1px solid #ddd;">Qty</th>
-                            <th style="padding: 10px; border: 1px solid #ddd;">Price @</th>
-                            <th style="padding: 10px; border: 1px solid #ddd;">Image</th>
-                        </tr>
-                        {''.join(
-                            f"""
-                            <tr>
-                                <td style="padding: 10px; border: 1px solid #ddd;">{item['product_name']}</td>
-                                <td style="padding: 10px; border: 1px solid #ddd;">{item['volume']} ML</td>
-                                <td style="padding: 10px; border: 1px solid #ddd;">{item['quantity']}</td>
-                                <td style="padding: 10px; border: 1px solid #ddd;">UgX {item['price']:,.2f}</td>
-                                <td style="padding: 10px; border: 1px solid #ddd;">
-                                    <img src="{item['image_url']}" alt="{item['product_name']}" style="width: 50px; height: auto; border-radius: 5px;">
-                                </td>
-                            </tr>
-                            """ for item in order_details
-                        )}
-                    </table>
+#                     <h4>Order ID: <strong>{order_id}</strong> | Status: <span style="color: #FF5733;">{order_status}</span></h4>
 
-                    <h3 style="text-align: right; color: #2E86C1;">Total Price: UgX {total_price:,.2f}</h3>
+#                     <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+#                         <tr style="background-color: #f2f2f2;">
+#                             <th style="padding: 10px; border: 1px solid #ddd;">Product</th>
+#                             <th style="padding: 10px; border: 1px solid #ddd;">Volume</th>
+#                             <th style="padding: 10px; border: 1px solid #ddd;">Qty</th>
+#                             <th style="padding: 10px; border: 1px solid #ddd;">Price @</th>
+#                             <th style="padding: 10px; border: 1px solid #ddd;">Image</th>
+#                         </tr>
+#                         {''.join(
+#                             f"""
+#                             <tr>
+#                                 <td style="padding: 10px; border: 1px solid #ddd;">{item['product_name']}</td>
+#                                 <td style="padding: 10px; border: 1px solid #ddd;">{item['volume']} ML</td>
+#                                 <td style="padding: 10px; border: 1px solid #ddd;">{item['quantity']}</td>
+#                                 <td style="padding: 10px; border: 1px solid #ddd;">UgX {item['price']:,.2f}</td>
+#                                 <td style="padding: 10px; border: 1px solid #ddd;">
+#                                     <img src="{item['image_url']}" alt="{item['product_name']}" style="width: 50px; height: auto; border-radius: 5px;">
+#                                 </td>
+#                             </tr>
+#                             """ for item in order_details
+#                         )}
+#                     </table>
 
-                    <div style="text-align: center; margin: 20px 0;">
-                        <a href="{customer_order_history_url}" style="background-color: #2E86C1; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 5px;">View Order History</a>
-                    </div>
+#                     <h3 style="text-align: right; color: #2E86C1;">Total Price: UgX {total_price:,.2f}</h3>
 
-                    <p>Thank you for shopping with us!</p>
-                    <p style="color: #888;">- Jobel Inc Management</p>
-                </div>
-            </body>
-        </html>
+#                     <div style="text-align: center; margin: 20px 0;">
+#                         <a href="{customer_order_history_url}" style="background-color: #2E86C1; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 5px;">View Order History</a>
+#                     </div>
 
-        """
-    else:
-        email_body = f"""
-        <html>
-        <body style="font-family: Arial, sans-serif; color: #333;">
-            <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-                <h2 style="color: #C0392B; text-align: center;">New Order to Process</h2>
-                <p>Hello <strong>Jobel Inc Team</strong>,</p>
-                <p>A new order has been placed. The order ID is <strong>{order_id}</strong>. Please review and process the order by clicking the button below:</p>
-                <div style="text-align: center; margin: 20px 0;">
-                    <a href="{orders_to_be_processed_url}" style="background-color: #C0392B; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 5px;">Process Order</a>
-                </div>
-                <p>Thanks for your prompt attention!</p>
-                <p style="color: #888;">- Jobel Inc Management</p>
-            </div>
-        </body>
-        </html>
-        """
+#                     <p>Thank you for shopping with us!</p>
+#                     <p style="color: #888;">- Jobel Inc Management</p>
+#                 </div>
+#             </body>
+#         </html>
 
-    from_email = getattr(settings, "EMAIL_HOST_USER", None)
-    to = [recipient_email]
+#         """
+#     else:
+#         email_body = f"""
+#         <html>
+#         <body style="font-family: Arial, sans-serif; color: #333;">
+#             <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+#                 <h2 style="color: #C0392B; text-align: center;">New Order to Process</h2>
+#                 <p>Hello <strong>Jobel Inc Team</strong>,</p>
+#                 <p>A new order has been placed. The order ID is <strong>{order_id}</strong>. Please review and process the order by clicking the button below:</p>
+#                 <div style="text-align: center; margin: 20px 0;">
+#                     <a href="{orders_to_be_processed_url}" style="background-color: #C0392B; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 5px;">Process Order</a>
+#                 </div>
+#                 <p>Thanks for your prompt attention!</p>
+#                 <p style="color: #888;">- Jobel Inc Management</p>
+#             </div>
+#         </body>
+#         </html>
+#         """
 
-    # Send HTML email
-    try:
-        email = EmailMultiAlternatives(subject, strip_tags(email_body), from_email, to)
-        email.attach_alternative(email_body, "text/html")
-        email.send()
-        logger.info(
-            f"Order email sent successfully to {recipient_email} for Order #{order_id}"
-        )
-        return True
-    except Exception as e:
-        logger.error(f"Error sending email to {recipient_email}: {str(e)}")
-        return False
+#     from_email = getattr(settings, "EMAIL_HOST_USER", None)
+#     to = [recipient_email]
+
+#     # Send HTML email
+#     try:
+#         email = EmailMultiAlternatives(subject, strip_tags(email_body), from_email, to)
+#         email.attach_alternative(email_body, "text/html")
+#         email.send()
+#         logger.info(
+#             f"Order email sent successfully to {recipient_email} for Order #{order_id}"
+#         )
+#         return True
+#     except Exception as e:
+#         logger.error(f"Error sending email to {recipient_email}: {str(e)}")
+#         return False
 
 
 # =================================== checkout_view ===================================
+# @login_required
+# def checkout_view(request):
+#     try:
+#         cart = Cart.objects.get(user=request.user)
+#     except Cart.DoesNotExist:
+#         messages.error(request, "Your cart is empty.")
+#         return redirect("orders:cart")  # Redirect to cart view if the cart is empty
+
+#     customer, created = Customer.objects.get_or_create(user=request.user)
+
+#     total_price = sum(
+#         item.get_total_price() for item in cart.items.all()
+#     )  # Calculate total price
+
+#     if request.method == "POST":
+#         form = CheckoutForm(request.POST)
+#         if form.is_valid():
+#             total_amount = total_price  # Use total_price here
+
+#             # Update customer details
+#             customer.first_name = form.cleaned_data["first_name"]
+#             customer.last_name = form.cleaned_data["last_name"]
+#             customer.email = form.cleaned_data["email"]
+#             customer.mobile = form.cleaned_data["mobile"]
+#             customer.address = form.cleaned_data["address"]
+#             customer.save()
+
+#             # Create the order
+#             order = Order.objects.create(
+#                 customer=customer,
+#                 created_at=timezone.now(),
+#                 total_amount=total_amount,
+#                 status="Pending",
+#             )
+
+#             order_details = []  # Initialize order_details list
+
+#             # Create OrderDetail entries
+#             for item in cart.items.all():
+#                 product_volume = item.volume
+#                 discounted_price = product_volume.get_discounted_price()
+#                 image_url = (
+#                     product_volume.volume.image.url
+#                     if product_volume.volume.image
+#                     else ""
+#                 )
+
+#                 order_details.append(
+#                     {
+#                         "product_name": item.product.name,
+#                         "volume": item.volume.volume.ml,
+#                         "quantity": item.quantity,
+#                         "price": discounted_price,
+#                         "image_url": image_url,
+#                         "order_status": order.status,
+#                     }
+#                 )
+
+#                 OrderDetail.objects.create(
+#                     order=order,
+#                     product=item.product,
+#                     product_volume=item.volume,
+#                     quantity=item.quantity,
+#                     discounted_price=discounted_price,
+#                     price=item.volume.volume.price,
+#                 )
+
+#             # Clear cart after checkout
+#             cart.items.all().delete()
+
+#             # Send confirmation emails
+#             send_order_email(
+#                 customer.first_name,
+#                 customer.email,
+#                 order.id,
+#                 order_details,
+#                 order.status,
+#                 total_price,
+#                 is_customer=True,
+#             )
+#             send_order_email(
+#                 "Jobel Inc",
+#                 settings.EMAIL_HOST_USER,
+#                 order.id,
+#                 order_details,
+#                 order.status,
+#                 total_price,
+#                 is_customer=False,
+#             )
+
+#             messages.success(
+#                 request,
+#                 f"Your order has been placed successfully! Order ID: {order.id}",
+#             )
+#             return redirect("orders:order_confirmation", order_id=order.id)
+
+#     else:
+#         form = CheckoutForm(
+#             initial={
+#                 "first_name": customer.first_name,
+#                 "last_name": customer.last_name,
+#                 "email": customer.email,
+#                 "mobile": customer.mobile,
+#                 "address": customer.address,
+#             }
+#         )
+
+#     return render(
+#         request,
+#         "orders/checkout.html",
+#         {"form": form, "cart": cart, "total_price": total_price},
+#     )
+
+
 @login_required
 def checkout_view(request):
     try:
@@ -916,28 +1031,10 @@ def checkout_view(request):
                 status="Pending",
             )
 
-            order_details = []  # Initialize order_details list
-
             # Create OrderDetail entries
             for item in cart.items.all():
                 product_volume = item.volume
                 discounted_price = product_volume.get_discounted_price()
-                image_url = (
-                    product_volume.volume.image.url
-                    if product_volume.volume.image
-                    else ""
-                )
-
-                order_details.append(
-                    {
-                        "product_name": item.product.name,
-                        "volume": item.volume.volume.ml,
-                        "quantity": item.quantity,
-                        "price": discounted_price,
-                        "image_url": image_url,
-                        "order_status": order.status,
-                    }
-                )
 
                 OrderDetail.objects.create(
                     order=order,
@@ -951,29 +1048,10 @@ def checkout_view(request):
             # Clear cart after checkout
             cart.items.all().delete()
 
-            # Send confirmation emails
-            send_order_email(
-                customer.first_name,
-                customer.email,
-                order.id,
-                order_details,
-                order.status,
-                total_price,
-                is_customer=True,
-            )
-            send_order_email(
-                "Jobel Inc",
-                settings.EMAIL_HOST_USER,
-                order.id,
-                order_details,
-                order.status,
-                total_price,
-                is_customer=False,
-            )
-
             messages.success(
                 request,
                 f"Your order has been placed successfully! Order ID: {order.id}",
+                extra_tags="bg-success",
             )
             return redirect("orders:order_confirmation", order_id=order.id)
 
