@@ -1,0 +1,80 @@
+{% load crispy_forms_tags %}
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+      body {
+        background: #f8f5ef;
+        color: #111;
+        font-family: Arial, sans-serif;
+        margin: 0;
+      }
+
+      .product-modal-form {
+        padding: 1rem;
+      }
+
+      .product-modal-form h1 {
+        color: #050505;
+        font-size: 1.15rem;
+        font-weight: 900;
+        margin: 0 0 .85rem;
+      }
+
+      .product-modal-form .form-control,
+      .product-modal-form select,
+      .product-modal-form textarea {
+        border: 1px solid rgba(5, 5, 5, .16);
+        border-radius: .75rem;
+        min-height: 42px;
+      }
+
+      .product-modal-actions {
+        background: #fff;
+        border-top: 1px solid rgba(5, 5, 5, .08);
+        bottom: 0;
+        display: flex;
+        gap: .75rem;
+        justify-content: flex-end;
+        margin: 1rem -1rem -1rem;
+        padding: .85rem 1rem;
+        position: sticky;
+      }
+
+      .product-modal-submit {
+        background: #050505;
+        border: 0;
+        border-radius: 999px;
+        color: #fff;
+        cursor: pointer;
+        font-weight: 800;
+        min-height: 42px;
+        padding: .65rem 1.2rem;
+      }
+
+      .product-modal-submit:hover {
+        background: #242424;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="product-modal-form">
+      <h1>{{ table_title }}</h1>
+
+      <form method="post" action="{{ request.get_full_path }}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="modal" value="1">
+        {{ form|crispy }}
+
+        <div class="product-modal-actions">
+          <button type="submit" class="product-modal-submit">
+            {{ submit_label|default:'Save product' }}
+          </button>
+        </div>
+      </form>
+    </main>
+  </body>
+</html>

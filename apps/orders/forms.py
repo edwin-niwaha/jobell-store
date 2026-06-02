@@ -3,6 +3,9 @@ from .models import Order
 from django.core.exceptions import ValidationError
 from phonenumbers import parse, is_valid_number, phonenumberutil
 
+from apps.addresses.models import CustomerAddress
+from apps.shipping.models import PickupStation
+
 
 # class CheckoutForm(forms.Form):
 
@@ -90,12 +93,20 @@ from phonenumbers import parse, is_valid_number, phonenumberutil
 
 
 class CheckoutForm(forms.Form):
+    saved_address = forms.ModelChoiceField(
+        queryset=CustomerAddress.objects.none(),
+        required=False,
+        empty_label="Use a new address",
+        label="Saved address",
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
     first_name = forms.CharField(
         max_length=50,
         widget=forms.TextInput(
             attrs={
                 "class": "form-control",
                 "placeholder": "First Name",
+                "autocomplete": "given-name",
             }
         ),
     )
@@ -106,6 +117,7 @@ class CheckoutForm(forms.Form):
             attrs={
                 "class": "form-control",
                 "placeholder": "Last Name (optional)",
+                "autocomplete": "family-name",
             }
         ),
     )
@@ -115,30 +127,68 @@ class CheckoutForm(forms.Form):
             attrs={
                 "class": "form-control",
                 "placeholder": "Email (optional)",
+                "autocomplete": "email",
             }
         ),
     )
     mobile = forms.CharField(
         max_length=20,
-        required=False,
+        required=True,
+        label="Contact Phone",
         widget=forms.TextInput(
             attrs={
                 "class": "form-control",
                 "placeholder": "e.g., +256123456789",
+                "autocomplete": "tel",
             }
         ),
     )
     address = forms.CharField(
         max_length=255,
-        required=False,
+        required=True,
         label="Shipping Address",
         widget=forms.Textarea(
             attrs={
                 "class": "form-control",
                 "placeholder": "Shipping Address",
                 "rows": 2,
+                "autocomplete": "street-address",
             }
         ),
+    )
+    delivery_region = forms.ChoiceField(
+        choices=CustomerAddress.Region.choices,
+        label="Delivery Region",
+        initial=CustomerAddress.Region.KAMPALA_AREA,
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+    delivery_city = forms.CharField(
+        max_length=100,
+        required=True,
+        label="City",
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+    )
+    delivery_area = forms.CharField(
+        max_length=100,
+        required=False,
+        label="Area",
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+    )
+    save_address = forms.BooleanField(
+        required=False,
+        label="Save this address for next time",
+        widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
+    )
+    shipping_method = forms.ChoiceField(
+        choices=Order.SHIPPING_METHOD_CHOICES,
+        widget=forms.RadioSelect(attrs={"class": "form-check-input"}),
+        initial="delivery",
+    )
+    pickup_station = forms.ModelChoiceField(
+        queryset=PickupStation.objects.none(),
+        required=False,
+        empty_label="Choose pickup station",
+        widget=forms.Select(attrs={"class": "form-select"}),
     )
     payment_method = forms.ChoiceField(
         choices=[("cod", "Cash on Delivery"), ("mobile", "Mobile Money")],
@@ -152,10 +202,25 @@ class CheckoutForm(forms.Form):
             attrs={
                 "class": "form-control",
                 "placeholder": "e.g., +256123456789",
+                "autocomplete": "tel",
             }
         ),
         help_text="Enter your Mobile Money number including the country code (e.g., +256123456789).",
     )
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+        self.fields["pickup_station"].queryset = PickupStation.objects.filter(
+            is_active=True
+        )
+        if user and user.is_authenticated:
+            self.fields["saved_address"].queryset = CustomerAddress.objects.filter(
+                user=user
+            )
+        else:
+            self.fields.pop("saved_address")
+            self.fields.pop("save_address")
 
     def clean_mobile(self):
         mobile = self.cleaned_data.get("mobile")
@@ -227,6 +292,9 @@ class CheckoutForm(forms.Form):
         cleaned_data = super().clean()
         payment_method = cleaned_data.get("payment_method")
         mobile_money_number = cleaned_data.get("mobile_money_number")
+        shipping_method = cleaned_data.get("shipping_method")
+        pickup_station = cleaned_data.get("pickup_station")
+        saved_address = cleaned_data.get("saved_address")
 
         # Additional cross-field validation
         if payment_method == "mobile" and not mobile_money_number:
@@ -234,6 +302,12 @@ class CheckoutForm(forms.Form):
                 "mobile_money_number",
                 "Mobile Money number is required for Mobile Money payment.",
             )
+
+        if shipping_method == "pickup":
+            if not pickup_station:
+                self.add_error("pickup_station", "Please choose a pickup station.")
+        elif not saved_address and not cleaned_data.get("address"):
+            self.add_error("address", "Please enter a delivery address.")
 
         return cleaned_data
 

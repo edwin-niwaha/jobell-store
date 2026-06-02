@@ -1,3 +1,5 @@
+import logging
+
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib import messages
@@ -11,6 +13,8 @@ from apps.authentication.decorators import (
     admin_required,
     admin_or_manager_or_staff_required,
 )
+
+logger = logging.getLogger(__name__)
 
 
 # =================================== Blog List View ===================================
@@ -61,14 +65,13 @@ def blog_category_add(request):
                         extra_tags="bg-success",
                     )
                     return redirect("blog:blog_category_add")
-                except Exception as e:
+                except Exception:
+                    logger.exception("Error creating blog category %s", category_name)
                     messages.error(
                         request,
                         "An error occurred during category creation.",
                         extra_tags="bg-danger",
                     )
-                    # Log the exception for debugging
-                    print(e)
                     return redirect("blog:blog_category_add")
         else:
             messages.error(

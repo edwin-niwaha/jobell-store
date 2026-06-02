@@ -1,100 +1,177 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block content %}
-<div class="container">
-    <div class="page-header flex-wrap">
-        <h3 class="mb-0">
-            {{ table_title|upper }}
-        </h3>
-        <div class="d-flex">
-            <a href="{% url 'products:products_list' %}">
-                <button type="button" class="btn btn-info font-weight-bold">
-                    <i class="mdi mdi-arrow-left-bold mr-2"></i>
-                    Go back
-                </button>
-            </a>
-            <a title="View Uploads..." class="btn btn-sm ml-3 btn-success"
-                href="{% url 'products:update_product_image' %}">
-                <i class="mdi mdi-cloud-upload btn-icon-prepend"></i>
-            </a>
-        </div>
-    </div>
-    <hr class="bg-info" style="height: 3px;" />
+  <div class="container-fluid">
+    <div class="admin-page-head">
+      <div>
+        <span class="admin-eyebrow">Catalog media</span>
+        <h1 class="admin-page-title">{{ table_title }}</h1>
+        <p class="admin-muted mb-0">Review product photos, default images, and active storefront media.</p>
+      </div>
 
-    <form method="POST" action="{% url 'products:product_images' %}">
-        {% csrf_token %}
-        <select name="id" id="dropdown" class="chzn-select" required>
-            <option value="" selected disabled>Search product...</option>
-            {% for product in products %}
-            <option value="{{ product.id }}">{{ product.name }}</option>
-            {% endfor %}
+      <div class="admin-actions print-hide">
+        <a href="{% url 'products:update_product_image' %}" class="btn btn-dark font-weight-bold">
+          <i class="mdi mdi-cloud-upload mr-2"></i>Upload image
+        </a>
+        <a href="{% url 'products:products_list' %}" class="btn btn-outline-dark font-weight-bold">
+          <i class="mdi mdi-arrow-left-bold mr-2"></i>Products
+        </a>
+      </div>
+    </div>
+
+    <div class="admin-stat-grid">
+      <div class="admin-stat">
+        <span>Images shown</span>
+        <strong>{{ total_images|default:0|intcomma }}</strong>
+      </div>
+      <div class="admin-stat">
+        <span>Default images</span>
+        <strong>{{ default_images|default:0|intcomma }}</strong>
+      </div>
+      <div class="admin-stat">
+        <span>Active images</span>
+        <strong>{{ active_images|default:0|intcomma }}</strong>
+      </div>
+      <div class="admin-stat">
+        <span>Products</span>
+        <strong>{{ products.count|default:0|intcomma }}</strong>
+      </div>
+    </div>
+
+    <form method="get" action="{% url 'products:product_images' %}" class="admin-search print-hide">
+      <div class="input-group">
+        <select name="id" id="dropdown" class="form-control chzn-select">
+          <option value="">All products</option>
+          {% for product in products %}
+            <option value="{{ product.id }}" {% if selected_product_id == product.id|stringformat:'s' %}selected{% endif %}>
+              {{ product.name }}
+            </option>
+          {% endfor %}
         </select>
-        <button type="submit" class="btn btn-sm ml-3 btn-success">
-            <i class="mdi mdi-view-list btn-icon-prepend"></i>
+        <button type="submit" class="btn btn-primary">
+          <i class="mdi mdi-filter-variant"></i> Filter
         </button>
+        {% if selected_product %}
+          <a href="{% url 'products:product_images' %}" class="btn btn-light">Clear</a>
+        {% endif %}
+      </div>
     </form>
 
-    <div id="printMe" class="tab-pane show active">
-        <hr class="bg-info" style="height: 3px;" />
-
-        {% if product_image_fetched %}
-        <header style="text-align: center;">
-            <h3>
-                Product: <span class="text-primary" style="font-family: 'Lucida Sans Unicode', sans-serif;">
-                    {{ selected_product.name }}</span>
-            </h3>
-        </header>
-        <hr class="bg-info" style="height: 3px;" />
-
-        <div class="table-responsive">
-            <table class="my-table">
-                <thead>
-                    <tr>
-                        <th scope="col">#</th>
-                        <th scope="col">Updated at</th>
-                        <th scope="col">Image</th>
-                        <th colspan="2" scope="col">Action</th>
-                    </tr>
-                </thead>
-                <tbody class="table-group-divider">
-                    {% for product_image in product_image_fetched %}
-                    <tr>
-                        <th scope="row">{{ forloop.counter }}.</th>
-                        <td>{{ product_image.updated_at }}</td>
-                        <td>
-                            {% if product_image.image %}
-                            <img class="rounded-circle account-img" height="100" width="100"
-                                src="{{ product_image.image.url }}" alt="Product Image">
-                            <a href="{{ product_image.image.url }}" download title="Download image"
-                                onclick="return confirm('Download image?');">
-                                <i class="bi bi-download"></i>
-                            </a>
-                            {% else %}
-                            No image!
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
-                            <a class="btn btn-danger btn-sm" title="Erase"
-                                href="{% url 'products:delete_product_image' product_image.id %}"
-                                onclick="return confirm('Are you sure? This record will be deleted permanently.');">
-                                <i class="bi bi-trash"></i>
-                            </a>
-                            {% else %}
-                            <button class="btn btn-danger btn-sm" onclick="showNoPermissionMessage('delete')">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+    <div id="printMe" class="admin-panel mb-4">
+      <div class="admin-panel-header">
+        <h2>
+          {% if selected_product %}
+            {{ selected_product.name }}
+          {% else %}
+            Select a Product
+          {% endif %}
+        </h2>
+        {% if has_selected_product %}
+          <span class="badge badge-warning text-dark">{{ total_images|default:0 }} image{{ total_images|pluralize }}</span>
         {% else %}
-        <p class="alert alert-danger">No image found for the selected product.</p>
+          <span class="badge badge-warning text-dark">Images load after filtering</span>
         {% endif %}
+      </div>
+
+      <div class="card-body">
+        {% if product_image_fetched %}
+          <div class="product-image-grid">
+            {% for product_image in product_image_fetched %}
+              <article class="product-image-card">
+                <div class="product-image-preview">
+                  {% if product_image.image_url %}
+                    <img src="{{ product_image.image_url }}" alt="{{ product_image.alt_text|default:product_image.product.name }}" loading="lazy">
+                  {% else %}
+                    <span class="product-image-empty"><i class="mdi mdi-image-off-outline"></i></span>
+                  {% endif %}
+                </div>
+
+                <div class="product-image-meta">
+                  <span class="admin-item-title">{{ product_image.product.name }}</span>
+                  <span class="admin-item-subtitle">{{ product_image.alt_text|default:'No alt text' }}</span>
+                </div>
+
+                <div class="product-image-badges">
+                  {% if product_image.is_default %}
+                    <span class="admin-badge is-warning">Default</span>
+                  {% endif %}
+                  {% if product_image.is_active %}
+                    <span class="admin-badge is-active">Active</span>
+                  {% else %}
+                    <span class="admin-badge is-inactive">Inactive</span>
+                  {% endif %}
+                </div>
+
+                <div class="product-image-foot">
+                  <span class="admin-item-subtitle">{{ product_image.created_at|date:'M j, Y' }}</span>
+                  <span class="admin-icon-actions print-hide">
+                    {% if product_image.image_url %}
+                      <a href="{{ product_image.image_url }}" class="btn btn-outline-secondary btn-sm admin-icon-btn" title="Open image" target="_blank" rel="noopener">
+                        <i class="mdi mdi-open-in-new"></i>
+                      </a>
+                    {% endif %}
+                    {% if user.profile.role == 'administrator' %}
+                      <a class="btn btn-danger btn-sm admin-icon-btn" title="Delete image" href="{% url 'products:delete_product_image' product_image.id %}" onclick="return confirm('Are you sure? This image will be deleted permanently.');">
+                        <i class="bi bi-trash"></i>
+                      </a>
+                    {% else %}
+                      <button type="button" class="btn btn-danger btn-sm admin-icon-btn" title="Only administrators can delete images" disabled>
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    {% endif %}
+                  </span>
+                </div>
+              </article>
+            {% endfor %}
+          </div>
+
+          {% if product_image_fetched.paginator.num_pages > 1 %}
+            <nav aria-label="Product image pagination" class="print-hide mt-4">
+              <ul class="pagination justify-content-center flex-wrap">
+                {% if product_image_fetched.has_previous %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ product_image_fetched.previous_page_number }}{% if selected_product_id %}&id={{ selected_product_id }}{% endif %}">&laquo;</a>
+                  </li>
+                {% else %}
+                  <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                {% endif %}
+
+                {% for num in product_image_fetched.paginator.page_range %}
+                  {% if product_image_fetched.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                  {% elif num > product_image_fetched.number|add:'-3' and num < product_image_fetched.number|add:'3' %}
+                    <li class="page-item">
+                      <a class="page-link" href="?page={{ num }}{% if selected_product_id %}&id={{ selected_product_id }}{% endif %}">{{ num }}</a>
+                    </li>
+                  {% endif %}
+                {% endfor %}
+
+                {% if product_image_fetched.has_next %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ product_image_fetched.next_page_number }}{% if selected_product_id %}&id={{ selected_product_id }}{% endif %}">&raquo;</a>
+                  </li>
+                {% else %}
+                  <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                {% endif %}
+              </ul>
+            </nav>
+          {% endif %}
+        {% else %}
+          <div class="admin-empty">
+            <div class="admin-empty-icon"><i class="mdi mdi-image-off-outline"></i></div>
+            {% if has_selected_product %}
+              <h2 class="h4 font-weight-bold">No images found</h2>
+              <p class="admin-muted">Upload an image for this product or choose another product.</p>
+              <a href="{% url 'products:update_product_image' %}" class="btn btn-dark print-hide">Upload image</a>
+            {% else %}
+              <h2 class="h4 font-weight-bold">Choose a product to view images</h2>
+              <p class="admin-muted">Images are loaded per product to keep this page fast and light.</p>
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
     </div>
-</div>
+  </div>
 {% endblock content %}

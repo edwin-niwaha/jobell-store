@@ -13,12 +13,22 @@ class Migration(migrations.Migration):
         migrations.RunSQL(
             sql="""
             ALTER TABLE finance_journalentry
-            DROP CONSTRAINT valid_payment_method;
+            DROP CONSTRAINT IF EXISTS valid_payment_method;
             """,
             reverse_sql="""
-            ALTER TABLE finance_journalentry
-            ADD CONSTRAINT valid_payment_method
-            CHECK (payment_method IN ('cash', 'bank_transfer', 'check', 'mobile_payment') OR payment_method IS NULL);
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1
+                    FROM pg_constraint
+                    WHERE conname = 'valid_payment_method'
+                      AND conrelid = 'finance_journalentry'::regclass
+                ) THEN
+                    ALTER TABLE finance_journalentry
+                    ADD CONSTRAINT valid_payment_method
+                    CHECK (payment_method IN ('cash', 'bank_transfer', 'check', 'mobile_payment') OR payment_method IS NULL);
+                END IF;
+            END $$;
             """,
         ),
     ]

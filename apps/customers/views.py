@@ -1,6 +1,10 @@
+import logging
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
+from django.core.paginator import Paginator
+from django.db.models import Q
 from django.db import transaction
 from .models import Customer
 from .forms import CustomerForm
@@ -11,15 +15,30 @@ from apps.authentication.decorators import (
     admin_required,
 )
 
+logger = logging.getLogger(__name__)
+
 
 # =================================== customers list view ===================================
 @login_required
 @admin_or_manager_or_staff_required
 def customers_list_view(request):
-    customers = Customer.objects.all().order_by("id")
+    search_query = request.GET.get("search", "").strip()
+    customers = Customer.objects.select_related("user").all()
+    if search_query:
+        customers = customers.filter(
+            Q(first_name__icontains=search_query)
+            | Q(last_name__icontains=search_query)
+            | Q(email__icontains=search_query)
+            | Q(mobile__icontains=search_query)
+            | Q(tel__icontains=search_query)
+        )
+    paginator = Paginator(customers, 25)
+    page_obj = paginator.get_page(request.GET.get("page"))
     context = {
         "active_icon": "customers",
-        "customers": customers,
+        "customers": page_obj,
+        "page_obj": page_obj,
+        "search_query": search_query,
         "table_title": "Customers",
     }
     return render(request, "customers/customers.html", context)
@@ -54,13 +73,13 @@ def customers_add_view(request):
                     extra_tags="bg-success",
                 )
                 return redirect("customers:customers_list")
-            except Exception as e:
+            except Exception:
+                logger.exception("Error creating customer")
                 messages.error(
                     request,
                     "There was an error during the creation!",
                     extra_tags="bg-danger",
                 )
-                print(e)
                 return redirect("customers:customers_add")
         else:
             messages.error(
@@ -106,13 +125,13 @@ def customers_update_view(request, customer_id):
                     extra_tags="bg-success",
                 )
                 return redirect("customers:customers_list")
-            except Exception as e:
+            except Exception:
+                logger.exception("Error updating customer %s", customer_id)
                 messages.error(
                     request,
                     "There was an error during the update!",
                     extra_tags="bg-danger",
                 )
-                print(e)
                 return redirect("customers:customers_update", customer_id=customer_id)
         else:
             messages.error(
@@ -145,11 +164,11 @@ def customers_delete_view(request, customer_id):
             extra_tags="bg-success",
         )
         return redirect("customers:customers_list")
-    except Exception as e:
+    except Exception:
+        logger.exception("Error deleting customer %s", customer_id)
         messages.error(
             request,
             "There was an error during the elimination!",
             extra_tags="bg-danger",
         )
-        print(e)
         return redirect("customers:customers_list")

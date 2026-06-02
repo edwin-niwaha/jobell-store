@@ -2,26 +2,33 @@ from django.core.mail import EmailMultiAlternatives
 from django.core.mail import send_mail
 from django.utils.html import strip_tags
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Q, Avg, Sum
 from django.conf import settings
 from django.contrib import messages
+from decimal import Decimal
 import requests
 import uuid
 from django.http import JsonResponse
 import logging
 import base64
 from django.shortcuts import render, get_object_or_404, redirect
-from django.core.exceptions import ObjectDoesNotExist
+from django.urls import reverse
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.contrib.auth.decorators import login_required
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils import timezone
 from django.db import transaction
 from .models import Cart, CartItem, Order, OrderDetail, Wishlist
+from .services import cart_total, create_order_from_cart, get_or_create_cart
 from apps.products.models import Product, ProductVolume, ProductImage
+from apps.products.selectors import build_storefront_product_card
 
 # from django.core.exceptions import MultipleObjectsReturned
 from .forms import CheckoutForm, OrderStatusForm
 from apps.customers.models import Customer
 from apps.products.models import Review
+from apps.addresses.models import CustomerAddress
+from apps.shipping.services import delivery_quote_for
 
 from apps.authentication.decorators import (
     admin_required,
@@ -32,12 +39,59 @@ from apps.authentication.decorators import (
 logger = logging.getLogger(__name__)
 
 
+def _safe_redirect_target(request, fallback):
+    target = request.POST.get("next") or request.GET.get("next")
+    if target and url_has_allowed_host_and_scheme(
+        target,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return target
+    return fallback
+
+
+def _wants_json(request):
+    return (
+        request.headers.get("x-requested-with") == "XMLHttpRequest"
+        or "application/json" in request.headers.get("accept", "")
+    )
+
+
+def _cart_count(cart):
+    return (
+        cart.items.aggregate(total_quantity=Sum("quantity"))["total_quantity"]
+        or 0
+    )
+
+
+def _cart_json_response(cart, message="Product added to cart successfully.", status=200):
+    return JsonResponse(
+        {
+            "ok": status < 400,
+            "message": message,
+            "cart_count": _cart_count(cart),
+            "cart_url": reverse("orders:cart"),
+        },
+        status=status,
+    )
+
+
+def _user_has_bought_product(user, product):
+    if not user.is_authenticated:
+        return False
+    return (
+        OrderDetail.objects.filter(order__customer__user=user, product=product)
+        .exclude(order__status__in=["Canceled", "Refunded", "Returned"])
+        .exists()
+    )
+
+
 # =================================== Products Detail ===================================
 
 
 # @login_required
 # def product_detail(request, product_uuid):
-#     product = get_object_or_404(Product, uuid=product_uuid)
+#     product = get_object_or_404(Product.objects.select_related("category", "supplier").prefetch_related("images", "productvolume_set__volume"), uuid=product_uuid)
 
 #     # Handle review submission
 #     if request.method == "POST" and "submit_review" in request.POST:
@@ -78,7 +132,7 @@ logger = logging.getLogger(__name__)
 
 #     # Continue fetching cart and product details
 #     cart, created = Cart.objects.get_or_create(user=request.user)
-#     cart_items = CartItem.objects.filter(cart=cart)
+#     cart_items = CartItem.objects.filter(cart=cart).select_related("product", "volume", "volume__volume")
 #     cart_count = sum(item.quantity for item in cart_items)
 
 #     # Fetch volumes specific to this product
@@ -116,12 +170,28 @@ logger = logging.getLogger(__name__)
 
 
 def product_detail(request, product_uuid):
-    product = get_object_or_404(Product, uuid=product_uuid)
+    product = get_object_or_404(
+        Product.objects.select_related("category", "supplier").prefetch_related("images"),
+        uuid=product_uuid,
+    )
+    has_bought_product = _user_has_bought_product(request.user, product)
+    user_review_exists = (
+        request.user.is_authenticated
+        and Review.objects.filter(product=product, user=request.user).exists()
+    )
+    can_review = has_bought_product and not user_review_exists
 
     # Handle review submission
     if request.method == "POST" and "submit_review" in request.POST:
         if not request.user.is_authenticated:
             messages.error(request, "Please log in to submit a review.")
+            return redirect("orders:product_detail", product_uuid=product_uuid)
+        if not has_bought_product:
+            messages.error(
+                request,
+                "Only customers who bought this product can leave a review.",
+                extra_tags="bg-danger text-white",
+            )
             return redirect("orders:product_detail", product_uuid=product_uuid)
         if Review.objects.filter(product=product, user=request.user).exists():
             messages.info(
@@ -167,37 +237,44 @@ def product_detail(request, product_uuid):
             )
         return redirect("orders:product_detail", product_uuid=product_uuid)
 
-    # Get or create cart
-    if request.user.is_authenticated:
-        cart, _ = Cart.objects.get_or_create(user=request.user)
-    else:
-        cart_id = request.session.get("cart_id")
-        if cart_id:
-            cart = get_object_or_404(Cart, id=cart_id, user=None)
-        else:
-            cart = Cart.objects.create(user=None)
-            request.session["cart_id"] = cart.id
-            request.session.modified = True
+    cart = get_or_create_cart(request)
 
-    cart_items = CartItem.objects.filter(cart=cart)
+    cart_items = CartItem.objects.filter(cart=cart).select_related("product", "volume", "volume__volume")
     cart_count = sum(item.quantity for item in cart_items)
 
     # Fetch product volumes
-    product_volumes = ProductVolume.objects.filter(product=product).order_by(
-        "volume__ml"
+    product_volumes = ProductVolume.objects.filter(
+        product=product, is_active=True
+    ).filter(
+        Q(stock_quantity__isnull=True) | Q(stock_quantity__gt=0)
+    ).order_by(
+        "sort_order", "volume__ml", "product_type"
     )
 
     # Fetch and paginate reviews
     reviews = Review.objects.filter(product=product, is_verified=True).order_by(
         "-created_at"
     )
+    average_rating = reviews.aggregate(value=Avg("rating"))["value"]
     paginator = Paginator(reviews, 5)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
     for review in page_obj:
-        review.filled_stars = "★" * review.rating
-        review.empty_stars = "☆" * (5 - review.rating)
+        review.filled_stars = range(review.rating)
+        review.empty_stars = range(5 - review.rating)
+
+    product_images = product.image_urls
+    if not product_images:
+        product_images = []
+
+    review_block_reason = ""
+    if not request.user.is_authenticated:
+        review_block_reason = "Log in after buying this product to leave a verified review."
+    elif user_review_exists:
+        review_block_reason = "You have already reviewed this product."
+    elif not has_bought_product:
+        review_block_reason = "Only customers who bought this product can leave a review."
 
     context = {
         "product": product,
@@ -205,6 +282,12 @@ def product_detail(request, product_uuid):
         "cart_count": cart_count,
         "reviews": page_obj,
         "verified_reviews_count": reviews.count(),
+        "average_rating": round(average_rating, 1) if average_rating else None,
+        "product_images": product_images,
+        "can_review": can_review,
+        "has_bought_product": has_bought_product,
+        "user_review_exists": user_review_exists,
+        "review_block_reason": review_block_reason,
     }
     return render(request, "orders/product_detail.html", context)
 
@@ -212,13 +295,22 @@ def product_detail(request, product_uuid):
 # =================================== Products Detail for quests not signed in ===================================
 def product_details_view(request, product_uuid):
     try:
-        product = Product.objects.get(uuid=product_uuid)
-        product_volumes = ProductVolume.objects.filter(product=product).order_by(
-            "volume__ml"
+        product = (
+            Product.objects.select_related("category", "supplier")
+            .prefetch_related("images")
+            .get(uuid=product_uuid)
+        )
+        product_volumes = ProductVolume.objects.filter(
+            product=product, is_active=True
+        ).filter(
+            Q(stock_quantity__isnull=True) | Q(stock_quantity__gt=0)
+        ).order_by(
+            "sort_order", "volume__ml", "product_type"
         )
         reviews = Review.objects.filter(product=product, is_verified=True).order_by(
             "-created_at"
         )
+        average_rating = reviews.aggregate(value=Avg("rating"))["value"]
 
         paginator = Paginator(reviews, 5)
         page_number = request.GET.get("page")
@@ -228,35 +320,51 @@ def product_details_view(request, product_uuid):
             review.filled_stars = "★" * review.rating
             review.empty_stars = "☆" * (5 - review.rating)
 
+        for review in page_obj:
+            review.filled_stars = range(review.rating)
+            review.empty_stars = range(5 - review.rating)
+
         verified_reviews_count = reviews.filter(is_verified=True).count()
+        product_images = product.image_urls
 
         context = {
+            "product": product,
             "product_id": product.id,
             "name": product.name,
             "gender": product.gender,
             "description": product.description,
             "category": product.category.name if product.category else "N/A",
+            "supplier": product.supplier,
             "volumes": [],
             "reviews": page_obj,
             "verified_reviews_count": verified_reviews_count,
+            "average_rating": round(average_rating, 1) if average_rating else None,
+            "product_images": product_images,
             "product_uuid": str(product_uuid),
         }
 
         for product_volume in product_volumes:
             volume = product_volume.volume
             discount_value = product_volume.discount_value or 0
-            # Use static placeholder if image is missing
+            # Use a remote placeholder if image is missing so storefront partials do not depend on local static assets.
             image_url = (
-                volume.image.url if volume.image else "/static/images/placeholder.png"
+                volume.image.url
+                if volume.image
+                else "https://placehold.co/600x600/f8fafc/111827?text=Jobell"
             )
             volume_data = {
-                "id": volume.id,  # Add volume ID for select options
-                "ml": volume.ml,
-                "price": float(volume.price),  # Ensure float for template
-                "image": image_url,
+                "id": product_volume.id,
+                "ml": product_volume.volume.ml,
+                "price": float(product_volume.effective_price),
+                "original_price": float(product_volume.original_price),
+                "image": product_volume.image_url or image_url,
                 "product_type": product_volume.product_type,
                 "discount_value": float(discount_value),
-                "discounted_price": float(product_volume.get_discounted_price()),
+                "discounted_price": float(product_volume.current_price),
+                "current_price": float(product_volume.current_price),
+                "variant_label": product_volume.variant_label,
+                "stock": product_volume.available_quantity,
+                "max_quantity_per_order": product_volume.max_quantity_per_order,
             }
             context["volumes"].append(volume_data)
 
@@ -295,15 +403,19 @@ def wishlist_add(request, product_uuid):
             extra_tags="bg-warning",
         )
 
-    # Redirect back to the product detail page
-    return redirect("orders:product_detail", product_uuid=product.uuid)
+    return redirect(
+        _safe_redirect_target(
+            request,
+            reverse("orders:product_detail", kwargs={"product_uuid": product.uuid}),
+        )
+    )
 
 
 # =================================== wishlist_view ===================================
 @login_required
 def wishlist_view(request):
     # Fetch all the products in the user's wishlist
-    wishlist_items = Wishlist.objects.filter(user=request.user)
+    wishlist_items = Wishlist.objects.filter(user=request.user).select_related("product", "product__category").prefetch_related("product__images")
 
     # Paginate the wishlist items (10 items per page)
     paginator = Paginator(wishlist_items, 12)  # Show 12 wishlist items per page
@@ -317,6 +429,7 @@ def wishlist_view(request):
         item.default_image = ProductImage.objects.filter(
             product=item.product, is_default=True
         ).first()
+        item.product_info = build_storefront_product_card(item.product)
 
     # Pass the page object to the template
     context = {"page_obj": page_obj}
@@ -328,13 +441,9 @@ def wishlist_view(request):
 
 @login_required
 def remove_from_wishlist(request, wishlist_item_id):
-    # Log the wishlist item ID to ensure it's being passed correctly
-    print(f"Wishlist Item ID passed: {wishlist_item_id}")
-
     try:
         # Check if the wishlist item exists for the logged-in user
         wishlist_item = Wishlist.objects.get(id=wishlist_item_id, user=request.user)
-        print(f"Wishlist item found: {wishlist_item.product.name}")
     except Wishlist.DoesNotExist:
         messages.error(
             request, "Product not found in your wishlist.", extra_tags="bg-danger"
@@ -482,75 +591,139 @@ def remove_from_wishlist(request, wishlist_item_id):
 
 def add_to_cart(request, product_uuid):
     product = get_object_or_404(Product, uuid=product_uuid)
-    quantity = int(request.POST.get("quantity", 1))
+    wants_json = _wants_json(request)
+    try:
+        quantity = int(request.POST.get("quantity", 1))
+    except (TypeError, ValueError):
+        quantity = 0
     volume_id = request.POST.get("volume_id")
+    fallback_url = reverse("orders:product_detail", kwargs={"product_uuid": product_uuid})
 
     # Validate volume
     if not volume_id:
+        if wants_json:
+            return JsonResponse(
+                {"ok": False, "message": "Please select a product volume."},
+                status=400,
+            )
         messages.error(request, "Please select a product volume.")
-        return redirect("orders:product_detail", product_uuid=product_uuid)
+        return redirect(_safe_redirect_target(request, fallback_url))
 
-    volume = get_object_or_404(ProductVolume, id=volume_id)
+    volume = get_object_or_404(ProductVolume, id=volume_id, product=product)
+
+    if not volume.is_active:
+        if wants_json:
+            return JsonResponse(
+                {
+                    "ok": False,
+                    "message": "This product option is currently unavailable.",
+                },
+                status=400,
+            )
+        messages.error(
+            request,
+            "This product option is currently unavailable.",
+            extra_tags="bg-danger text-white",
+        )
+        return redirect(_safe_redirect_target(request, fallback_url))
 
     # Validate quantity
     if quantity <= 0:
+        if wants_json:
+            return JsonResponse(
+                {"ok": False, "message": "Quantity must be greater than zero."},
+                status=400,
+            )
         messages.error(
             request,
             "Quantity must be greater than zero.",
             extra_tags="bg-danger text-white",
         )
-        return redirect("orders:product_detail", product_uuid=product_uuid)
+        return redirect(_safe_redirect_target(request, fallback_url))
 
-    # Check stock (assuming ProductVolume has a stock field)
-    if hasattr(volume, "stock") and volume.stock < quantity:
+    # Check stock and per-order limits from the product variation.
+    if volume.available_quantity < quantity:
+        if wants_json:
+            return JsonResponse(
+                {
+                    "ok": False,
+                    "message": f"Only {volume.available_quantity} units available.",
+                },
+                status=400,
+            )
         messages.error(
             request,
-            f"Only {volume.stock} units available.",
+            f"Only {volume.available_quantity} units available.",
             extra_tags="bg-danger text-white",
         )
-        return redirect("orders:product_detail", product_uuid=product_uuid)
+        return redirect(_safe_redirect_target(request, fallback_url))
 
-    # Get or create cart
-    if request.user.is_authenticated:
-        cart, _ = Cart.objects.get_or_create(user=request.user, session_key=None)
-    else:
-        session_key = request.session.session_key
-        if not session_key:
-            request.session.create()  # Ensure session exists
-            session_key = request.session.session_key
-        cart, _ = Cart.objects.get_or_create(session_key=session_key, user=None)
-        request.session["session_key"] = session_key
-        request.session.modified = True
+    if volume.max_quantity_per_order and quantity > volume.max_quantity_per_order:
+        if wants_json:
+            return JsonResponse(
+                {
+                    "ok": False,
+                    "message": (
+                        f"You can add up to {volume.max_quantity_per_order} units "
+                        "of this option per order."
+                    ),
+                },
+                status=400,
+            )
+        messages.error(
+            request,
+            f"You can add up to {volume.max_quantity_per_order} units of this option per order.",
+            extra_tags="bg-danger text-white",
+        )
+        return redirect(_safe_redirect_target(request, fallback_url))
+
+    cart = get_or_create_cart(request)
 
     # Add or update cart item
-    cart_item, created = CartItem.objects.get_or_create(
-        cart=cart, product=product, volume=volume
-    )
-    if not created:
+    with transaction.atomic():
+        cart_item, created = CartItem.objects.select_for_update().get_or_create(
+            cart=cart,
+            volume=volume,
+            defaults={"product": product, "quantity": 0},
+        )
         new_quantity = cart_item.quantity + quantity
-        if hasattr(volume, "stock") and new_quantity > volume.stock:
+        if new_quantity > volume.available_quantity:
+            if wants_json:
+                return _cart_json_response(
+                    cart,
+                    (
+                        f"Cannot add {new_quantity} units. "
+                        f"Only {volume.available_quantity} available."
+                    ),
+                    status=400,
+                )
             messages.error(
                 request,
-                f"Cannot add {new_quantity} units. Only {volume.stock} available.",
+                f"Cannot add {new_quantity} units. Only {volume.available_quantity} available.",
                 extra_tags="bg-danger text-white",
             )
-            return redirect("orders:product_detail", product_uuid=product_uuid)
+            return redirect(_safe_redirect_target(request, fallback_url))
+        cart_item.product = product
         cart_item.quantity = new_quantity
-        messages.info(
-            request,
-            f"Increased {product.name} ({volume.volume.ml}ml) to {new_quantity} in cart.",
-            extra_tags="bg-info text-white",
-        )
-    else:
-        cart_item.quantity = quantity
+        cart_item.save()
+
+    if wants_json:
+        return _cart_json_response(cart)
+
+    if created:
         messages.success(
             request,
             f"Added {quantity} x {product.name} ({volume.volume.ml}ml) to cart.",
             extra_tags="bg-success text-white",
         )
-    cart_item.save()
+    else:
+        messages.info(
+            request,
+            f"Increased {product.name} ({volume.volume.ml}ml) to {cart_item.quantity} in cart.",
+            extra_tags="bg-info text-white",
+        )
 
-    return redirect("orders:product_detail", product_uuid=product_uuid)
+    return redirect(_safe_redirect_target(request, fallback_url))
 
 
 # =================================== cart_view ===================================
@@ -558,7 +731,7 @@ def add_to_cart(request, product_uuid):
 # def cart_view(request):
 #     cart, created = Cart.objects.get_or_create(user=request.user)
 
-#     total_price = sum(item.get_total_price() for item in cart.items.all())
+#     total_price = sum(item.get_total_price() for item in cart.items.select_related("product", "volume", "volume__volume"))
 
 #     context = {
 #         "cart": cart,
@@ -581,7 +754,7 @@ def add_to_cart(request, product_uuid):
 #             request.session["cart_id"] = cart.id
 #             request.session.modified = True
 
-#     total_price = sum(item.get_total_price() for item in cart.items.all())
+#     total_price = sum(item.get_total_price() for item in cart.items.select_related("product", "volume", "volume__volume"))
 
 #     context = {
 #         "cart": cart,
@@ -592,23 +765,21 @@ def add_to_cart(request, product_uuid):
 
 
 def cart_view(request):
-    # Get or create cart
-    if request.user.is_authenticated:
-        cart, created = Cart.objects.get_or_create(user=request.user, session_key=None)
-    else:
-        session_key = request.session.session_key
-        if not session_key:
-            request.session.create()  # Ensure session exists
-            session_key = request.session.session_key
-        cart, created = Cart.objects.get_or_create(session_key=session_key, user=None)
-        request.session["session_key"] = session_key
-        request.session.modified = True
-
-    total_price = sum(item.get_total_price() for item in cart.items.all())
+    cart = get_or_create_cart(request)
+    cart_items = cart.items.select_related(
+        "product",
+        "product__category",
+        "volume",
+        "volume__volume",
+    )
+    total_price = cart_total(cart)
+    total_items = sum(item.quantity for item in cart_items)
 
     context = {
         "cart": cart,
+        "cart_items": cart_items,
         "total_price": total_price,
+        "total_items": total_items,
     }
 
     return render(request, "orders/cart.html", context)
@@ -617,7 +788,7 @@ def cart_view(request):
 # @login_required
 # def update_cart(request, item_id):
 #     cart = get_object_or_404(Cart, user=request.user)
-#     item = get_object_or_404(CartItem, id=item_id, cart=cart)
+#     item = get_object_or_404(CartItem.objects.select_related("product", "volume", "volume__volume"), id=item_id, cart=cart)
 
 #     if request.method == "POST":
 #         quantity = int(request.POST.get("quantity", 1))
@@ -638,7 +809,7 @@ def cart_view(request):
 # @login_required
 # def remove_from_cart(request, item_id):
 #     cart = get_object_or_404(Cart, user=request.user)
-#     item = get_object_or_404(CartItem, id=item_id, cart=cart)
+#     item = get_object_or_404(CartItem.objects.select_related("product", "volume", "volume__volume"), id=item_id, cart=cart)
 
 #     item.delete()
 #     messages.success(request, "Item removed from cart.", extra_tags="bg-success")
@@ -658,7 +829,7 @@ def cart_view(request):
 #         cart = get_object_or_404(Cart, id=cart_id, user=None)
 
 #     # Get the cart item and verify ownership
-#     item = get_object_or_404(CartItem, id=item_id, cart=cart)
+#     item = get_object_or_404(CartItem.objects.select_related("product", "volume", "volume__volume"), id=item_id, cart=cart)
 
 #     if request.method == "POST":
 #         quantity = int(request.POST.get("quantity", 1))
@@ -701,7 +872,7 @@ def cart_view(request):
 #         cart = get_object_or_404(Cart, id=cart_id, user=None)
 
 #     # Get the cart item and verify ownership
-#     item = get_object_or_404(CartItem, id=item_id, cart=cart)
+#     item = get_object_or_404(CartItem.objects.select_related("product", "volume", "volume__volume"), id=item_id, cart=cart)
 
 #     product_name = item.product.name
 #     item.delete()
@@ -715,29 +886,28 @@ def cart_view(request):
 
 
 def update_cart(request, item_id):
-    # Get or create cart
-    if request.user.is_authenticated:
-        cart, created = Cart.objects.get_or_create(user=request.user, session_key=None)
-    else:
-        session_key = request.session.session_key
-        if not session_key:
-            request.session.create()  # Ensure session exists
-            session_key = request.session.session_key
-        cart, created = Cart.objects.get_or_create(session_key=session_key, user=None)
-        request.session["session_key"] = session_key
-        request.session.modified = True
+    cart = get_or_create_cart(request)
 
     # Get the cart item and verify ownership
-    item = get_object_or_404(CartItem, id=item_id, cart=cart)
+    item = get_object_or_404(CartItem.objects.select_related("product", "volume", "volume__volume"), id=item_id, cart=cart)
 
     if request.method == "POST":
         quantity = int(request.POST.get("quantity", 1))
 
-        # Validate stock (assuming ProductVolume has a stock field)
-        if hasattr(item.volume, "stock") and quantity > item.volume.stock:
+        # Validate stock against the selected product variation.
+        if quantity > item.volume.available_quantity:
             messages.error(
                 request,
-                f"Cannot update to {quantity} units. Only {item.volume.stock} available.",
+                f"Cannot update to {quantity} units. Only {item.volume.available_quantity} available.",
+                extra_tags="bg-danger text-white",
+            )
+        elif (
+            item.volume.max_quantity_per_order
+            and quantity > item.volume.max_quantity_per_order
+        ):
+            messages.error(
+                request,
+                f"You can keep up to {item.volume.max_quantity_per_order} units of this option in one order.",
                 extra_tags="bg-danger text-white",
             )
         elif quantity > 0:
@@ -760,20 +930,10 @@ def update_cart(request, item_id):
 
 
 def remove_from_cart(request, item_id):
-    # Get or create cart
-    if request.user.is_authenticated:
-        cart, created = Cart.objects.get_or_create(user=request.user, session_key=None)
-    else:
-        session_key = request.session.session_key
-        if not session_key:
-            request.session.create()  # Ensure session exists
-            session_key = request.session.session_key
-        cart, created = Cart.objects.get_or_create(session_key=session_key, user=None)
-        request.session["session_key"] = session_key
-        request.session.modified = True
+    cart = get_or_create_cart(request)
 
     # Get the cart item and verify ownership
-    item = get_object_or_404(CartItem, id=item_id, cart=cart)
+    item = get_object_or_404(CartItem.objects.select_related("product", "volume", "volume__volume"), id=item_id, cart=cart)
 
     product_name = item.product.name
     item.delete()
@@ -994,59 +1154,264 @@ def remove_from_cart(request, item_id):
 #         "orders/checkout.html",
 #         {"form": form, "cart": cart, "total_price": total_price},
 #     )
+def _checkout_addresses_for(request):
+    if not request.user.is_authenticated:
+        return []
+    return [
+        {
+            "id": address.pk,
+            "phone_number": address.phone_number,
+            "street_name": address.street_name,
+            "region": address.region,
+            "city": address.city,
+            "area": address.area,
+        }
+        for address in CustomerAddress.objects.filter(user=request.user)
+    ]
 
 
-@login_required
+def _checkout_context(
+    request,
+    *,
+    form,
+    cart,
+    subtotal,
+    shipping_fee,
+    grand_total,
+    delivery_available=True,
+    delivery_quote_message="",
+):
+    return {
+        "form": form,
+        "cart": cart,
+        "total_price": subtotal,
+        "shipping_fee": shipping_fee,
+        "grand_total": grand_total,
+        "delivery_available": delivery_available,
+        "delivery_quote_message": delivery_quote_message,
+        "checkout_addresses": _checkout_addresses_for(request),
+    }
+
+
+def _has_location_override(saved_address, region, city, area):
+    if not saved_address:
+        return False
+    return any(
+        [
+            (region or "") and region != saved_address.region,
+            (city or "").strip().casefold() != (saved_address.city or "").strip().casefold(),
+            (area or "").strip().casefold() != (saved_address.area or "").strip().casefold(),
+        ]
+    )
+
+
+def checkout_delivery_summary(request):
+    cart = get_or_create_cart(request)
+    cart = Cart.objects.prefetch_related("items__volume").filter(pk=cart.pk).first()
+    if not cart or not cart.items.exists():
+        return JsonResponse(
+            {
+                "available": False,
+                "message": "Your cart is empty.",
+                "subtotal": "0.00",
+                "shipping_fee": "0.00",
+                "grand_total": "0.00",
+            },
+            status=400,
+        )
+
+    shipping_method = request.GET.get("shipping_method", "delivery")
+    subtotal = cart_total(cart)
+    if shipping_method == "pickup":
+        return JsonResponse(
+            {
+                "available": True,
+                "message": "Pickup is free.",
+                "match_level": "pickup",
+                "subtotal": f"{subtotal:.2f}",
+                "shipping_fee": "0.00",
+                "grand_total": f"{subtotal:.2f}",
+            }
+        )
+
+    saved_address = None
+    saved_address_id = request.GET.get("saved_address")
+    if saved_address_id and request.user.is_authenticated:
+        saved_address = CustomerAddress.objects.filter(
+            pk=saved_address_id, user=request.user
+        ).first()
+
+    request_region = request.GET.get("delivery_region", "")
+    request_city = request.GET.get("delivery_city", "")
+    request_area = request.GET.get("delivery_area", "")
+    if saved_address and not _has_location_override(
+        saved_address, request_region, request_city, request_area
+    ):
+        region = saved_address.region
+        city = saved_address.city
+        area = saved_address.area
+    else:
+        region = request_region
+        city = request_city
+        area = request_area
+
+    quote = delivery_quote_for(region, city, area)
+    return JsonResponse(
+        {
+            "available": quote.available,
+            "message": quote.message,
+            "match_level": quote.match_level,
+            "subtotal": f"{subtotal:.2f}",
+            "shipping_fee": f"{quote.fee:.2f}",
+            "grand_total": f"{subtotal + quote.fee:.2f}",
+        },
+    )
+
+
 def checkout_view(request):
-    try:
-        cart = Cart.objects.get(user=request.user)
-    except Cart.DoesNotExist:
+    cart = get_or_create_cart(request)
+    cart = (
+        Cart.objects.prefetch_related("items__product", "items__volume__volume")
+        .filter(pk=cart.pk)
+        .first()
+    )
+    if not cart or not cart.items.exists():
         messages.error(request, "Your cart is empty.")
         return redirect("orders:cart")  # Redirect to cart view if the cart is empty
 
-    customer, created = Customer.objects.get_or_create(user=request.user)
-
-    total_price = sum(
-        item.get_total_price() for item in cart.items.all()
-    )  # Calculate total price
+    customer = None
+    if request.user.is_authenticated:
+        customer, created = Customer.objects.get_or_create(
+            user=request.user,
+            defaults={
+                "first_name": request.user.first_name or request.user.username,
+                "last_name": request.user.last_name,
+                "email": request.user.email,
+            },
+        )
+    subtotal = cart_total(cart)
+    shipping_fee = Decimal("0.00")
+    grand_total = subtotal
+    delivery_quote_message = ""
+    delivery_available = True
 
     if request.method == "POST":
-        form = CheckoutForm(request.POST)
+        form = CheckoutForm(request.POST, user=request.user)
         if form.is_valid():
-            total_amount = total_price  # Use total_price here
-
-            # Update customer details
-            customer.first_name = form.cleaned_data["first_name"]
-            customer.last_name = form.cleaned_data["last_name"]
-            customer.email = form.cleaned_data["email"]
-            customer.mobile = form.cleaned_data["mobile"]
-            customer.address = form.cleaned_data["address"]
-            customer.save()
-
-            # Create the order
-            order = Order.objects.create(
-                customer=customer,
-                created_at=timezone.now(),
-                total_amount=total_amount,
-                status="Pending",
+            saved_address = form.cleaned_data.get("saved_address")
+            update_saved_address = request.POST.get("update_saved_address") == "1"
+            shipping_method = form.cleaned_data.get("shipping_method", "delivery")
+            pickup_station = form.cleaned_data.get("pickup_station")
+            form_delivery_region = form.cleaned_data["delivery_region"]
+            form_delivery_city = form.cleaned_data["delivery_city"]
+            form_delivery_area = form.cleaned_data.get("delivery_area", "")
+            has_location_override = _has_location_override(
+                saved_address,
+                form_delivery_region,
+                form_delivery_city,
+                form_delivery_area,
             )
+            if saved_address and not update_saved_address and not has_location_override:
+                delivery_region = saved_address.region
+                delivery_city = saved_address.city
+                delivery_area = saved_address.area
+                delivery_address_text = saved_address.single_line
+                contact_phone = saved_address.phone_number or form.cleaned_data["mobile"]
+            else:
+                delivery_region = form_delivery_region
+                delivery_city = form_delivery_city
+                delivery_area = form_delivery_area
+                delivery_address_text = form.cleaned_data["address"]
+                contact_phone = form.cleaned_data["mobile"]
 
-            # Create OrderDetail entries
-            for item in cart.items.all():
-                product_volume = item.volume
-                discounted_price = product_volume.get_discounted_price()
-
-                OrderDetail.objects.create(
-                    order=order,
-                    product=item.product,
-                    product_volume=item.volume,
-                    quantity=item.quantity,
-                    discounted_price=discounted_price,
-                    price=item.volume.volume.price,
+            if shipping_method == "pickup":
+                shipping_fee = Decimal("0.00")
+            else:
+                delivery_quote = delivery_quote_for(
+                    delivery_region, delivery_city, delivery_area
                 )
+                shipping_fee = delivery_quote.fee
+                delivery_available = delivery_quote.available
+                delivery_quote_message = delivery_quote.message
+                if not delivery_quote.available:
+                    form.add_error("delivery_area", delivery_quote.message)
+                    grand_total = subtotal
+                    return render(
+                        request,
+                        "orders/checkout.html",
+                        _checkout_context(
+                            request,
+                            form=form,
+                            cart=cart,
+                            subtotal=subtotal,
+                            shipping_fee=shipping_fee,
+                            grand_total=grand_total,
+                            delivery_available=delivery_available,
+                            delivery_quote_message=delivery_quote_message,
+                        ),
+                    )
+            grand_total = subtotal + shipping_fee
+            customer_data = {
+                "first_name": form.cleaned_data["first_name"],
+                "last_name": form.cleaned_data["last_name"],
+                "email": form.cleaned_data["email"],
+                "mobile": contact_phone,
+                "address": (
+                    f"Pickup: {pickup_station}"
+                    if shipping_method == "pickup" and pickup_station
+                    else delivery_address_text
+                ),
+            }
+            try:
+                order = create_order_from_cart(
+                    cart,
+                    customer_data=customer_data,
+                    payment_method=form.cleaned_data.get("payment_method", "cod"),
+                    mobile_money_number=form.cleaned_data.get(
+                        "mobile_money_number", ""
+                    ),
+                    shipping_data={
+                        "shipping_method": shipping_method,
+                        "shipping_fee": shipping_fee,
+                        "delivery_address_text": delivery_address_text,
+                        "delivery_region": delivery_region,
+                        "pickup_station": pickup_station,
+                    },
+                )
+            except (ValueError, ValidationError) as exc:
+                messages.error(request, exc, extra_tags="bg-danger text-white")
+                return redirect("orders:cart")
 
-            # Clear cart after checkout
-            cart.items.all().delete()
+            if request.user.is_authenticated and shipping_method == "delivery":
+                if saved_address and update_saved_address:
+                    saved_address.street_name = delivery_address_text
+                    saved_address.city = delivery_city
+                    saved_address.area = delivery_area
+                    saved_address.phone_number = contact_phone
+                    saved_address.region = delivery_region
+                    if form.cleaned_data.get("save_address"):
+                        CustomerAddress.objects.filter(
+                            user=request.user, is_default=True
+                        ).exclude(pk=saved_address.pk).update(is_default=False)
+                        saved_address.is_default = True
+                    saved_address.save()
+                elif form.cleaned_data.get("save_address") and not saved_address:
+                    CustomerAddress.objects.create(
+                        user=request.user,
+                        street_name=delivery_address_text,
+                        city=delivery_city,
+                        area=delivery_area,
+                        phone_number=contact_phone,
+                        region=delivery_region,
+                        is_default=not CustomerAddress.objects.filter(
+                            user=request.user, is_default=True
+                        ).exists(),
+                    )
+
+            placed_order_ids = request.session.get("placed_order_ids", [])
+            placed_order_ids.append(order.id)
+            request.session["placed_order_ids"] = placed_order_ids[-10:]
+            request.session.modified = True
 
             messages.success(
                 request,
@@ -1056,20 +1421,53 @@ def checkout_view(request):
             return redirect("orders:order_confirmation", order_id=order.id)
 
     else:
+        default_address = (
+            CustomerAddress.objects.filter(user=request.user, is_default=True).first()
+            if request.user.is_authenticated
+            else None
+        )
+        if default_address:
+            delivery_quote = delivery_quote_for(
+                default_address.region,
+                default_address.city,
+                default_address.area,
+            )
+            shipping_fee = delivery_quote.fee
+            delivery_available = delivery_quote.available
+            delivery_quote_message = delivery_quote.message
+            grand_total = subtotal + shipping_fee
         form = CheckoutForm(
             initial={
-                "first_name": customer.first_name,
-                "last_name": customer.last_name,
-                "email": customer.email,
-                "mobile": customer.mobile,
-                "address": customer.address,
-            }
+                "first_name": customer.first_name if customer else "",
+                "last_name": customer.last_name if customer else "",
+                "email": customer.email if customer else "",
+                "mobile": (
+                    default_address.phone_number
+                    if default_address and default_address.phone_number
+                    else customer.mobile if customer else ""
+                ),
+                "address": default_address.street_name if default_address else customer.address if customer else "",
+                "delivery_region": default_address.region if default_address else CustomerAddress.Region.KAMPALA_AREA,
+                "delivery_city": default_address.city if default_address else "",
+                "delivery_area": default_address.area if default_address else "",
+                "saved_address": default_address.pk if default_address else None,
+            },
+            user=request.user,
         )
 
     return render(
         request,
         "orders/checkout.html",
-        {"form": form, "cart": cart, "total_price": total_price},
+        _checkout_context(
+            request,
+            form=form,
+            cart=cart,
+            subtotal=subtotal,
+            shipping_fee=shipping_fee,
+            grand_total=grand_total,
+            delivery_available=delivery_available,
+            delivery_quote_message=delivery_quote_message,
+        ),
     )
 
 
@@ -1079,7 +1477,7 @@ def process_payment(request, order_id):
     """
     Handles the payment processing for a given order.
     """
-    order = get_object_or_404(Order, id=order_id)
+    order = get_object_or_404(Order, id=order_id, customer__user=request.user)
     form_title = "Payment Details"
 
     # Retrieve the customer's phone number
@@ -1199,7 +1597,7 @@ def get_access_token():
 
 # =================================== confirm_payment ===================================
 def confirm_payment_view(request, order_id):
-    order = get_object_or_404(Order, id=order_id)
+    order = get_object_or_404(Order, id=order_id, customer__user=request.user)
     customer = order.customer
 
     # Update payment status
@@ -1219,11 +1617,12 @@ def confirm_payment_view(request, order_id):
 
 
 # =================================== payment_flutter_view ===================================
+@login_required
 def payment_flutter_view(request):
     unique_tx_ref = f"txref-{uuid.uuid4()}"  # Generate a unique transaction reference
     context = {
         "unique_tx_ref": unique_tx_ref,
-        "public_key": "FLWPUBK_TEST-02b9b5fc6406bd4a41c3ff141cc45e93-X",
+        "public_key": getattr(settings, "FLUTTERWAVE_PUBLIC_KEY", ""),
         "currency": "UGX",
         "form_title": "Secure Flutterwave Payment",
     }
@@ -1231,10 +1630,35 @@ def payment_flutter_view(request):
 
 
 # =================================== order_confirmation_view ===================================
-@login_required
 def order_confirmation_view(request, order_id):
-    order = get_object_or_404(Order, id=order_id)
-    return render(request, "orders/order_confirmation.html", {"order": order})
+    order = get_object_or_404(
+        Order.objects.select_related("customer", "pickup_station").prefetch_related(
+            "details__product",
+            "details__product_volume__volume",
+        ),
+        id=order_id,
+    )
+    is_owner = request.user.is_authenticated and order.customer.user == request.user
+    is_session_order = order.id in request.session.get("placed_order_ids", [])
+    if not (is_owner or is_session_order):
+        messages.error(request, "We could not verify access to that order.")
+        return redirect("orders:cart")
+
+    subtotal = sum((detail.total for detail in order.details.all()), Decimal("0"))
+    known_fees = (order.shipping_fee or Decimal("0")) + (order.tax_amount or Decimal("0"))
+    other_fee = order.total_amount - subtotal - known_fees
+    if other_fee < 0:
+        other_fee = Decimal("0")
+
+    return render(
+        request,
+        "orders/order_confirmation.html",
+        {
+            "order": order,
+            "order_subtotal": subtotal,
+            "order_other_fee": other_fee,
+        },
+    )
 
 
 # =================================== orders_to_be_processed_view ===================================
@@ -1242,9 +1666,9 @@ def order_confirmation_view(request, order_id):
 @admin_or_manager_or_staff_required
 def orders_to_be_processed_view(request):
     search_query = request.GET.get("search", "")
-    orders = Order.objects.filter(status__in=["Pending", "Out for Delivery"]).order_by(
-        "created_at"
-    )
+    orders = Order.objects.select_related("customer").filter(
+        status__in=["Pending", "Out for Delivery"]
+    ).order_by("created_at")
 
     # Apply search filter if search query is provided
     if search_query:
@@ -1273,12 +1697,25 @@ def orders_to_be_processed_view(request):
 def customer_order_history_view(request):
     try:
         customer = request.user.customer
-        orders = Order.objects.filter(customer=customer).order_by("-created_at")
+        orders = (
+            Order.objects.filter(customer=customer)
+            .prefetch_related("details__product", "details__product_volume__volume")
+            .order_by("-created_at")
+        )
+        total_orders = orders.count()
+        delivered_orders = orders.filter(status="Delivered").count()
+        pending_orders = orders.filter(status__in=["Pending", "Out for Delivery"]).count()
 
         return render(
             request,
             "orders/order_history.html",
-            {"orders": orders, "customer": customer},
+            {
+                "orders": orders,
+                "customer": customer,
+                "total_orders": total_orders,
+                "delivered_orders": delivered_orders,
+                "pending_orders": pending_orders,
+            },
         )
 
     except ObjectDoesNotExist:
@@ -1302,9 +1739,9 @@ def all_orders_view(request):
 
     # Filter orders based on status and search term
     if status_filter == "All" or status_filter == "":
-        orders = Order.objects.all()
+        orders = Order.objects.select_related("customer").all()
     else:
-        orders = Order.objects.filter(status=status_filter)
+        orders = Order.objects.select_related("customer").filter(status=status_filter)
 
     if search_query:
         orders = orders.filter(
@@ -1330,28 +1767,16 @@ def all_orders_view(request):
 
 # =================================== order_report_view ===================================
 @login_required
+@admin_or_manager_or_staff_required
 def order_report_view(request, order_id):
     # Fetch order with its details, and prefetch related volumes through ProductVolume
     order = get_object_or_404(
-        Order.objects.prefetch_related(
-            "details__product__volumes",  # Prefetch volumes related to products in the order
+        Order.objects.select_related("customer").prefetch_related(
+            "details__product",
+            "details__product_volume__volume",
         ),
         id=order_id,
     )
-
-    print("Order Details Count:", order.details.count())
-
-    # Printing product names, quantities, prices, and volume details for debugging
-    for detail in order.details.all():
-        print(detail.product.name, detail.quantity, detail.price)
-
-        # Fetch the first associated volume for each product (or logic for selecting one volume)
-        product_volumes = detail.product.volumes.all()
-        if product_volumes:
-            volume = product_volumes[
-                0
-            ]  # Assuming we take the first volume if available
-            print("Volume ML:", volume.ml)  # Print the volume in ML
 
     return render(request, "orders/order_report.html", {"order": order})
 
@@ -1361,28 +1786,37 @@ def order_report_view(request, order_id):
 
 @login_required
 def order_detail_view(request, order_id):
-    order = get_object_or_404(Order, id=order_id, customer=request.user.customer)
+    order = get_object_or_404(
+        Order.objects.select_related("customer").prefetch_related(
+            "details__product",
+            "details__product__category",
+            "details__product_volume__volume",
+        ),
+        id=order_id,
+        customer=request.user.customer,
+    )
 
     statuses = ["Pending", "Out for Delivery", "Delivered"]
-    total_statuses = len(statuses)
-    progress_width = (
-        100 / total_statuses if total_statuses else 0
-    )  # Calculate the width for each status
+    current_status_index = statuses.index(order.status) if order.status in statuses else -1
 
     return render(
         request,
         "orders/order_detail.html",
-        {"order": order, "statuses": statuses, "progress_width": progress_width},
+        {
+            "order": order,
+            "statuses": statuses,
+            "current_status_index": current_status_index,
+        },
     )
 
 
 # =================================== order_process_view ===================================
 @login_required
 @admin_or_manager_or_staff_required
-@login_required
-@admin_or_manager_or_staff_required
 def order_process_view(request, order_id):
-    order = get_object_or_404(Order.objects.prefetch_related("details"), id=order_id)
+    order = get_object_or_404(
+        Order.objects.select_related("customer").prefetch_related("details"), id=order_id
+    )
 
     if request.method == "POST":
         form = OrderStatusForm(request.POST, instance=order)
@@ -1486,13 +1920,13 @@ def order_delete_view(request, order_id):
             f"Order: {order_id} not found!",
             extra_tags="bg-danger",
         )
-    except Exception as e:
+    except Exception:
         # General exception for any other errors
+        logger.exception("Error deleting order %s", order_id)
         messages.error(
             request,
             "There was an error during the elimination!",
             extra_tags="bg-danger",
         )
-        print(e)
     finally:
         return redirect("orders:orders_to_be_processed")

@@ -2,50 +2,100 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row mb-3">
-        <div class="col-md-12 d-flex justify-content-between align-items-center">
-            <a href="{% url 'products:products_list' %}">
-                <button type="button" class="btn btn-info font-weight-bold">
-                    <i class="mdi mdi-arrow-left-bold mr-2"></i>
-                    Go back
-                </button>
-            </a>
-            <div class="d-flex">
-                <a href="{% url 'products:product_images' %}" class="btn btn-success font-weight-bold ml-2">
-                    <i class="mdi mdi-cloud-download mr-2"></i>
-                </a>
-            </div>
-        </div>
+  <div class="container-fluid">
+    <div class="admin-page-head">
+      <div>
+        <span class="admin-eyebrow">Catalog media</span>
+        <h1 class="admin-page-title">{{ table_title|default:'Upload Image' }}</h1>
+        <p class="admin-muted mb-0">Attach a product photo, mark it as default, and keep storefront media organized.</p>
+      </div>
+
+      <div class="admin-actions print-hide">
+        <a href="{% url 'products:product_images' %}" class="btn btn-dark font-weight-bold">
+          <i class="mdi mdi-image-multiple mr-2"></i>View images
+        </a>
+        <a href="{% url 'products:products_list' %}" class="btn btn-outline-dark font-weight-bold">
+          <i class="mdi mdi-arrow-left-bold mr-2"></i>Products
+        </a>
+      </div>
     </div>
-    <div class="row">
-        <div class="col-12">
-            <div class="card card-secondary">
-                <div class="card-header">
-                    <h3>{{ table_title|upper }}</h3>
-                </div>
-                <div class="card-body">
-                    <form method="post" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        <select name="id" id="dropdown" class="chzn-select" required>
-                            <option value="" selected disabled>Search product...</option>
-                            {% for product in products %}
-                            <option value="{{ product.id }}">{{ product.name }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                        <br /><br />
-                        <!--  -->
-                        {{ form|crispy }}
-                        <div class="form-group mt-4 mb-0">
-                            <button type="submit" class="col-md-12 btn btn-dark"
-                                onclick="return confirm('Are you sure you want to proceed?') && validateForm()">
-                                Upload Image</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+
+    <div class="product-upload-layout">
+      <section class="admin-panel product-upload-panel">
+        <div class="admin-panel-header">
+          <h2>Image Details</h2>
+          <span class="badge badge-warning text-dark">PNG, JPG, JPEG</span>
         </div>
+
+        <div class="card-body">
+          <form method="post" enctype="multipart/form-data" class="product-image-upload-form">
+            {% csrf_token %}
+
+            <div class="form-group">
+              <label for="dropdown" class="font-weight-bold">Product</label>
+              <select name="id" id="dropdown" class="form-control chzn-select" required>
+                <option value="" selected disabled>Search product...</option>
+                {% for product in products %}
+                  <option value="{{ product.id }}">{{ product.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            {{ form|crispy }}
+
+            <div class="product-upload-actions">
+              <button type="submit" class="btn btn-dark font-weight-bold">
+                <i class="mdi mdi-cloud-upload mr-2"></i>Upload image
+              </button>
+              <a href="{% url 'products:product_images' %}" class="btn btn-light font-weight-bold">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <aside class="admin-panel product-upload-preview-panel">
+        <div class="admin-panel-header">
+          <h2>Preview</h2>
+        </div>
+        <div class="product-upload-preview">
+          <div class="product-upload-preview-frame">
+            <img src="" alt="Selected product preview" data-image-preview hidden>
+            <div class="product-upload-preview-empty" data-image-preview-empty>
+              <i class="mdi mdi-image-plus"></i>
+              <strong>No image selected</strong>
+              <span>Choose a file to preview it before upload.</span>
+            </div>
+          </div>
+          <div class="product-upload-note">
+            <span class="admin-badge is-info">Tip</span>
+            <p class="admin-muted mb-0">Use square or portrait product photos with a clean background. Default images become the main storefront image.</p>
+          </div>
+        </div>
+      </aside>
     </div>
-</div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const input = document.querySelector('[data-image-preview-input]')
+      const preview = document.querySelector('[data-image-preview]')
+      const empty = document.querySelector('[data-image-preview-empty]')
+
+      if (!input || !preview || !empty) return
+
+      input.addEventListener('change', function () {
+        const file = input.files && input.files[0]
+        if (!file) {
+          preview.hidden = true
+          preview.removeAttribute('src')
+          empty.hidden = false
+          return
+        }
+
+        preview.src = URL.createObjectURL(file)
+        preview.hidden = false
+        empty.hidden = true
+      })
+    })
+  </script>
 {% endblock content %}

@@ -22,7 +22,7 @@ class Profile(models.Model):
         ("guest", "Guest"),
     )
 
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     role = models.CharField(max_length=15, choices=ROLE_CHOICES, default="guest")
     avatar = CloudinaryField("avatar", default="default.jpg")
     bio = models.TextField()
@@ -48,6 +48,12 @@ class Profile(models.Model):
         related_name="profiles",
         verbose_name="Branch",
     )
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["role"], name="profile_role_idx"),
+            models.Index(fields=["branch", "role"], name="profile_branch_role_idx"),
+        ]
 
     def __str__(self):
         return self.user.username
@@ -101,6 +107,12 @@ class Contact(models.Model):
     class Meta:
         verbose_name = "User Feedback"
         db_table = "client_feedback"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["email"], name="feedback_email_idx"),
+            models.Index(fields=["is_valid", "created_at"], name="feedback_valid_created_idx"),
+            models.Index(fields=["created_at"], name="feedback_created_idx"),
+        ]
 
     def __str__(self):
         return f"Feedback from {self.name} ({self.email})"

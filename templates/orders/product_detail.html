@@ -3,292 +3,552 @@
 {% load humanize %}
 
 {% block content %}
-  <div class="container py-3">
-    <div class="row gx-lg-5 d-flex align-items-stretch">
-      <div class="col-12 col-lg-5 mb-4 mb-lg-0">
-        <div id="product-carousel" class="carousel slide shadow-lg rounded-4 overflow-hidden border border-light-subtle h-100" data-bs-ride="carousel" aria-label="Product Image Carousel">
-          <div class="carousel-inner h-100">
-            {% if product.images.exists %}
-              {% for image in product.images.all %}
-                <div class="carousel-item {% if forloop.first %}active{% endif %} h-100">
-                  <img src="{{ image.image.url }}" class="d-block w-100 img-fluid" style="object-fit: cover; height: 100%;" alt="{{ product.name }} image {{ forloop.counter }}" loading="lazy" />
+<style>
+  :root {
+    --detail-black: #050505;
+    --detail-gold: #b8860b;
+    --detail-cream: #f8f5ef;
+    --detail-muted: #70675d;
+    --detail-border: rgba(5, 5, 5, 0.1);
+    --detail-shadow: 0 18px 46px rgba(5, 5, 5, 0.08);
+  }
+
+  .product-detail-page {
+    background: linear-gradient(180deg, #ffffff 0%, var(--detail-cream) 100%);
+    padding: 1.25rem 0 3rem;
+  }
+
+  .product-detail-shell {
+    margin-inline: auto;
+    max-width: 1180px;
+    padding-inline: 1rem;
+  }
+
+  .product-detail-hero {
+    align-items: start;
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: minmax(0, 1.02fr) minmax(360px, 0.98fr);
+  }
+
+  .detail-gallery,
+  .detail-buy-box,
+  .detail-section {
+    background: #ffffff;
+    border: 1px solid var(--detail-border);
+    border-radius: 1rem;
+    box-shadow: var(--detail-shadow);
+    overflow: hidden;
+  }
+
+  .detail-gallery-main {
+    aspect-ratio: 1 / 1;
+    background: #f4f0e8;
+  }
+
+  .detail-gallery-main img {
+    height: 100%;
+    object-fit: cover;
+    width: 100%;
+  }
+
+  .detail-gallery-strip {
+    display: grid;
+    gap: 0.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(74px, 1fr));
+    padding: 0.75rem;
+  }
+
+  .detail-gallery-strip img {
+    aspect-ratio: 1 / 1;
+    border: 1px solid rgba(184, 134, 11, 0.22);
+    border-radius: 0.65rem;
+    object-fit: cover;
+    width: 100%;
+  }
+
+  .detail-buy-box {
+    padding: clamp(1rem, 2.2vw, 1.5rem);
+  }
+
+  .detail-eyebrow {
+    color: var(--detail-gold);
+    display: block;
+    font-size: 0.76rem;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .detail-title {
+    color: var(--detail-black);
+    font-size: clamp(1.7rem, 4vw, 2.6rem);
+    font-weight: 950;
+    letter-spacing: 0;
+    line-height: 1.05;
+    margin: 0.25rem 0 0.55rem;
+  }
+
+  .detail-meta {
+    color: var(--detail-muted);
+    font-weight: 700;
+  }
+
+  .detail-rating-row,
+  .detail-price-card,
+  .detail-actions {
+    margin-top: 1rem;
+  }
+
+  .detail-stars {
+    color: var(--detail-gold);
+    font-size: 1rem;
+    letter-spacing: 0;
+  }
+
+  .detail-price-card {
+    align-items: center;
+    background: var(--detail-black);
+    border-radius: 0.85rem;
+    color: #ffffff;
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    padding: 0.95rem 1rem;
+  }
+
+  .detail-price-card small {
+    color: rgba(255, 255, 255, 0.68);
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  #selected-price {
+    color: var(--detail-gold);
+    display: block;
+    font-size: 1.55rem;
+    font-weight: 950;
+  }
+
+  #selected-original-price {
+    color: rgba(255, 255, 255, 0.76);
+    display: block;
+    font-size: 0.9rem;
+  }
+
+  .detail-label {
+    color: var(--detail-black);
+    display: block;
+    font-weight: 900;
+    margin: 1.15rem 0 0.45rem;
+  }
+
+  .detail-buy-box .form-select,
+  .detail-buy-box .form-control,
+  .review-form .form-select,
+  .review-form .form-control {
+    border: 1px solid rgba(5, 5, 5, 0.16);
+    border-radius: 0.7rem;
+    min-height: 44px;
+  }
+
+  .detail-actions {
+    display: grid;
+    gap: 0.7rem;
+  }
+
+  .detail-cart-row {
+    display: grid;
+    gap: 0.7rem;
+    grid-template-columns: 96px minmax(0, 1fr);
+  }
+
+  .btn-detail-primary,
+  .btn-detail-dark,
+  .btn-detail-outline {
+    border-radius: 999px;
+    font-weight: 900;
+    min-height: 44px;
+    padding: 0.65rem 1rem;
+  }
+
+  .btn-detail-primary {
+    background: var(--detail-gold);
+    border-color: var(--detail-gold);
+    color: #ffffff;
+  }
+
+  .btn-detail-dark {
+    background: var(--detail-black);
+    border-color: var(--detail-black);
+    color: #ffffff;
+  }
+
+  .btn-detail-outline {
+    background: #ffffff;
+    border: 1px solid var(--detail-gold);
+    color: var(--detail-black);
+  }
+
+  .detail-note {
+    background: #fbf8f1;
+    border: 1px solid rgba(184, 134, 11, 0.22);
+    border-radius: 0.85rem;
+    color: #302820;
+    margin-top: 1rem;
+    padding: 0.85rem;
+  }
+
+  .detail-section {
+    margin-top: 1.25rem;
+    padding: clamp(1rem, 2.2vw, 1.5rem);
+  }
+
+  .detail-section h2 {
+    color: var(--detail-black);
+    font-size: 1.25rem;
+    font-weight: 950;
+    margin: 0 0 0.8rem;
+  }
+
+  .review-grid {
+    display: grid;
+    gap: 0.85rem;
+  }
+
+  .review-card {
+    border: 1px solid rgba(5, 5, 5, 0.08);
+    border-radius: 0.8rem;
+    padding: 1rem;
+  }
+
+  .review-card-head {
+    align-items: start;
+    display: flex;
+    gap: 0.75rem;
+    justify-content: space-between;
+  }
+
+  .verified-pill {
+    background: rgba(6, 125, 98, 0.1);
+    border-radius: 999px;
+    color: #067d62;
+    display: inline-flex;
+    font-size: 0.75rem;
+    font-weight: 900;
+    padding: 0.3rem 0.65rem;
+  }
+
+  .review-locked {
+    background: #fbf8f1;
+    border: 1px solid rgba(184, 134, 11, 0.2);
+    border-radius: 0.85rem;
+    padding: 1rem;
+  }
+
+  @media (max-width: 991.98px) {
+    .product-detail-hero {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 575.98px) {
+    .product-detail-shell {
+      padding-inline: 0.75rem;
+    }
+
+    .detail-cart-row,
+    .detail-price-card {
+      grid-template-columns: 1fr;
+    }
+
+    .detail-cart-row {
+      display: flex;
+      flex-direction: column;
+    }
+  }
+</style>
+
+<section class="product-detail-page">
+  <div class="product-detail-shell">
+    <div class="product-detail-hero">
+      <div class="detail-gallery">
+        <div id="product-carousel" class="carousel slide" data-bs-ride="carousel" aria-label="Product images">
+          <div class="carousel-inner detail-gallery-main">
+            {% if product_images %}
+              {% for image_url in product_images %}
+                <div class="carousel-item h-100 {% if forloop.first %}active{% endif %}">
+                  <img src="{{ image_url }}" alt="{{ product.name }} image {{ forloop.counter }}" loading="{% if forloop.first %}eager{% else %}lazy{% endif %}">
                 </div>
               {% endfor %}
             {% else %}
-              <div class="carousel-item active h-100">
-                <img src="{% static 'images/no-image.png' %}" class="d-block w-100 img-fluid" style="object-fit: cover; height: 100%;" alt="No image available" loading="lazy" />
+              <div class="carousel-item h-100 active">
+                <img src="{% static 'images/no-image.png' %}" alt="No image available">
               </div>
             {% endif %}
           </div>
-          {% if product.images.count > 1 %}
+
+          {% if product_images|length > 1 %}
             <button class="carousel-control-prev" type="button" data-bs-target="#product-carousel" data-bs-slide="prev">
-              <span class="carousel-control-prev-icon bg-dark bg-opacity-50 rounded-circle" aria-hidden="true"></span>
+              <span class="carousel-control-prev-icon bg-dark rounded-circle" aria-hidden="true"></span>
               <span class="visually-hidden">Previous</span>
             </button>
             <button class="carousel-control-next" type="button" data-bs-target="#product-carousel" data-bs-slide="next">
-              <span class="carousel-control-next-icon bg-dark bg-opacity-50 rounded-circle" aria-hidden="true"></span>
+              <span class="carousel-control-next-icon bg-dark rounded-circle" aria-hidden="true"></span>
               <span class="visually-hidden">Next</span>
             </button>
           {% endif %}
         </div>
-      </div>
 
-      <div class="col-12 col-lg-7">
-        <div class="product-details p-4 rounded-4 bg-light-subtle shadow-lg d-flex flex-column h-100">
-          <div class="d-flex align-items-center gap-3 mb-3">
-            <img id="volume-image"
-              class="rounded-circle shadow-sm"
-              style="width: 60px; height: 60px; object-fit: cover;"
-              src="{% if product_volumes and product_volumes.0.volume.image %}
-                {{ product_volumes.0.volume.image.url }}
-              {% else %}
-                {% static 'images/no-image.png' %}
-              {% endif %}"
-              alt="Selected Product Volume Image"
-              loading="lazy" />
-            <h1 class="mb-0 fw-bold text-primary fs-2">{{ product.name }}</h1>
-          </div>
-          <span class="text-muted mb-3">{{ product.category }} | {{ product.gender }}</span>
-          <h4 class="fw-semibold mb-3">Available Options</h4>
-          <div class="table-responsive mb-4">
-            <table class="table table-striped table-hover rounded-3 overflow-hidden">
-              <tbody>
-                <tr>
-                  <td class="align-middle">
-                    <select name="volume_id" id="volume-select" form="add-to-cart-form" class="form-select" required aria-label="Select product volume and type">
-                      <option value="" disabled selected>Choose product type and volume</option>
-                      {% for product_volume in product_volumes %}
-                        <option value="{{ product_volume.id }}"
-                          data-image-url="{% if product_volume.volume.image %}
-                            {{ product_volume.volume.image.url }}
-                          {% else %}
-                            {% static 'images/no-image.png' %}
-                          {% endif %}">
-                          {{ product_volume.product_type }} - {{ product_volume.volume.ml }} ML{% if product_volume.discount_value %}
-                            -<del class="text-muted">UGX {{ product_volume.volume.price|floatformat:'0'|intcomma }}</del>
-                            <span class="text-danger fw-bold">UGX {{ product_volume.get_discounted_price|floatformat:'0'|intcomma }}</span>
-                            <span class="badge bg-success ms-2">{{ product_volume.discount_value|floatformat:'0' }}% Off</span>
-                          {% else %}
-                            - <span class="fw-bold text-success">UGX {{ product_volume.volume.price|floatformat:'0'|intcomma }}</span>
-                          {% endif %}
-                        </option>
-                      {% endfor %}
-                    </select>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="d-flex flex-column flex-sm-row align-items-center justify-content-start gap-3 mt-4">
-            <form id="add-to-cart-form" action="{% url 'orders:add_to_cart' product.uuid %}" method="post" class="d-flex align-items-center gap-2">
-              {% csrf_token %}
-              <div class="input-group">
-                <label for="quantity-input" class="visually-hidden">Quantity</label>
-                <input type="number" name="quantity" id="quantity-input" class="form-control text-center" value="1" min="1" aria-label="Product quantity" style="max-width: 100px;" />
-              </div>
-              <button title="Add to Cart" type="submit" class="btn btn-primary"><i class="fas fa-shopping-cart me-2"></i>Add to Cart</button>
-            </form>
-            <form method="POST" action="{% url 'orders:wishlist_add' product.uuid %}">
-              {% csrf_token %}
-              <button title="Add to Wishlist" type="submit" class="btn btn-outline-danger"><i class="fas fa-heart me-2"></i>Add to Wishlist</button>
-            </form>
-          </div>
-
-          {% if user.is_authenticated and user.profile.role != 'guest' %}
-            <form method="POST" action="{% url 'orders:product_detail' product.uuid %}" class="mt-3">
-              {% csrf_token %}
-              {% if not product.is_featured %}
-                <button type="submit" name="set_featured" class="btn btn-outline-warning btn-lg w-100 fw-bold rounded-3"><i class="fas fa-star me-2"></i>Set as Featured ✨</button>
-              {% else %}
-                <button type="submit" name="remove_featured" class="btn btn-outline-danger btn-lg w-100 fw-bold rounded-3"><i class="fas fa-times me-2"></i>Remove from Featured 🚫</button>
-              {% endif %}
-            </form>
-          {% endif %}
-
-          {% if user.is_authenticated %}
-            <div class="alert alert-info mt-4 d-flex align-items-center justify-content-between shadow-sm" role="alert">
-              <div>
-                <i class="fas fa-info-circle me-2"></i> Items in your cart: <strong class="badge bg-primary rounded-pill">{{ cart_count|default:0 }}</strong>
-              </div>
-              <a href="{% url 'orders:cart' %}" class="btn btn-outline-primary btn-sm">View Cart <i class="fas fa-cart-shopping"></i></a>
-            </div>
-          {% else %}
-            <div class="alert alert-warning mt-4 shadow-sm" role="alert">
-              <i class="fas fa-exclamation-triangle me-2"></i><strong>Please log in to add items to your wishlist!</strong>
-              <hr />
-              <a href="{% url 'login' %}" class="btn btn-primary ms-2 fw-bold px-4 py-2 shadow-sm w-100">Log In Here</a>
-            </div>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-    <hr class="my-3" />
-
-    <div class="row">
-      <div class="col-12">
-        <div class="bg-light p-4 rounded-4 shadow-sm">
-          <h3 class="card-title text-primary mb-3 fw-bold border-bottom pb-2">Product Description</h3>
-          <p class="lead text-dark-emphasis mb-0">{{ product.description|default:'No description available.' }}</p>
-        </div>
-      </div>
-    </div>
-
-    <hr class="my-5" />
-
-    <div class="row">
-      <div class="col-12">
-        <h2 class="text-primary mb-4 fw-bold">Customer Reviews & Ratings ✨</h2>
-
-        {% if reviews %}
-          <div class="reviews-summary d-flex align-items-center gap-3 mb-4">
-            <p class="fs-4 mb-0 text-success">
-              <strong>{{ verified_reviews_count }} Verified Ratings</strong>
-            </p>
-          </div>
-
-          <div class="reviews-list p-4 rounded-4 shadow-sm mb-4">
-            {% for review in reviews %}
-              <div class="card mb-3 review-card border-0 shadow-sm bg-white">
-                <div class="card-body">
-                  <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h5 class="card-title mb-0 text-success fw-bold">{{ review.user.username }}</h5>
-                    <span class="text-warning fs-5">
-                      {% for _ in review.filled_stars %}
-                        ⭐
-                      {% endfor %}
-                      {% for _ in review.empty_stars %}
-                        ☆
-                      {% endfor %}
-                    </span>
-                  </div>
-                  <p class="card-text text-dark">{{ review.review_text }}</p>
-                  <small class="card-subtitle text-muted d-block mt-2">Reviewed on {{ review.created_at|date:'M d, Y' }}</small>
-                </div>
-              </div>
+        {% if product_images|length > 1 %}
+          <div class="detail-gallery-strip">
+            {% for image_url in product_images|slice:':8' %}
+              <img src="{{ image_url }}" alt="{{ product.name }} thumbnail {{ forloop.counter }}" loading="lazy">
             {% endfor %}
           </div>
+        {% endif %}
+      </div>
 
-          {% if reviews.paginator.num_pages > 1 %}
-            <nav aria-label="Reviews Pagination" class="d-flex justify-content-center mt-4">
-              <ul class="pagination shadow-sm">
-                {% if reviews.has_previous %}
-                  <li class="page-item">
-                    <a class="page-link" href="?page=1" aria-label="First"><span aria-hidden="true">&laquo;&laquo;</span></a>
-                  </li>
-                  <li class="page-item">
-                    <a class="page-link" href="?page={{ reviews.previous_page_number }}" aria-label="Previous"><span aria-hidden="true">&laquo;</span></a>
-                  </li>
-                {% endif %}
-                <li class="page-item disabled">
-                  <span class="page-link">Page {{ reviews.number }} of {{ reviews.paginator.num_pages }}</span>
-                </li>
-                {% if reviews.has_next %}
-                  <li class="page-item">
-                    <a class="page-link" href="?page={{ reviews.next_page_number }}" aria-label="Next"><span aria-hidden="true">&raquo;</span></a>
-                  </li>
-                  <li class="page-item">
-                    <a class="page-link" href="?page={{ reviews.paginator.num_pages }}" aria-label="Last"><span aria-hidden="true">&raquo;&raquo;</span></a>
-                  </li>
-                {% endif %}
-              </ul>
-            </nav>
-          {% endif %}
+      <aside class="detail-buy-box">
+        <span class="detail-eyebrow">{{ product.category|default:'Product' }}</span>
+        <h1 class="detail-title">{{ product.name }}</h1>
+        <div class="detail-meta">{{ product.gender|default:'Unisex' }}{% if product.supplier %} / {{ product.supplier }}{% endif %}</div>
+
+        <div class="detail-rating-row">
+          <span class="detail-stars">
+            {% if average_rating %}
+              {% for _ in "12345" %}&#9733;{% endfor %}
+            {% else %}
+              &#9734;&#9734;&#9734;&#9734;&#9734;
+            {% endif %}
+          </span>
+          <span class="detail-meta">
+            {% if average_rating %}{{ average_rating }} / 5{% else %}No ratings yet{% endif %}
+            · {{ verified_reviews_count }} verified review{{ verified_reviews_count|pluralize }}
+          </span>
+        </div>
+
+        {% if product_volumes %}
+          <label for="volume-select" class="detail-label">Choose volume</label>
+          <select name="volume_id" id="volume-select" form="add-to-cart-form" class="form-select" required>
+            <option value="" disabled selected>Select product type and volume</option>
+            {% for product_volume in product_volumes %}
+              <option
+                value="{{ product_volume.id }}"
+                data-image-url="{{ product_volume.image_url|default:product.hero_image_url }}"
+                data-price="{{ product_volume.current_price|floatformat:'0' }}"
+                data-original-price="{{ product_volume.original_price|floatformat:'0' }}"
+                data-discount="{{ product_volume.discount_value|default:'0' }}"
+                data-stock="{{ product_volume.stock }}"
+                data-max-quantity="{{ product_volume.max_quantity_per_order }}"
+              >
+                {{ product_volume.variant_label }} - UGX {{ product_volume.current_price|floatformat:'0'|intcomma }}
+              </option>
+            {% endfor %}
+          </select>
+
+          <div class="detail-price-card" role="status">
+            <div>
+              <small>Selected price</small>
+              <span id="selected-price">Choose an option</span>
+              <span id="selected-original-price"></span>
+            </div>
+            <span id="selected-stock" class="badge rounded-pill text-bg-light"></span>
+          </div>
+
+          <div class="detail-actions">
+            <form id="add-to-cart-form" action="{% url 'orders:add_to_cart' product.uuid %}" method="post" class="detail-cart-row js-add-to-cart-form">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <label for="quantity-input" class="visually-hidden">Quantity</label>
+              <input type="number" name="quantity" id="quantity-input" class="form-control text-center" value="1" min="1" aria-label="Product quantity">
+              <button title="Add to Cart" type="submit" class="btn btn-detail-primary" data-cart-submit>
+                <i class="fas fa-shopping-cart me-2"></i>Add to Cart
+              </button>
+            </form>
+
+            <form method="post" action="{% url 'orders:wishlist_add' product.uuid %}">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button title="Add to Wishlist" type="submit" class="btn btn-detail-outline w-100">
+                <i class="fas fa-heart me-2"></i>Add to Wishlist
+              </button>
+            </form>
+          </div>
         {% else %}
-          <div class="alert alert-info alert-dismissible fade show shadow-sm" role="alert">
-            <i class="fas fa-star me-2"></i>No reviews yet for this product. Be the first to share your thoughts!
+          <div class="detail-note">
+            This product is currently unavailable.
           </div>
         {% endif %}
 
-        <div class="card mt-5 shadow-lg border-0 rounded-4">
-          <div class="card-header bg-primary text-white py-3 rounded-top-4">
-            <h4 class="mb-0 fw-bold">Leave a Review</h4>
-          </div>
-          <div class="card-body">
-            <form method="POST">
-              {% csrf_token %}
-              <div class="mb-3">
-                <label for="rating" class="form-label fw-bold">Your Rating <span class="text-danger">*</span></label>
-                <select name="rating" id="rating" class="form-select" required aria-label="Select your rating">
-                  <option value="" disabled selected>Select a rating...</option>
-                  <option value="1">⭐ 1 Star</option>
-                  <option value="2">⭐⭐ 2 Stars</option>
-                  <option value="3">⭐⭐⭐ 3 Stars</option>
-                  <option value="4">⭐⭐⭐⭐ 4 Stars</option>
-                  <option value="5">⭐⭐⭐⭐⭐ 5 Stars</option>
-                </select>
-              </div>
-              <div class="mb-3">
-                <label for="review_text" class="form-label fw-bold">Your Review <span class="text-danger">*</span></label>
-                <textarea name="review_text" id="review_text" class="form-control" rows="4" placeholder="Share your experience with this product..." required></textarea>
-              </div>
-              <button type="submit" name="submit_review" class="btn btn-warning btn-lg w-100 text-white fw-bold shadow-sm" style="background-color: #b88a4b; border-color: #b88a4b;"><i class="fas fa-paper-plane me-2"></i>Submit Review</button>
-            </form>
-          </div>
+        <div class="detail-note">
+          <strong>Short checkout:</strong> choose a volume, add to cart, then confirm delivery details.
+          {% if user.is_authenticated %}
+            <a href="{% url 'orders:cart' %}" class="btn btn-detail-dark btn-sm mt-2 w-100">View cart ({{ cart_count|default:0 }})</a>
+          {% endif %}
         </div>
-      </div>
+      </aside>
     </div>
-  </div>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      const volumeSelect = document.getElementById('volume-select')
-      const volumeImage = document.getElementById('volume-image')
-      const addToCartForm = document.getElementById('add-to-cart-form')
-      const quantityInput = document.getElementById('quantity-input')
-    
-      // Function to update the image based on selected volume
-      if (volumeSelect && volumeImage) {
-        volumeSelect.addEventListener('change', function () {
-          const selectedOption = this.options[this.selectedIndex]
-          const imageUrl = selectedOption.getAttribute('data-image-url')
-          if (imageUrl) {
-            volumeImage.src = imageUrl
-          } else {
-            volumeImage.src = "{% static 'images/no-image.png' %}"
-          }
-        })
-    
-        // Trigger change event on load to display the correct initial image if pre-selected
-        if (volumeSelect.value) {
-          volumeSelect.dispatchEvent(new Event('change'))
-        }
+    <section class="detail-section">
+      <h2>Description</h2>
+      <p class="mb-0">{{ product.description|default:'No description available.' }}</p>
+    </section>
+
+    <section class="detail-section">
+      <div class="d-flex flex-column flex-md-row justify-content-between gap-2 mb-3">
+        <div>
+          <h2 class="mb-1">Customer Reviews</h2>
+          <p class="detail-meta mb-0">{{ verified_reviews_count }} verified review{{ verified_reviews_count|pluralize }}</p>
+        </div>
+        {% if average_rating %}
+          <div class="text-md-right">
+            <strong class="h4 mb-0 d-block">{{ average_rating }} / 5</strong>
+            <span class="detail-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+          </div>
+        {% endif %}
+      </div>
+
+      {% if reviews %}
+        <div class="review-grid">
+          {% for review in reviews %}
+            <article class="review-card">
+              <div class="review-card-head">
+                <div>
+                  <strong>{{ review.user.username|default:'Customer' }}</strong>
+                  <span class="verified-pill ml-2">Verified buyer</span>
+                </div>
+                <span class="detail-stars">
+                  {% for _ in review.filled_stars %}&#9733;{% endfor %}{% for _ in review.empty_stars %}&#9734;{% endfor %}
+                </span>
+              </div>
+              <p class="mt-3 mb-2">{{ review.review_text }}</p>
+              <small class="text-muted">Reviewed on {{ review.created_at|date:'M d, Y' }}</small>
+            </article>
+          {% endfor %}
+        </div>
+
+        {% if reviews.paginator.num_pages > 1 %}
+          <nav aria-label="Reviews pagination" class="d-flex justify-content-center mt-4">
+            <ul class="pagination flex-wrap justify-content-center">
+              {% if reviews.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ reviews.previous_page_number }}">&laquo;</a></li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+              {% endif %}
+              <li class="page-item disabled"><span class="page-link">Page {{ reviews.number }} of {{ reviews.paginator.num_pages }}</span></li>
+              {% if reviews.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ reviews.next_page_number }}">&raquo;</a></li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+              {% endif %}
+            </ul>
+          </nav>
+        {% endif %}
+      {% else %}
+        <div class="review-locked">
+          No verified reviews yet.
+        </div>
+      {% endif %}
+
+      <div class="detail-section p-0 mt-4 border-0 shadow-none">
+        {% if can_review %}
+          <h2>Leave a Review</h2>
+          <form method="post" class="review-form">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="rating" class="detail-label">Your rating</label>
+              <select name="rating" id="rating" class="form-select" required>
+                <option value="" disabled selected>Select a rating</option>
+                <option value="1">1 star</option>
+                <option value="2">2 stars</option>
+                <option value="3">3 stars</option>
+                <option value="4">4 stars</option>
+                <option value="5">5 stars</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="review_text" class="detail-label">Your review</label>
+              <textarea name="review_text" id="review_text" class="form-control" rows="4" placeholder="Share your experience with this product" required></textarea>
+            </div>
+            <button type="submit" name="submit_review" class="btn btn-detail-primary w-100">
+              Submit verified review
+            </button>
+          </form>
+        {% else %}
+          <div class="review-locked">
+            <strong>Verified buyers only.</strong>
+            <p class="mb-0">{{ review_block_reason }}</p>
+          </div>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+</section>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const volumeSelect = document.getElementById('volume-select')
+    const addToCartForm = document.getElementById('add-to-cart-form')
+    const quantityInput = document.getElementById('quantity-input')
+    const selectedPrice = document.getElementById('selected-price')
+    const selectedOriginalPrice = document.getElementById('selected-original-price')
+    const selectedStock = document.getElementById('selected-stock')
+
+    const formatUgx = (value) => Number(value || 0).toLocaleString('en-US', {
+      maximumFractionDigits: 0
+    })
+
+    function updateSelectedVolume() {
+      const selectedOption = volumeSelect.options[volumeSelect.selectedIndex]
+      if (!selectedOption || !selectedOption.value) return
+
+      const price = selectedOption.getAttribute('data-price')
+      const originalPrice = selectedOption.getAttribute('data-original-price')
+      const discount = Number(selectedOption.getAttribute('data-discount') || 0)
+      const stock = Number(selectedOption.getAttribute('data-stock') || 0)
+      const maxQuantity = Number(selectedOption.getAttribute('data-max-quantity') || 1)
+
+      selectedPrice.textContent = `UGX ${formatUgx(price)}`
+      selectedOriginalPrice.innerHTML =
+        discount > 0 && Number(originalPrice) > Number(price)
+          ? `<del>UGX ${formatUgx(originalPrice)}</del> ${discount}% off`
+          : ''
+
+      selectedStock.textContent =
+        stock > 999999
+          ? `Limit ${maxQuantity} per order`
+          : `${formatUgx(stock)} available`
+
+      quantityInput.max = Math.max(1, Math.min(stock || maxQuantity, maxQuantity))
+      if (Number(quantityInput.value) > Number(quantityInput.max)) {
+        quantityInput.value = quantityInput.max
       }
-    
-      // Disable right-click for images with 'disable-right-click' class
-      document.addEventListener('contextmenu', function (e) {
-        if (e.target.classList.contains('disable-right-click')) {
-          e.preventDefault()
+    }
+
+    if (volumeSelect) {
+      volumeSelect.addEventListener('change', updateSelectedVolume)
+    }
+
+    if (addToCartForm) {
+      addToCartForm.addEventListener('submit', function (event) {
+        const quantity = parseInt(quantityInput.value, 10)
+        if (!volumeSelect.value) {
+          event.preventDefault()
+          volumeSelect.focus()
+          alert('Please select a product volume.')
+          return
+        }
+        if (isNaN(quantity) || quantity < 1) {
+          event.preventDefault()
+          quantityInput.focus()
+          alert('Please enter a valid quantity.')
         }
       })
-    
-      // Function for Add to Cart form validation
-      window.validateForm = function () {
-        const selectedVolume = volumeSelect.value
-        const quantity = parseInt(quantityInput.value, 10)
-    
-        if (!selectedVolume) {
-          alert('Please select a product type and volume before adding to cart.')
-          volumeSelect.focus()
-          return false
-        }
-    
-        if (isNaN(quantity) || quantity < 1) {
-          alert('Please enter a valid quantity (minimum 1).')
-          quantityInput.focus()
-          return false
-        }
-    
-        return true
-      }
-    
-      // Prevent default form submission if validation fails
-      if (addToCartForm) {
-        addToCartForm.addEventListener('submit', function (event) {
-          if (!validateForm()) {
-            event.preventDefault()
-          }
-        })
-      }
-    })
-  </script>
+    }
+  })
+</script>
 {% endblock %}

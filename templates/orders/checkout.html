@@ -1,200 +1,579 @@
 {% extends 'accounts/base.html' %}
-{% load static %}
 {% load humanize %}
 {% load crispy_forms_tags %}
 
 {% block content %}
-  <div class="container py-4">
-    <div class="row justify-content-center">
-      <div class="col-lg-12 col-xl-12">
-        <div class="card shadow-lg border-0 rounded-4 mb-4">
-          <div class="card-header text-center bg-gradient bg-primary text-white py-3">
-            <h2 class="fw-bold mb-0"><i class="fas fa-shopping-cart me-2"></i>Complete Your Order</h2>
-          </div>
-          <div class="card-body p-4 p-md-5">
-            <!-- Global form errors -->
-            {% if form.non_field_errors %}
-              <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <h4 class="alert-heading">Please correct the following issues:</h4>
-                <ul class="mb-0">
-                  {% for error in form.non_field_errors %}
-                    <li>{{ error }}</li>
-                  {% endfor %}
-                </ul>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-              </div>
-            {% endif %}
-
-            <form method="POST" class="needs-validation" novalidate id="checkoutForm">
-              {% csrf_token %}
-
-              <!-- Shipping Information (Collapsible) -->
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4 class="mb-0 text-secondary fw-bold"><i class="fas fa-shipping-fast me-2"></i>Shipping Information</h4>
-                <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#shippingInfo" aria-expanded="false" aria-controls="shippingInfo" aria-label="Toggle Shipping Information"><i class="fas fa-plus" id="shippingToggleIcon"></i></button>
-              </div>
-              <div class="collapse" id="shippingInfo">
-                <div class="row g-3">
-                  <div class="col-md-6">{{ form.first_name|as_crispy_field }}</div>
-                  <div class="col-md-6">{{ form.last_name|as_crispy_field }}</div>
-                  <div class="col-md-6">{{ form.email|as_crispy_field }}</div>
-                  <div class="col-md-6">{{ form.mobile|as_crispy_field }}</div>
-                  <div class="col-12">{{ form.address|as_crispy_field }}</div>
-                </div>
-              </div>
-
-              <hr class="my-5" />
-
-              <!-- Payment Options -->
-              <h4 class="mb-4 text-secondary fw-bold"><i class="fas fa-credit-card me-2"></i>Payment Method</h4>
-              <div class="row g-3 mb-4">
-                <div class="col-12">
-                  <div class="form-check">
-                    <input class="form-check-input" type="radio" name="payment_method" id="cashOnDelivery" value="cod" checked />
-                    <label class="form-check-label" for="cashOnDelivery">
-                      <i class="fas fa-money-bill-wave me-2"></i>Cash on Delivery
-                      <small class="text-muted">(Pay when you receive your order)</small>
-                    </label>
-                  </div>
-                </div>
-                <div class="col-12">
-                  <div class="form-check">
-                    <input class="form-check-input" type="radio" name="payment_method" id="mobileMoney" value="mobile" />
-                    <label class="form-check-label" for="mobileMoney">
-                      <i class="fas fa-mobile-alt me-2"></i>Mobile Money
-                      <small class="text-muted">(MTN, Airtel)</small>
-                    </label>
-                  </div>
-                  <div id="mobileMoneyFields" class="mt-3" style="display: none;">
-                    <div class="mb-3">{{ form.mobile_money_number|as_crispy_field }}</div>
-                  </div>
-                </div>
-              </div>
-
-              <hr class="my-5" />
-
-              <!-- Order Summary (Collapsible) -->
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4 class="mb-0 text-secondary fw-bold"><i class="fas fa-list-alt me-2"></i>Order Summary</h4>
-                <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#orderSummary" aria-expanded="false" aria-controls="orderSummary" aria-label="Toggle Order Summary"><i class="fas fa-plus" id="orderToggleIcon"></i></button>
-              </div>
-              <div class="collapse" id="orderSummary">
-                {% if cart.items.all %}
-                  <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                      <thead class="table-light">
-                        <tr>
-                          <th>Product</th>
-                          <th>Quantity</th>
-                          <th>Price</th>
-                          <th>Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {% for item in cart.items.all %}
-                          {% if item.product and item.volume and item.volume.volume and item.quantity %}
-                            <tr>
-                              <td>
-                                <div class="d-flex align-items-center">
-                                  {% if item.volume.volume.image %}
-                                    <img src="{{ item.volume.volume.image.url }}" alt="{{ item.product.name }}" class="img-fluid rounded me-3" style="max-width: 60px;" />
-                                  {% endif %}
-                                  <div>
-                                    <h6 class="mb-0 fw-bold">{{ item.product.name }}</h6>
-                                    <small class="text-muted">({{ item.volume.volume.ml }}ML)</small>
-                                  </div>
-                                </div>
-                              </td>
-                              <td>{{ item.quantity }}</td>
-                              <td>
-                                {% if item.volume.discount_value %}
-                                  <del>UgX {{ item.volume.volume.price|floatformat:'0'|intcomma }}</del>
-                                  <span class="text-danger fw-bold">UgX {{ item.volume.get_discounted_price|floatformat:'0'|intcomma }}</span>
-                                  <span class="badge bg-danger ms-1">{{ item.volume.discount_value|floatformat:'0' }}% Off</span>
-                                {% else %}
-                                  UgX {{ item.volume.volume.price|floatformat:'0'|intcomma }}
-                                {% endif %}
-                              </td>
-                              <td class="fw-bold text-primary">UgX {{ item.get_total_price|floatformat:'0'|intcomma }}</td>
-                            </tr>
-                          {% else %}
-                            <tr>
-                              <td colspan="4" class="text-danger">
-                                <i class="fas fa-exclamation-triangle me-2"></i>There was an issue with this item. Please review your cart.
-                              </td>
-                            </tr>
-                          {% endif %}
-                        {% endfor %}
-                      </tbody>
-                    </table>
-                  </div>
-                  <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top border-secondary">
-                    <h4 class="mb-0 text-dark">Total Amount:</h4>
-                    <h3 class="mb-0 text-success fw-bold">UgX {{ cart.get_total_price|floatformat:'0'|intcomma }}</h3>
-                  </div>
-                {% else %}
-                  <div class="alert alert-info text-center" role="alert">
-                    <i class="fas fa-info-circle me-2"></i>Your cart is empty. Please add items before checking out.
-                  </div>
-                {% endif %}
-              </div>
-
-              <div class="text-center mt-5">
-                <button type="submit" class="btn btn-success btn-lg px-5" onclick="return confirm('Are you sure you want to place this order?')"><i class="fas fa-check-circle me-2"></i>Place Order</button>
-              </div>
-            </form>
+  <main class="store-page checkout-page">
+    <div class="container">
+      <div class="checkout-hero">
+        <div class="checkout-hero-main">
+          <span class="checkout-icon"><i class="fas fa-shield-alt" aria-hidden="true"></i></span>
+          <div>
+            <span class="store-eyebrow">Checkout</span>
+            <h1 class="store-title h2">Complete your order</h1>
+            <p class="store-muted mb-0">Confirm your customer details, delivery method, payment, and order total.</p>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- JavaScript for Payment Method and Toggle Sections -->
+        <div class="checkout-hero-actions">
+          <span class="checkout-pill"><i class="fas fa-shopping-bag" aria-hidden="true"></i>{{ cart.items.count }} item{{ cart.items.count|pluralize }}</span>
+          <a href="{% url 'orders:cart' %}" class="store-btn-outline">
+            <i class="fas fa-arrow-left" aria-hidden="true"></i>Back to cart
+          </a>
+        </div>
+      </div>
+
+      {% if form.non_field_errors %}
+        <div class="checkout-alert checkout-alert-danger" role="alert">
+          {% for error in form.non_field_errors %}
+            <div>{{ error }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <form method="post" id="checkoutForm" class="checkout-layout" data-delivery-summary-url="{% url 'orders:checkout_delivery_summary' %}" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="update_saved_address" id="updateSavedAddress" value="">
+
+        <div class="checkout-main">
+          <section class="checkout-card">
+            <div class="checkout-compact-head">
+              <div class="checkout-card-head mb-0">
+                <span class="store-checkout-step">1</span>
+                <div>
+                  <span class="store-eyebrow">Customer</span>
+                  <h2>Contact details</h2>
+                  <p id="contactSummaryText">
+                    {% if form.first_name.value or form.mobile.value %}
+                      {{ form.first_name.value|default:'Customer' }}{% if form.mobile.value %} - {{ form.mobile.value }}{% endif %}
+                    {% else %}
+                      Add your name and phone number.
+                    {% endif %}
+                  </p>
+                </div>
+              </div>
+              <button type="button" class="checkout-plus-action" data-bs-toggle="modal" data-bs-target="#contactModal" aria-label="Add or update contact details">
+                <i class="mdi mdi-plus" aria-hidden="true"></i>
+                <span>Update</span>
+              </button>
+            </div>
+          </section>
+
+          <section class="checkout-card">
+            <div class="checkout-compact-head">
+              <div class="checkout-card-head mb-0">
+                <span class="store-checkout-step">2</span>
+                <div>
+                  <span class="store-eyebrow">Address</span>
+                  <h2>Delivery address</h2>
+                  <p id="addressSummaryText">
+                    {% if form.delivery_city.value or form.delivery_area.value %}
+                      {{ form.delivery_area.value|default:'Delivery area' }}{% if form.delivery_city.value %}, {{ form.delivery_city.value }}{% endif %}
+                    {% else %}
+                      Add your delivery location.
+                    {% endif %}
+                  </p>
+                </div>
+              </div>
+              <button type="button" class="checkout-plus-action" data-bs-toggle="modal" data-bs-target="#addressModal" aria-label="Add or update delivery address">
+                <i class="mdi mdi-plus" aria-hidden="true"></i>
+                <span>Update</span>
+              </button>
+            </div>
+          </section>
+
+          <section class="checkout-card">
+            <div class="checkout-card-head">
+              <span class="store-checkout-step">3</span>
+              <div>
+                <span class="store-eyebrow">Delivery</span>
+                <h2>Shipping method</h2>
+                <p>Pickup is free. Door delivery is priced by the location entered above.</p>
+              </div>
+            </div>
+
+            <div class="checkout-option-grid">
+              <label class="checkout-option" for="shipDelivery">
+                <input class="form-check-input" type="radio" name="shipping_method" id="shipDelivery" value="delivery" {% if form.shipping_method.value == 'delivery' or not form.shipping_method.value %}checked{% endif %}>
+                <span class="checkout-option-icon"><i class="mdi mdi-truck-delivery-outline" aria-hidden="true"></i></span>
+                <span class="checkout-option-body">
+                  <strong>Door Delivery</strong>
+                  <small>Delivered to your address. Fee is shown in the summary.</small>
+                </span>
+                <span class="checkout-radio-dot" aria-hidden="true"></span>
+              </label>
+
+              <label class="checkout-option" for="shipPickup">
+                <input class="form-check-input" type="radio" name="shipping_method" id="shipPickup" value="pickup" {% if form.shipping_method.value == 'pickup' %}checked{% endif %}>
+                <span class="checkout-option-icon"><i class="mdi mdi-store-marker-outline" aria-hidden="true"></i></span>
+                <span class="checkout-option-body">
+                  <strong>Pickup Station</strong>
+                  <small>Collect from an active Jobell pickup point.</small>
+                </span>
+                <span class="checkout-radio-dot" aria-hidden="true"></span>
+              </label>
+            </div>
+
+            <div id="pickupFields" class="checkout-inline-panel">
+              <div class="checkout-field">
+                <label for="{{ form.pickup_station.id_for_label }}">Pickup station</label>
+                {{ form.pickup_station }}
+                {% for error in form.pickup_station.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
+              </div>
+            </div>
+
+            <div class="checkout-delivery-status {% if delivery_quote_message and not delivery_available %}is-error{% endif %}" id="deliveryStatus">
+              <i class="mdi mdi-truck-fast-outline" aria-hidden="true"></i>
+              <span id="deliveryStatusText">
+                {% if delivery_quote_message %}
+                  {{ delivery_quote_message }}
+                {% else %}
+                  Enter your delivery location to calculate transport.
+                {% endif %}
+              </span>
+            </div>
+          </section>
+
+          <section class="checkout-card">
+            <div class="checkout-card-head">
+              <span class="store-checkout-step">4</span>
+              <div>
+                <span class="store-eyebrow">Payment</span>
+                <h2>Payment method</h2>
+                <p>Choose how you want to complete payment for this order.</p>
+              </div>
+            </div>
+
+            <div class="checkout-option-grid">
+              <label class="checkout-option" for="cashOnDelivery">
+                <input class="form-check-input" type="radio" name="payment_method" id="cashOnDelivery" value="cod" {% if form.payment_method.value == 'cod' or not form.payment_method.value %}checked{% endif %}>
+                <span class="checkout-option-icon"><i class="fas fa-wallet" aria-hidden="true"></i></span>
+                <span class="checkout-option-body">
+                  <strong>Cash on Delivery</strong>
+                  <small>Pay when your package arrives.</small>
+                </span>
+                <span class="checkout-radio-dot" aria-hidden="true"></span>
+              </label>
+
+              <label class="checkout-option" for="mobileMoney">
+                <input class="form-check-input" type="radio" name="payment_method" id="mobileMoney" value="mobile" {% if form.payment_method.value == 'mobile' %}checked{% endif %}>
+                <span class="checkout-option-icon"><i class="fas fa-mobile-alt" aria-hidden="true"></i></span>
+                <span class="checkout-option-body">
+                  <strong>Mobile Money</strong>
+                  <small>We will track the payment as pending until confirmed.</small>
+                </span>
+                <span class="checkout-radio-dot" aria-hidden="true"></span>
+              </label>
+            </div>
+
+            <div id="mobileMoneyFields" class="checkout-inline-panel">
+              <div class="checkout-field">
+                <label for="{{ form.mobile_money_number.id_for_label }}">Mobile Money number</label>
+                {{ form.mobile_money_number }}
+                {% if form.mobile_money_number.help_text %}<small class="checkout-help">{{ form.mobile_money_number.help_text }}</small>{% endif %}
+                {% for error in form.mobile_money_number.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="modal fade checkout-edit-modal" id="contactModal" tabindex="-1" aria-labelledby="contactModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+              <div class="modal-header">
+                <div>
+                  <span class="store-eyebrow">Customer</span>
+                  <h2 class="modal-title" id="contactModalLabel">Contact details</h2>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <div class="checkout-field-grid">
+                  <div class="checkout-field">
+                    <label for="{{ form.first_name.id_for_label }}">First name</label>
+                    {{ form.first_name }}
+                    {% for error in form.first_name.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div class="checkout-field">
+                    <label for="{{ form.last_name.id_for_label }}">Last name</label>
+                    {{ form.last_name }}
+                    {% for error in form.last_name.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div class="checkout-field">
+                    <label for="{{ form.email.id_for_label }}">Email</label>
+                    {{ form.email }}
+                    {% for error in form.email.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div class="checkout-field">
+                    <label for="{{ form.mobile.id_for_label }}">Phone number</label>
+                    {{ form.mobile }}
+                    {% for error in form.mobile.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="store-btn-outline" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="store-btn" data-bs-dismiss="modal">
+                  <i class="fas fa-check" aria-hidden="true"></i>
+                  Use details
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal fade checkout-edit-modal" id="addressModal" tabindex="-1" aria-labelledby="addressModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+              <div class="modal-header">
+                <div>
+                  <span class="store-eyebrow">Address</span>
+                  <h2 class="modal-title" id="addressModalLabel">Delivery address</h2>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                {% if form.saved_address %}
+                  <div class="checkout-saved-row mb-3">
+                    <div class="checkout-field">
+                      <label for="{{ form.saved_address.id_for_label }}">Saved address</label>
+                      {{ form.saved_address }}
+                      {% for error in form.saved_address.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
+                    </div>
+                    <button type="button" class="checkout-mini-action" id="updateAddressBtn">
+                      <i class="mdi mdi-pencil-outline" aria-hidden="true"></i>Use selected
+                    </button>
+                  </div>
+                {% endif %}
+
+                <div class="checkout-field-grid checkout-field-grid-address">
+                  <div class="checkout-field checkout-field-wide">
+                    <label for="{{ form.address.id_for_label }}">Street address</label>
+                    {{ form.address }}
+                    {% for error in form.address.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div class="checkout-field">
+                    <label for="{{ form.delivery_region.id_for_label }}">Region</label>
+                    {{ form.delivery_region }}
+                    {% for error in form.delivery_region.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div class="checkout-field">
+                    <label for="{{ form.delivery_city.id_for_label }}">City</label>
+                    {{ form.delivery_city }}
+                    {% for error in form.delivery_city.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div class="checkout-field">
+                    <label for="{{ form.delivery_area.id_for_label }}">Area</label>
+                    {{ form.delivery_area }}
+                    {% for error in form.delivery_area.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
+                  </div>
+                  {% if form.save_address %}
+                    <div class="checkout-check-row checkout-field-wide">
+                      {{ form.save_address }}
+                      <label for="{{ form.save_address.id_for_label }}">{{ form.save_address.label }}</label>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="store-btn-outline" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="store-btn" data-bs-dismiss="modal">
+                  <i class="fas fa-check" aria-hidden="true"></i>
+                  Use address
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="checkout-summary-wrap">
+          <section class="checkout-summary">
+            <div class="checkout-summary-status">
+              <span><i class="fas fa-lock" aria-hidden="true"></i></span>
+              <div>
+                <small>Checkout status</small>
+                <strong>Ready for secure review</strong>
+                <p>Totals are calculated on the server before the order is created.</p>
+              </div>
+            </div>
+
+            <div class="checkout-summary-head">
+              <div>
+                <span class="store-eyebrow">Review</span>
+                <h2>Order summary</h2>
+              </div>
+              <span class="checkout-count">{{ cart.items.count }} item{{ cart.items.count|pluralize }}</span>
+            </div>
+
+            <div class="checkout-items">
+              {% for item in cart.items.all %}
+                <div class="checkout-item">
+                  {% if item.volume.image_url %}
+                    <img src="{{ item.volume.image_url }}" alt="{{ item.product.name }}" loading="lazy">
+                  {% else %}
+                    <span class="checkout-item-placeholder"><i class="fas fa-image" aria-hidden="true"></i></span>
+                  {% endif %}
+
+                  <div class="checkout-item-body">
+                    <div class="checkout-item-top">
+                      <strong>{{ item.product.name }}</strong>
+                      <span>UGX {{ item.get_total_price|floatformat:'0'|intcomma }}</span>
+                    </div>
+                    <small>{{ item.volume.variant_label }}</small>
+                    <small>Qty {{ item.quantity }} at UGX {{ item.volume.get_discounted_price|floatformat:'0'|intcomma }}</small>
+                  </div>
+                </div>
+              {% empty %}
+                <div class="checkout-note">
+                  <i class="fas fa-shopping-cart" aria-hidden="true"></i>
+                  <span>Your cart is empty.</span>
+                </div>
+              {% endfor %}
+            </div>
+
+            <div class="checkout-totals">
+              <div>
+                <span>Subtotal</span>
+                <strong>UGX {{ total_price|floatformat:'0'|intcomma }}</strong>
+              </div>
+              <div>
+                <span>Discount</span>
+                <strong>UGX 0</strong>
+              </div>
+              <div>
+                <span>Delivery fee</span>
+                <strong id="summaryShippingFee">UGX {{ shipping_fee|floatformat:'0'|intcomma }}</strong>
+              </div>
+              <div>
+                <span>Tax</span>
+                <strong>UGX 0</strong>
+              </div>
+              <div class="checkout-total-row">
+                <span>Total</span>
+                <strong id="summaryGrandTotal">UGX {{ grand_total|floatformat:'0'|intcomma }}</strong>
+              </div>
+            </div>
+
+            <button type="submit" class="checkout-place-order" id="placeOrderBtn">
+              <i class="fas fa-check-circle" aria-hidden="true"></i>
+              <span>Place order</span>
+            </button>
+
+            <div class="checkout-trust-grid">
+              <span><i class="fas fa-shield-alt" aria-hidden="true"></i>Secure checkout</span>
+              <span><i class="mdi mdi-truck-fast-outline" aria-hidden="true"></i>Delivery support</span>
+              <span><i class="fas fa-credit-card" aria-hidden="true"></i>Safe payment</span>
+            </div>
+
+            <a href="{% url 'products:shop_homepage' %}" class="checkout-continue-link">Continue shopping</a>
+          </section>
+        </aside>
+      </form>
+
+      {{ checkout_addresses|json_script:"checkoutAddressData" }}
+    </div>
+  </main>
+
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const cashOnDelivery = document.getElementById('cashOnDelivery')
       const mobileMoney = document.getElementById('mobileMoney')
       const mobileMoneyFields = document.getElementById('mobileMoneyFields')
+      const shipDelivery = document.getElementById('shipDelivery')
+      const shipPickup = document.getElementById('shipPickup')
+      const pickupFields = document.getElementById('pickupFields')
+      const updateAddressBtn = document.getElementById('updateAddressBtn')
+      const updateSavedAddress = document.getElementById('updateSavedAddress')
+      const savedAddressSelect = document.getElementById('id_saved_address')
+      const checkoutAddressData = document.getElementById('checkoutAddressData')
       const form = document.getElementById('checkoutForm')
-      const shippingToggleButton = document.querySelector('[data-bs-target="#shippingInfo"]')
-      const shippingToggleIcon = document.getElementById('shippingToggleIcon')
-      const orderToggleButton = document.querySelector('[data-bs-target="#orderSummary"]')
-      const orderToggleIcon = document.getElementById('orderToggleIcon')
-    
-      // Toggle payment fields
-      function togglePaymentFields() {
-        mobileMoneyFields.style.display = mobileMoney.checked ? 'block' : 'none'
+      const placeOrderBtn = document.getElementById('placeOrderBtn')
+      const deliveryStatus = document.getElementById('deliveryStatus')
+      const deliveryStatusText = document.getElementById('deliveryStatusText')
+      const summaryShippingFee = document.getElementById('summaryShippingFee')
+      const summaryGrandTotal = document.getElementById('summaryGrandTotal')
+      const contactSummaryText = document.getElementById('contactSummaryText')
+      const addressSummaryText = document.getElementById('addressSummaryText')
+      const contactModal = document.getElementById('contactModal')
+      const addressModal = document.getElementById('addressModal')
+      const savedAddresses = checkoutAddressData ? JSON.parse(checkoutAddressData.textContent) : []
+      let deliverySummaryTimer = null
+
+      function fieldValue(id) {
+        const field = document.getElementById(id)
+        return field ? field.value.trim() : ''
       }
-    
-      cashOnDelivery.addEventListener('change', togglePaymentFields)
-      mobileMoney.addEventListener('change', togglePaymentFields)
-    
-      // Toggle shipping info icon (+/-)
-      shippingToggleButton.addEventListener('click', function () {
-        const isExpanded = shippingToggleButton.getAttribute('aria-expanded') === 'true'
-        shippingToggleIcon.classList.toggle('fa-plus', !isExpanded)
-        shippingToggleIcon.classList.toggle('fa-minus', isExpanded)
+
+      function formatMoney(value) {
+        const amount = Number(value || 0)
+        return 'UGX ' + new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(amount)
+      }
+
+      function updateContactSummary() {
+        if (!contactSummaryText) return
+        const name = [fieldValue('id_first_name'), fieldValue('id_last_name')].filter(Boolean).join(' ')
+        const phone = fieldValue('id_mobile')
+        const email = fieldValue('id_email')
+        contactSummaryText.textContent = name || phone || email
+          ? [name || 'Customer', phone || email].filter(Boolean).join(' - ')
+          : 'Add your name and phone number.'
+      }
+
+      function updateAddressSummary() {
+        if (!addressSummaryText) return
+        const address = fieldValue('id_address')
+        const city = fieldValue('id_delivery_city')
+        const area = fieldValue('id_delivery_area')
+        addressSummaryText.textContent = address || city || area
+          ? [area || address || 'Delivery address', city].filter(Boolean).join(', ')
+          : 'Add your delivery location.'
+      }
+
+      function setDeliveryStatus(message, available) {
+        if (deliveryStatusText) deliveryStatusText.textContent = message
+        if (deliveryStatus) deliveryStatus.classList.toggle('is-error', !available)
+        if (placeOrderBtn && shipDelivery) {
+          placeOrderBtn.disabled = shipDelivery.checked && !available
+        }
+      }
+
+      function collectDeliveryParams() {
+        const params = new URLSearchParams()
+        params.set('shipping_method', shipPickup && shipPickup.checked ? 'pickup' : 'delivery')
+        const savedAddress = document.getElementById('id_saved_address')
+        if (savedAddress && savedAddress.value && (!updateSavedAddress || updateSavedAddress.value !== '1')) {
+          params.set('saved_address', savedAddress.value)
+        }
+        ;[
+          ['delivery_region', 'id_delivery_region'],
+          ['delivery_city', 'id_delivery_city'],
+          ['delivery_area', 'id_delivery_area']
+        ].forEach(function (pair) {
+          const field = document.getElementById(pair[1])
+          if (field && field.value) params.set(pair[0], field.value)
+        })
+        return params
+      }
+
+      function refreshDeliverySummary() {
+        if (!form || !form.dataset.deliverySummaryUrl) return
+        window.clearTimeout(deliverySummaryTimer)
+        deliverySummaryTimer = window.setTimeout(function () {
+          const url = form.dataset.deliverySummaryUrl + '?' + collectDeliveryParams().toString()
+          fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function (response) {
+              return response.json()
+            })
+            .then(function (data) {
+              if (summaryShippingFee) summaryShippingFee.textContent = formatMoney(data.shipping_fee)
+              if (summaryGrandTotal) summaryGrandTotal.textContent = formatMoney(data.grand_total)
+              setDeliveryStatus(data.message || 'Delivery fee updated.', Boolean(data.available))
+            })
+            .catch(function () {
+              setDeliveryStatus('Could not calculate delivery right now. Please try again.', false)
+            })
+        }, 250)
+      }
+
+      function togglePaymentFields() {
+        if (!mobileMoneyFields || !mobileMoney) return
+        mobileMoneyFields.classList.toggle('d-none', !mobileMoney.checked)
+      }
+
+      cashOnDelivery?.addEventListener('change', togglePaymentFields)
+      mobileMoney?.addEventListener('change', togglePaymentFields)
+      togglePaymentFields()
+
+      function toggleShippingFields() {
+        if (!pickupFields || !shipPickup) return
+        pickupFields.classList.toggle('d-none', !shipPickup.checked)
+        refreshDeliverySummary()
+      }
+
+      shipDelivery?.addEventListener('change', toggleShippingFields)
+      shipPickup?.addEventListener('change', toggleShippingFields)
+      toggleShippingFields()
+
+      function setFieldValue(id, value) {
+        const field = document.getElementById(id)
+        if (field) field.value = value || ''
+      }
+
+      function populateSelectedAddress() {
+        if (!savedAddressSelect) return
+        const selectedAddress = savedAddresses.find(function (address) {
+          return String(address.id) === String(savedAddressSelect.value)
+        })
+        if (!selectedAddress) {
+          refreshDeliverySummary()
+          return
+        }
+
+        setFieldValue('id_mobile', selectedAddress.phone_number)
+        setFieldValue('id_address', selectedAddress.street_name)
+        setFieldValue('id_delivery_region', selectedAddress.region)
+        setFieldValue('id_delivery_city', selectedAddress.city)
+        setFieldValue('id_delivery_area', selectedAddress.area)
+        updateContactSummary()
+        updateAddressSummary()
+        refreshDeliverySummary()
+      }
+
+      savedAddressSelect?.addEventListener('change', function () {
+        if (updateSavedAddress) updateSavedAddress.value = ''
+        populateSelectedAddress()
       })
-    
-      // Toggle order summary icon (+/-)
-      orderToggleButton.addEventListener('click', function () {
-        const isExpanded = orderToggleButton.getAttribute('aria-expanded') === 'true'
-        orderToggleIcon.classList.toggle('fa-plus', !isExpanded)
-        orderToggleIcon.classList.toggle('fa-minus', isExpanded)
+
+      updateAddressBtn?.addEventListener('click', function () {
+        if (updateSavedAddress) updateSavedAddress.value = '1'
+        populateSelectedAddress()
       })
-    
-      // Bootstrap form validation
-      form.addEventListener(
-        'submit',
-        function (event) {
-          if (!form.checkValidity()) {
-            event.preventDefault()
-            event.stopPropagation()
-          }
-          form.classList.add('was-validated')
-        },
-        false
-      )
+
+      populateSelectedAddress()
+      ;['id_first_name', 'id_last_name', 'id_email', 'id_mobile'].forEach(function (id) {
+        const field = document.getElementById(id)
+        field?.addEventListener('input', updateContactSummary)
+        field?.addEventListener('change', updateContactSummary)
+      })
+      ;['id_delivery_region', 'id_delivery_city', 'id_delivery_area'].forEach(function (id) {
+        const field = document.getElementById(id)
+        function handleDeliveryFieldChange() {
+          if (savedAddressSelect) savedAddressSelect.value = ''
+          if (updateSavedAddress) updateSavedAddress.value = ''
+          updateAddressSummary()
+          refreshDeliverySummary()
+        }
+        field?.addEventListener('change', handleDeliveryFieldChange)
+        field?.addEventListener('input', handleDeliveryFieldChange)
+      })
+      const addressField = document.getElementById('id_address')
+      function handleStreetAddressChange() {
+        if (savedAddressSelect) savedAddressSelect.value = ''
+        if (updateSavedAddress) updateSavedAddress.value = ''
+        updateAddressSummary()
+      }
+      addressField?.addEventListener('input', handleStreetAddressChange)
+      addressField?.addEventListener('change', handleStreetAddressChange)
+      updateContactSummary()
+      updateAddressSummary()
+      refreshDeliverySummary()
+
+      const hasContactErrors = {% if form.first_name.errors or form.last_name.errors or form.email.errors or form.mobile.errors %}true{% else %}false{% endif %}
+      const hasAddressErrors = {% if form.saved_address.errors or form.address.errors or form.delivery_region.errors or form.delivery_city.errors or form.delivery_area.errors or form.save_address.errors %}true{% else %}false{% endif %}
+      if (window.bootstrap) {
+        if (hasContactErrors && contactModal) {
+          new window.bootstrap.Modal(contactModal).show()
+        } else if (hasAddressErrors && addressModal) {
+          new window.bootstrap.Modal(addressModal).show()
+        }
+      }
+
+      form?.addEventListener('submit', function () {
+        if (!placeOrderBtn) return
+        if (placeOrderBtn.disabled) return
+        placeOrderBtn.disabled = true
+        placeOrderBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span><span>Placing order...</span>'
+      })
     })
   </script>
 {% endblock %}

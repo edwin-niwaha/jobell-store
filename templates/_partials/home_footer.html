@@ -1,65 +1,58 @@
 {% load static %}
-<!-- Site footer -->
-<footer class="site-footer">
-  <div class="container-fluid">
-    <div class="row">
-      <div class="col-sm-12 col-md-6">
-        <h6>About</h6>
-        <hr />
-        <p class="text-justify">Welcome to Jobell Inc, your ultimate destination for exquisite scents that elevate your spirit and enhance your unique identity. At Jobell, we believe that fragrance is not just a scent; it's an experience, a memory, and a reflection of your personality.</p>
+
+<footer class="jobell-footer">
+  <div class="jobell-footer-shell">
+    <div class="jobell-footer-grid">
+      <div class="jobell-footer-brand">
+        <a class="jobell-footer-logo" href="{% url 'users-home' %}">
+          <img src="{% static 'images/file.png' %}" alt="Jobell" />
+          <span>
+            <strong>Jobell</strong>
+            <small>Shop - Scent - Deliver</small>
+          </span>
+        </a>
+        <p>Exquisite fragrances, body care, and home scent essentials with a storefront built for simple discovery and confident checkout.</p>
+        <div class="jobell-footer-socials">
+          <a href="https://wa.me/256777337491" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+          <a href="https://instagram.com/jobell_inc" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="https://www.linkedin.com/in/christbell-ainomugisha-452965232/" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+        </div>
       </div>
 
-      <div class="col-xs-6 col-md-3">
-        <h6>Products/Services</h6>
-        <hr />
-        <ul class="footer-links">
-          <li class="footer-item">Perfumes</li>
-          <li class="footer-item">Home Fragrances</li>
-          <li class="footer-item">Skin and Body Products</li>
-        </ul>
+      <div class="jobell-footer-column">
+        <h6>Shop</h6>
+        <a href="{% url 'products:shop_homepage' %}">All products</a>
+        <a href="{% url 'orders:wishlist' %}">Wishlist</a>
+        <a href="{% url 'orders:customer_order_history' %}">Orders</a>
+        <a href="{% url 'blog:blog_list' %}">Blog</a>
       </div>
 
-      <div class="col-xs-6 col-md-3">
-        <h6>Quick Links</h6>
-        <hr />
-        <ul class="footer-links">
-          <li>
-            <a class="footer-item" href="{% url 'about_us' %}">About Us</a>
-          </li>
-          <li>
-            <a class="footer-item" href="{% url 'contact_us' %}">Contact Us</a>
-          </li>
-          <li>
-            <a class="footer-item" href="{% url 'privacy_policy' %}">Privacy Policy</a>
-          </li>
-        </ul>
-      </div>
-    </div>
-    <hr />
-  </div>
-
-  <div class="container-fluid">
-    <div class="row">
-      <div class="col-md-8 col-sm-6 col-xs-12">
-        <p class="copyright-text">
-          Copyright &copy; <span id="year"></span> | All Rights Reserved by Jobell Inc | Crafted by
-          <a target="_blank" href="https://perpetual-web-vert.vercel.app/" class="creator-link" style="font-family: 'Brush Script MT', cursive; color: whitesmoke; text-decoration: none;">Perpetual Tech</a>
-        </p>
-        <script>
-          // Automatically display the current year
-          document.getElementById('year').textContent = new Date().getFullYear()
-        </script>
+      <div class="jobell-footer-column">
+        <h6>Support</h6>
+        <a href="{% url 'about_us' %}">About us</a>
+        <a href="{% url 'contact_us' %}">Contact us</a>
+        <a href="{% url 'privacy_policy' %}">Privacy policy</a>
+        {% if user.is_authenticated %}
+          <a href="{% url 'users-profile' %}">My profile</a>
+        {% else %}
+          <a href="{% url 'login' %}">Log in</a>
+        {% endif %}
       </div>
 
-      <div class="col-md-4 col-sm-6 col-xs-12">
-        <a target="_blank" class="m-1 btn btn-primary btn-floating" style="background-color: #3b5998" href="https://wa.me/256777337491" role="button"><i class="fab fa-whatsapp"></i></a>
-        <!-- Instagram -->
-        <a target="_blank" class="m-1 btn btn-primary btn-floating" style="background-color: #ac2bac" href="https://instagram.com/jobell_inc" role="button"><i class="fab fa-instagram"></i></a>
-
-        <!-- Linkedin -->
-        <a target="_blank" class="m-1 btn btn-primary btn-floating" style="background-color: #0082ca" href="https://www.linkedin.com/in/christbell-ainomugisha-452965232/" role="button"><i class="fab fa-linkedin-in"></i></a>
+      <div class="jobell-footer-contact">
+        <h6>Contact</h6>
+        <p><i class="mdi mdi-map-marker-outline"></i> Makerere, Kampala</p>
+        <p><i class="mdi mdi-phone-outline"></i> +256 777-337-491</p>
+        <p><i class="mdi mdi-email-outline"></i> jobellinc@gmail.com</p>
       </div>
     </div>
+
+    <div class="jobell-footer-bottom">
+      <p>Copyright &copy; <span id="year"></span> Jobell Inc. All rights reserved.</p>
+      <a target="_blank" rel="noopener" href="https://perpetual-web-vert.vercel.app/">Crafted by Perpetual Tech</a>
+    </div>
   </div>
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear()
+  </script>
 </footer>
-<!-- end Footer -->

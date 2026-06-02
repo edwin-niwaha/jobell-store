@@ -1,0 +1,38 @@
+{% extends 'accounts/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% if address %}Edit Address{% else %}Add Address{% endif %}{% endblock %}
+
+{% block content %}
+  <main class="store-page">
+    <div class="store-shell" style="max-width: 900px;">
+      <div class="d-flex justify-content-between align-items-end gap-3 mb-4">
+        <div>
+          <span class="store-eyebrow">Delivery details</span>
+          <h1 class="store-title h2">{% if address %}Edit Address{% else %}Add Address{% endif %}</h1>
+        </div>
+        <a class="store-btn-outline" href="{% url 'addresses:list' %}">Back</a>
+      </div>
+
+      <section class="store-panel">
+        <div class="card-body p-4">
+          <form method="post">
+            {% csrf_token %}
+            <div class="row g-3">
+              <div class="col-12">{{ form.street_name|as_crispy_field }}</div>
+              <div class="col-md-6">{{ form.city|as_crispy_field }}</div>
+              <div class="col-md-6">{{ form.area|as_crispy_field }}</div>
+              <div class="col-md-6">{{ form.region|as_crispy_field }}</div>
+              <div class="col-md-6">{{ form.phone_number|as_crispy_field }}</div>
+              <div class="col-md-6">{{ form.additional_telephone|as_crispy_field }}</div>
+              <div class="col-12">{{ form.additional_information|as_crispy_field }}</div>
+              <div class="col-12">{{ form.is_default|as_crispy_field }}</div>
+            </div>
+            <button class="store-btn mt-3" type="submit">Save address</button>
+          </form>
+        </div>
+      </section>
+    </div>
+  </main>
+{% endblock %}
+

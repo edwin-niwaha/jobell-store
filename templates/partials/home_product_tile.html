@@ -1,0 +1,92 @@
+{% load static %}
+{% load humanize %}
+
+{% with product=product_info.product images=product_info.images min_price=product_info.min_price max_price=product_info.max_price %}
+  <article class="jobell-product-card {% if compact %}jobell-product-card-compact{% endif %} {% if grid %}jobell-product-card-grid{% endif %}">
+    <span class="jobell-product-image-wrap">
+    <a class="jobell-product-image" href="{% url 'orders:product_detail' product.uuid %}" aria-label="View {{ product.name }}">
+      {% if product_info.image_url %}
+        <img src="{{ product_info.image_url }}" alt="{{ product.name }}" />
+      {% elif images %}
+        {% for image in images|slice:':1' %}
+          <img src="{{ image.image.url }}" alt="{{ product.name }}" />
+        {% endfor %}
+      {% else %}
+        <img src="{% static 'images/no-image.png' %}" alt="No image available" />
+      {% endif %}
+    </a>
+    <form class="jobell-image-wishlist" method="post" action="{% url 'orders:wishlist_add' product.uuid %}">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.get_full_path }}" />
+      <button class="store-icon-btn"
+              type="submit"
+              title="Add {{ product.name }} to wishlist"
+              aria-label="Add {{ product.name }} to wishlist">
+        <i class="mdi mdi-heart-outline" aria-hidden="true"></i>
+      </button>
+    </form>
+    </span>
+    <a class="jobell-product-name" href="{% url 'orders:product_detail' product.uuid %}">{{ product.name }}</a>
+    <span class="jobell-product-meta">
+      {% if product.category %}{{ product.category }}{% else %}Available now{% endif %}
+      {% if product.gender %} | {{ product.gender }}{% endif %}
+    </span>
+    <span class="jobell-product-price">
+      {% if product_info.has_sellable_price %}
+        UGX {{ min_price|floatformat:'0'|intcomma }}{% if min_price != max_price %} - {{ max_price|floatformat:'0'|intcomma }}{% endif %}
+      {% else %}
+        Price not available
+      {% endif %}
+    </span>
+    <span class="jobell-stock {% if product_info.is_in_stock %}is-available{% else %}is-unavailable{% endif %}">
+      {% if product_info.is_in_stock %}In stock{% else %}Not available{% endif %}
+    </span>
+
+    {% if product_info.sellable_variants %}
+      {% if product_info.sellable_variants|length > 6 %}
+        <div class="jobell-product-purchase">
+          <span class="jobell-variant-pill">
+            {% if product_info.volume_range_label %}{{ product_info.volume_range_label }} · {% endif %}{{ product_info.sellable_variants|length }} options
+          </span>
+          <a class="jobell-card-cart" href="{% url 'orders:product_detail' product.uuid %}">
+            <i class="mdi mdi-format-list-bulleted" aria-hidden="true"></i>
+            Choose options
+          </a>
+        </div>
+      {% else %}
+      <form class="jobell-product-purchase js-add-to-cart-form" method="post" action="{% url 'orders:add_to_cart' product.uuid %}">
+        {% csrf_token %}
+        <input type="hidden" name="quantity" value="1" />
+        <input type="hidden" name="next" value="{{ request.get_full_path }}" />
+
+        {% if product_info.sellable_variants|length > 1 %}
+          <label class="jobell-variant-label">Variant</label>
+          <select class="jobell-variant-select" name="volume_id" aria-label="Choose variant for {{ product.name }}" required>
+            {% for variant in product_info.sellable_variants %}
+              <option value="{{ variant.id }}">
+                {{ variant.variant_label }} - UGX {{ variant.current_price|floatformat:'0'|intcomma }}
+              </option>
+            {% endfor %}
+          </select>
+        {% else %}
+          {% for variant in product_info.sellable_variants|slice:':1' %}
+            <input type="hidden" name="volume_id" value="{{ variant.id }}" />
+            <span class="jobell-variant-pill">{{ variant.variant_label }}</span>
+          {% endfor %}
+        {% endif %}
+
+        <button class="jobell-card-cart" type="submit" data-cart-submit>
+          <i class="mdi mdi-cart-outline" aria-hidden="true"></i>
+          Add to cart
+        </button>
+      </form>
+      {% endif %}
+
+    {% else %}
+      <a class="jobell-card-view" href="{% url 'orders:product_detail' product.uuid %}">
+        <i class="mdi mdi-eye-outline" aria-hidden="true"></i>
+        View details
+      </a>
+    {% endif %}
+  </article>
+{% endwith %}

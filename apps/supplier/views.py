@@ -1,3 +1,5 @@
+import logging
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.core.paginator import Paginator
@@ -9,6 +11,8 @@ from apps.authentication.decorators import (
     admin_or_manager_or_staff_required,
     admin_required,
 )
+
+logger = logging.getLogger(__name__)
 
 
 # =================================== supplier list view ===================================
@@ -104,10 +108,10 @@ def supplier_delete(request, supplier_id):
         messages.success(
             request, f"Supplier: {supplier.name} deleted!", extra_tags="bg-danger"
         )
-    except Exception as e:
+    except Exception:
+        logger.exception("Error deleting supplier %s", supplier_id)
         messages.error(
             request, "There was an error during the deletion!", extra_tags="bg-danger"
         )
-        print(e)
 
     return redirect("supplier:supplier_list")

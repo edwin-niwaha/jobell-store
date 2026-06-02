@@ -1,46 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends 'accounts/base.html' %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>403 Forbidden</title>
-    <!-- Include Bootstrap CSS for styling -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <style>
-        .error-page {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            text-align: center;
-            background-color: #f8f9fa;
-        }
+{% block title %}
+  403 Forbidden
+{% endblock %}
 
-        .error-page h1 {
-            font-size: 5rem;
-            margin-bottom: 1rem;
-        }
-
-        .error-page p {
-            font-size: 1.25rem;
-            margin-bottom: 2rem;
-        }
-    </style>
-</head>
-
-<body>
-    <div class="container error-page">
-        <h1 class="display-1">403</h1>
-        <p class="lead">You do not have permission to access this page.</p>
-        <a href="/" class="btn btn-primary">Go to Home</a>
+{% block content %}
+  <section class="jobell-info-page jobell-centered-page">
+    <div class="jobell-info-panel jobell-status-panel">
+      <span class="jobell-status-icon jobell-status-warning"><i class="mdi mdi-shield-alert-outline"></i></span>
+      <h1>403</h1>
+      <p>You do not have permission to access this page.</p>
+      <a href="{% url 'users-home' %}" class="jobell-page-button">Go to home</a>
     </div>
-
-    <!-- Include Bootstrap JS and dependencies -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-</body>
-
-</html>
+  </section>
+{% endblock %}

@@ -14,13 +14,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-
-if os.environ.get("DJANGO_ENV") == "development":
-    settings = "core.settings_dev"
-else:
-    settings = "core.settings"
-
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", settings)
+environment = os.getenv("DJANGO_ENV", "development").strip().lower()
+settings_module = (
+    "core.settings.production"
+    if environment in {"prod", "production"}
+    else "core.settings.development"
+)
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", settings_module)
 
 
 application = get_wsgi_application()

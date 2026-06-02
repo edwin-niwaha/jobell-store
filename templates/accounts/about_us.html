@@ -2,120 +2,65 @@
 {% load static %}
 
 {% block title %}
-  About Us Page
+  About Jobell
 {% endblock %}
 
 {% block content %}
-  <!-- About Us Section -->
-  <div class="container-fluid my-3">
-    <section class="section-content">
-      <div class="container-xl text-center">
-        <div class="row">
-          <div class="col-md-12">
-            <div class="about-logo mb-5" style="height: 250px; background-size: contain; background-repeat: no-repeat; background-position: center; background-image: url('{% static 'images/file.png' %}');"></div>
-            <hr />
-            <h2 class="display-4 mb-2 fw-bold text-dark">About Us</h2>
-            <p class="lead text-muted mb-5">Welcome to our website! We are dedicated to providing you with the best online shopping experience. Our journey began with a simple idea: to make shopping easy, accessible, and enjoyable for everyone. Over the years, we have grown into a trusted online retailer, offering a wide range of products to meet your needs.</p>
-          </div>
-        </div>
-
-        <div class="row mt-3">
-          <div class="col-md-6">
-            <h2 class="display-4 mb-2 fw-bold text-dark">Our Mission</h2>
-            <p>Our mission is to provide our customers with high-quality products at competitive prices, backed by exceptional customer service. We strive to create a seamless shopping experience, from browsing to delivery, ensuring that you receive the best value and satisfaction.</p>
-          </div>
-          <div class="col-md-6">
-            <h2 class="display-4 mb-2 fw-bold text-dark">Our Vision</h2>
-            <p>Our vision is to be the leading online retailer, known for our commitment to quality, innovation, and customer satisfaction. We aim to continuously expand our product range and improve our services to meet the evolving needs of our customers.</p>
-          </div>
-        </div>
-
-        <div class="row mt-3">
-          <div class="col-md-12">
-            <h2 class="display-4 mb-2 fw-bold text-dark">Our Values</h2>
-            <ul class="list-unstyled">
-              <li>
-                <i class="fas fa-check-circle" style="color: green;"></i> <strong>Customer First:</strong> We prioritize our customers' needs and strive to exceed their expectations with every interaction.
-              </li>
-              <li>
-                <i class="fas fa-check-circle" style="color: green;"></i> <strong>Quality:</strong> We are committed to offering products of the highest quality and stand behind everything we sell.
-              </li>
-              <li>
-                <i class="fas fa-check-circle" style="color: green;"></i> <strong>Integrity:</strong> We conduct our business with honesty and transparency.
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="row mt-3">
-          <p class="para-text">
-            We hope you enjoy our products as much as we enjoy offering them to you. If you have any questions or comments, please don't hesitate to <a href="{% url 'contact_us' %}">contact us.</a>
-          </p>
-        </div>
+  <section class="jobell-info-page">
+    <div class="jobell-info-hero">
+      <div>
+        <span class="jobell-page-kicker">About Jobell</span>
+        <h1>Fragrance, body care, and everyday essentials.</h1>
+        <p>Jobell is built around a simple shopping experience: clear products, reliable service, and carefully selected scents for personal care and home spaces.</p>
       </div>
-    </section>
-  </div>
-
-  <!-- Our Team Section -->
-  <div class="container-fluid my-3">
-    <!-- Title and Background Gradient -->
-    <div class="row text-center py-3">
-      <div class="col-12">
-        <h2 class="display-4 mb-2 fw-bold text-dark">Meet Our Team</h2>
-        <hr class="w-25 mx-auto" />
-      </div>
+      <img class="jobell-info-logo" src="{% static 'images/file.png' %}" alt="Jobell" />
     </div>
 
-    <!-- Team Member Cards in a Container for Same Width -->
-    <div class="container my-3">
-      <div class="row justify-content-center g-4">
-        <!-- CEO -->
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-          <div class="card border-0 shadow-lg rounded-4 text-center h-100">
-            <img src="{% static 'team/ceo.jpeg' %}" class="rounded-circle mx-auto mt-4" alt="CEO" style="width: 140px; height: 140px; object-fit: cover;" />
-            <div class="card-body">
-              <h5 class="card-title fw-semibold mb-1">Christbell Mujuni</h5>
-              <p class="card-text text-muted">Chief Executive Officer</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Managing Director -->
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-          <div class="card border-0 shadow-lg rounded-4 text-center h-100">
-            <img src="{% static 'team/md.jpeg' %}" class="rounded-circle mx-auto mt-4" alt="Accountant" style="width: 140px; height: 140px; object-fit: cover;" />
-            <div class="card-body">
-              <h5 class="card-title fw-semibold mb-1">Jordan Mujuni</h5>
-              <p class="card-text text-muted">Managing Director</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- IT Specialist -->
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-          <div class="card border-0 shadow-lg rounded-4 text-center h-100">
-            <img src="{% static 'team/specialist.jpeg' %}" class="rounded-circle mx-auto mt-4" alt="Programs Manager" style="width: 140px; height: 140px; object-fit: cover;" />
-            <div class="card-body">
-              <h5 class="card-title fw-semibold mb-1">Cronnie Owomugisha</h5>
-              <p class="card-text text-muted">IT Specialist</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Consultant -->
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-          <div class="card border-0 shadow-lg rounded-4 text-center h-100">
-            <img src="{% static 'team/consultant.jpg' %}" class="rounded-circle mx-auto mt-4" alt="Field Officer" style="width: 140px; height: 140px; object-fit: cover;" />
-            <div class="card-body">
-              <h5 class="card-title fw-semibold mb-1">Edwin Niwaha</h5>
-              <p class="card-text text-muted">Consultant</p>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div class="jobell-value-grid">
+      <article class="jobell-info-panel">
+        <h2>Our mission</h2>
+        <p>Provide high-quality products at fair prices, backed by helpful service from discovery to delivery.</p>
+      </article>
+      <article class="jobell-info-panel">
+        <h2>Our vision</h2>
+        <p>Become a trusted storefront known for quality, simplicity, and customer confidence.</p>
+      </article>
+      <article class="jobell-info-panel">
+        <h2>Our values</h2>
+        <ul class="jobell-check-list">
+          <li><i class="mdi mdi-check-circle-outline"></i> Customer-first service</li>
+          <li><i class="mdi mdi-check-circle-outline"></i> Quality products</li>
+          <li><i class="mdi mdi-check-circle-outline"></i> Honest communication</li>
+        </ul>
+      </article>
     </div>
-  </div>
 
-  <!-- Add margin-bottom to create space between content and footer -->
-  <div class="mb-5"></div>
+    <div class="jobell-section-heading-wide">
+      <h2>Meet our team</h2>
+      <p>The people keeping Jobell moving.</p>
+    </div>
+
+    <div class="jobell-team-grid">
+      <article class="jobell-team-card">
+        <img src="{% static 'team/ceo.jpeg' %}" alt="Christbell Mujuni" />
+        <h3>Christbell Mujuni</h3>
+        <p>Chief Executive Officer</p>
+      </article>
+      <article class="jobell-team-card">
+        <img src="{% static 'team/md.jpeg' %}" alt="Jordan Mujuni" />
+        <h3>Jordan Mujuni</h3>
+        <p>Managing Director</p>
+      </article>
+      <article class="jobell-team-card">
+        <img src="{% static 'team/specialist.jpeg' %}" alt="Cronnie Owomugisha" />
+        <h3>Cronnie Owomugisha</h3>
+        <p>IT Specialist</p>
+      </article>
+      <article class="jobell-team-card">
+        <img src="{% static 'team/consultant.jpg' %}" alt="Edwin Niwaha" />
+        <h3>Edwin Niwaha</h3>
+        <p>Consultant</p>
+      </article>
+    </div>
+  </section>
 {% endblock %}

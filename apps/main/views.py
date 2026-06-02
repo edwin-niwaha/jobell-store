@@ -1,4 +1,5 @@
 import json
+import logging
 from django.conf import settings
 from django.core.mail import send_mail
 from django.http import JsonResponse
@@ -12,10 +13,10 @@ from django.db.models import Sum, FloatField, F, Q, Count
 from django.db.models.functions import Coalesce
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.db.models import Min, Max, Avg
 from django.core.paginator import Paginator, EmptyPage
 
 from apps.products.models import Product, Category, Review
+from apps.products.selectors import active_products_queryset, build_storefront_cards
 from apps.sales.models import Sale
 from apps.orders.models import Cart, CartItem, Order, Wishlist
 from apps.finance.models import ChartOfAccounts, Transaction, FinancialPeriod
@@ -33,6 +34,8 @@ from .utils import (
     get_top_selling_products,
 )
 
+logger = logging.getLogger(__name__)
+
 import logging
 
 # Set up logging
@@ -44,12 +47,61 @@ def index(request):
     # Initialize the filter form
     form = ProductFilterForm(request.GET)
 
-    # Start with all active products
-    products = (
-        Product.objects.prefetch_related("images", "productvolume_set")
-        .filter(status="ACTIVE", is_featured=True)
-        .order_by("name")
+    active_products = active_products_queryset().order_by(
+        "-is_featured", "-created_at", "name"
     )
+    categories = list(Category.objects.filter(products__status="ACTIVE").distinct()[:12])
+    category_icon_map = {
+        "gift": {
+            "url": "https://cdn-icons-png.flaticon.com/512/104/104671.png",
+            "credit": "Freepik",
+            "source": "https://www.flaticon.com/free-icon/gift_104671",
+        },
+        "body": {
+            "url": "https://cdn-icons-png.flaticon.com/512/2351/2351666.png",
+            "credit": "Made by Made Premium",
+            "source": "https://www.flaticon.com/free-icon/cosmetics_2351666",
+        },
+        "cosmetic": {
+            "url": "https://cdn-icons-png.flaticon.com/512/2351/2351666.png",
+            "credit": "Made by Made Premium",
+            "source": "https://www.flaticon.com/free-icon/cosmetics_2351666",
+        },
+        "care": {
+            "url": "https://cdn-icons-png.flaticon.com/512/5512/5512237.png",
+            "credit": "Smashicons",
+            "source": "https://www.flaticon.com/free-icon/bottle_5512237",
+        },
+        "home": {
+            "url": "https://cdn-icons-png.flaticon.com/512/9658/9658309.png",
+            "credit": "Nuricon",
+            "source": "https://www.flaticon.com/free-icon/diffuser_9658309",
+        },
+        "diffuser": {
+            "url": "https://cdn-icons-png.flaticon.com/512/9658/9658309.png",
+            "credit": "Nuricon",
+            "source": "https://www.flaticon.com/free-icon/diffuser_9658309",
+        },
+        "default": {
+            "url": "https://cdn-icons-png.flaticon.com/512/2371/2371049.png",
+            "credit": "Freepik",
+            "source": "https://www.flaticon.com/free-icon/perfume_2371049",
+        },
+    }
+    for category in categories:
+        category_name = category.name.lower()
+        category.icon = category_icon_map["default"]
+        for key, icon in category_icon_map.items():
+            if key != "default" and key in category_name:
+                category.icon = icon
+                break
+    featured_count = active_products.filter(is_featured=True).count()
+
+    # Prefer featured products on the landing page, but fall back to active products
+    # so a new store still has a useful homepage before merchandising is configured.
+    products = active_products.filter(is_featured=True)
+    if not products.exists():
+        products = active_products
 
     # Initialize counts for cart, wishlist, and orders
     cart_count = 0
@@ -89,16 +141,32 @@ def index(request):
         # Filter by price range if provided
         if min_price is not None and max_price is not None:
             products = products.filter(
-                productvolume__volume__price__gte=min_price,
-                productvolume__volume__price__lte=max_price,
+                Q(productvolume__price__gte=min_price)
+                | Q(
+                    productvolume__price__isnull=True,
+                    productvolume__volume__price__gte=min_price,
+                ),
+                Q(productvolume__price__lte=max_price)
+                | Q(
+                    productvolume__price__isnull=True,
+                    productvolume__volume__price__lte=max_price,
+                ),
             ).distinct()
         elif min_price is not None:
             products = products.filter(
-                productvolume__volume__price__gte=min_price
+                Q(productvolume__price__gte=min_price)
+                | Q(
+                    productvolume__price__isnull=True,
+                    productvolume__volume__price__gte=min_price,
+                )
             ).distinct()
         elif max_price is not None:
             products = products.filter(
-                productvolume__volume__price__lte=max_price
+                Q(productvolume__price__lte=max_price)
+                | Q(
+                    productvolume__price__isnull=True,
+                    productvolume__volume__price__lte=max_price,
+                )
             ).distinct()
 
         # Filter by search query if provided
@@ -121,37 +189,7 @@ def index(request):
     except EmptyPage:
         page_obj = paginator.page(paginator.num_pages)
 
-    # Prepare the products with images and volumes
-    products_with_images = []
-    for product in page_obj:
-        images = product.images.filter(is_default=True)
-        if not images.exists():
-            images = product.images.all()
-
-        volumes = product.productvolume_set.all()
-        if volumes.exists():
-            min_vol_price = volumes.aggregate(Min("volume__price"))[
-                "volume__price__min"
-            ]
-            max_vol_price = volumes.aggregate(Max("volume__price"))[
-                "volume__price__max"
-            ]
-        else:
-            min_vol_price = max_vol_price = None
-
-        # Calculate the average rating
-        avg_rating = product.reviews.aggregate(Avg("rating"))["rating__avg"]
-        avg_rating = round(avg_rating, 1) if avg_rating else None
-
-        products_with_images.append(
-            {
-                "product": product,
-                "images": images,
-                "min_price": min_vol_price,
-                "max_price": max_vol_price,
-                "avg_rating": avg_rating,  # Add average rating
-            }
-        )
+    products_with_images = build_storefront_cards(page_obj)
 
     # Handle testimonial and nesletter forms submission
     testimonial_form = TestimonialForm(request.POST or None)
@@ -186,6 +224,12 @@ def index(request):
         {
             "form": form,
             "products_with_images": products_with_images,
+            "categories": categories,
+            "active_products_count": active_products.count(),
+            "categories_count": Category.objects.filter(products__status="ACTIVE")
+            .distinct()
+            .count(),
+            "featured_count": featured_count,
             "user": request.user,
             "page_obj": page_obj,
             "cart_count": cart_count,
@@ -196,86 +240,6 @@ def index(request):
             "newsletter_form": newsletter_form,
         },
     )
-
-
-# =================================== The finance dashboard view ===================================
-# @login_required
-# @admin_or_manager_or_staff_required
-# def finance_dashboard(request):
-#     def calculate_sales_profit():
-#         """Calculate total profit from sales."""
-#         total_profit = Decimal("0.00")
-#         try:
-#             sales = Sale.objects.prefetch_related("items__product_volume__volume")
-#             for sale in sales:
-#                 for item in sale.items.all():
-#                     if item.product_volume:
-#                         cost = Decimal(item.product_volume.volume.cost or 0)
-#                         price = Decimal(item.product_volume.volume.price or 0)
-#                         total_profit += (price - cost) * Decimal(item.quantity or 0)
-#         except Exception as e:
-#             print(f"Error calculating sales profit: {e}")
-#         return total_profit
-
-#     def calculate_other_income():
-#         """Calculate non-sales revenue."""
-#         try:
-#             return Transaction.objects.filter(account__account_type="revenue").exclude(
-#                 account__account_name="Sales Revenue"
-#             ).aggregate(total_income=Sum("amount"))["total_income"] or Decimal("0.00")
-#         except Exception as e:
-#             print(f"Error calculating other income: {e}")
-#             return Decimal("0.00")
-
-#     def calculate_account_totals():
-#         """Calculate totals for each account type."""
-#         account_types = ["Asset", "Liability", "Revenue", "Expense", "NetIncome"]
-#         summary = {}
-#         try:
-#             total_revenue = calculate_sales_profit() + calculate_other_income()
-#             for account_type in account_types:
-#                 if account_type == "NetIncome":
-#                     continue
-#                 if account_type == "Revenue":
-#                     summary[account_type] = float(total_revenue)
-#                     continue
-
-#                 total = Decimal("0.00")
-#                 accounts = ChartOfAccounts.objects.filter(
-#                     account_type=account_type.lower()
-#                 )
-#                 for acc in accounts:
-#                     transactions = Transaction.objects.filter(account=acc).aggregate(
-#                         debit_sum=Sum("amount", filter=Q(transaction_type="debit")),
-#                         credit_sum=Sum("amount", filter=Q(transaction_type="credit")),
-#                     )
-#                     debit = transactions["debit_sum"] or Decimal("0.00")
-#                     credit = transactions["credit_sum"] or Decimal("0.00")
-#                     total += (
-#                         (debit - credit)
-#                         if account_type.lower() in ["asset", "expense"]
-#                         else (credit - debit)
-#                     )
-#                 summary[account_type] = float(total)
-
-#             # Calculate Net Income
-#             summary["NetIncome"] = float(
-#                 summary.get("Revenue", 0) - summary.get("Expense", 0)
-#             )
-#         except Exception as e:
-#             print(f"Error in account totals: {e}")
-#             summary = {key: 0.0 for key in account_types}
-#         return summary
-
-#     # Prepare context
-#     context = {
-#         "summary": calculate_account_totals(),
-#         "recent_transactions": Transaction.objects.select_related(
-#             "journal_entry", "account"
-#         ).order_by("-journal_entry__transaction_date")[:8],
-#     }
-
-#     return render(request, "main/fin_dashboard.html", context)
 
 
 @login_required
@@ -408,8 +372,9 @@ def dashboard(request):
         )["total"]
         for month in range(1, 13)
     ]
-    annual_earnings = format(sum(monthly_earnings), ".2f")
-    avg_month = format(sum(monthly_earnings) / 12, ".2f")
+    monthly_earnings = [float(value or 0) for value in monthly_earnings]
+    annual_earnings = sum(monthly_earnings)
+    avg_month = annual_earnings / 12
 
     # Get total sales for today, week, and month
     total_sales_today = get_total_sales_for_period(today, today)
@@ -420,6 +385,18 @@ def dashboard(request):
 
     # Get top-selling products using the new method
     top_products = get_top_selling_products()
+
+    sales_per_year = (
+        Sale.objects.annotate(year=ExtractYear("trans_date"))
+        .values("year")
+        .annotate(total_sales=Sum("grand_total"))
+        .order_by("year")
+    )
+    payment_mix = (
+        Sale.objects.values("payment_method")
+        .annotate(total=Sum("grand_total"))
+        .order_by("-total")
+    )
 
     # Fetch all sales and prefetch related data
     sales = Sale.objects.prefetch_related(
@@ -465,6 +442,50 @@ def dashboard(request):
         "total_sales_month": total_sales_month,
         "top_products": top_products,
         "total_profit_after_sales": total_profit_after_sales,
+        "sales_count": Sale.objects.count(),
+        "avg_sale_value": annual_earnings / max(Sale.objects.filter(trans_date__year=year).count(), 1),
+        "current_year": year,
+        "dashboard_chart_data": {
+            "monthly": {
+                "labels": [
+                    "Jan",
+                    "Feb",
+                    "Mar",
+                    "Apr",
+                    "May",
+                    "Jun",
+                    "Jul",
+                    "Aug",
+                    "Sep",
+                    "Oct",
+                    "Nov",
+                    "Dec",
+                ],
+                "sales": monthly_earnings,
+            },
+            "annual": {
+                "labels": [item["year"] for item in sales_per_year],
+                "sales": [float(item["total_sales"] or 0) for item in sales_per_year],
+            },
+            "payments": {
+                "labels": [
+                    item["payment_method"].replace("_", " ").title()
+                    for item in payment_mix
+                ],
+                "sales": [float(item["total"] or 0) for item in payment_mix],
+            },
+            "topProducts": {
+                "labels": [product.name for product in top_products[:6]],
+                "quantity": [
+                    int(product.total_quantity_sold or 0)
+                    for product in top_products[:6]
+                ],
+                "sales": [
+                    float(product.total_sales_value or 0)
+                    for product in top_products[:6]
+                ],
+            },
+        },
     }
 
     return render(request, "main/dashboard.html", context)
@@ -537,6 +558,8 @@ def sales_data_api(request):
 
 # =================================== Finance graphs ===================================
 # 1. Bar Chart: Transaction Totals by Account Type
+@login_required
+@admin_or_manager_or_staff_required
 def transactions_by_account_type(request):
     data = (
         Transaction.objects.select_related("account")
@@ -550,6 +573,8 @@ def transactions_by_account_type(request):
 
 
 # 2. Pie Chart: Financial Period Status Distribution
+@login_required
+@admin_or_manager_or_staff_required
 def financial_period_status(request):
     data = (
         FinancialPeriod.objects.values("status")
@@ -562,6 +587,8 @@ def financial_period_status(request):
 
 
 # 3. Line Chart: Transaction Trends Over Time
+@login_required
+@admin_or_manager_or_staff_required
 def transaction_trends(request):
     current_year = timezone.now().year  # 2025
     start_date = datetime(current_year, 1, 1).date()
@@ -603,6 +630,8 @@ def transaction_trends(request):
 
 
 # 4. Donut Chart: Top Accounts by Transaction Volume
+@login_required
+@admin_or_manager_or_staff_required
 def top_accounts(request):
     data = (
         Transaction.objects.select_related("account")
@@ -618,6 +647,8 @@ def top_accounts(request):
 # 5. Income Vs Expenses
 
 
+@login_required
+@admin_or_manager_or_staff_required
 def income_vs_expenses(request):
     current_year = timezone.now().year  # 2025
     start_date = datetime(current_year, 1, 1).date()
@@ -683,6 +714,8 @@ def income_vs_expenses(request):
 
 
 # =================================== testimonials_view ===================================
+@login_required
+@admin_or_manager_or_staff_required
 def testimonials_view(request):
     # Fetch all testimonials
     testimonials_list = Testimonial.objects.all()
@@ -752,11 +785,11 @@ def testimonial_delete(request, pk):
         messages.success(
             request, "Testimonial deleted successfully.", extra_tags="bg-danger"
         )
-    except Exception as e:
+    except Exception:
+        logger.exception("Error deleting testimonial %s", pk)
         messages.error(
             request, "There was an error during the deletion!", extra_tags="bg-danger"
         )
-        print(e)
 
     return redirect("testimonials")
 
@@ -794,6 +827,8 @@ def delete_subscriber_view(request, subscriber_id):
 
 
 # =================================== Send Email ===================================
+@login_required
+@admin_or_manager_or_staff_required
 def send_bulk_email_view(request):
     table_title = "Subscriber Email List"
 
@@ -843,8 +878,10 @@ def send_bulk_email_view(request):
 
 
 # =================================== Reviews ===================================
+@login_required
+@admin_or_manager_or_staff_required
 def reviews_list_view(request):
-    reviews = Review.objects.all()  # Fetch all reviews
+    reviews = Review.objects.select_related("product", "user").all()
     if request.method == "POST":
         review_id = request.POST.get("review_id")
         action = request.POST.get("action")
@@ -864,6 +901,8 @@ def reviews_list_view(request):
     return render(request, "main/reviews_list.html", {"reviews": reviews})
 
 
+@login_required
+@admin_or_manager_or_staff_required
 def toggle_is_verified(request, review_id):
     # Fetch the review object based on the given ID
     review = get_object_or_404(Review, id=review_id)
@@ -877,6 +916,8 @@ def toggle_is_verified(request, review_id):
     return JsonResponse({"is_verified": review.is_verified})
 
 
+@login_required
+@admin_or_manager_or_staff_required
 def delete_review(request, review_id):
     review = get_object_or_404(Review, id=review_id)
     review.delete()

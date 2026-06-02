@@ -37,6 +37,8 @@ logger = logging.getLogger(__name__)
 
 
 # =================================== Account List view ===================================
+@login_required
+@admin_or_manager_or_staff_required
 def chart_of_accounts_list_view(request):
     accounts = ChartOfAccounts.objects.all()  # Retrieve all accounts
     accounts_by_type = {}  # Dictionary to group accounts by type
@@ -299,13 +301,13 @@ def chart_of_account_delete_view(request, account_id):
             f"Account: {account.account_name} deleted successfully!",
             extra_tags="bg-success",
         )
-    except Exception as e:
+    except Exception:
+        logger.exception("Error deleting chart of account %s", account_id)
         messages.error(
             request,
             "An error occurred during the deletion process.",
             extra_tags="bg-danger",
         )
-        print(f"Error deleting account: {e}")
 
     return redirect("finance:chart_of_accounts_list")
 
@@ -747,11 +749,11 @@ def delete_transaction_detailed(request, transaction_id):
             request, f"Journal Entry #{journal_ref} deleted!", extra_tags="bg-success"
         )
     except ValidationError as e:
+        logger.warning("Validation error deleting detailed transaction %s: %s", transaction_id, e)
         messages.error(request, f"Validation error: {str(e)}", extra_tags="bg-danger")
-        print(e)
-    except Exception as e:
+    except Exception:
+        logger.exception("Error deleting detailed transaction %s", transaction_id)
         messages.error(request, "Deletion error!", extra_tags="bg-danger")
-        print(e)
     return redirect("finance:ledger_select_period")
 
 
@@ -776,11 +778,11 @@ def delete_transaction(request, transaction_id):
             request, f"Journal Entry #{journal_ref} deleted!", extra_tags="bg-success"
         )
     except ValidationError as e:
+        logger.warning("Validation error deleting transaction %s: %s", transaction_id, e)
         messages.error(request, f"Validation error: {str(e)}", extra_tags="bg-danger")
-        print(e)
-    except Exception as e:
+    except Exception:
+        logger.exception("Error deleting transaction %s", transaction_id)
         messages.error(request, "Deletion error!", extra_tags="bg-danger")
-        print(e)
     return redirect("finance:ledger_report")
 
 
@@ -922,8 +924,7 @@ def profit_loss_statement_view(request):
         # Calculate net profit
         profit_and_loss["net_profit"] = float(total_revenue - total_expenses)
 
-    # Debug: Print profit_and_loss to verify structure
-    print("profit_and_loss:", profit_and_loss)
+    logger.debug("Profit and loss report generated: %s", profit_and_loss)
 
     # Pass data to the template
     context = {

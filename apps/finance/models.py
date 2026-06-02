@@ -34,6 +34,8 @@ class Branch(AuditableModel):  # Inherit from AuditableModel
     class Meta:
         verbose_name = _("Branch")
         verbose_name_plural = _("Branches")
+        ordering = ["name"]
+        indexes = [models.Index(fields=["code"], name="branch_code_idx")]
 
     def __str__(self):
         return self.name
@@ -66,6 +68,11 @@ class FinancialPeriod(AuditableModel):  # Inherit from AuditableModel
         verbose_name = _("Financial Period")
         verbose_name_plural = _("Financial Periods")
         ordering = ["-start_date"]
+        indexes = [
+            models.Index(fields=["branch", "status"], name="period_branch_status_idx"),
+            models.Index(fields=["start_date", "end_date"], name="period_date_range_idx"),
+            models.Index(fields=["status", "start_date"], name="period_status_start_idx"),
+        ]
 
     def __str__(self):
         return f"{self.name} ({self.start_date} - {self.end_date})"
@@ -149,6 +156,13 @@ class ChartOfAccounts(AuditableModel):
         verbose_name_plural = "Chart of Accounts"
         ordering = ["account_number"]
         db_table = "accounts"
+        indexes = [
+            models.Index(fields=["account_number"], name="coa_account_number_idx"),
+            models.Index(fields=["account_type", "status"], name="coa_type_status_idx"),
+            models.Index(fields=["branch", "status"], name="coa_branch_status_idx"),
+            models.Index(fields=["parent_account"], name="coa_parent_idx"),
+            models.Index(fields=["is_deleted", "status"], name="coa_deleted_status_idx"),
+        ]
 
     def __str__(self):
         return f"{self.account_name} ({self.get_account_type_display()})"
@@ -256,6 +270,16 @@ class JournalEntry(AuditableModel):
         verbose_name=_("Branch"),
     )
 
+    class Meta:
+        ordering = ["-transaction_date", "-id"]
+        indexes = [
+            models.Index(fields=["reference_number"], name="journal_reference_idx"),
+            models.Index(fields=["transaction_date"], name="journal_date_idx"),
+            models.Index(fields=["financial_period", "transaction_date"], name="journal_period_date_idx"),
+            models.Index(fields=["branch", "transaction_date"], name="journal_branch_date_idx"),
+            models.Index(fields=["payment_method"], name="journal_payment_method_idx"),
+        ]
+
     def __str__(self):
         return f"Journal Entry #{self.reference_number} on {self.transaction_date}"
 
@@ -303,6 +327,12 @@ class Transaction(AuditableModel):
     account = models.ForeignKey("ChartOfAccounts", on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPE_CHOICES)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["journal_entry", "transaction_type"], name="txn_journal_type_idx"),
+            models.Index(fields=["account", "transaction_type"], name="txn_account_type_idx"),
+        ]
 
     def __str__(self):
         return f"{self.transaction_type.title()} {self.amount} ({self.account})"

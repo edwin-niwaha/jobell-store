@@ -1,122 +1,135 @@
-{% extends 'accounts/base.html' %}
-{% load static %}
+{% extends 'base.html' %}
 {% load humanize %}
 
 {% block content %}
   <div class="container-fluid">
-    <div class="card shadow-lg border-0">
-      <div class="card-header bg-primary text-white text-center">
-        <h2 class="mb-0">Process Order - {{ order.id }}</h2>
+    <div class="admin-page-head">
+      <div>
+        <span class="admin-eyebrow">Fulfillment</span>
+        <h1 class="admin-page-title">Process order #{{ order.id }}</h1>
+        <p class="admin-muted mb-0">Review the customer, items, and update the delivery status.</p>
       </div>
-      <div class="card-body">
-        <!-- Order & Customer Details -->
-        <div class="row g-4">
-          <!-- Order Details -->
-          <div class="col-md-6">
-            <h4 class="border-bottom pb-2 text-secondary">Order Details</h4>
-            <p>
-              <strong>Order ID:</strong> {{ order.id }}
-            </p>
-            <p>
-              <strong>Date:</strong> {{ order.created_at|date:'d M Y, H:i A' }}
-            </p>
-            <p>
-              <strong>Order Status:</strong>
-              {% if order.status == 'Pending' %}
-                <span class="badge bg-warning">Pending</span>
-              {% elif order.status == 'Out for Delivery' %}
-                <span class="badge bg-info text-dark">Out for Delivery</span>
-              {% elif order.status == 'Delivered' %}
-                <span class="badge bg-success">Delivered</span>
-              {% elif order.status == 'Canceled' %}
-                <span class="badge bg-danger">Canceled</span>
-              {% elif order.status == 'Refunded' %}
-                <span class="badge bg-secondary">Refunded</span>
-              {% elif order.status == 'Returned' %}
-                <span class="badge bg-dark">Returned</span>
-              {% else %}
-                <span class="badge bg-light text-dark">Unknown</span>
-              {% endif %}
-            </p>
-            <p>
-              <strong>Total Amount:</strong> {{ order.total_amount|floatformat:'2'|intcomma }}
-            </p>
-            {% comment %} <p>
-              <strong>Payment Method:</strong> {{ order.payment_method }}
-            </p> {% endcomment %}
-          </div>
 
-          <!-- Customer Information -->
-          <div class="col-md-6">
-            <h4 class="border-bottom pb-2 text-secondary">Customer Information</h4>
-            <p>
-              <strong>Name:</strong> {{ order.customer.get_full_name }}
-            </p>
-            <p>
-              <strong>Email:</strong> <a href="mailto:{{ order.customer.email }}">{{ order.customer.email }}</a>
-            </p>
-            <p>
-              <strong>Phone:</strong> <a href="tel:{{ order.customer.mobile }}">{{ order.customer.mobile }}</a>
-            </p>
-            <p>
-              <strong>Address:</strong> {{ order.customer.address }}
-            </p>
-          </div>
-        </div>
+      <div class="admin-actions print-hide">
+        <a href="{% url 'orders:orders_to_be_processed' %}" class="btn btn-outline-dark">
+          <i class="mdi mdi-arrow-left mr-2"></i>Back to queue
+        </a>
+        <a href="{% url 'orders:order_report' order.id %}" class="btn btn-info">
+          <i class="mdi mdi-eye-outline mr-2"></i>View report
+        </a>
+      </div>
+    </div>
 
-        <!-- Order Items -->
-        <div class="mt-4">
-          <h4 class="border-bottom pb-2 text-secondary">Order Items</h4>
-          <div class="table-responsive">
-            <table class="table table-striped table-hover align-middle">
-              <thead class="table-light">
-                <tr>
-                  <th>Product</th>
-                  <th>Volume</th>
-                  <th>Quantity</th>
-                  <th class="text-right">Unit Price</th>
-                  <th class="text-right">Total Price</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for detail in order.details.all %}
+    <div class="admin-stat-grid">
+      <div class="admin-stat">
+        <span>Status</span>
+        <strong>{{ order.status }}</strong>
+      </div>
+      <div class="admin-stat">
+        <span>Total</span>
+        <strong>UGX {{ order.total_amount|floatformat:'0'|intcomma }}</strong>
+      </div>
+      <div class="admin-stat">
+        <span>Payment</span>
+        <strong>{{ order.get_payment_method_display }}</strong>
+      </div>
+      <div class="admin-stat">
+        <span>Date</span>
+        <strong>{{ order.created_at|date:'d M' }}</strong>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-lg-8">
+        <section class="admin-panel mb-4">
+          <div class="admin-panel-header">
+            <h2>Order items</h2>
+            <span class="badge badge-warning text-dark">{{ order.details.count }} item{{ order.details.count|pluralize }}</span>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
                   <tr>
-                    <td>{{ detail.product.name }} | {{ detail.product.category }} | {{ detail.product.gender }} | {{ detail.product_volume.product_type }}</td>
-                    <td class="text-center">
-                      {% if detail.product_volume %}
-                        {{ detail.product_volume.volume.ml }} ML
-                      {% else %}
-                        No volume specified
-                      {% endif %}
-                    </td>
-                    <td>{{ detail.quantity }}</td>
-                    <td class="text-right">{{ detail.price|floatformat:'2'|intcomma }}</td>
-                    <td class="text-right">{{ detail.total|floatformat:'2'|intcomma }}</td>
+                    <th>Product</th>
+                    <th>Variant</th>
+                    <th>Qty</th>
+                    <th class="text-right">Unit</th>
+                    <th class="text-right">Total</th>
                   </tr>
-                {% empty %}
-                  <tr>
-                    <td colspan="4" class="text-center text-muted">No items found for this order.</td>
-                  </tr>
+                </thead>
+                <tbody>
+                  {% for detail in order.details.all %}
+                    <tr>
+                      <td>
+                        <span class="admin-item-title">{{ detail.product.name }}</span>
+                        <span class="admin-item-subtitle">{{ detail.product.category }}{% if detail.product.gender %} / {{ detail.product.gender }}{% endif %}</span>
+                      </td>
+                      <td>
+                        {% if detail.product_volume %}
+                          {{ detail.product_volume.variant_label }}
+                        {% else %}
+                          <span class="admin-muted">No variant</span>
+                        {% endif %}
+                      </td>
+                      <td>{{ detail.quantity }}</td>
+                      <td class="text-right">UGX {{ detail.price|floatformat:'0'|intcomma }}</td>
+                      <td class="text-right"><strong>UGX {{ detail.total|floatformat:'0'|intcomma }}</strong></td>
+                    </tr>
+                  {% empty %}
+                    <tr>
+                      <td colspan="5">
+                        <div class="admin-empty">
+                          <div class="admin-empty-icon"><i class="mdi mdi-package-variant-closed"></i></div>
+                          <h2 class="h5 font-weight-bold">No items found</h2>
+                        </div>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="col-lg-4">
+        <section class="admin-panel mb-4">
+          <div class="admin-panel-header">
+            <h2>Customer</h2>
+          </div>
+          <div class="card-body">
+            <span class="admin-item-title">{{ order.customer.get_full_name|default:'Customer' }}</span>
+            <p class="admin-muted mb-2">{{ order.customer.address|default:'Address pending' }}</p>
+            {% if order.customer.email %}
+              <p class="mb-1"><i class="mdi mdi-email-outline mr-2"></i><a href="mailto:{{ order.customer.email }}">{{ order.customer.email }}</a></p>
+            {% endif %}
+            {% if order.customer.mobile %}
+              <p class="mb-0"><i class="mdi mdi-phone-outline mr-2"></i><a href="tel:{{ order.customer.mobile }}">{{ order.customer.mobile }}</a></p>
+            {% endif %}
+          </div>
+        </section>
+
+        <section class="admin-panel">
+          <div class="admin-panel-header">
+            <h2>Update status</h2>
+          </div>
+          <div class="card-body">
+            <form method="post">
+              {% csrf_token %}
+              <div class="form-group">
+                {{ form.status.label_tag }}
+                {{ form.status }}
+                {% for error in form.status.errors %}
+                  <div class="text-danger small mt-1">{{ error }}</div>
                 {% endfor %}
-              </tbody>
-            </table>
+              </div>
+              <button type="submit" class="btn btn-success btn-lg w-100" onclick="return confirm('Update this order status?')">
+                <i class="mdi mdi-check-circle-outline mr-2"></i>Update status
+              </button>
+            </form>
           </div>
-        </div>
-
-        <!-- Update Order Status -->
-        <div class="mt-4">
-          <h4 class="border-bottom pb-2 text-secondary">Update Order Status</h4>
-          <form method="post" class="mt-3">
-            {% csrf_token %}
-            <div class="mb-3">{{ form.as_p }}</div>
-            <button type="submit" class="btn btn-success btn-lg" onclick="return confirm('Are you sure you want to proceed?')">Update Status</button>
-          </form>
-        </div>
-
-        <!-- Navigation -->
-        <div class="text-end mt-4">
-          <a href="{% url 'orders:orders_to_be_processed' %}" class="btn btn-secondary"><i class="mdi mdi-arrow-left"></i> Back to Orders</a>
-        </div>
+        </section>
       </div>
     </div>
   </div>

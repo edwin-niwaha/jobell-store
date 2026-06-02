@@ -657,14 +657,14 @@ def sale_delete_view(request, sale_id):
             f"Sale: {sale_id} not found!",
             extra_tags="bg-danger",
         )
-    except Exception as e:
+    except Exception:
+        logger.exception("Error deleting sale %s", sale_id)
         # General exception for any other errors
         messages.error(
             request,
             "There was an error during the elimination!",
             extra_tags="bg-danger",
         )
-        print(e)
     finally:
         return redirect("sales:sales_list")
 

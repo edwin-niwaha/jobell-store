@@ -1,124 +1,147 @@
 {% extends 'accounts/base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}
   Your Wishlist
 {% endblock %}
 
 {% block content %}
-  <div class="container mt-2">
-    <div class="row">
-      <div class="col-12 text-center mb-4">
-        <h1 class="display-5 fw-bold text-dark"><i class="fas fa-heart text-danger me-2"></i>Your Wishlist</h1>
-        <hr class="w-25 mx-auto border-3 border-primary" />
+  <main class="store-page">
+    <div class="store-shell">
+      <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4">
+        <div>
+          <span class="store-eyebrow">Saved products</span>
+          <h1 class="store-title h2">Your wishlist</h1>
+          <p class="store-muted mb-0">Keep favorites close and move them to cart when you are ready.</p>
+        </div>
+
+        <a href="{% url 'products:shop_homepage' %}" class="store-btn-outline">
+          <i class="fas fa-store"></i> Continue shopping
+        </a>
       </div>
-    </div>
 
-    {% if page_obj %}
-      <div class="row g-4">
-        {% for item in page_obj %}
-          <div class="col-lg-3 col-md-4 col-sm-6">
-            <div class="card h-100 border-0 shadow-sm rounded-3 overflow-hidden transition-hover">
-              <div class="position-relative">
-                {% if item.default_image %}
-                  <img src="{{ item.default_image.image.url }}" class="card-img-top" alt="{{ item.product.name }}" style="height: 220px; object-fit: cover; transition: transform 0.3s ease;" />
-                {% else %}
-                  <img src="{% static 'images/default-product.jpg' %}" class="card-img-top" alt="Default Product Image" style="height: 220px; object-fit: cover; transition: transform 0.3s ease;" />
-                {% endif %}
-                <div class="position-absolute top-0 end-0 p-2">
-                  <button type="button" class="btn btn-sm btn-danger rounded-circle shadow" data-bs-toggle="modal" data-bs-target="#removeModal{{ item.id }}" title="Remove from Wish Wishlist" aria-label="Remove from Wishlist"><i class="fas fa-times"></i></button>
-                </div>
-              </div>
-              <div class="card-body">
-                <h5 class="card-title fw-semibold text-dark text-truncate" title="{{ item.product.name }}">{{ item.product.name }}</h5>
-                <div class="d-flex gap-2 mt-3">
-                  <a href="{% url 'orders:product_detail' item.product.uuid %}" class="btn btn-outline-primary btn-sm w-100"><i class="fas fa-eye me-2"></i>View Details</a>
-                  <button type="button" class="btn btn-outline-danger btn-sm w-100" data-bs-toggle="modal" data-bs-target="#removeModal{{ item.id }}"><i class="fas fa-trash-alt me-2"></i>Remove</button>
-                </div>
-              </div>
+      {% if page_obj %}
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-4">
+          {% for item in page_obj %}
+            {% with product=item.product product_info=item.product_info %}
+              <div class="col">
+                <article class="store-product-card">
+                  <a href="{% url 'orders:product_detail' product.uuid %}" class="store-product-media" aria-label="View {{ product.name }}">
+                    {% if product_info.image_url %}
+                      <img src="{{ product_info.image_url }}" alt="{{ product.name }}" loading="lazy">
+                    {% elif item.default_image %}
+                      <img src="{{ item.default_image.image.url }}" alt="{{ product.name }}" loading="lazy">
+                    {% else %}
+                      <span class="store-product-placeholder">No image</span>
+                    {% endif %}
 
-              <!-- Modal -->
-              <div class="modal fade" id="removeModal{{ item.id }}" tabindex="-1" aria-labelledby="removeModalLabel{{ item.id }}" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                  <div class="modal-content rounded-3 shadow-lg">
-                    <div class="modal-header border-0 bg-light">
-                      <h5 class="modal-title fw-bold" id="removeModalLabel{{ item.id }}">Confirm Removal</h5>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <span class="store-product-badge {% if not product_info.is_in_stock %}is-out{% endif %}">
+                      {% if product_info.is_in_stock %}In stock{% else %}Out of stock{% endif %}
+                    </span>
+                  </a>
+
+                  <form method="post" action="{% url 'orders:remove_from_wishlist' item.id %}" class="store-product-heart">
+                    {% csrf_token %}
+                    <button class="store-icon-btn is-active" type="submit" title="Remove {{ product.name }} from wishlist" aria-label="Remove {{ product.name }} from wishlist">
+                      <i class="fas fa-heart"></i>
+                    </button>
+                  </form>
+
+                  <div class="store-product-body">
+                    <div class="store-product-kicker">{{ product.category|default:'Product' }}</div>
+                    <a href="{% url 'orders:product_detail' product.uuid %}" class="store-product-title">{{ product.name }}</a>
+
+                    <div class="store-product-price {% if product_info.has_discount %}is-sale{% endif %}">
+                      {% if product_info.has_sellable_price %}
+                        UGX {{ product_info.min_price|floatformat:'0'|intcomma }}{% if product_info.min_price != product_info.max_price %} - {{ product_info.max_price|floatformat:'0'|intcomma }}{% endif %}
+                      {% else %}
+                        Price pending
+                      {% endif %}
                     </div>
-                    <div class="modal-body">
-                      <p>
-                        Are you sure you want to remove <strong class="text-danger">{{ item.product.name }}</strong> from your wishlist?
-                      </p>
+
+                    <div class="store-rating">
+                      {% if product_info.avg_rating %}
+                        <i class="fas fa-star"></i>
+                        <span>{{ product_info.avg_rating|floatformat:1 }} rating</span>
+                      {% else %}
+                        <span class="store-muted">No ratings yet</span>
+                      {% endif %}
                     </div>
-                    <div class="modal-footer border-0">
-                      <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                      <form action="{% url 'orders:remove_from_wishlist' item.id %}" method="post">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-danger">Remove</button>
-                      </form>
+
+                    <div class="mt-auto pt-3 d-grid gap-2">
+                      {% if product_info.sellable_variants and product_info.is_in_stock %}
+                        {% if product_info.sellable_variants|length > 6 %}
+                          <span class="store-variant-pill">
+                            {% if product_info.volume_range_label %}{{ product_info.volume_range_label }} · {% endif %}{{ product_info.sellable_variants|length }} options
+                          </span>
+                          <a href="{% url 'orders:product_detail' product.uuid %}" class="store-btn w-100">
+                            <i class="fas fa-list"></i> Choose options
+                          </a>
+                        {% else %}
+                        <form method="post" action="{% url 'orders:add_to_cart' product.uuid %}" class="d-grid gap-2 js-add-to-cart-form">
+                          {% csrf_token %}
+                          <input type="hidden" name="quantity" value="1">
+                          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+
+                          {% if product_info.sellable_variants|length > 1 %}
+                            <select class="form-select store-variant-select" name="volume_id" aria-label="Choose variant for {{ product.name }}" required>
+                              {% for variant in product_info.sellable_variants %}
+                                <option value="{{ variant.id }}">{{ variant.variant_label }} - UGX {{ variant.current_price|floatformat:'0'|intcomma }}</option>
+                              {% endfor %}
+                            </select>
+                          {% else %}
+                            {% for variant in product_info.sellable_variants|slice:':1' %}
+                              <input type="hidden" name="volume_id" value="{{ variant.id }}">
+                              <span class="store-variant-pill">{{ variant.variant_label }}</span>
+                            {% endfor %}
+                          {% endif %}
+
+                          <button type="submit" class="store-btn w-100" data-cart-submit>
+                            <i class="fas fa-shopping-cart"></i> Add to cart
+                          </button>
+                        </form>
+                        {% endif %}
+                      {% endif %}
+
+                      <a href="{% url 'orders:product_detail' product.uuid %}" class="store-btn-outline w-100">
+                        <i class="fas fa-eye"></i> View details
+                      </a>
                     </div>
                   </div>
-                </div>
+                </article>
               </div>
-            </div>
-          </div>
-        {% endfor %}
-      </div>
-
-      <!-- Pagination -->
-      <nav aria-label="Wishlist pagination" class="mt-5">
-        <ul class="pagination justify-content-center gap-1">
-          {% if page_obj.has_previous %}
-            <li class="page-item">
-              <a class="page-link rounded-pill px-3" href="?page=1">&laquo; First</a>
-            </li>
-            <li class="page-item">
-              <a class="page-link rounded-pill px-3" href="?page={{ page_obj.previous_page_number }}">Previous</a>
-            </li>
-          {% else %}
-            <li class="page-item disabled">
-              <span class="page-link rounded-pill px-3">&laquo; First</span>
-            </li>
-            <li class="page-item disabled">
-              <span class="page-link rounded-pill px-3">Previous</span>
-            </li>
-          {% endif %}
-
-          {% for num in page_obj.paginator.page_range %}
-            {% if page_obj.number == num %}
-              <li class="page-item active">
-                <span class="page-link rounded-pill px-3">{{ num }}</span>
-              </li>
-            {% else %}
-              <li class="page-item">
-                <a class="page-link rounded-pill px-3" href="?page={{ num }}">{{ num }}</a>
-              </li>
-            {% endif %}
+            {% endwith %}
           {% endfor %}
+        </div>
 
-          {% if page_obj.has_next %}
-            <li class="page-item">
-              <a class="page-link rounded-pill px-3" href="?page={{ page_obj.next_page_number }}">Next</a>
-            </li>
-            <li class="page-item">
-              <a class="page-link rounded-pill px-3" href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
-            </li>
-          {% else %}
-            <li class="page-item disabled">
-              <span class="page-link rounded-pill px-3">Next</span>
-            </li>
-            <li class="page-item disabled">
-              <span class="page-link rounded-pill px-3">Last &raquo;</span>
-            </li>
-          {% endif %}
-        </ul>
-      </nav>
-    {% else %}
-      <div class="text-center py-5">
-        <i class="fas fa-heart-broken fa-3x text-muted mb-3"></i>
-        <p class="lead text-muted">Your wishlist is empty</p>
-        <a href="/" class="btn btn-primary rounded-pill px-4">Start Shopping</a>
-      </div>
-    {% endif %}
-  </div>
+        {% if page_obj.paginator.num_pages > 1 %}
+          <nav aria-label="Wishlist pagination" class="mt-5">
+            <ul class="pagination justify-content-center flex-wrap">
+              {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link text-dark" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+              {% endif %}
+
+              <li class="page-item active">
+                <span class="page-link border-0" style="background: #B8860B;">{{ page_obj.number }}</span>
+              </li>
+
+              {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link text-dark" href="?page={{ page_obj.next_page_number }}">Next</a></li>
+              {% endif %}
+            </ul>
+          </nav>
+        {% endif %}
+      {% else %}
+        <section class="store-panel store-empty">
+          <div class="store-empty-icon"><i class="fas fa-heart"></i></div>
+          <h2 class="store-title h3">Your wishlist is empty</h2>
+          <p class="store-muted mb-4">Tap the heart on any product to save it here.</p>
+          <a href="{% url 'products:shop_homepage' %}" class="store-btn">
+            <i class="fas fa-store"></i> Start shopping
+          </a>
+        </section>
+      {% endif %}
+    </div>
+  </main>
 {% endblock %}

@@ -2,56 +2,278 @@
 {% load static %}
 
 {% block content %}
+  <style>
+    .category-page-head {
+      align-items: flex-end;
+      display: flex;
+      gap: 1rem;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+    }
+
+    .category-eyebrow {
+      color: #b8860b;
+      display: block;
+      font-size: .78rem;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .category-title {
+      color: #050505;
+      font-weight: 900;
+      margin: .2rem 0 0;
+    }
+
+    .category-tools {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .6rem;
+      justify-content: flex-end;
+    }
+
+    .category-search {
+      background: #fff;
+      border: 1px solid rgba(5, 5, 5, .08);
+      border-radius: 1rem;
+      box-shadow: 0 14px 34px rgba(5, 5, 5, .06);
+      margin-bottom: 1rem;
+      padding: 1rem;
+    }
+
+    .category-card {
+      border: 0;
+      border-radius: 1.1rem;
+      box-shadow: 0 18px 46px rgba(5, 5, 5, .08);
+      overflow: hidden;
+    }
+
+    .category-card .card-header {
+      align-items: center;
+      background: #050505;
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+    }
+
+    .category-card .card-header h2 {
+      color: #fff;
+      font-size: 1.15rem;
+      font-weight: 900;
+      margin: 0;
+    }
+
+    .category-table {
+      border-collapse: separate;
+      border-spacing: 0 .75rem;
+      width: 100%;
+    }
+
+    .category-table thead th {
+      border: 0;
+      color: #6b6258;
+      font-size: .75rem;
+      font-weight: 900;
+      letter-spacing: .08em;
+      padding: .35rem .85rem;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .category-table tbody tr {
+      background: #fff;
+      box-shadow: 0 8px 22px rgba(5, 5, 5, .05);
+    }
+
+    .category-table tbody td {
+      border-bottom: 1px solid rgba(5, 5, 5, .06);
+      border-top: 1px solid rgba(5, 5, 5, .06);
+      padding: .85rem;
+      vertical-align: middle;
+    }
+
+    .category-table tbody td:first-child {
+      border-left: 1px solid rgba(5, 5, 5, .06);
+      border-radius: .9rem 0 0 .9rem;
+    }
+
+    .category-table tbody td:last-child {
+      border-radius: 0 .9rem .9rem 0;
+      border-right: 1px solid rgba(5, 5, 5, .06);
+    }
+
+    .category-thumb {
+      background: #f8f5ef;
+      border: 1px solid rgba(184, 134, 11, .22);
+      border-radius: .9rem;
+      height: 72px;
+      object-fit: cover;
+      width: 72px;
+    }
+
+    .category-thumb-placeholder {
+      align-items: center;
+      color: #b8860b;
+      display: inline-flex;
+      font-size: 1.55rem;
+      justify-content: center;
+    }
+
+    .category-name {
+      color: #050505;
+      display: block;
+      font-weight: 900;
+      line-height: 1.2;
+    }
+
+    .category-slug {
+      color: #756b5f;
+      display: block;
+      font-size: .82rem;
+      margin-top: .25rem;
+    }
+
+    .category-status {
+      border-radius: 999px;
+      display: inline-flex;
+      font-size: .78rem;
+      font-weight: 900;
+      padding: .35rem .7rem;
+    }
+
+    .category-status.is-active {
+      background: rgba(6, 125, 98, .1);
+      color: #067d62;
+    }
+
+    .category-status.is-inactive {
+      background: rgba(177, 39, 4, .1);
+      color: #b12704;
+    }
+
+    .category-count {
+      color: #050505;
+      font-weight: 900;
+    }
+
+    .category-empty {
+      padding: 3rem 1rem;
+      text-align: center;
+    }
+
+    @media (max-width: 767.98px) {
+      .category-page-head {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .category-tools {
+        justify-content: flex-start;
+      }
+
+      .category-table {
+        min-width: 760px;
+      }
+    }
+
+    @media print {
+      .category-search,
+      .category-tools,
+      .print-hide {
+        display: none !important;
+      }
+
+      .category-card,
+      .category-table tbody tr {
+        box-shadow: none !important;
+      }
+    }
+  </style>
+
   <div class="container-fluid">
-    <div class="row mb-3">
-      <div class="col-md-12 d-flex justify-content-between align-items-center">
-        <a href="{% url 'products:categories_add' %}" class="btn btn-success font-weight-bold"><i class="mdi mdi-plus mr-2"></i> Add Category</a>
-        <div class="d-flex">
-          <button title="Print" type="button" class="btn btn-success ml-2" onclick="printDiv('printMe')"><i class="mdi mdi-printer btn-icon-prepend"></i></button>
-        </div>
+    <div class="category-page-head">
+      <div>
+        <span class="category-eyebrow">Catalog setup</span>
+        <h1 class="category-title">Product categories</h1>
+        <p class="text-muted mb-0">Manage storefront departments and the images shown to customers.</p>
+      </div>
+
+      <div class="category-tools print-hide">
+        <a href="{% url 'products:categories_add' %}" class="btn btn-success font-weight-bold">
+          <i class="mdi mdi-plus mr-2"></i>Add Category
+        </a>
+        <button title="Print" type="button" class="btn btn-dark" onclick="printDiv('printMe')">
+          <i class="mdi mdi-printer btn-icon-prepend"></i>
+        </button>
       </div>
     </div>
 
-    <!-- Search Form -->
-    <form method="get" action="{% url 'products:categories_list' %}">
+    <form method="get" action="{% url 'products:categories_list' %}" class="category-search print-hide">
       <div class="input-group">
-        <input type="text" class="form-control" name="search" value="{{ search_query }}" placeholder="Search by name" />
+        <input type="text" class="form-control" name="search" value="{{ search_query }}" placeholder="Search categories by name" />
         <button class="btn btn-primary" type="submit"><i class="mdi mdi-magnify"></i> Search</button>
       </div>
     </form>
 
-    <!-- DataTable -->
-    <div id="printMe" class="card shadow mb-4">
-      <div class="card-header py-3">
-        <h2>PRODUCTS CATEGORIES</h2>
+    <div id="printMe" class="card category-card mb-4">
+      <div class="card-header">
+        <h2>Categories</h2>
+        <span class="badge badge-warning text-dark">{{ page_obj.paginator.count }} total</span>
       </div>
+
       <div class="card-body">
         <div class="table-responsive">
-          <table class="my-table" id="dataTable">
+          <table class="category-table" id="dataTable">
             <thead>
               <tr>
                 <th>#</th>
+                <th>Image</th>
                 <th>Name</th>
-                <th>Description</th>
-                <th colspan="2" class="text-center print-hide" style="width:15%">Actions</th>
+                <th>Status</th>
+                <th>Products</th>
+                <th colspan="2" class="text-center print-hide">Actions</th>
               </tr>
             </thead>
             <tbody>
               {% for c in categories %}
                 <tr>
-                  <td>{{ forloop.counter }}</td>
-                  <td>{{ c.name }}</td>
-                  <td>{{ c.description }}</td>
+                  <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
+                  <td>
+                    {% if c.image_url %}
+                      <img src="{{ c.image_url }}" alt="{{ c.name }}" class="category-thumb" loading="lazy">
+                    {% else %}
+                      <span class="category-thumb category-thumb-placeholder" aria-label="No category image">
+                        <i class="mdi mdi-image-off-outline"></i>
+                      </span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <span class="category-name">{{ c.name }}</span>
+                    <span class="category-slug">{{ c.slug|default:'No slug yet' }}</span>
+                  </td>
+                  <td>
+                    {% if c.is_active %}
+                      <span class="category-status is-active">Active</span>
+                    {% else %}
+                      <span class="category-status is-inactive">Inactive</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <span class="category-count">{{ c.product_count }}</span>
+                  </td>
                   <td class="text-center print-hide">
-                    <!-- Update button -->
-                    <a href="{% url 'products:categories_update' c.id %}" class="text-decoration-none" onclick="return confirm('Are you sure you want to update this record?');"><button type="button" class="btn btn-warning btn-sm" data-bs-toggle="tooltip" title="Update category"><i class="bi bi-pencil"></i></button></a>
+                    <a href="{% url 'products:categories_update' c.id %}" class="btn btn-warning btn-sm" title="Update category" aria-label="Update {{ c.name }}">
+                      <i class="bi bi-pencil"></i>
+                    </a>
                   </td>
                   <td class="text-center print-hide">
                     {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
-                      <!-- Delete button and modal -->
-                      <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ c.id }}" title="Delete category"><i class="bi bi-trash"></i></button>
+                      <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ c.id }}" title="Delete category" aria-label="Delete {{ c.name }}">
+                        <i class="bi bi-trash"></i>
+                      </button>
 
-                      <!-- Delete Modal -->
                       <div class="modal fade" id="deleteModal{{ c.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ c.id }}" aria-hidden="true">
                         <div class="modal-dialog">
                           <div class="modal-content">
@@ -60,11 +282,11 @@
                               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">X</button>
                             </div>
                             <div class="modal-body">
-                              Are you sure you want to delete the category: <h3>{{ c.name }}?</h3>
+                              Are you sure you want to delete <strong>{{ c.name }}</strong>?
                             </div>
                             <div class="modal-footer">
                               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                              <a href="{% url 'products:categories_delete' c.id %}" class="text-decoration-none"><button type="button" class="btn btn-danger">Delete</button></a>
+                              <a href="{% url 'products:categories_delete' c.id %}" class="btn btn-danger">Delete</a>
                             </div>
                           </div>
                         </div>
@@ -72,26 +294,39 @@
                     {% endif %}
                   </td>
                 </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="7">
+                    <div class="category-empty">
+                      <i class="mdi mdi-shape-outline display-4 text-muted"></i>
+                      <h2 class="h4 font-weight-bold mt-3">No categories found</h2>
+                      <p class="text-muted">Add a category with an image so it can appear nicely on the storefront.</p>
+                      <a href="{% url 'products:categories_add' %}" class="btn btn-success print-hide">Add category</a>
+                    </div>
+                  </td>
+                </tr>
               {% endfor %}
             </tbody>
           </table>
         </div>
-        <!-- Pagination -->
-        <div class="pagination">
-          <span class="step-links">
-            {% if page_obj.has_previous %}
-              <a href="?page=1&search={{ search_query }}">&laquo; first</a>
-              <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}">previous</a>
-            {% endif %}
 
-            <span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.</span>
+        {% if page_obj.paginator.num_pages > 1 %}
+          <nav aria-label="Category pagination" class="pagination justify-content-center mt-3 print-hide">
+            <span class="step-links">
+              {% if page_obj.has_previous %}
+                <a href="?page=1&search={{ search_query }}">&laquo; first</a>
+                <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}">previous</a>
+              {% endif %}
 
-            {% if page_obj.has_next %}
-              <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}">next</a>
-              <a href="?page={{ page_obj.paginator.num_pages }}&search={{ search_query }}">last &raquo;</a>
-            {% endif %}
-          </span>
-        </div>
+              <span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
+              {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}">next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}&search={{ search_query }}">last &raquo;</a>
+              {% endif %}
+            </span>
+          </nav>
+        {% endif %}
       </div>
     </div>
   </div>

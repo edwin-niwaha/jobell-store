@@ -19,9 +19,9 @@
             <div class="card shadow-sm">
               <!-- Product Image -->
               {% if product.default_image %}
-                <a href="{% url 'orders:product_detail' product.id %}"><img src="{{ product.default_image.image.url }}" alt="{{ product.name }}" class="d-block w-100 rounded-pill img-fluid product-image" style="max-height: 200px; object-fit: contain;" /></a>
+                <a href="{% url 'orders:product_detail' product.uuid %}"><img src="{{ product.default_image.image.url }}" alt="{{ product.name }}" class="d-block w-100 rounded-pill img-fluid product-image" style="max-height: 200px; object-fit: contain;" /></a>
               {% else %}
-                <a href="{% url 'orders:product_detail' product.id %}"><img src="{% static 'images/default-product.jpg' %}" alt="Default Product Image" class="d-block w-100 rounded-pill img-fluid" style="max-height: 200px; object-fit: contain;" /></a>
+                <a href="{% url 'orders:product_detail' product.uuid %}"><img src="{% static 'images/default-product.jpg' %}" alt="Default Product Image" class="d-block w-100 rounded-pill img-fluid" style="max-height: 200px; object-fit: contain;" /></a>
               {% endif %}
 
               <div class="card-body">
@@ -53,8 +53,26 @@
 
                 <!-- Action Buttons -->
                 <div class="d-flex justify-content-between mt-3">
-                  <a href="{% url 'orders:product_detail' product.id %}" class="btn btn-outline-primary btn-sm" title="View Product Details"><i class="mdi mdi-eye me-1"></i> View</a>
-                  <a href="{% url 'orders:product_detail' product.id %}" class="btn btn-success btn-sm" title="Add to Cart"><i class="mdi mdi-cart me-1"></i> Add to Cart</a>
+                  <a href="{% url 'orders:product_detail' product.uuid %}" class="btn btn-outline-primary btn-sm" title="View Product Details"><i class="mdi mdi-eye me-1"></i> View</a>
+                  {% if product.discounted_volumes %}
+                    <form method="post" action="{% url 'orders:add_to_cart' product.uuid %}" class="js-add-to-cart-form">
+                      {% csrf_token %}
+                      <input type="hidden" name="quantity" value="1">
+                      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                      {% if product.discounted_volumes|length > 1 %}
+                        <select class="sr-only" name="volume_id" aria-label="Choose discounted option for {{ product.name }}">
+                          {% for volume in product.discounted_volumes %}
+                            <option value="{{ volume.id }}">{{ volume.variant_label }}</option>
+                          {% endfor %}
+                        </select>
+                      {% else %}
+                        {% for volume in product.discounted_volumes|slice:':1' %}
+                          <input type="hidden" name="volume_id" value="{{ volume.id }}">
+                        {% endfor %}
+                      {% endif %}
+                      <button type="submit" class="btn btn-success btn-sm" title="Add to Cart" data-cart-submit><i class="mdi mdi-cart me-1"></i> Add to Cart</button>
+                    </form>
+                  {% endif %}
                 </div>
               </div>
             </div>

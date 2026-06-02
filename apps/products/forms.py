@@ -59,21 +59,25 @@ class ProductFilterForm(forms.Form):
 class CategoryForm(forms.ModelForm):
     class Meta:
         model = Category
-        fields = ["name", "description"]
+        fields = ["name", "slug", "image", "is_active"]
         widgets = {
             "name": forms.TextInput(
                 attrs={"class": "form-control", "placeholder": "Enter category name"}
             ),
-            "description": forms.TextInput(
+            "slug": forms.TextInput(
                 attrs={
                     "class": "form-control",
-                    "placeholder": "Enter category description",
+                    "placeholder": "Leave blank to auto-generate",
                 }
             ),
+            "image": forms.FileInput(attrs={"class": "form-control", "accept": "image/*"}),
+            "is_active": forms.CheckboxInput(attrs={"class": "form-check-input"}),
         }
         labels = {
             "name": "Category Name",
-            "description": "Description",
+            "slug": "Slug",
+            "image": "Category Icon/Image",
+            "is_active": "Active",
         }
 
 
@@ -100,11 +104,63 @@ class ProductVolumeForm(forms.ModelForm):
 
     class Meta:
         model = ProductVolume
-        # fields = ["volume", "product_type", "cost", "price", "discount_value", "image"]
-        fields = ["volume", "product_type", "discount_value"]
+        fields = [
+            "name",
+            "sku",
+            "volume",
+            "product_type",
+            "price",
+            "unit_cost",
+            "discount_value",
+            "color",
+            "size",
+            "scent",
+            "barcode",
+            "variant_image",
+            "attributes",
+            "stock_quantity",
+            "max_quantity_per_order",
+            "is_active",
+            "sort_order",
+        ]
         widgets = {
+            "name": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Leave blank to use type and volume",
+                }
+            ),
+            "sku": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Leave blank to auto-generate",
+                }
+            ),
             "volume": forms.Select(attrs={"class": "form-control"}),
             "product_type": forms.Select(attrs={"class": "form-control"}),
+            "price": forms.NumberInput(
+                attrs={"class": "form-control", "step": "0.01", "min": "0"}
+            ),
+            "unit_cost": forms.NumberInput(
+                attrs={"class": "form-control", "step": "0.01", "min": "0"}
+            ),
+            "discount_value": forms.NumberInput(
+                attrs={"class": "form-control", "step": "0.01", "min": "0"}
+            ),
+            "color": forms.TextInput(attrs={"class": "form-control", "placeholder": "Optional color/shade"}),
+            "size": forms.TextInput(attrs={"class": "form-control", "placeholder": "Optional size"}),
+            "scent": forms.TextInput(attrs={"class": "form-control", "placeholder": "Optional scent"}),
+            "barcode": forms.TextInput(attrs={"class": "form-control", "placeholder": "Optional barcode"}),
+            "variant_image": forms.FileInput(attrs={"class": "form-control", "accept": "image/*"}),
+            "attributes": forms.Textarea(attrs={"class": "form-control", "rows": 3, "placeholder": '{"material": "glass"}'}),
+            "stock_quantity": forms.NumberInput(
+                attrs={"class": "form-control", "min": "0"}
+            ),
+            "max_quantity_per_order": forms.NumberInput(
+                attrs={"class": "form-control", "min": "1"}
+            ),
+            "sort_order": forms.NumberInput(attrs={"class": "form-control", "min": "0"}),
+            "is_active": forms.CheckboxInput(attrs={"class": "form-check-input"}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -117,18 +173,29 @@ class ProductVolumeForm(forms.ModelForm):
         cleaned_data = super().clean()
         volume = cleaned_data.get("volume")
         product_type = cleaned_data.get("product_type")
+        color = cleaned_data.get("color", "")
+        size = cleaned_data.get("size", "")
+        scent = cleaned_data.get("scent", "")
+        sku = cleaned_data.get("sku")
+        barcode = cleaned_data.get("barcode")
 
-        # Check if a ProductVolume with the same product, volume, and product_type already exists
-        if (
-            ProductVolume.objects.filter(
-                product=self.product, volume=volume, product_type=product_type
-            )
-            .exclude(id=self.instance.id)
-            .exists()
-        ):
-            raise ValidationError(
-                "Oops! This combination of volume and product type is already assigned to this product."
-            )
+        if self.product and volume and product_type:
+            duplicate_qs = ProductVolume.objects.filter(
+                product=self.product,
+                volume=volume,
+                product_type=product_type,
+                color=color,
+                size=size,
+                scent=scent,
+            ).exclude(id=self.instance.id)
+            if duplicate_qs.exists():
+                raise ValidationError(
+                    "Oops! This exact variation already exists for this product."
+                )
+        if sku and ProductVolume.objects.filter(sku=sku).exclude(id=self.instance.id).exists():
+            raise ValidationError("This SKU is already assigned to another variant.")
+        if barcode and ProductVolume.objects.filter(barcode=barcode).exclude(id=self.instance.id).exists():
+            raise ValidationError("This barcode is already assigned to another variant.")
         return cleaned_data
 
     def save(self, commit=True):
@@ -168,15 +235,26 @@ class ProductForm(forms.ModelForm):
         model = Product
         fields = [
             "name",
+            "slug",
             "description",
             "status",
             "category",
             "gender",
             "supplier",
+            "cost_price",
+            "selling_price",
+            "is_featured",
+            "hero_image",
         ]
         widgets = {
             "name": forms.TextInput(
                 attrs={"class": "form-control", "placeholder": "Enter product name"}
+            ),
+            "slug": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Leave blank to auto-generate",
+                }
             ),
             "description": forms.Textarea(
                 attrs={
@@ -189,14 +267,27 @@ class ProductForm(forms.ModelForm):
             "category": forms.Select(attrs={"class": "form-control"}),
             "gender": forms.Select(attrs={"class": "form-control"}),
             "supplier": forms.Select(attrs={"class": "form-control"}),
+            "cost_price": forms.NumberInput(
+                attrs={"class": "form-control", "step": "0.01", "min": "0"}
+            ),
+            "selling_price": forms.NumberInput(
+                attrs={"class": "form-control", "step": "0.01", "min": "0"}
+            ),
+            "is_featured": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+            "hero_image": forms.FileInput(attrs={"class": "form-control", "accept": "image/*"}),
         }
         labels = {
             "name": "Product Name",
+            "slug": "Slug",
             "description": "Description",
             "status": "Status",
             "category": "Category",
             "gender": "Gender",
-            "suppliers": "Suppliers",  # Label for the suppliers field
+            "supplier": "Supplier",  # Label for the suppliers field
+            "cost_price": "Default Cost Price",
+            "selling_price": "Default Selling Price",
+            "is_featured": "Featured",
+            "hero_image": "Hero Image",
         }
 
 
@@ -206,21 +297,31 @@ class ProductImageForm(forms.ModelForm):
 
     class Meta:
         model = ProductImage
-        fields = ["image"]
+        fields = ["image", "alt_text", "is_default", "is_active", "sort_order"]
 
         labels = {
             "image": "Upload Product Image:",
+            "alt_text": "Alt Text",
+            "is_default": "Default Image",
+            "is_active": "Active",
+            "sort_order": "Sort Order",
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["image"].widget = forms.FileInput(attrs={"accept": "image/*"})
+        self.fields["image"].widget = forms.FileInput(
+            attrs={"accept": "image/*", "class": "form-control", "data-image-preview-input": "true"}
+        )
+        for field_name in ["alt_text", "sort_order"]:
+            self.fields[field_name].widget.attrs.update({"class": "form-control"})
+        self.fields["is_default"].widget.attrs.update({"class": "form-check-input"})
+        self.fields["is_active"].widget.attrs.update({"class": "form-check-input"})
 
-    def clean_picture(self):
-        picture = self.cleaned_data.get("image")
-        if picture and picture.size > 1500 * 1024:  # 1.5 MB
+    def clean_image(self):
+        image = self.cleaned_data.get("image")
+        if image and image.size > 1500 * 1024:
             raise forms.ValidationError("Image size should not exceed 1.5 MB.")
-        return picture
+        return image
 
 
 # =================================== Volume Selection Form ===================================

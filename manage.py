@@ -13,7 +13,7 @@ def main():
     """Run administrative tasks."""
 
     if os.environ.get("DJANGO_ENV") == "development":
-        settings = "core.settings_dev"
+        settings = "core.settings.development"
     else:
         settings = "core.settings"
 

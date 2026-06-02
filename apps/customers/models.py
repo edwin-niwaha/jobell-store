@@ -48,11 +48,21 @@ class Customer(models.Model):
         db_table = "Customers"
         verbose_name = "Customer"
         verbose_name_plural = "Customers"
+        ordering = ["first_name", "last_name"]
+        indexes = [
+            models.Index(fields=["email"], name="customer_email_idx"),
+            models.Index(fields=["first_name", "last_name"], name="customer_name_idx"),
+            models.Index(fields=["created_at"], name="customer_created_idx"),
+        ]
 
     def __str__(self):
         if self.user:
             return f"{self.user.username} (Customer)"
         return f"{self.first_name} {self.last_name}".strip()
+
+    @property
+    def full_name(self):
+        return self.get_full_name()
 
     def get_full_name(self):
         return f"{self.first_name} {self.last_name}".strip()

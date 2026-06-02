@@ -3,37 +3,57 @@
 
 {% block content %}
   <div class="container-fluid">
-    <div class="row mb-3">
-      <div class="col-md-12 d-flex justify-content-between align-items-center">
-        <a href="{% url 'products:add-volume-to-all-products' %}">
-          <button type="button" class="btn btn-info font-weight-bold">
-            <i class="mdi mdi-arrow-left-bold mr-2"></i>
-            Go back
-          </button>
+    <div class="admin-page-head">
+      <div>
+        <span class="admin-eyebrow">Bulk variant tools</span>
+        <h1 class="admin-page-title">{{ form_title }}</h1>
+        <p class="admin-muted mb-0">Create one volume/type variant across every product, skipping combinations that already exist.</p>
+      </div>
+
+      <div class="admin-actions print-hide">
+        <a href="{% url 'products:product-volumes-list' %}" class="btn btn-dark font-weight-bold">
+          <i class="mdi mdi-format-list-bulleted mr-2"></i>View variants
         </a>
-        <div class="d-flex">
-          <a href="{% url 'products:delete-selected-volumes' %}" class="btn btn-success ml-3 font-weight-bold">Manage Volumes</a>
-          <a href="{% url 'products:product-volumes-list' %}" class="btn btn-success ml-3 font-weight-bold">View Volumes</a>
-        </div>
+        <a href="{% url 'products:delete-selected-volumes' %}" class="btn btn-outline-danger font-weight-bold">
+          <i class="mdi mdi-delete-sweep mr-2"></i>Delete batch
+        </a>
+        <a href="{% url 'products:volume_list' %}" class="btn btn-outline-dark font-weight-bold">
+          <i class="mdi mdi-beaker-outline mr-2"></i>Volumes
+        </a>
       </div>
     </div>
-    <div class="row">
-      <div class="col-12">
-        <div class="card card-secondary">
-          <div class="card-header">
-            <h3>{{ form_title|upper }}</h3>
-          </div>
-          <div class="card-body">
-            <form method="post">
-              {% csrf_token %}
-              {{ form|crispy }}
-              <div class="form-group mt-4 mb-0">
-                <button type="submit" class="btn btn-dark btn-block" onclick="return confirm('Are you sure you want to proceed?') && validateForm()">Add Volume to All Products</button>
-              </div>
-            </form>
+
+    <div class="admin-form-layout">
+      <section class="admin-panel">
+        <div class="admin-panel-header">
+          <h2>Bulk Add</h2>
+          <span class="badge badge-warning text-dark">All products</span>
+        </div>
+        <div class="card-body">
+          <form method="post" class="admin-compact-form">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <div class="admin-form-actions">
+              <button type="submit" class="btn btn-dark font-weight-bold" onclick="return confirm('This will add the selected volume and type to every product that does not already have it. Continue?')">
+                <i class="mdi mdi-plus-circle mr-2"></i>Add to all products
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <aside class="admin-panel admin-help-panel">
+        <div class="admin-panel-header">
+          <h2>How It Works</h2>
+        </div>
+        <div class="card-body">
+          <div class="admin-help-list">
+            <span><i class="mdi mdi-check-circle-outline"></i> Adds only missing product/volume/type combinations</span>
+            <span><i class="mdi mdi-minus-circle-outline"></i> Keeps existing variants unchanged</span>
+            <span><i class="mdi mdi-alert-outline"></i> Best used after creating a new ML size</span>
           </div>
         </div>
-      </div>
+      </aside>
     </div>
   </div>
 {% endblock %}

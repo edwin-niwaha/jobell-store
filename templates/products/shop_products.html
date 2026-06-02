@@ -3,166 +3,387 @@
 {% load humanize %}
 
 {% block content %}
-  <div class="container-fluid px-4 py-3 bg-light">
-    <!-- Header Section -->
-    <header class="text-center mb-3">
-      <h3 class="display-5 fw-bold text-primary" style="background: linear-gradient(90deg, #FF6B6B, #FFD93D); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase; letter-spacing: 2px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">Discover Your Signature Scent</h3>
-    </header>
+  <style>
+    :root {
+      --deep-gold: #B8860B;
+      --deep-gold-dark: #D4AF37;
+      --brand-black: #050505;
+    }
 
-    <!-- Search and Filter Form -->
-    <form method="get" action="{% url 'products:shop_homepage' %}" class="bg-white p-4 rounded-3 shadow-sm mb-3 sticky-top" style="top: 1rem; z-index: 1000;">
-      <div class="row g-3 align-items-end">
-        <div class="col-md-4">
-          <label for="id_category" class="form-label fw-medium text-dark">Category</label>
-          {{ form.category }}
-        </div>
-        <div class="col-md-5">
-          <label for="id_search" class="form-label fw-medium text-dark">Search by Name</label>
-          <div class="input-group">
-            {{ form.search }}
-            <span class="input-group-text bg-light"><i class="fas fa-search"></i></span>
+    .shop-hero {
+      background: linear-gradient(135deg, #050505, #1c1c1c);
+    }
+
+    .btn-gold {
+      background: var(--deep-gold);
+      border-color: var(--deep-gold);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .btn-gold:hover,
+    .btn-gold:focus {
+      background: var(--deep-gold-dark);
+      border-color: var(--deep-gold-dark);
+      color: #fff;
+    }
+
+    .btn-outline-gold {
+      border-color: var(--deep-gold);
+      color: var(--deep-gold);
+      font-weight: 700;
+    }
+
+    .btn-outline-gold:hover,
+    .btn-outline-gold:focus {
+      background: var(--deep-gold);
+      border-color: var(--deep-gold);
+      color: #fff;
+    }
+
+    .shop-img {
+      aspect-ratio: 1 / 1;
+      object-fit: cover;
+      transition: transform .25s ease;
+    }
+
+    .product-card {
+      position: relative;
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+
+    .product-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 1rem 2.25rem rgba(0, 0, 0, .14) !important;
+    }
+
+    .product-card:hover .shop-img {
+      transform: scale(1.04);
+    }
+
+    .product-media {
+      overflow: hidden;
+      position: relative;
+    }
+
+    .category-scroll {
+      scrollbar-width: thin;
+    }
+
+    .category-chip.active,
+    .category-chip:hover {
+      background: var(--deep-gold) !important;
+      border-color: var(--deep-gold) !important;
+      color: #fff !important;
+    }
+
+    .price-text {
+      color: var(--deep-gold-dark);
+    }
+
+    .variant-select {
+      border-color: rgba(184, 138, 68, .28);
+      border-radius: 999px;
+      font-size: .85rem;
+      font-weight: 600;
+      min-height: 40px;
+    }
+
+    .variant-pill {
+      background: #f8f4ec;
+      border: 1px solid rgba(184, 138, 68, .24);
+      border-radius: 999px;
+      color: #6c6258;
+      display: block;
+      font-size: .8rem;
+      font-weight: 700;
+      overflow: hidden;
+      padding: .55rem .75rem;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .wishlist-btn {
+      aspect-ratio: 1 / 1;
+      width: 44px;
+    }
+
+    .shop-card-heart {
+      position: absolute;
+      right: .85rem;
+      top: .85rem;
+      z-index: 3;
+    }
+
+    .shop-card-heart .btn {
+      align-items: center;
+      background: rgba(255,255,255,.94);
+      border: 1px solid rgba(255,255,255,.75);
+      border-radius: 999px;
+      box-shadow: 0 .6rem 1.4rem rgba(0,0,0,.12);
+      color: var(--brand-black);
+      display: inline-flex;
+      height: 42px;
+      justify-content: center;
+      padding: 0;
+      width: 42px;
+    }
+
+    .shop-card-heart .btn:hover {
+      background: #fff7f7;
+      color: #b12704;
+    }
+  </style>
+
+  <main class="bg-light py-4 py-lg-5">
+    <div class="container-fluid px-3 px-lg-4">
+      <section class="shop-hero rounded-4 shadow-sm overflow-hidden mb-4">
+        <div class="p-4 p-lg-5">
+          <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-4">
+            <div class="text-white">
+              <p class="text-uppercase fw-bold text-warning small mb-2">Jobell store</p>
+              <h1 class="display-5 fw-bold mb-2">Discover your signature scent</h1>
+              <p class="text-white-50 mb-0">
+                {{ result_count|default:0 }} product{{ result_count|default:0|pluralize }} available for delivery or pickup follow-up.
+              </p>
+            </div>
+
+            <a href="{% url 'orders:cart' %}" class="btn btn-gold rounded-pill px-4">
+              <i class="fas fa-shopping-cart me-2"></i>View cart
+            </a>
           </div>
         </div>
-        <div class="col-md-3">
-          <button type="submit" class="btn btn-primary w-100 fw-semibold py-2 rounded-3 shadow-sm"><i class="fas fa-search me-2"></i>Find Scents</button>
-        </div>
-      </div>
-    </form>
+      </section>
 
-    <!-- Product Grid -->
-    <div id="product-list" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-      {% if products_with_images %}
-        {% for product_info in products_with_images %}
-          {% with product=product_info.product images=product_info.images min_price=product_info.min_price max_price=product_info.max_price %}
-            <div class="col product-item">
-              <div class="card h-100 border-0 rounded-3 overflow-hidden shadow-sm transition-transform" style="transition: transform 0.3s ease, box-shadow 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 10px 20px rgba(0,0,0,0.15)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.1)';">
-                <!-- Product Carousel -->
-                <div id="carousel-{{ product.id }}" class="carousel slide" data-bs-ride="carousel" data-bs-interval="5000">
-                  <div class="carousel-inner">
-                    {% if images %}
-                      {% for image in images %}
-                        <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                          <div class="ratio ratio-1x1">
-                            <img src="{{ image.image.url }}" class="d-block w-100 h-100 object-fit-cover rounded-top disable-right-click" alt="{{ product.name }}" loading="lazy" />
-                          </div>
-                        </div>
-                      {% endfor %}
-                    {% else %}
-                      <div class="carousel-item active">
-                        <div class="ratio ratio-1x1">
-                          <img src="{% static 'images/no-image.png' %}" class="d-block w-100 h-100 object-fit-cover rounded-top disable-right-click" alt="No image available" loading="lazy" />
-                        </div>
-                      </div>
-                    {% endif %}
-                  </div>
-                  {% if images.count > 1 %}
-                    <button class="carousel-control-prev" type="button" data-bs-target="#carousel-{{ product.id }}" data-bs-slide="prev">
-                      <span class="carousel-control-prev-icon bg-dark bg-opacity-50 rounded-circle" aria-hidden="true"></span>
-                      <span class="visually-hidden">Previous</span>
-                    </button>
-                    <button class="carousel-control-next" type="button" data-bs-target="#carousel-{{ product.id }}" data-bs-slide="next">
-                      <span class="carousel-control-next-icon bg-dark bg-opacity-50 rounded-circle" aria-hidden="true"></span>
-                      <span class="visually-hidden">Next</span>
-                    </button>
-                  {% endif %}
-                </div>
-
-                <!-- Card Body -->
-                <div class="card-body p-3 d-flex flex-column">
-                  <h5 class="card-title text-uppercase fw-semibold text-dark mb-2 truncate-text" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ product.name }}</h5>
-                  <p class="card-text text-muted small mb-2">{{ product.category }} | {{ product.gender }}</p>
-                  <p class="card-text fw-bold text-dark mb-3">
-                    {% if min_price and max_price %}
-                      UGX {{ min_price|floatformat:'0'|intcomma }} - {{ max_price|floatformat:'0'|intcomma }}
-                    {% else %}
-                      Price not available
-                    {% endif %}
-                  </p>
-                  <div class="d-flex align-items-center mb-3">
-                    <div class="text-warning">
-                      {% if product_info.avg_rating %}
-                        {% for i in '12345'|make_list %}
-                          {% if forloop.counter0|add:0.5 <= product_info.avg_rating %}
-                            <i class="fas fa-star"></i>
-                          {% elif forloop.counter0|add:0 <= product_info.avg_rating %}
-                            <i class="fas fa-star-half-alt"></i>
-                          {% else %}
-                            <i class="far fa-star"></i>
-                          {% endif %}
-                        {% endfor %}
-                        <span class="ms-1 small text-muted">({{ product_info.avg_rating|floatformat:1 }})</span>
-                      {% else %}
-                        <span class="small text-muted">No ratings</span>
-                      {% endif %}
-                    </div>
-                  </div>
-                  <div class="mt-auto d-grid gap-2">
-                    <a href="{% url 'orders:product_details_view' product.uuid %}" class="btn btn-outline-primary btn-sm fw-semibold rounded-3"><i class="fas fa-info-circle me-1"></i>Details</a>
-                    <a href="{% url 'orders:product_detail' product.uuid %}" class="btn btn-primary btn-sm fw-semibold rounded-3"><i class="fas fa-shopping-cart me-1"></i>Shop Now</a>
-                  </div>
-                </div>
-              </div>
+      <form method="get" action="{% url 'products:shop_homepage' %}" class="card border-0 shadow-sm rounded-4 mb-3">
+        <div class="card-body p-3 p-lg-4">
+          <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+              <label for="id_category" class="form-label small fw-bold text-muted text-uppercase">Category</label>
+              {{ form.category }}
             </div>
-          {% endwith %}
-        {% endfor %}
-      {% else %}
-        <div class="col-12 text-center py-5">
-          <i class="fas fa-search fa-3x text-muted mb-3"></i>
-          <p class="lead text-muted">No products found. Try adjusting your search or filters.</p>
-          <a href="{% url 'products:shop_homepage' %}" class="btn btn-outline-primary mt-3"><i class="fas fa-redo me-2"></i>Reset Filters</a>
+
+            <div class="col-md-4">
+              <label for="id_search" class="form-label small fw-bold text-muted text-uppercase">Search</label>
+              {{ form.search }}
+            </div>
+
+            <div class="col-md-2">
+              <label for="id_min_price" class="form-label small fw-bold text-muted text-uppercase">Min price</label>
+              {{ form.min_price }}
+            </div>
+
+            <div class="col-md-2">
+              <label for="id_max_price" class="form-label small fw-bold text-muted text-uppercase">Max price</label>
+              {{ form.max_price }}
+            </div>
+
+            <div class="col-md-1 d-grid">
+              <button type="submit" class="btn btn-gold rounded-pill" title="Search products" aria-label="Search products">
+                <i class="fas fa-search"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </form>
+
+      {% if categories %}
+        <div class="d-flex flex-nowrap overflow-auto gap-2 mb-4 pb-2 category-scroll">
+          <a href="{% url 'products:shop_homepage' %}" class="btn btn-sm rounded-pill border bg-white text-dark category-chip {% if not selected_category %}active{% endif %}">
+            All
+          </a>
+
+          {% for category in categories %}
+            <a href="?category={{ category.id }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="btn btn-sm rounded-pill border bg-white text-dark category-chip {% if selected_category and selected_category.id == category.id %}active{% endif %}">
+              {{ category.name }}
+            </a>
+          {% endfor %}
         </div>
       {% endif %}
-    </div>
 
-    <!-- Pagination -->
-    {% if page_obj.paginator.num_pages > 1 %}
-      <nav aria-label="Product page navigation" class="d-flex justify-content-center my-5">
-        <ul class="pagination pagination-lg">
-          {% if page_obj.has_previous %}
-            <li class="page-item">
-              <a class="page-link" href="?page=1&search={{ request.GET.search|default:'' }}&category={{ request.GET.category|default:'' }}" aria-label="First"><i class="fas fa-angle-double-left"></i></a>
-            </li>
-            <li class="page-item">
-              <a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ request.GET.search|default:'' }}&category={{ request.GET.category|default:'' }}" aria-label="Previous"><i class="fas fa-angle-left"></i></a>
-            </li>
-          {% else %}
-            <li class="page-item disabled">
-              <span class="page-link"><i class="fas fa-angle-double-left"></i></span>
-            </li>
-            <li class="page-item disabled">
-              <span class="page-link"><i class="fas fa-angle-left"></i></span>
-            </li>
-          {% endif %}
+      <div id="product-list" class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-4">
+        {% if products_with_images %}
+          {% for product_info in products_with_images %}
+            {% with product=product_info.product %}
+              <div class="col product-item">
+                <article class="card product-card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
+                  <a href="{% url 'orders:product_detail' product.uuid %}" class="product-media d-block bg-secondary-subtle">
+                    {% if product_info.image_url %}
+                      <img src="{{ product_info.image_url }}" alt="{{ product.name }}" loading="lazy" class="w-100 shop-img disable-right-click">
+                    {% else %}
+                      <img src="{% static 'images/no-image.png' %}" alt="No image available" loading="lazy" class="w-100 shop-img">
+                    {% endif %}
+                  </a>
 
-          {% for i in page_obj.paginator.page_range %}
-            {% if page_obj.number == i %}
-              <li class="page-item active" aria-current="page">
-                <span class="page-link">{{ i }}</span>
-              </li>
-            {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                  <form method="post" action="{% url 'orders:wishlist_add' product.uuid %}" class="shop-card-heart">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button type="submit" class="btn" title="Add {{ product.name }} to wishlist" aria-label="Add {{ product.name }} to wishlist">
+                      <i class="fas fa-heart"></i>
+                    </button>
+                  </form>
+
+                  <div class="card-body d-flex flex-column p-3 p-lg-4">
+                    <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                      <span class="badge bg-light text-dark border">
+                        {{ product.category|default:'Uncategorized' }}
+                      </span>
+
+                      {% if product.is_featured %}
+                        <span class="badge bg-warning text-dark">Featured</span>
+                      {% endif %}
+                    </div>
+
+                    <h2 class="h6 fw-bold mb-1">
+                      <a href="{% url 'orders:product_detail' product.uuid %}" class="text-dark text-decoration-none">
+                        {{ product.name }}
+                      </a>
+                    </h2>
+
+                    <p class="small text-muted mb-2">
+                      {{ product.gender }}
+                      {% if product_info.sellable_variants %}
+                        / {{ product_info.sellable_variants|length }} option{{ product_info.sellable_variants|length|pluralize }}
+                      {% endif %}
+                    </p>
+
+                    <div class="mb-3">
+                      {% if product_info.has_sellable_price %}
+                        {% if product_info.min_price == product_info.max_price %}
+                          <strong class="{% if product_info.has_discount %}text-danger{% else %}price-text{% endif %}">
+                            UGX {{ product_info.min_price|floatformat:'0'|intcomma }}
+                          </strong>
+                        {% else %}
+                          <strong class="{% if product_info.has_discount %}text-danger{% else %}price-text{% endif %}">
+                            UGX {{ product_info.min_price|floatformat:'0'|intcomma }} - {{ product_info.max_price|floatformat:'0'|intcomma }}
+                          </strong>
+                        {% endif %}
+
+                        {% if product_info.has_discount and product_info.min_original_price and product_info.min_original_price > product_info.min_price %}
+                          <small class="d-block text-muted">
+                            Was UGX {{ product_info.min_original_price|floatformat:'0'|intcomma }}
+                          </small>
+                        {% endif %}
+                      {% else %}
+                        <span class="text-muted small">Not currently for sale</span>
+                      {% endif %}
+                    </div>
+
+                    <div class="small mb-3">
+                      {% if product_info.avg_rating %}
+                        <span class="text-warning"><i class="fas fa-star"></i></span>
+                        <span class="text-muted ms-1">{{ product_info.avg_rating|floatformat:1 }} rating</span>
+                      {% else %}
+                        <span class="text-muted">No ratings yet</span>
+                      {% endif %}
+                    </div>
+
+                    <div class="mt-auto">
+                      {% if product_info.sellable_variants and product_info.has_sellable_price and product_info.is_in_stock %}
+                        {% if product_info.sellable_variants|length > 6 %}
+                          <div class="d-grid gap-2">
+                            <span class="variant-pill">
+                              {% if product_info.volume_range_label %}{{ product_info.volume_range_label }} · {% endif %}{{ product_info.sellable_variants|length }} options
+                            </span>
+                            <a href="{% url 'orders:product_detail' product.uuid %}" class="btn btn-gold rounded-pill">
+                              <i class="fas fa-list me-2"></i>Choose options
+                            </a>
+                          </div>
+                        {% else %}
+                        <form method="post" action="{% url 'orders:add_to_cart' product.uuid %}" class="d-grid gap-2 js-add-to-cart-form">
+                          {% csrf_token %}
+                          <input type="hidden" name="quantity" value="1">
+                          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+
+                          {% if product_info.sellable_variants|length > 1 %}
+                            <label class="form-label small fw-bold text-muted text-uppercase mb-0">Variant</label>
+                            <select class="form-select variant-select" name="volume_id" aria-label="Choose variant for {{ product.name }}" required>
+                              {% for variant in product_info.sellable_variants %}
+                                <option value="{{ variant.id }}">
+                                  {{ variant.variant_label }} - UGX {{ variant.current_price|floatformat:'0'|intcomma }}
+                                </option>
+                              {% endfor %}
+                            </select>
+                          {% else %}
+                            {% for variant in product_info.sellable_variants|slice:':1' %}
+                              <input type="hidden" name="volume_id" value="{{ variant.id }}">
+                              <span class="variant-pill">{{ variant.variant_label }}</span>
+                            {% endfor %}
+                          {% endif %}
+
+                          <button type="submit" class="btn btn-gold rounded-pill" data-cart-submit>
+                            <i class="fas fa-shopping-cart me-2"></i>Add to cart
+                          </button>
+                        </form>
+                        {% endif %}
+                      {% else %}
+                        <a href="{% url 'orders:product_detail' product.uuid %}" class="btn btn-outline-secondary w-100 rounded-pill">
+                          <i class="fas fa-eye me-2"></i>View details
+                        </a>
+                      {% endif %}
+
+                      <div class="d-flex gap-2 mt-2">
+                        <a href="{% url 'orders:product_details_view' product.uuid %}" class="btn btn-outline-gold rounded-circle wishlist-btn d-inline-flex align-items-center justify-content-center" title="Quick details" aria-label="Quick details for {{ product.name }}">
+                          <i class="fas fa-info-circle"></i>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              </div>
+            {% endwith %}
+          {% endfor %}
+        {% else %}
+          <div class="col-12">
+            <section class="card border-0 shadow-sm rounded-4 text-center p-4 p-lg-5">
+              <div class="card-body">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h2 class="h4 fw-bold text-dark">No products found</h2>
+                <p class="text-muted">Try a different search or category.</p>
+                <a href="{% url 'products:shop_homepage' %}" class="btn btn-outline-gold rounded-pill px-4">
+                  <i class="fas fa-redo me-2"></i>Reset filters
+                </a>
+              </div>
+            </section>
+          </div>
+        {% endif %}
+      </div>
+
+      {% if page_obj.paginator.num_pages > 1 %}
+        <nav aria-label="Product page navigation" class="d-flex justify-content-center my-5">
+          <ul class="pagination flex-wrap justify-content-center">
+            {% if page_obj.has_previous %}
               <li class="page-item">
-                <a class="page-link" href="?page={{ i }}&search={{ request.GET.search|default:'' }}&category={{ request.GET.category|default:'' }}">{{ i }}</a>
+                <a class="page-link text-dark" href="?page={{ page_obj.previous_page_number }}&search={{ request.GET.search|default:'' }}&category={{ request.GET.category|default:'' }}&min_price={{ request.GET.min_price|default:'' }}&max_price={{ request.GET.max_price|default:'' }}" aria-label="Previous">
+                  <i class="fas fa-angle-left"></i>
+                </a>
               </li>
             {% endif %}
-          {% endfor %}
 
-          {% if page_obj.has_next %}
-            <li class="page-item">
-              <a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ request.GET.search|default:'' }}&category={{ request.GET.category|default:'' }}" aria-label="Next"><i class="fas fa-angle-right"></i></a>
-            </li>
-            <li class="page-item">
-              <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&search={{ request.GET.search|default:'' }}&category={{ request.GET.category|default:'' }}" aria-label="Last"><i class="fas fa-angle-double-right"></i></a>
-            </li>
-          {% else %}
-            <li class="page-item disabled">
-              <span class="page-link"><i class="fas fa-angle-right"></i></span>
-            </li>
-            <li class="page-item disabled">
-              <span class="page-link"><i class="fas fa-angle-double-right"></i></span>
-            </li>
-          {% endif %}
-        </ul>
-      </nav>
-    {% endif %}
-  </div>
+            {% for i in page_obj.paginator.page_range %}
+              {% if page_obj.number == i %}
+                <li class="page-item active">
+                  <span class="page-link border-0" style="background-color: #b88a44;">{{ i }}</span>
+                </li>
+              {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                <li class="page-item">
+                  <a class="page-link text-dark" href="?page={{ i }}&search={{ request.GET.search|default:'' }}&category={{ request.GET.category|default:'' }}&min_price={{ request.GET.min_price|default:'' }}&max_price={{ request.GET.max_price|default:'' }}">
+                    {{ i }}
+                  </a>
+                </li>
+              {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+              <li class="page-item">
+                <a class="page-link text-dark" href="?page={{ page_obj.next_page_number }}&search={{ request.GET.search|default:'' }}&category={{ request.GET.category|default:'' }}&min_price={{ request.GET.min_price|default:'' }}&max_price={{ request.GET.max_price|default:'' }}" aria-label="Next">
+                  <i class="fas fa-angle-right"></i>
+                </a>
+              </li>
+            {% endif %}
+          </ul>
+        </nav>
+      {% endif %}
+    </div>
+  </main>
 {% endblock %}

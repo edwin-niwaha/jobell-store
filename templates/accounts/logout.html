@@ -1,19 +1,16 @@
 {% extends 'accounts/base.html' %}
-{% load static %}
+
+{% block title %}
+  Logged Out
+{% endblock %}
 
 {% block content %}
-  <div class="container-fluid min-vh-500 d-flex align-items-center bg-light">
-    <div class="row w-50 mx-auto">
-      <!-- Logout Message Section -->
-      <div class="col-lg-12 d-flex align-items-center justify-content-center p-4">
-        <div class="text-center">
-          <h2 class="display-5 fw-bold text-success mb-3 animate__animated animate__fadeInUp">Successfully Logged Out</h2>
-          <p class="lead text-muted mb-4 animate__animated animate__fadeInUp animate__delay-1s">Thank you for visiting! We can't wait to see you back.</p>
-
-          <!-- Login Button -->
-          <a href="{% url 'login' %}" class="btn btn-lg w-100 text-white shadow-sm hover-scale" style="background-color: #b88a4b; border-color: #b88a4b; transition: transform 0.2s;">Login Again</a>
-        </div>
-      </div>
+  <section class="jobell-info-page jobell-centered-page">
+    <div class="jobell-info-panel jobell-status-panel">
+      <span class="jobell-status-icon"><i class="mdi mdi-check"></i></span>
+      <h1>Successfully logged out</h1>
+      <p>Thanks for visiting Jobell. Your account session has ended.</p>
+      <a href="{% url 'login' %}" class="jobell-page-button">Log in again</a>
     </div>
-  </div>
+  </section>
 {% endblock %}

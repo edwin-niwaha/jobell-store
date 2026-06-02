@@ -15,6 +15,14 @@ class Supplier(models.Model):
     address = models.CharField(max_length=255, verbose_name="Address")
     created_at = models.DateTimeField(default=timezone.now, verbose_name="Created At")
 
+    class Meta:
+        ordering = ["name"]
+        indexes = [
+            models.Index(fields=["name"], name="supplier_name_idx"),
+            models.Index(fields=["email"], name="supplier_email_idx"),
+            models.Index(fields=["created_at"], name="supplier_created_idx"),
+        ]
+
     def __str__(self):
         return self.name
 

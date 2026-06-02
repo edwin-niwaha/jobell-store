@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Sum
 from .models import Inventory
 from .forms import InventoryForm
-from apps.inventory.models import Product
+from apps.products.models import Product
 
 from apps.authentication.decorators import (
     admin_or_manager_or_staff_required,
@@ -20,7 +20,7 @@ from apps.authentication.decorators import (
 @admin_or_manager_or_staff_required
 def inventory_list_view(request):
     search_query = request.GET.get("search", "")
-    inventories = Inventory.objects.select_related("product").all()
+    inventories = Inventory.objects.select_related("product", "product__category").all()
 
     # If there's a search query, filter the inventory based on the product name or category
     if search_query:
@@ -54,7 +54,7 @@ def inventory_report_view(request):
             | Q(product__description__icontains=search_query)
         ).select_related("product")
     else:
-        inventories = Inventory.objects.select_related("product").all()
+        inventories = Inventory.objects.select_related("product", "product__category").all()
 
     # Pagination
     paginator = Paginator(inventories, 25)  # Show 25 inventories per page
@@ -105,9 +105,7 @@ def inventory_report_view(request):
 def inventory_add_view(request):
     context = {
         "table_title": "Add Inventory",
-        "products": Product.objects.filter(
-            status="ACTIVE"
-        ),  # Pass only active products
+        "products": Product.objects.filter(status="ACTIVE").select_related("category").order_by("name"),  # Pass only active products
     }
 
     if request.method == "POST":

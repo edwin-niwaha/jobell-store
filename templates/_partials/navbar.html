@@ -1,6 +1,6 @@
 {% load static %}
 
-<nav class="navbar col-lg-12 col-12 p-lg-0 fixed-top d-flex flex-row">
+<nav class="navbar col-lg-12 col-12 p-lg-0 fixed-top d-flex flex-row" data-dashboard-navbar>
   <div class="navbar-menu-wrapper d-flex align-items-stretch justify-content-between">
     <!-- Brand Logo -->
     <a class="navbar-brand brand-logo-mini align-self-center d-lg-none" href="{% url 'dashboard' %}"><img src="{% static 'assets/images/logo-mini.svg' %}" alt="logo" /></a>
@@ -12,7 +12,7 @@
     <ul class="navbar-nav">
       <!-- Customer Orders -->
       <li class="nav-item dropdown">
-        <a class="nav-link count-indicator dropdown-toggle" id="orderDropdown" href="#" data-toggle="dropdown">
+        <a class="nav-link count-indicator dropdown-toggle" id="orderDropdown" href="#" data-toggle="dropdown" data-bs-toggle="dropdown">
           <i class="mdi mdi-cart-outline"></i>
           <span class="count count-varient2">{{ pending_orders_count }}</span>
         </a>
@@ -38,7 +38,7 @@
 
       <!-- Low Stock Alerts -->
       <li class="nav-item dropdown">
-        <a class="nav-link count-indicator dropdown-toggle" id="lowStockDropdown" href="#" data-toggle="dropdown">
+        <a class="nav-link count-indicator dropdown-toggle" id="lowStockDropdown" href="#" data-toggle="dropdown" data-bs-toggle="dropdown">
           <i class="mdi mdi-cube-outline"></i>
           <span class="count count-varient2">{{ low_stock_count }}</span>
         </a>
@@ -64,7 +64,7 @@
 
       <!-- User Feedback -->
       <li class="nav-item dropdown">
-        <a class="nav-link count-indicator dropdown-toggle" id="feedbackDropdown" href="#" data-toggle="dropdown">
+        <a class="nav-link count-indicator dropdown-toggle" id="feedbackDropdown" href="#" data-toggle="dropdown" data-bs-toggle="dropdown">
           <i class="mdi mdi-email-outline"></i>
           <span class="count count-varient2">{{ feedback_count }}</span>
         </a>
@@ -124,7 +124,7 @@
         <a onclick="toggleFullScreen()" class="nav-link waves-light waves-effect"><i class="mdi mdi-crop-free noti-icon"></i></a>
       </li>
       <li class="nav-item nav-profile dropdown border-0">
-        <a class="nav-link dropdown-toggle" id="profileDropdown" href="#" data-toggle="dropdown">
+        <a class="nav-link dropdown-toggle" id="profileDropdown" href="#" data-toggle="dropdown" data-bs-toggle="dropdown">
           <img class="nav-profile-img mr-2" src="{{ user.profile.avatar.url }}" />
           <span class="profile-name">
             {{ user.username|title|default:'Guest' }}
@@ -144,7 +144,7 @@
     </ul>
 
     <!-- Offcanvas Menu -->
-    <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center" type="button" data-toggle="offcanvas"><span class="mdi mdi-menu"></span></button>
+    <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center" type="button" data-toggle="offcanvas" data-dashboard-menu-toggle aria-controls="sidebar" aria-expanded="false" aria-label="Toggle dashboard menu"><span class="mdi mdi-menu"></span></button>
   </div>
 </nav>
 

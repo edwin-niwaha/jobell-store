@@ -11,6 +11,8 @@ class Category(models.Model):
     class Meta:
         verbose_name = "Category"
         verbose_name_plural = "Categories"
+        ordering = ["name"]
+        indexes = [models.Index(fields=["slug"], name="blog_category_slug_idx")]
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -33,6 +35,10 @@ class Comment(models.Model):
         ordering = ["-created_at"]
         verbose_name = "Comment"
         verbose_name_plural = "Comments"
+        indexes = [
+            models.Index(fields=["post", "created_at"], name="blog_comment_post_created_idx"),
+            models.Index(fields=["author", "created_at"], name="blg_cmt_auth_cr_idx"),
+        ]
 
     def __str__(self):
         return f"Comment by {self.author} on '{self.post.title}'"
@@ -45,6 +51,8 @@ class Tag(models.Model):
     class Meta:
         verbose_name = "Tag"
         verbose_name_plural = "Tags"
+        ordering = ["name"]
+        indexes = [models.Index(fields=["slug"], name="blog_tag_slug_idx")]
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -79,6 +87,12 @@ class BlogPost(models.Model):
         ordering = ["-created_at"]
         verbose_name = "Blog Post"
         verbose_name_plural = "Blog Posts"
+        indexes = [
+            models.Index(fields=["slug"], name="blog_post_slug_idx"),
+            models.Index(fields=["is_published", "created_at"], name="blg_post_pub_cr_idx"),
+            models.Index(fields=["category", "is_published"], name="blog_post_category_pub_idx"),
+            models.Index(fields=["author", "created_at"], name="blog_post_author_created_idx"),
+        ]
 
     def save(self, *args, **kwargs):
         if not self.slug:

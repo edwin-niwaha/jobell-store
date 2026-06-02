@@ -1,173 +1,429 @@
 {% extends 'accounts/base.html' %}
-{% load static %}
 {% load humanize %}
+
 {% block content %}
-  <div class="container-fluid my-2 mb-5">
-    <div class="card shadow-lg border-0">
-      <div class="card-header bg-primary text-white">
-        <h2 class="mb-0 text-center">Order Details - #{{ order.id }}</h2>
+  <style>
+    :root {
+      --order-black: #050505;
+      --order-gold: #b8860b;
+      --order-cream: #f8f5ef;
+      --order-muted: #70675d;
+      --order-border: rgba(5, 5, 5, 0.1);
+      --order-shadow: 0 18px 46px rgba(5, 5, 5, 0.08);
+    }
+
+    .order-detail-page {
+      background: linear-gradient(180deg, #ffffff 0%, var(--order-cream) 100%);
+      min-height: 72vh;
+      padding: clamp(1rem, 3vw, 2.5rem) 0 3rem;
+    }
+
+    .order-detail-shell {
+      margin-inline: auto;
+      max-width: 1180px;
+      padding-inline: 1rem;
+    }
+
+    .order-detail-head {
+      align-items: flex-end;
+      display: flex;
+      gap: 1rem;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .order-eyebrow {
+      color: var(--order-gold);
+      display: block;
+      font-size: 0.76rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .order-title {
+      color: var(--order-black);
+      font-size: clamp(1.8rem, 4vw, 2.7rem);
+      font-weight: 950;
+      line-height: 1.06;
+      margin: 0.25rem 0 0.35rem;
+    }
+
+    .order-muted {
+      color: var(--order-muted);
+      margin: 0;
+    }
+
+    .order-grid {
+      align-items: start;
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: minmax(0, 1fr) minmax(300px, 0.42fr);
+    }
+
+    .order-card {
+      background: #ffffff;
+      border: 1px solid var(--order-border);
+      border-radius: 1rem;
+      box-shadow: var(--order-shadow);
+      overflow: hidden;
+    }
+
+    .order-card-head {
+      align-items: center;
+      background: var(--order-black);
+      color: #ffffff;
+      display: flex;
+      gap: 1rem;
+      justify-content: space-between;
+      padding: 0.9rem 1rem;
+    }
+
+    .order-card-head h2 {
+      color: #ffffff;
+      font-size: 1rem;
+      font-weight: 950;
+      margin: 0;
+    }
+
+    .order-card-body {
+      padding: 1rem;
+    }
+
+    .status-pill {
+      border-radius: 999px;
+      display: inline-flex;
+      font-size: 0.76rem;
+      font-weight: 900;
+      padding: 0.35rem 0.7rem;
+      white-space: nowrap;
+    }
+
+    .status-pending {
+      background: rgba(212, 175, 55, 0.18);
+      color: #765600;
+    }
+
+    .status-delivery {
+      background: rgba(11, 90, 122, 0.12);
+      color: #0b5a7a;
+    }
+
+    .status-delivered {
+      background: rgba(6, 125, 98, 0.12);
+      color: #067d62;
+    }
+
+    .status-danger {
+      background: rgba(177, 39, 4, 0.12);
+      color: #b12704;
+    }
+
+    .tracking-steps {
+      display: grid;
+      gap: 0.75rem;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .tracking-step {
+      border: 1px solid rgba(5, 5, 5, 0.08);
+      border-radius: 0.85rem;
+      padding: 0.85rem;
+    }
+
+    .tracking-step.is-done {
+      background: rgba(6, 125, 98, 0.08);
+      border-color: rgba(6, 125, 98, 0.2);
+    }
+
+    .tracking-step.is-current {
+      background: rgba(184, 134, 11, 0.12);
+      border-color: rgba(184, 134, 11, 0.32);
+    }
+
+    .tracking-step span {
+      align-items: center;
+      background: var(--order-black);
+      border-radius: 999px;
+      color: var(--order-gold);
+      display: inline-flex;
+      font-weight: 950;
+      height: 32px;
+      justify-content: center;
+      margin-bottom: 0.5rem;
+      width: 32px;
+    }
+
+    .tracking-step strong {
+      color: var(--order-black);
+      display: block;
+    }
+
+    .summary-list {
+      display: grid;
+      gap: 0.7rem;
+    }
+
+    .summary-row {
+      display: flex;
+      gap: 1rem;
+      justify-content: space-between;
+    }
+
+    .summary-row span {
+      color: var(--order-muted);
+    }
+
+    .summary-row strong {
+      color: var(--order-black);
+      text-align: right;
+    }
+
+    .summary-total {
+      border-top: 1px solid rgba(5, 5, 5, 0.1);
+      margin-top: 0.85rem;
+      padding-top: 0.85rem;
+    }
+
+    .summary-total strong {
+      color: var(--order-gold);
+      font-size: 1.45rem;
+      font-weight: 950;
+    }
+
+    .order-items {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .order-item {
+      border: 1px solid rgba(5, 5, 5, 0.08);
+      border-radius: 0.85rem;
+      display: grid;
+      gap: 0.75rem;
+      grid-template-columns: minmax(0, 1fr) auto;
+      padding: 0.85rem;
+    }
+
+    .order-item strong {
+      color: var(--order-black);
+    }
+
+    .order-item small {
+      color: var(--order-muted);
+      display: block;
+      margin-top: 0.2rem;
+    }
+
+    .customer-grid {
+      display: grid;
+      gap: 0.75rem;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .customer-box {
+      background: #fbf8f1;
+      border: 1px solid rgba(184, 134, 11, 0.16);
+      border-radius: 0.8rem;
+      padding: 0.75rem;
+    }
+
+    .customer-box span {
+      color: var(--order-muted);
+      display: block;
+      font-size: 0.74rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .customer-box strong {
+      color: var(--order-black);
+      display: block;
+      margin-top: 0.2rem;
+    }
+
+    .btn-order-primary,
+    .btn-order-outline {
+      border-radius: 999px;
+      font-weight: 900;
+      min-height: 42px;
+      padding: 0.6rem 1rem;
+    }
+
+    .btn-order-primary {
+      background: var(--order-gold);
+      border-color: var(--order-gold);
+      color: #ffffff;
+    }
+
+    .btn-order-outline {
+      background: #ffffff;
+      border: 1px solid var(--order-gold);
+      color: var(--order-black);
+    }
+
+    @media (max-width: 991.98px) {
+      .order-detail-head {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .order-grid,
+      .tracking-steps,
+      .customer-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <main class="order-detail-page">
+    <div class="order-detail-shell">
+      <div class="order-detail-head">
+        <div>
+          <span class="order-eyebrow">Order details</span>
+          <h1 class="order-title">Order #{{ order.id }}</h1>
+          <p class="order-muted">Placed {{ order.created_at|date:'M d, Y, g:i A' }}</p>
+        </div>
+
+        <a href="{% url 'orders:customer_order_history' %}" class="btn btn-order-outline">
+          <i class="fas fa-arrow-left me-2"></i>Order history
+        </a>
       </div>
-      <div class="card-body">
-        <div class="row g-4">
-          <!-- Order Information -->
-          <div class="col-md-6">
-            <div class="bg-light p-3 rounded">
-              <h4 class="text-primary">Order Information</h4>
-              <hr />
-              <p>
-                <strong>Order ID:</strong> {{ order.id }}
-              </p>
-              <p>
-                <strong>Date:</strong> {{ order.created_at|date:'d M Y, H:i A' }}
-              </p>
-              <p>
-                <strong>Order Status:</strong>
-                {% if order.status == 'Pending' %}
-                  <span class="badge bg-warning">Pending</span>
-                {% elif order.status == 'Out for Delivery' %}
-                  <span class="badge bg-info text-dark">Out for Delivery</span>
-                {% elif order.status == 'Delivered' %}
-                  <span class="badge bg-success">Delivered</span>
-                {% elif order.status == 'Canceled' %}
-                  <span class="badge bg-danger">Canceled</span>
-                {% elif order.status == 'Refunded' %}
-                  <span class="badge bg-secondary">Refunded</span>
-                {% elif order.status == 'Returned' %}
-                  <span class="badge bg-dark">Returned</span>
-                {% else %}
-                  <span class="badge bg-light text-dark">Unknown</span>
-                {% endif %}
-              </p>
-              {% comment %} <p>
-                <strong>Payment Status:</strong>
-                {% if order.payment_status == 'paid' %}
-                  <span class="badge bg-success">Paid</span>
-                {% else %}
-                  <span class="badge bg-danger">Unpaid</span>
-                {% endif %}
-              </p> {% endcomment %}
-              <p>
-                <strong>Total Amount:</strong>
-                <span class="badge rounded-pill bg-primary">UGX: {{ order.total_amount|floatformat:'2'|intcomma }}</span>
-              </p>
-              <hr />
-            </div>
-          </div>
 
-          <!-- Customer Information -->
-          <div class="col-md-6">
-            <div class="bg-light p-3 rounded">
-              <h4 class="text-primary">Customer Information</h4>
-              <hr />
-              <p>
-                <strong>Name:</strong> {{ order.customer.get_full_name }}
-              </p>
-              <p>
-                <strong>Email:</strong> {{ order.customer.email }}
-              </p>
-              <p>
-                <strong>Tel:</strong> {{ order.customer.tel }}
-              </p>
-              <p>
-                <strong>Mobile:</strong> {{ order.customer.mobile }}
-              </p>
-              <p>
-                <strong>Address:</strong> {{ order.customer.address|default:'N/A' }}
-              </p>
-            </div>
-          </div>
-
-          <!-- Order Tracking Progress Bar -->
-          <h4 class="mt-4 text-primary">Order Tracking</h4>
-          <div class="container mt-3">
-            <div class="progress" style="height: 25px; border-radius: 10px;">
-              {% for status in statuses %}
-                <div class="progress-bar 
-                    {% if order.status == status %}
-                    
-                    
-                    
-                    
-                   bg-success 
-
-
-
-
-                  {% else %}
-                    
-                    
-                    
-                    
-                   bg-secondary 
-
-
-
-
-                  {% endif %}"
-                  role="progressbar"
-                  style="width: {{ progress_width }}%; border-radius: 10px; transition: width 0.4s;"
-                  aria-valuenow="{{ forloop.counter }}"
-                  aria-valuemin="0"
-                  aria-valuemax="{{ statuses|length }}">
-                  <span class="text-white">{{ forloop.counter }}. {{ status }}</span> <!-- Display step number and status -->
-                </div>
-              {% endfor %}
-            </div>
-          </div>
-        </div>
-
-        <!-- Order Items -->
-        <h4 class="mt-4 text-primary">Order Items</h4>
-        {% if order.details.exists %}
-          <div class="table-responsive">
-            <table class="table table-bordered table-hover align-middle">
-              <thead class="table-primary text-center">
-                <tr>
-                  <th>Product</th>
-                  <th>Volume</th>
-                  <th>Quantity</th>
-                  <th class="text-right">Unit Price</th>
-                  <th class="text-right">Total Price</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for detail in order.details.all %}
-                  <tr>
-                    <td>{{ detail.product.name }} | {{ detail.product.category }} | {{ detail.product.gender }} | {{ detail.product_volume.product_type }}</td>
-                    <td class="text-center">
-                      {% if detail.product_volume %}
-                        {{ detail.product_volume.volume.ml }} ML
+      <div class="order-grid">
+        <div class="d-grid gap-3">
+          <section class="order-card">
+            <header class="order-card-head">
+              <h2>Tracking</h2>
+              {% if order.status == 'Pending' %}
+                <span class="status-pill status-pending">Pending</span>
+              {% elif order.status == 'Out for Delivery' %}
+                <span class="status-pill status-delivery">Out for Delivery</span>
+              {% elif order.status == 'Delivered' %}
+                <span class="status-pill status-delivered">Delivered</span>
+              {% else %}
+                <span class="status-pill status-danger">{{ order.status }}</span>
+              {% endif %}
+            </header>
+            <div class="order-card-body">
+              <div class="tracking-steps">
+                {% for status in statuses %}
+                  <div class="tracking-step {% if forloop.counter0 < current_status_index %}is-done{% elif forloop.counter0 == current_status_index %}is-current{% endif %}">
+                    <span>{{ forloop.counter }}</span>
+                    <strong>{{ status }}</strong>
+                    <small class="order-muted">
+                      {% if forloop.counter0 < current_status_index %}
+                        Completed
+                      {% elif forloop.counter0 == current_status_index %}
+                        Current step
                       {% else %}
-                        No volume specified
+                        Pending
                       {% endif %}
-                    </td>
-
-                    <td class="text-center">{{ detail.quantity }}</td>
-                    <td class="text-right">{{ detail.price|floatformat:'2'|intcomma }}</td>
-                    <td class="text-right">{{ detail.total|floatformat:'2'|intcomma }}</td>
-                  </tr>
-                {% empty %}
-                  <tr>
-                    <td colspan="5" class="text-center">No items found for this order.</td>
-                  </tr>
+                    </small>
+                  </div>
                 {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        {% else %}
-          <p class="text-muted">No items found for this order.</p>
-        {% endif %}
+              </div>
+            </div>
+          </section>
 
-        <!-- Action Buttons -->
-        <div class="d-flex justify-content-end mt-4">
-          {% if user.profile.role == 'guest' %}
-            <a href="{% url 'orders:customer_order_history' %}" class="btn btn-secondary me-2"><i class="mdi mdi-arrow-left"></i> Back to Order History</a>
-            <a href="/" class="btn btn-primary"><i class="mdi mdi-cart-outline"></i> Continue Shopping</a>
-          {% else %}
-            <a href="{% url 'orders:orders_to_be_processed' %}" class="btn btn-secondary me-2"><i class="mdi mdi-arrow-left"></i> Back</a>
-          {% endif %}
+          <section class="order-card">
+            <header class="order-card-head">
+              <h2>Items</h2>
+              <span class="status-pill status-pending">{{ order.details.count }} item{{ order.details.count|pluralize }}</span>
+            </header>
+            <div class="order-card-body">
+              {% if order.details.exists %}
+                <div class="order-items">
+                  {% for detail in order.details.all %}
+                    <div class="order-item">
+                      <div>
+                        <strong>{{ detail.product.name }}</strong>
+                        <small>
+                          {{ detail.product.category|default:'Product' }} · {{ detail.product_volume.variant_label }} · Qty {{ detail.quantity }}
+                          {% if detail.has_discount %} · discounted{% endif %}
+                        </small>
+                      </div>
+                      <strong>UGX {{ detail.total|floatformat:'0'|intcomma }}</strong>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <p class="order-muted">No items found for this order.</p>
+              {% endif %}
+            </div>
+          </section>
+
+          <section class="order-card">
+            <header class="order-card-head">
+              <h2>Customer & Delivery</h2>
+            </header>
+            <div class="order-card-body">
+              <div class="customer-grid">
+                <div class="customer-box">
+                  <span>Name</span>
+                  <strong>{{ order.customer.get_full_name|default:'N/A' }}</strong>
+                </div>
+                <div class="customer-box">
+                  <span>Email</span>
+                  <strong>{{ order.customer.email|default:'N/A' }}</strong>
+                </div>
+                <div class="customer-box">
+                  <span>Mobile</span>
+                  <strong>{{ order.customer.mobile|default:'N/A' }}</strong>
+                </div>
+                <div class="customer-box">
+                  <span>Telephone</span>
+                  <strong>{{ order.customer.tel|default:'N/A' }}</strong>
+                </div>
+                <div class="customer-box" style="grid-column: 1 / -1;">
+                  <span>Address</span>
+                  <strong>{{ order.customer.address|default:'N/A' }}</strong>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
+
+        <aside class="order-card">
+          <header class="order-card-head">
+            <h2>Summary</h2>
+          </header>
+          <div class="order-card-body">
+            <div class="summary-list">
+              <div class="summary-row">
+                <span>Status</span>
+                <strong>{{ order.status }}</strong>
+              </div>
+              <div class="summary-row">
+                <span>Payment</span>
+                <strong>{{ order.payment_status|title }}</strong>
+              </div>
+              <div class="summary-row">
+                <span>Method</span>
+                <strong>{{ order.get_payment_method_display }}</strong>
+              </div>
+              {% if order.transaction_id %}
+                <div class="summary-row">
+                  <span>Transaction</span>
+                  <strong>{{ order.transaction_id }}</strong>
+                </div>
+              {% endif %}
+              <div class="summary-row">
+                <span>Tax</span>
+                <strong>UGX {{ order.tax_amount|floatformat:'0'|intcomma }}</strong>
+              </div>
+              <div class="summary-row summary-total">
+                <span>Total</span>
+                <strong>UGX {{ order.total_amount|floatformat:'0'|intcomma }}</strong>
+              </div>
+            </div>
+
+            <a href="{% url 'products:shop_homepage' %}" class="btn btn-order-primary w-100 mt-4">
+              Continue shopping
+            </a>
+          </div>
+        </aside>
       </div>
     </div>
-  </div>
+  </main>
 {% endblock %}

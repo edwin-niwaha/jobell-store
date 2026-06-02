@@ -1,16 +1,10 @@
 {% load static %}
 <nav class="sidebar sidebar-offcanvas" id="sidebar">
-  <!-- Brand Logo -->
   <div class="text-center sidebar-brand-wrapper d-flex align-items-center py-4">
-    <a class="sidebar-brand brand-logo" href="/" style="color: #127D61;"><img src="{% static 'images/file.png' %}" height="50" width="40" alt="Jobell Logo" loading="lazy" /></a>
+    <a class="sidebar-brand brand-logo" href="/" style="color: #B8860B;"><img src="{% static 'images/file.png' %}" height="50" width="40" alt="Jobell Logo" loading="lazy" /></a>
   </div>
 
   <ul class="nav flex-column">
-    <!-- Divider -->
-    <li>
-      <hr class="sidebar-divider my-3" />
-    </li>
-
     <!-- Dashboards -->
     <li class="nav-item">
       <a class="nav-link" data-bs-toggle="collapse" href="#dashboardsMenu" aria-expanded="false" aria-controls="dashboardsMenu">
@@ -23,37 +17,38 @@
           <li class="nav-item">
             <a class="nav-link" href="{% url 'dashboard' %}">
               <i class="mdi mdi-view-dashboard menu-icon"></i>
-              SALES
+              Sales Dashboard
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{% url 'fin_dashboard' %}">
               <i class="mdi mdi-bank menu-icon"></i>
-              FINANCIALS
+              Finance Dashboard
             </a>
           </li>
         </ul>
       </div>
     </li>
 
-    <!-- Divider -->
-    <li>
-      <hr class="sidebar-divider my-3" />
-    </li>
-
     <!-- Business Operations -->
     <li class="nav-item">
       <a class="nav-link" data-bs-toggle="collapse" href="#operationsMenu" aria-expanded="false" aria-controls="operationsMenu">
         <i class="mdi mdi-briefcase menu-icon"></i>
-        <span class="menu-title">Operations</span>
+        <span class="menu-title">Orders & People</span>
         <i class="menu-arrow"></i>
       </a>
       <div class="collapse" id="operationsMenu">
         <ul class="nav flex-column sub-menu">
           <li class="nav-item">
             <a class="nav-link" href="{% url 'orders:orders_to_be_processed' %}">
-              <i class="mdi mdi-cart menu-icon"></i>
-              Orders
+              <i class="mdi mdi-truck-fast-outline menu-icon"></i>
+              Open Orders
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'orders:all_orders' %}">
+              <i class="mdi mdi-receipt-text-outline menu-icon"></i>
+              All Orders
             </a>
           </li>
           <li class="nav-item">
@@ -78,6 +73,57 @@
       </div>
     </li>
 
+    <li class="nav-item">
+      {% if perms.shipping.view_deliveryrate or perms.shipping.add_deliveryrate or perms.shipping.change_deliveryrate or perms.shipping.view_pickupstation or perms.shipping.add_pickupstation or perms.shipping.change_pickupstation %}
+        <a class="nav-link" data-bs-toggle="collapse" href="#shippingMenu" aria-expanded="false" aria-controls="shippingMenu">
+          <i class="mdi mdi-truck-delivery-outline menu-icon"></i>
+          <span class="menu-title">Shipping</span>
+          <i class="menu-arrow"></i>
+        </a>
+        <div class="collapse" id="shippingMenu">
+          <ul class="nav flex-column sub-menu">
+            {% if perms.shipping.view_deliveryrate or perms.shipping.add_deliveryrate or perms.shipping.change_deliveryrate %}
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'shipping:delivery_rate_list' %}">
+                  <i class="mdi mdi-cash-multiple menu-icon"></i>
+                  Shipping Fees
+                </a>
+              </li>
+            {% endif %}
+            {% if perms.shipping.add_deliveryrate %}
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'shipping:delivery_rate_add' %}">
+                  <i class="mdi mdi-plus-circle-outline menu-icon"></i>
+                  Add Shipping Fee
+                </a>
+              </li>
+            {% endif %}
+            {% if perms.shipping.view_pickupstation or perms.shipping.add_pickupstation or perms.shipping.change_pickupstation %}
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'shipping:pickup_station_list' %}">
+                  <i class="mdi mdi-store-marker-outline menu-icon"></i>
+                  Pickup Stations
+                </a>
+              </li>
+            {% endif %}
+            {% if perms.shipping.add_pickupstation %}
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'shipping:pickup_station_add' %}">
+                  <i class="mdi mdi-map-marker-plus-outline menu-icon"></i>
+                  Add Pickup Station
+                </a>
+              </li>
+            {% endif %}
+          </ul>
+        </div>
+      {% else %}
+        <a class="nav-link" href="#" onclick="showMessageSettings(event)">
+          <i class="mdi mdi-truck-delivery-outline menu-icon"></i>
+          <span class="menu-title">Shipping</span>
+        </a>
+      {% endif %}
+    </li>
+
     <!-- Products -->
     <li class="nav-item">
       <a class="nav-link" data-bs-toggle="collapse" href="#productsMenu" aria-expanded="false" aria-controls="productsMenu">
@@ -90,7 +136,13 @@
           <li class="nav-item">
             <a class="nav-link" href="{% url 'products:products_list' %}">
               <i class="mdi mdi-package menu-icon"></i>
-              Product List
+              Products
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'products:shop_homepage' %}">
+              <i class="mdi mdi-storefront-outline menu-icon"></i>
+              Storefront
             </a>
           </li>
           <li class="nav-item">
@@ -102,13 +154,13 @@
           <li class="nav-item">
             <a class="nav-link" href="{% url 'products:volume_add' %}">
               <i class="mdi mdi-package-variant menu-icon"></i>
-              Add Volume
+              Volumes
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{% url 'products:add-volume-to-all-products' %}">
               <i class="mdi mdi-package-variant menu-icon"></i>
-              Manage Volumes
+              Bulk Variants
             </a>
           </li>
         </ul>
@@ -138,11 +190,6 @@
           </li>
         </ul>
       </div>
-    </li>
-
-    <!-- Divider -->
-    <li>
-      <hr class="sidebar-divider my-3" />
     </li>
 
     <!-- Finance (Admin Only) -->
@@ -294,11 +341,6 @@
       </div>
     </li>
 
-    <!-- Divider -->
-    <li>
-      <hr class="sidebar-divider my-3" />
-    </li>
-
     <!-- Settings (Admin Only) -->
     <li class="nav-item">
       {% if user.profile.role == 'administrator' %}
@@ -349,9 +391,11 @@
       {% endif %}
     </li>
 
-    <!-- Divider -->
-    <li>
-      <hr class="sidebar-divider my-3" />
+    <li class="nav-item mt-2">
+      <a class="nav-link" href="{% url 'users-home' %}">
+        <i class="mdi mdi-open-in-new menu-icon"></i>
+        <span class="menu-title">View Store</span>
+      </a>
     </li>
   </ul>
 </nav>

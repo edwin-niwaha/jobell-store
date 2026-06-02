@@ -1,144 +1,353 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block content %}
   <div class="container-fluid">
-    <div class="row mb-3">
-      <div class="col-md-12 d-flex justify-content-between align-items-center">
-        <a href="{% url 'products:products_add' %}" class="btn btn-dark ml-2">
-          <i class="mdi mdi-plus mr-2"></i>
-          Add Product
+    <div class="admin-page-head">
+      <div>
+        <span class="admin-eyebrow">Catalog</span>
+        <h1 class="admin-page-title">{{ table_title|default:'Products' }}</h1>
+        <p class="admin-muted mb-0">Manage products, variants, images, stock state, and storefront visibility.</p>
+      </div>
+
+      <div class="admin-actions print-hide">
+        <a href="{% url 'products:products_add' %}?modal=1" class="btn btn-dark font-weight-bold" data-product-modal-url="{% url 'products:products_add' %}?modal=1" data-product-modal-title="Add product">
+          <i class="mdi mdi-plus mr-2"></i>Add product
         </a>
-        <div class="d-flex">
-          <a href="{% url 'products:add-volume-to-all-products' %}" class="btn btn-success ml-3 font-weight-bold">Manage Volumes for All Products</a>
-          <a href="{% url 'products:update_product_image' %}" class="btn btn-success font-weight-bold ml-2"><i class="mdi mdi-cloud-upload mr-2"></i></a>
-          <button title="Print" type="button" class="btn btn-success ml-2" onclick="printDiv('printMe')"><i class="mdi mdi-printer btn-icon-prepend"></i></button>
-        </div>
+        <a href="{% url 'products:add-volume-to-all-products' %}" class="btn btn-success font-weight-bold">
+          <i class="mdi mdi-package-variant mr-2"></i>Manage variants
+        </a>
+        <a href="{% url 'products:update_product_image' %}" class="btn btn-outline-success font-weight-bold">
+          <i class="mdi mdi-cloud-upload mr-2"></i>Images
+        </a>
+        <button title="Print" type="button" class="btn btn-outline-dark" onclick="printDiv('printMe')">
+          <i class="mdi mdi-printer btn-icon-prepend"></i>
+        </button>
       </div>
     </div>
 
-    <!-- Search Form -->
-    <div class="row mb-3">
-      <div class="col-md-12">
-        <form method="get" action="{% url 'products:products_list' %}">
-          <div class="input-group">
-            <input type="text" class="form-control" name="search" value="{{ search_query }}" placeholder="Search by name or category or supplier" />
-            <button class="btn btn-primary" type="submit"><i class="mdi mdi-magnify"></i> Search</button>
-          </div>
-        </form>
+    <div class="admin-stat-grid">
+      <div class="admin-stat">
+        <span>Total stock</span>
+        <strong>{{ total_stock|default:0|intcomma }}</strong>
+      </div>
+      <div class="admin-stat">
+        <span>Stock value</span>
+        <strong>UGX {{ total_price|default:0|floatformat:'0'|intcomma }}</strong>
+      </div>
+      <div class="admin-stat">
+        <span>Stock cost</span>
+        <strong>UGX {{ total_cost|default:0|floatformat:'0'|intcomma }}</strong>
+      </div>
+      <div class="admin-stat">
+        <span>Current page</span>
+        <strong>{{ products.number }} / {{ products.paginator.num_pages }}</strong>
       </div>
     </div>
 
-    <!-- DataTable -->
-    <div id="printMe" class="card shadow mb-4">
-      <div class="card-header py-3">
-        <h3>{{ table_title|upper }}</h3>
+    <form method="get" action="{% url 'products:products_list' %}" class="admin-search print-hide">
+      <div class="input-group">
+        <input type="text" class="form-control" name="search" value="{{ search_query }}" placeholder="Search by product, category, or supplier" />
+        <button class="btn btn-primary" type="submit"><i class="mdi mdi-magnify"></i> Search</button>
+        {% if search_query %}
+          <a class="btn btn-light" href="{% url 'products:products_list' %}">Clear</a>
+        {% endif %}
       </div>
+    </form>
+
+    <div id="printMe" class="admin-panel mb-4">
+      <div class="admin-panel-header">
+        <h2>Products</h2>
+        <span class="badge badge-warning text-dark">{{ products.paginator.count }} total</span>
+      </div>
+
       <div class="card-body">
         <div class="table-responsive">
-          <table class="my-table" id="dataTable">
+          <table class="admin-table" id="dataTable">
             <thead>
               <tr>
-                <th>#</th>
+                <th>ID</th>
+                <th>Image</th>
                 <th>Product</th>
                 <th>Category</th>
-                <th>Gender</th>
-                <th>Supplier</th>
-                <th class="text-center print-hide">Status</th>
-                <th colspan="3" class="text-center print-hide">Action</th>
+                <th>Variants</th>
+                <th>Stock</th>
+                <th>Status</th>
+                <th class="text-center print-hide">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {% if products %}
-                {% for product in products %}
-                  <tr>
-                    <td>{{ product.prefixed_id }}</td>
-                    <td>{{ product.name }}</td>
-                    <td>{{ product.category }}</td>
-                    <td>{{ product.gender }}</td>
-                    <td>{{ product.supplier }}</td>
-                    <td class="text-center print-hide">
-                      {% if product.status == 'ACTIVE' %}
-                        <span class="badge badge-success" style="font-size:0.8em;">{{ product.status }}</span>
-                      {% elif product.status == 'INACTIVE' %}
-                        <span class="badge badge-danger" style="font-size:0.8em;">{{ product.status }}</span>
+              {% for product in products %}
+                <tr>
+                  <td>{{ product.prefixed_id }}</td>
+                  <td>
+                    {% if product.hero_image_url %}
+                      <img src="{{ product.hero_image_url }}" alt="{{ product.name }}" class="admin-thumb" loading="lazy">
+                    {% elif product.admin_images %}
+                      {% for image in product.admin_images|slice:':1' %}
+                        <img src="{{ image.image_url }}" alt="{{ product.name }}" class="admin-thumb" loading="lazy">
+                      {% endfor %}
+                    {% else %}
+                      <span class="admin-thumb admin-thumb-placeholder"><i class="mdi mdi-image-off-outline"></i></span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <span class="admin-item-title">{{ product.name }}</span>
+                    <span class="admin-item-subtitle">
+                      {{ product.gender|default:'Unisex' }}
+                      {% if product.supplier %} / {{ product.supplier }}{% endif %}
+                    </span>
+                  </td>
+                  <td>{{ product.category|default:'Uncategorized' }}</td>
+                  <td>
+                    <span class="admin-badge is-muted">{{ product.variant_count }} option{{ product.variant_count|pluralize }}</span>
+                    {% if product.admin_active_variants %}
+                      <span class="admin-item-subtitle">{{ product.admin_active_variants|length }} active</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if product.inventory %}
+                      <strong>{{ product.inventory.quantity|default:0|intcomma }}</strong>
+                    {% else %}
+                      <span class="admin-muted">Untracked</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if product.status == 'ACTIVE' %}
+                      <span class="admin-badge is-active">Active</span>
+                    {% elif product.status == 'INACTIVE' %}
+                      <span class="admin-badge is-inactive">Inactive</span>
+                    {% else %}
+                      <span class="admin-badge is-muted">{{ product.status }}</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center print-hide">
+                    <span class="admin-icon-actions">
+                      <a href="{% url 'orders:product_detail' product.uuid %}" class="btn btn-outline-secondary btn-sm admin-icon-btn" title="View storefront" aria-label="View {{ product.name }}">
+                        <i class="mdi mdi-eye-outline"></i>
+                      </a>
+                      <a href="{% url 'products:products_update' product.uuid %}?modal=1" class="btn btn-warning btn-sm admin-icon-btn" title="Update product" aria-label="Update {{ product.name }}" data-product-modal-url="{% url 'products:products_update' product.uuid %}?modal=1" data-product-modal-title="Update {{ product.name }}">
+                        <i class="bi bi-pencil"></i>
+                      </a>
+                      <a href="{% url 'products:product_volume_list' product.id %}" class="btn btn-info btn-sm admin-icon-btn" title="Manage variants" aria-label="Manage variants for {{ product.name }}">
+                        <i class="bi bi-box"></i>
+                      </a>
+                      {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
+                        <button type="button" class="btn btn-danger btn-sm admin-icon-btn" data-bs-toggle="modal" data-bs-target="#deleteModal{{ product.uuid }}" title="Delete product" aria-label="Delete {{ product.name }}">
+                          <i class="bi bi-trash"></i>
+                        </button>
                       {% endif %}
-                    </td>
-                    <td class="text-center print-hide">
-                      <a href="{% url 'products:products_update' product.uuid %}" class="text-decoration-none" onclick="return confirm('Are you sure you want to update this record?');"><button type="button" class="btn btn-warning btn-sm" data-bs-toggle="tooltip" title="Update product"><i class="bi bi-pencil"></i></button></a>
-                    </td>
-                    <td class="text-center print-hide">
-                      <a href="{% url 'products:product_volume_list' product.id %}" class="text-decoration-none"><button type="button" class="btn btn-info btn-sm" data-bs-toggle="tooltip" title="Manage Volumes"><i class="bi bi-box"></i></button></a>
-                    </td>
-                    {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
-                      <td class="text-center print-hide">
-                        <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ product.id }}" title="Delete product"><i class="bi bi-trash"></i></button>
+                    </span>
 
-                        <div class="modal fade" id="deleteModal{{ product.uuid }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ product.id }}" aria-hidden="true">
-                          <div class="modal-dialog">
-                            <div class="modal-content">
-                              <div class="modal-header">
-                                <h5 class="modal-title" id="deleteModalLabel{{ product.uuid }}">Delete Product</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">X</button>
-                              </div>
-                              <div class="modal-body">
-                                Are you sure you want to delete the product: <h3>{{ product.name }}?</h3>
-                              </div>
-                              <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <a href="{% url 'products:products_delete' product.uuid %}" class="text-decoration-none"><button type="button" class="btn btn-danger">Delete</button></a>
-                              </div>
+                    {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
+                      <div class="modal fade" id="deleteModal{{ product.uuid }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ product.uuid }}" aria-hidden="true">
+                        <div class="modal-dialog">
+                          <div class="modal-content">
+                            <div class="modal-header">
+                              <h5 class="modal-title" id="deleteModalLabel{{ product.uuid }}">Delete Product</h5>
+                              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">X</button>
+                            </div>
+                            <div class="modal-body text-left">
+                              Are you sure you want to delete <strong>{{ product.name }}</strong>?
+                            </div>
+                            <div class="modal-footer">
+                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                              <a href="{% url 'products:products_delete' product.uuid %}" class="btn btn-danger">Delete</a>
                             </div>
                           </div>
                         </div>
-                      </td>
+                      </div>
                     {% endif %}
-                  </tr>
-                {% endfor %}
-              {% else %}
-                <tr>
-                  <td colspan="7" class="text-center">No products available</td>
+                  </td>
                 </tr>
-              {% endif %}
+              {% empty %}
+                <tr>
+                  <td colspan="8">
+                    <div class="admin-empty">
+                      <div class="admin-empty-icon"><i class="mdi mdi-package-variant-closed"></i></div>
+                      <h2 class="h4 font-weight-bold">No products found</h2>
+                      <p class="admin-muted">Add a product or adjust your search.</p>
+                      <a href="{% url 'products:products_add' %}?modal=1" class="btn btn-dark print-hide" data-product-modal-url="{% url 'products:products_add' %}?modal=1" data-product-modal-title="Add product">Add product</a>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
             </tbody>
           </table>
         </div>
-        <nav aria-label="Page navigation">
-          <ul class="pagination justify-content-center">
-            {% if products.has_previous %}
-              <li class="page-item">
-                <a class="page-link" href="?page={{ products.previous_page_number }}&search={{ search_query }}" aria-label="Previous"><span aria-hidden="true">&laquo;</span></a>
-              </li>
-            {% else %}
-              <li class="page-item disabled">
-                <span class="page-link" aria-hidden="true">&laquo;</span>
-              </li>
-            {% endif %}
 
-            {% for num in products.paginator.page_range %}
-              {% if products.number == num %}
-                <li class="page-item active">
-                  <span class="page-link">{{ num }}</span>
-                </li>
+        {% if products.paginator.num_pages > 1 %}
+          <nav aria-label="Product pagination" class="print-hide">
+            <ul class="pagination justify-content-center flex-wrap">
+              {% if products.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ products.previous_page_number }}&search={{ search_query }}">&laquo;</a></li>
               {% else %}
-                <li class="page-item">
-                  <a class="page-link" href="?page={{ num }}&search={{ search_query }}">{{ num }}</a>
-                </li>
+                <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
               {% endif %}
-            {% endfor %}
 
-            {% if products.has_next %}
-              <li class="page-item">
-                <a class="page-link" href="?page={{ products.next_page_number }}&search={{ search_query }}" aria-label="Next"><span aria-hidden="true">&raquo;</span></a>
-              </li>
-            {% else %}
-              <li class="page-item disabled">
-                <span class="page-link" aria-hidden="true">&raquo;</span>
-              </li>
-            {% endif %}
-          </ul>
-        </nav>
+              {% for num in products.paginator.page_range %}
+                {% if products.number == num %}
+                  <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
+                  <li class="page-item"><a class="page-link" href="?page={{ num }}&search={{ search_query }}">{{ num }}</a></li>
+                {% endif %}
+              {% endfor %}
+
+              {% if products.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ products.next_page_number }}&search={{ search_query }}">&raquo;</a></li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+              {% endif %}
+            </ul>
+          </nav>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="modal fade product-form-modal-window" id="productFormModal" tabindex="-1" aria-labelledby="productFormModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title font-weight-bold" id="productFormModalLabel">Product</h5>
+            <button type="button" class="product-modal-close" data-product-modal-close data-bs-dismiss="modal" aria-label="Close">&times;</button>
+          </div>
+          <div class="modal-body p-0">
+            <div id="productFormModalBody" class="p-0">
+              <div class="p-4 text-muted">Loading form...</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const modalEl = document.getElementById('productFormModal')
+      const modalBody = document.getElementById('productFormModalBody')
+      const title = document.getElementById('productFormModalLabel')
+      const listPath = "{% url 'products:products_list' %}"
+      let productModal = null
+      let manualBackdrop = null
+
+      function showManualModal() {
+        modalEl.style.display = 'block'
+        modalEl.removeAttribute('aria-hidden')
+        modalEl.setAttribute('aria-modal', 'true')
+        modalEl.classList.add('show')
+        document.body.classList.add('modal-open')
+
+        if (!manualBackdrop) {
+          manualBackdrop = document.createElement('div')
+          manualBackdrop.className = 'modal-backdrop fade show product-modal-backdrop'
+          manualBackdrop.addEventListener('click', hideProductModal)
+          document.body.appendChild(manualBackdrop)
+        }
+      }
+
+      function hideProductModal() {
+        if (window.bootstrap && window.bootstrap.Modal && productModal) {
+          productModal = productModal || window.bootstrap.Modal.getOrCreateInstance(modalEl)
+          productModal.hide()
+        } else if (window.jQuery && window.jQuery.fn.modal) {
+          window.jQuery(modalEl).modal('hide')
+        }
+
+        modalEl.classList.remove('show')
+        modalEl.setAttribute('aria-hidden', 'true')
+        modalEl.removeAttribute('aria-modal')
+        modalEl.style.display = 'none'
+        document.body.classList.remove('modal-open')
+        document.querySelectorAll('.modal-backdrop').forEach(function (backdrop) {
+          backdrop.remove()
+        })
+
+        if (manualBackdrop) {
+          manualBackdrop.remove()
+          manualBackdrop = null
+        }
+      }
+
+      function extractModalForm(html) {
+        const parser = new DOMParser()
+        const doc = parser.parseFromString(html, 'text/html')
+        const formShell = doc.querySelector('.product-modal-form')
+        return formShell ? formShell.outerHTML : html
+      }
+
+      function bindModalForm() {
+        const form = modalBody.querySelector('form')
+        if (!form) return
+
+        form.addEventListener('submit', function (event) {
+          event.preventDefault()
+          const submitButton = form.querySelector('button[type="submit"]')
+          if (submitButton) {
+            submitButton.disabled = true
+            submitButton.textContent = 'Saving...'
+          }
+
+          fetch(form.action || window.location.href, {
+            method: 'POST',
+            body: new FormData(form),
+            credentials: 'same-origin'
+          })
+            .then(function (response) {
+              const responseUrl = new URL(response.url)
+              if (responseUrl.pathname === listPath && !responseUrl.search.includes('modal=1')) {
+                window.location.reload()
+                return null
+              }
+              return response.text()
+            })
+            .then(function (html) {
+              if (!html) return
+              modalBody.innerHTML = extractModalForm(html)
+              bindModalForm()
+            })
+            .catch(function () {
+              modalBody.innerHTML = '<div class="p-4 text-danger font-weight-bold">Unable to save right now. Please try again.</div>'
+            })
+        })
+      }
+
+      function showProductModal(event, trigger) {
+        event.preventDefault()
+        title.textContent = trigger.dataset.productModalTitle || 'Product'
+        modalBody.innerHTML = '<div class="p-4 text-muted">Loading form...</div>'
+        showManualModal()
+
+        fetch(trigger.dataset.productModalUrl || trigger.href, { credentials: 'same-origin' })
+          .then(function (response) { return response.text() })
+          .then(function (html) {
+            modalBody.innerHTML = extractModalForm(html)
+            bindModalForm()
+          })
+          .catch(function () {
+            modalBody.innerHTML = '<div class="p-4 text-danger font-weight-bold">Unable to load the product form.</div>'
+          })
+      }
+
+      modalEl.addEventListener('hidden.bs.modal', function () {
+        modalBody.innerHTML = '<div class="p-4 text-muted">Loading form...</div>'
+      })
+
+      modalEl.querySelectorAll('[data-product-modal-close]').forEach(function (button) {
+        button.addEventListener('click', hideProductModal)
+      })
+
+      document.addEventListener('click', function (event) {
+        const trigger = event.target.closest('[data-product-modal-url]')
+        if (!trigger) return
+        showProductModal(event, trigger)
+      })
+
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && modalEl.classList.contains('show')) {
+          hideProductModal()
+        }
+      })
+    })
+  </script>
 {% endblock %}

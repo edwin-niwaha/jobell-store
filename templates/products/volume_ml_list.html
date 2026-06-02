@@ -4,133 +4,163 @@
 
 {% block content %}
   <div class="container-fluid">
-    <div class="row mb-3">
-      <div class="col-md-12 d-flex justify-content-between align-items-center">
-        <a href="{% url 'products:volume_add' %}" class="btn btn-dark ml-2">
-          <i class="mdi mdi-plus mr-2"></i>
-          Add Volume (ML)
+    <div class="admin-page-head">
+      <div>
+        <span class="admin-eyebrow">Variant setup</span>
+        <h1 class="admin-page-title">{{ table_title }}</h1>
+        <p class="admin-muted mb-0">Manage reusable ML sizes and their default price/cost values.</p>
+      </div>
+
+      <div class="admin-actions print-hide">
+        <a href="{% url 'products:volume_add' %}" class="btn btn-dark font-weight-bold">
+          <i class="mdi mdi-plus mr-2"></i>Add volume
         </a>
-        <div class="d-flex">
-          <button title="Print" type="button" class="btn btn-success ml-2" onclick="printDiv('printMe')"><i class="mdi mdi-printer btn-icon-prepend"></i></button>
-        </div>
+        <a href="{% url 'products:add-volume-to-all-products' %}" class="btn btn-outline-success font-weight-bold">
+          <i class="mdi mdi-package-variant mr-2"></i>Bulk variants
+        </a>
+        <button title="Print" type="button" class="btn btn-outline-dark" onclick="printDiv('printMe')">
+          <i class="mdi mdi-printer btn-icon-prepend"></i>
+        </button>
       </div>
     </div>
 
-    <div class="row mb-3">
-      <div class="col-md-12">
-        <form method="get" action="{% url 'products:volume_list' %}">
-          <div class="input-group">
-            <input type="text" class="form-control" name="search" value="{{ search_query }}" placeholder="Search by volume" />
-            <button class="btn btn-primary" type="submit"><i class="mdi mdi-magnify"></i> Search</button>
-          </div>
-        </form>
+    <div class="admin-stat-grid">
+      <div class="admin-stat">
+        <span>Shown</span>
+        <strong>{{ volumes.paginator.count|default:0|intcomma }}</strong>
+      </div>
+      <div class="admin-stat">
+        <span>Total ML</span>
+        <strong>{{ total_ml|default:0|intcomma }}</strong>
+      </div>
+      <div class="admin-stat">
+        <span>Total cost</span>
+        <strong>{{ total_cost|default:0|floatformat:'0'|intcomma }}</strong>
+      </div>
+      <div class="admin-stat">
+        <span>Total price</span>
+        <strong>{{ total_price|default:0|floatformat:'0'|intcomma }}</strong>
       </div>
     </div>
 
-    <!-- DataTable -->
-    <div id="printMe" class="card shadow mb-4">
-      <div class="card-header py-3">
-        <h3>{{ table_title|upper }}</h3>
+    <form method="get" action="{% url 'products:volume_list' %}" class="admin-search print-hide">
+      <div class="input-group">
+        <input type="text" class="form-control" name="search" value="{{ search_query }}" placeholder="Search by ML, cost, or price" />
+        <button class="btn btn-primary" type="submit"><i class="mdi mdi-magnify"></i> Search</button>
+        {% if search_query %}
+          <a class="btn btn-light" href="{% url 'products:volume_list' %}">Clear</a>
+        {% endif %}
       </div>
+    </form>
+
+    <div id="printMe" class="admin-panel mb-4">
+      <div class="admin-panel-header">
+        <h2>Volumes</h2>
+        <span class="badge badge-warning text-dark">{{ volumes.paginator.count }} total</span>
+      </div>
+
       <div class="card-body">
         <div class="table-responsive">
-          <table class="my-table" id="dataTable">
+          <table class="admin-table volume-admin-table" id="dataTable">
             <thead>
               <tr>
-                <th>#</th>
                 <th>Image</th>
-                <th class="text-center">Volume(ML)</th>
-                <th class="text-right">Cost Price</th>
-                <th class="text-right">Selling Price</th>
-                <th class="print-hide" colspan="2" class="text-center">Actions</th>
+                <th>Volume</th>
+                <th class="text-right">Cost</th>
+                <th class="text-right">Price</th>
+                <th class="text-center print-hide">Actions</th>
               </tr>
             </thead>
             <tbody>
               {% for volume in volumes %}
                 <tr>
-                  <td>{{ forloop.counter }}</td>
                   <td>
                     {% if volume.image %}
-                      <img src="{{ volume.image.url }}" alt="{{ volume.product.name }}" class="rounded-circle account-img" height="50" width="50" />
+                      <img src="{{ volume.image.url }}" alt="{{ volume.ml }} ML" class="admin-thumb" loading="lazy" />
                     {% else %}
-                      <span>No Image</span>
+                      <span class="admin-thumb admin-thumb-placeholder"><i class="mdi mdi-beaker-outline"></i></span>
                     {% endif %}
                   </td>
-                  <td class="text-center">{{ volume.ml }}</td>
-                  <td class="text-right">{{ volume.cost|floatformat:'2'|intcomma }}</td>
-                  <td class="text-right">{{ volume.price|floatformat:'2'|intcomma }}</td>
-                  <td class="text-center print-hide">
-                    <!-- Update button -->
-                    <a href="{% url 'products:volume_update' volume.id %}" class="text-decoration-none" onclick="return confirm('Are you sure you want to update this record?');"><button type="button" class="btn btn-warning btn-sm" data-bs-toggle="tooltip" title="Update Volume"><i class="bi bi-pencil"></i></button></a>
+                  <td>
+                    <span class="admin-item-title">{{ volume.ml|intcomma }} ML</span>
+                    <span class="admin-item-subtitle">Reusable size option</span>
                   </td>
-                  {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
-                    <td class="text-center print-hide">
-                      <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ volume.id }}" title="Delete product"><i class="bi bi-trash"></i></button>
+                  <td class="text-right">UGX {{ volume.cost|floatformat:'0'|intcomma }}</td>
+                  <td class="text-right">UGX {{ volume.price|floatformat:'0'|intcomma }}</td>
+                  <td class="text-center print-hide">
+                    <span class="admin-icon-actions">
+                      <a href="{% url 'products:volume_update' volume.id %}" class="btn btn-warning btn-sm admin-icon-btn" title="Update volume">
+                        <i class="bi bi-pencil"></i>
+                      </a>
+                      {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
+                        <button type="button" class="btn btn-danger btn-sm admin-icon-btn" data-bs-toggle="modal" data-bs-target="#deleteModal{{ volume.id }}" title="Delete volume">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      {% endif %}
+                    </span>
 
+                    {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
                       <div class="modal fade" id="deleteModal{{ volume.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ volume.id }}" aria-hidden="true">
                         <div class="modal-dialog">
                           <div class="modal-content">
                             <div class="modal-header">
                               <h5 class="modal-title" id="deleteModalLabel{{ volume.id }}">Delete Volume</h5>
-                              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">X</button>
+                              <button type="button" class="product-modal-close" data-bs-dismiss="modal" aria-label="Close">&times;</button>
                             </div>
-                            <div class="modal-body">
-                              <p>
-                                Are you sure you want to delete <strong>{{ volume.ml }}ML?</strong>
-                              </p>
-                              <p>This process cannot be reversed.</p>
+                            <div class="modal-body text-left">
+                              Delete <strong>{{ volume.ml }}ML</strong>? This cannot be reversed.
                             </div>
                             <div class="modal-footer">
                               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                              <a href="{% url 'products:delete_volume' volume.id %}" class="text-decoration-none"><button type="button" class="btn btn-danger">Delete</button></a>
+                              <a href="{% url 'products:delete_volume' volume.id %}" class="btn btn-danger">Delete</a>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </td>
-                  {% endif %}
+                    {% endif %}
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="5">
+                    <div class="admin-empty">
+                      <div class="admin-empty-icon"><i class="mdi mdi-beaker-outline"></i></div>
+                      <h2 class="h4 font-weight-bold">No volumes found</h2>
+                      <p class="admin-muted">Add a reusable volume or adjust your search.</p>
+                      <a href="{% url 'products:volume_add' %}" class="btn btn-dark print-hide">Add volume</a>
+                    </div>
+                  </td>
                 </tr>
               {% endfor %}
             </tbody>
-            <tfoot>
-              <tr>
-                <th colspan="2">Total</th>
-                <th class="text-center">{{ total_ml }} ML</th>
-                <th class="text-right">{{ total_cost|floatformat:'2'|intcomma }}</th>
-                <th class="text-right">{{ total_price|floatformat:'2'|intcomma }}</th>
-                <th colspan="2" class="print-hide"></th>
-              </tr>
-            </tfoot>
           </table>
         </div>
-        <!-- Pagination controls -->
-        <div class="d-flex justify-content-between align-items-center mt-4">
-          <nav>
-            <ul class="pagination">
+
+        {% if page_obj.paginator.num_pages > 1 %}
+          <nav aria-label="Volume pagination" class="print-hide">
+            <ul class="pagination justify-content-center flex-wrap">
               {% if page_obj.has_previous %}
-                <li class="page-item">
-                  <a class="page-link" href="?q={{ query }}&page={{ page_obj.previous_page_number }}">Previous</a>
-                </li>
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}">&laquo;</a></li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
               {% endif %}
+
               {% for num in page_obj.paginator.page_range %}
                 {% if page_obj.number == num %}
-                  <li class="page-item active">
-                    <span class="page-link">{{ num }}</span>
-                  </li>
-                {% else %}
-                  <li class="page-item">
-                    <a class="page-link" href="?q={{ query }}&page={{ num }}">{{ num }}</a>
-                  </li>
+                  <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                  <li class="page-item"><a class="page-link" href="?page={{ num }}&search={{ search_query }}">{{ num }}</a></li>
                 {% endif %}
               {% endfor %}
+
               {% if page_obj.has_next %}
-                <li class="page-item">
-                  <a class="page-link" href="?q={{ query }}&page={{ page_obj.next_page_number }}">Next</a>
-                </li>
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ search_query }}">&raquo;</a></li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
               {% endif %}
             </ul>
           </nav>
-        </div>
+        {% endif %}
       </div>
     </div>
   </div>

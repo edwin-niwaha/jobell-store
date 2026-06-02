@@ -13,6 +13,7 @@ $(document).ready(function () {
 document.addEventListener("DOMContentLoaded", function () {
   const searchInput = document.getElementById("searchInput");
   const productList = document.getElementById("search_list");
+  if (!searchInput || !productList) return;
 
   searchInput.addEventListener("keyup", function () {
     const filter = searchInput.value.toLowerCase();

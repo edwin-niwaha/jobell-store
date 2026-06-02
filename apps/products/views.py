@@ -1,13 +1,19 @@
+import logging
+
 from django.contrib import messages
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db import IntegrityError
-from django.db.models import Sum, F, Q, Min, Max, Avg
+from django.db.models import Sum, F, Q, Count, Prefetch
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db import transaction
 from apps.inventory.models import Inventory
+from apps.products.selectors import (
+    active_products_queryset,
+    build_storefront_cards,
+)
 
 # Import models and forms
 from .models import Category, Volume, ProductVolume, Product, ProductImage
@@ -29,17 +35,27 @@ from apps.authentication.decorators import (
     admin_required,
 )
 
+logger = logging.getLogger(__name__)
+
+
+def _product_identity_filter(cleaned_data):
+    """Return only stable product identity fields for duplicate checks."""
+    return {
+        "name__iexact": cleaned_data.get("name", "").strip(),
+        "category": cleaned_data.get("category"),
+        "supplier": cleaned_data.get("supplier"),
+        "gender": cleaned_data.get("gender"),
+    }
+
 
 def shop_homepage_view(request):
     # Initialize the filter form
     form = ProductFilterForm(request.GET)
+    categories = Category.objects.filter(is_active=True, products__status="ACTIVE").distinct().order_by("name")
+    selected_category = None
 
     # Start with all active products
-    products = (
-        Product.objects.prefetch_related("images", "productvolume_set")
-        .filter(status="ACTIVE")
-        .order_by("name")
-    )
+    products = active_products_queryset().order_by("name")
 
     # Apply filters if the form is valid
     if form.is_valid():
@@ -51,20 +67,25 @@ def shop_homepage_view(request):
         # Filter by category if selected
         if category_filter:
             products = products.filter(category=category_filter)
+            selected_category = category_filter
 
         # Filter by price range if provided
         if min_price is not None and max_price is not None:
             products = products.filter(
-                productvolume__volume__price__gte=min_price,
-                productvolume__volume__price__lte=max_price,
+                Q(productvolume__price__gte=min_price)
+                | Q(productvolume__price__isnull=True, productvolume__volume__price__gte=min_price),
+                Q(productvolume__price__lte=max_price)
+                | Q(productvolume__price__isnull=True, productvolume__volume__price__lte=max_price),
             ).distinct()
         elif min_price is not None:
             products = products.filter(
-                productvolume__volume__price__gte=min_price
+                Q(productvolume__price__gte=min_price)
+                | Q(productvolume__price__isnull=True, productvolume__volume__price__gte=min_price)
             ).distinct()
         elif max_price is not None:
             products = products.filter(
-                productvolume__volume__price__lte=max_price
+                Q(productvolume__price__lte=max_price)
+                | Q(productvolume__price__isnull=True, productvolume__volume__price__lte=max_price)
             ).distinct()
 
         # Filter by search query if provided
@@ -87,37 +108,7 @@ def shop_homepage_view(request):
     except EmptyPage:
         page_obj = paginator.page(paginator.num_pages)
 
-    # Prepare the products with images and volumes
-    products_with_images = []
-    for product in page_obj:
-        images = product.images.filter(is_default=True)
-        if not images.exists():
-            images = product.images.all()
-
-        volumes = product.productvolume_set.all()
-        if volumes.exists():
-            min_vol_price = volumes.aggregate(Min("volume__price"))[
-                "volume__price__min"
-            ]
-            max_vol_price = volumes.aggregate(Max("volume__price"))[
-                "volume__price__max"
-            ]
-        else:
-            min_vol_price = max_vol_price = None
-
-        # Calculate the average rating
-        avg_rating = product.reviews.aggregate(Avg("rating"))["rating__avg"]
-        avg_rating = round(avg_rating, 1) if avg_rating else None
-
-        products_with_images.append(
-            {
-                "product": product,
-                "images": images,
-                "min_price": min_vol_price,
-                "max_price": max_vol_price,
-                "avg_rating": avg_rating,
-            }
-        )
+    products_with_images = build_storefront_cards(page_obj)
 
     # Pass the form, filtered products, and pagination to the template
     return render(
@@ -127,6 +118,9 @@ def shop_homepage_view(request):
             "form": form,
             "products_with_images": products_with_images,
             "page_obj": page_obj,
+            "categories": categories,
+            "selected_category": selected_category,
+            "result_count": paginator.count,
         },
     )
 
@@ -137,7 +131,9 @@ def categories_list_view(request):
     search_query = request.GET.get(
         "search", ""
     )  # Get the search query from the request
-    categories = Category.objects.all()
+    categories = Category.objects.annotate(product_count=Count("products")).order_by(
+        "name"
+    )
 
     # Filter categories based on the search query
     if search_query:
@@ -167,7 +163,7 @@ def categories_add_view(request):
     }
 
     if request.method == "POST":
-        form = CategoryForm(request.POST)
+        form = CategoryForm(request.POST, request.FILES)
         if form.is_valid():
             # Check if a category with the same name already exists
             category_name = form.cleaned_data["name"]
@@ -187,13 +183,13 @@ def categories_add_view(request):
                         extra_tags="bg-success",
                     )
                     return redirect("products:categories_list")
-                except Exception as e:
+                except Exception:
+                    logger.exception("Error creating category %s", category_name)
                     messages.error(
                         request,
                         "There was an error during the creation!",
                         extra_tags="bg-danger",
                     )
-                    print(e)
                     return redirect("products:categories_add")
         else:
             messages.error(
@@ -217,7 +213,7 @@ def categories_update_view(request, category_id):
     category = get_object_or_404(Category, id=category_id)
 
     if request.method == "POST":
-        form = CategoryForm(request.POST, instance=category)
+        form = CategoryForm(request.POST, request.FILES, instance=category)
         if form.is_valid():
             try:
                 # Save the form data
@@ -228,13 +224,13 @@ def categories_update_view(request, category_id):
                     extra_tags="bg-success",
                 )
                 return redirect("products:categories_list")
-            except Exception as e:
+            except Exception:
+                logger.exception("Error updating category %s", category_id)
                 messages.error(
                     request,
                     "There was an error during the update!",
                     extra_tags="bg-danger",
                 )
-                print(e)
                 return redirect("products:categories_list")
         else:
             messages.error(
@@ -269,13 +265,13 @@ def categories_delete_view(request, category_id):
             extra_tags="bg-success",
         )
         return redirect("products:categories_list")
-    except Exception as e:
+    except Exception:
+        logger.exception("Error deleting category %s", category_id)
         messages.success(
             request,
             "There was an error during the elimination!",
             extra_tags="bg-danger",
         )
-        print(e)
         return redirect("products:categories_list")
 
 
@@ -385,6 +381,12 @@ def product_volume_list_view(request, product_id):
     if query:
         product_volumes = product_volumes.filter(
             Q(product_type__icontains=query)
+            | Q(name__icontains=query)
+            | Q(sku__icontains=query)
+            | Q(barcode__icontains=query)
+            | Q(color__icontains=query)
+            | Q(size__icontains=query)
+            | Q(scent__icontains=query)
             | Q(volume__ml__icontains=query)
             | Q(volume__cost__icontains=query)
             | Q(volume__price__icontains=query)
@@ -437,28 +439,19 @@ def add_product_volume_view(request, product_id):
             volume = form.cleaned_data["volume"]
             product_type = form.cleaned_data["product_type"]
 
-            # Check if ProductVolume with the same product, volume, and product type already exists
-            if ProductVolume.objects.filter(
-                product=product, volume=volume, product_type=product_type
-            ).exists():
-                form.add_error(
-                    None,
-                    "This combination of product, volume, and product type already exists.",
-                )
-            else:
-                try:
-                    with transaction.atomic():  # Wrap the database operation in an atomic block
-                        form.save()  # The form now handles the save and uniqueness check
-                        messages.success(
-                            request,
-                            "Record added successfully!",
-                            extra_tags="bg-success",
-                        )
-                        return redirect(
-                            "products:product_volume_list", product_id=product.id
-                        )
-                except IntegrityError:
-                    form.add_error(None, "An unexpected error occurred while saving.")
+            try:
+                with transaction.atomic():
+                    form.save()
+                    messages.success(
+                        request,
+                        "Product variation added successfully!",
+                        extra_tags="bg-success",
+                    )
+                    return redirect(
+                        "products:product_volume_list", product_id=product.id
+                    )
+            except IntegrityError:
+                form.add_error(None, "This product variation already exists or uses a duplicate SKU/barcode.")
         else:
             # Form is not valid
             messages.error(request, "Please correct the errors below.")
@@ -565,8 +558,23 @@ def products_list_view(request):
     page = request.GET.get("page", 1)
 
     # Filter products based on the search query
+    active_variants = ProductVolume.objects.filter(is_active=True).select_related(
+        "volume"
+    )
+    active_images = ProductImage.objects.filter(is_active=True).order_by(
+        "-is_default", "sort_order", "-created_at"
+    )
     products = (
-        Product.objects.prefetch_related("productvolume_set", "inventory")
+        Product.objects.select_related("category", "supplier", "inventory")
+        .prefetch_related(
+            Prefetch(
+                "productvolume_set",
+                queryset=active_variants,
+                to_attr="admin_active_variants",
+            ),
+            Prefetch("images", queryset=active_images, to_attr="admin_images"),
+        )
+        .annotate(variant_count=Count("productvolume", distinct=True))
         .filter(
             Q(name__icontains=search_query)
             | Q(category__name__icontains=search_query)
@@ -621,20 +629,25 @@ def products_list_view(request):
 @admin_or_manager_or_staff_required
 @transaction.atomic
 def products_add_view(request):
+    is_modal = request.GET.get("modal") == "1" or request.POST.get("modal") == "1"
     context = {
         "product_status": Product.status.field.choices,
         "table_title": "Add Product",
+        "is_modal": is_modal,
+        "submit_label": "Add product",
     }
 
     if request.method == "POST":
-        form = ProductForm(request.POST)
+        form = ProductForm(request.POST, request.FILES)
         if form.is_valid():
             # Check if a product with the same attributes exists
             attributes = form.cleaned_data
-            if Product.objects.filter(**attributes).exists():
+            if Product.objects.filter(**_product_identity_filter(attributes)).exists():
                 messages.error(
                     request, "Product already exists!", extra_tags="bg-warning"
                 )
+                if is_modal:
+                    return redirect(f"{reverse('products:products_add')}?modal=1")
                 return redirect("products:products_add")
 
             try:
@@ -645,13 +658,15 @@ def products_add_view(request):
                     extra_tags="bg-success",
                 )
                 return redirect("products:products_list")
-            except Exception as e:
+            except Exception:
+                logger.exception("Error creating product")
                 messages.error(
                     request,
                     "There was an error during the creation!",
                     extra_tags="bg-danger",
                 )
-                print(e)
+                if is_modal:
+                    return redirect(f"{reverse('products:products_add')}?modal=1")
                 return redirect("products:products_add")
         else:
             messages.error(
@@ -663,6 +678,8 @@ def products_add_view(request):
         form = ProductForm()
 
     context["form"] = form
+    if is_modal:
+        return render(request, "products/_product_form_modal.html", context=context)
     return render(request, "products/products_add.html", context=context)
 
 
@@ -671,6 +688,7 @@ def products_add_view(request):
 @admin_or_manager_or_staff_required
 @transaction.atomic
 def products_update_view(request, product_uuid):
+    is_modal = request.GET.get("modal") == "1" or request.POST.get("modal") == "1"
     # Get the product or return 404 if not found
     product = get_object_or_404(Product, uuid=product_uuid)
 
@@ -679,19 +697,29 @@ def products_update_view(request, product_uuid):
         "product_status": Product.status.field.choices,
         "product": product,
         "categories": Category.objects.all(),
+        "is_modal": is_modal,
+        "submit_label": "Update product",
     }
 
     if request.method == "POST":
-        form = ProductForm(request.POST, instance=product)
+        form = ProductForm(request.POST, request.FILES, instance=product)
         if form.is_valid():
             # Check if a product with the same attributes exists, excluding the current product
             attributes = form.cleaned_data
-            if Product.objects.filter(**attributes).exclude(uuid=product_uuid).exists():
+            if (
+                Product.objects.filter(**_product_identity_filter(attributes))
+                .exclude(uuid=product_uuid)
+                .exists()
+            ):
                 messages.error(
                     request,
                     "Product with the same attributes already exists!",
                     extra_tags="warning",
                 )
+                if is_modal:
+                    return redirect(
+                        f"{reverse('products:products_update', kwargs={'product_uuid': product_uuid})}?modal=1"
+                    )
                 return redirect("products:products_update", product_uuid=product_uuid)
 
             try:
@@ -702,13 +730,17 @@ def products_update_view(request, product_uuid):
                     extra_tags="bg-success",
                 )
                 return redirect("products:products_list")
-            except Exception as e:
+            except Exception:
+                logger.exception("Error updating product %s", product_uuid)
                 messages.error(
                     request,
                     "There was an error during the update!",
                     extra_tags="bg-danger",
                 )
-                print(e)
+                if is_modal:
+                    return redirect(
+                        f"{reverse('products:products_update', kwargs={'product_uuid': product_uuid})}?modal=1"
+                    )
                 return redirect("products:products_update", product_uuid=product_uuid)
         else:
             messages.error(
@@ -720,6 +752,8 @@ def products_update_view(request, product_uuid):
         form = ProductForm(instance=product)
 
     context["form"] = form
+    if is_modal:
+        return render(request, "products/_product_form_modal.html", context=context)
     return render(request, "products/products_update.html", context=context)
 
 
@@ -736,13 +770,13 @@ def products_delete_view(request, product_uuid):
             request, "¡Product: " + product.name + " deleted!", extra_tags="bg-success"
         )
         return redirect("products:products_list")
-    except Exception as e:
+    except Exception:
+        logger.exception("Error deleting product %s", product_uuid)
         messages.success(
             request,
             "There was an error during the elimination!",
             extra_tags="bg-danger",
         )
-        print(e)
         return redirect("products:products_list")
 
 
@@ -776,20 +810,21 @@ def stock_alerts_view(request):
 @transaction.atomic
 def update_product_image(request):
     if request.method == "POST":
-        form = ProductImageForm(request.POST, request.FILES)
+        product_id = request.POST.get("id")
+        product = get_object_or_404(Product, id=product_id)
+        form = ProductImageForm(
+            request.POST,
+            request.FILES,
+            instance=ProductImage(product=product),
+        )
         if form.is_valid():
-            product_id = request.POST.get("id")
-            product_image = get_object_or_404(Product, id=product_id)
-
-            # Save the new product image without committing
             new_picture = form.save(commit=False)
-            new_picture.product = product_image
-            new_picture.is_default = True  # Assuming is_current means default image
+            new_picture.product = product
             new_picture.save()
 
-            # Update product's profile image
-            product_image.image = new_picture.image
-            product_image.save()
+            if new_picture.is_default:
+                product.hero_image = new_picture.image
+                product.save(update_fields=["hero_image"])
 
             messages.success(
                 request, "Product image updated successfully!", extra_tags="bg-success"
@@ -819,42 +854,38 @@ def update_product_image(request):
 @login_required
 @admin_or_manager_or_staff_required
 def product_images(request):
-    products = Product.objects.all().order_by("id")
-
-    if request.method == "POST":
-        product_id = request.POST.get("id")
-
-        if product_id:
-            selected_product = get_object_or_404(Product, id=product_id)
-            # Fetch all images related to the product
-            image_fetched = ProductImage.objects.filter(product_id=product_id)
-
-            if not image_fetched.exists():
-                messages.error(
-                    request,
-                    "No images found for the selected product.",
-                    extra_tags="bg-warning",
-                )
-
-            return render(
+    products = Product.objects.order_by("name")
+    product_id = request.POST.get("id") if request.method == "POST" else request.GET.get("id")
+    selected_product = None
+    images = ProductImage.objects.none()
+    if product_id:
+        selected_product = get_object_or_404(Product, id=product_id)
+        images = ProductImage.objects.select_related("product").filter(
+            product=selected_product
+        ).order_by("-is_default", "sort_order", "-created_at")
+        if not images.exists():
+            messages.error(
                 request,
-                "products/product_images.html",
-                {
-                    "table_title": "Product Images",
-                    "products": products,
-                    "selected_product": selected_product,  # Pass the selected product
-                    "product_image_fetched": image_fetched,  # Pass the fetched images
-                },
+                "No images found for the selected product.",
+                extra_tags="bg-warning",
             )
-        else:
-            messages.error(request, "No product selected.", extra_tags="bg-danger")
 
-    # Handle GET request or fallback if no product is selected
-    return render(
-        request,
-        "products/product_images.html",
-        {"table_title": "Product Image", "products": products},
-    )
+    paginator = Paginator(images, 24)
+    page_number = request.GET.get("page")
+    product_images_page = paginator.get_page(page_number)
+
+    context = {
+        "table_title": "Product Images",
+        "products": products,
+        "selected_product": selected_product,
+        "selected_product_id": str(product_id or ""),
+        "product_image_fetched": product_images_page,
+        "has_selected_product": bool(selected_product),
+        "total_images": images.count(),
+        "default_images": images.filter(is_default=True).count(),
+        "active_images": images.filter(is_active=True).count(),
+    }
+    return render(request, "products/product_images.html", context)
 
 
 # =================================== Delete Product Image ===================================
@@ -929,7 +960,7 @@ def add_volume_to_all_products_view(request):
             for product in products:
                 # Check if the combination of product, volume, and product type already exists
                 if not ProductVolume.objects.filter(
-                    product=product, volume=volume, product_type=product_type
+                    product=product, volume=volume, product_type=product_type, color="", size="", scent=""
                 ).exists():
                     product_volumes.append(
                         ProductVolume(
@@ -1040,6 +1071,12 @@ def product_volumes_list_view(request):
         volumes = ProductVolume.objects.filter(
             Q(volume__ml__icontains=search_query)
             | Q(product__name__icontains=search_query)
+            | Q(name__icontains=search_query)
+            | Q(sku__icontains=search_query)
+            | Q(barcode__icontains=search_query)
+            | Q(color__icontains=search_query)
+            | Q(size__icontains=search_query)
+            | Q(scent__icontains=search_query)
         ).select_related("product", "volume")
     else:
         volumes = (

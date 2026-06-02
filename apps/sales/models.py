@@ -49,6 +49,14 @@ class Sale(models.Model):
 
     class Meta:
         db_table = "Sales"
+        ordering = ["-trans_date", "-id"]
+        indexes = [
+            models.Index(fields=["customer", "trans_date"], name="sale_customer_date_idx"),
+            models.Index(fields=["trans_date"], name="sale_trans_date_idx"),
+            models.Index(fields=["payment_method", "trans_date"], name="sale_payment_date_idx"),
+            models.Index(fields=["sale_type", "trans_date"], name="sale_type_date_idx"),
+            models.Index(fields=["receipt_number"], name="sale_receipt_idx"),
+        ]
 
     def __str__(self) -> str:
         return (
@@ -96,6 +104,10 @@ class SaleDetail(models.Model):
 
     class Meta:
         db_table = "SaleDetails"
+        indexes = [
+            models.Index(fields=["sale", "product"], name="saledetail_sale_product_idx"),
+            models.Index(fields=["product", "created_at"], name="saledetail_prod_cr_idx"),
+        ]
 
     def __str__(self) -> str:
         return f"Detail ID: {self.id} | Sale ID: {self.sale.id} | Quantity: {self.quantity} | Product: {self.product.name}"
@@ -104,7 +116,7 @@ class SaleDetail(models.Model):
         """Calculate profit for a single item."""
         if self.product_volume:
             return (
-                self.product_volume.price - self.product_volume.cost
+                self.product_volume.effective_price - self.product_volume.effective_cost
             ) * self.quantity
         return 0
 

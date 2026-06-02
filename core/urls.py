@@ -12,11 +12,13 @@ urlpatterns = [
     path("", include("apps.main.urls")),
     path("auth/", include("apps.authentication.urls")),
     path("customers/", include("apps.customers.urls")),
+    path("addresses/", include("apps.addresses.urls")),
     path("supplier/", include("apps.supplier.urls")),
     path("products/", include("apps.products.urls")),
     path("inventory/", include("apps.inventory.urls")),
     path("sales/", include("apps.sales.urls")),
     path("orders/", include("apps.orders.urls")),
+    path("shipping/", include("apps.shipping.urls")),
     path("financials/", include("apps.finance.urls")),
     path("blog/", include("apps.blog.urls")),
     # Social Authentication
