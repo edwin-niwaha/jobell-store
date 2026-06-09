@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.text import slugify
-from .validators import validate_youtube_url
+from .validators import build_youtube_embed_url, validate_youtube_url
 
 
 class Category(models.Model):
@@ -101,3 +101,7 @@ class BlogPost(models.Model):
 
     def __str__(self):
         return self.title
+
+    @property
+    def youtube_embed_url(self):
+        return build_youtube_embed_url(self.url_content or "")

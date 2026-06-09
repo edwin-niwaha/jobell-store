@@ -11,12 +11,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <link rel="shortcut icon" href="{% static 'images/file.png' %}" />
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font/css/materialdesignicons.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="{% static 'css/admin_store.css' %}?v=5" />
+    <link rel="stylesheet" href="{% static 'assets/css/jobell-dashboard.css' %}?v=2" />
   </head>
 
-  <body>
+  <body class="content-wrapper">
     <div class="container-fluid" style="margin-top: 80px;">
       <!-- Topbar -->
       {% include 'accounts/_partials/navbar_1.html' %}
@@ -154,4 +157,6 @@
       </div>
     </div>
   </body>
+  <script src="{% static 'js/print.js' %}"></script>
+  <script src="{% static 'assets/js/jobell-dashboard.js' %}?v=1"></script>
 </html>

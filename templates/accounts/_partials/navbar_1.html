@@ -1,77 +1,318 @@
-<!DOCTYPE html>
-<html lang="en">
-  {% load bootstrap5 %} {% load static %}
+{% load static %}
 
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet" />
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
-    <!-- MDB -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/3.6.0/mdb.min.css" rel="stylesheet" />
-  </head>
+<style>
+  .jobell-sales-nav {
+    background: #020617;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 26px rgba(2, 6, 23, 0.2);
+    min-height: 76px;
+    padding: 0;
+  }
 
-  <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg bg-dark navbar-dark fixed-top" data-responsive-navbar>
-      <div class="container-fluid">
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#jobellLegacyNavbar" aria-controls="jobellLegacyNavbar" aria-expanded="false" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
-        <div class="collapse navbar-collapse" id="jobellLegacyNavbar" data-navbar-menu>
-          <ul class="navbar-nav me-auto mb-2 mb-lg-0" style="font-family: 'Times New Roman', Times, serif">
-            <li class="nav-item">
-              <a class="nav-link" href="/">Home</a>
-            </li>
-            {% if user.is_authenticated %}
-              {% if user.profile.role == 'guest' %}
-                <li class="nav-item">
-                  <!-- Hide the dashboard -->
-                </li>
-              {% else %}
-                <li class="nav-item">
-                  <a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a>
-                </li>
-              {% endif %}
-            {% endif %}
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'orders:wishlist' %}">Wishlist</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'orders:customer_order_history' %}">Orders</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'about_us' %}">About Us</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'contact_us' %}">Contact Us</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'blog:blog_list' %}">Blog</a>
-            </li>
-          </ul>
-          <ul class="navbar-nav ms-auto mb-2 mb-lg-0" style="font-family: 'Times New Roman', Times, serif">
-            {% if user.is_authenticated %}
-              <li>
-                <a href="{% url 'users-profile' %}" class="nav-item nav-link">My Profile</a>
-              </li>
-              <li>
-                <a href="{% url 'logout' %}" class="nav-item nav-link" onclick="return confirm('Are you sure you want to logout?');">Logout</a>
-              </li>
-            {% else %}
-              <li class="nav-item me-2">
-                <b><a href="{% url 'login' %}" class="nav-item nav-link">Log in</a></b>
-              </li>
-              <li class="nav-item">
-                <b><a class="nav-link" href="{% url 'users-register' %}">Register</a></b>
-              </li>
-            {% endif %}
-          </ul>
-        </div>
-      </div>
-    </nav>
+  .jobell-sales-nav .jobell-sales-nav-inner {
+    align-items: center;
+    gap: 18px;
+    max-width: 1500px;
+    padding: 10px 18px;
+  }
 
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/3.6.0/mdb.min.js"></script>
-  </body>
-</html>
+  .jobell-sales-brand {
+    align-items: center;
+    display: inline-flex;
+    gap: 12px;
+    min-width: max-content;
+    text-decoration: none;
+  }
+
+  .jobell-sales-brand:hover {
+    text-decoration: none;
+  }
+
+  .jobell-sales-brand-mark {
+    align-items: center;
+    background: #ffffff;
+    border-radius: 12px;
+    display: inline-flex;
+    height: 46px;
+    justify-content: center;
+    overflow: hidden;
+    width: 46px;
+  }
+
+  .jobell-sales-brand-mark img {
+    height: 100%;
+    object-fit: contain;
+    width: 100%;
+  }
+
+  .jobell-sales-brand-copy {
+    display: grid;
+    line-height: 1.1;
+  }
+
+  .jobell-sales-brand-copy strong {
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: 900;
+  }
+
+  .jobell-sales-brand-copy small {
+    color: rgba(255, 255, 255, 0.62);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .jobell-sales-nav-toggle {
+    align-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 10px;
+    color: #ffffff;
+    display: inline-flex;
+    height: 42px;
+    justify-content: center;
+    padding: 0;
+    width: 42px;
+  }
+
+  .jobell-sales-nav-toggle i {
+    font-size: 24px;
+  }
+
+  .jobell-sales-nav-links,
+  .jobell-sales-nav-actions {
+    align-items: center;
+    gap: 6px;
+  }
+
+  .jobell-sales-nav-links {
+    margin-left: 18px;
+    margin-right: auto;
+  }
+
+  .jobell-sales-nav-actions {
+    margin-left: auto;
+  }
+
+  .jobell-sales-nav .nav-link,
+  .jobell-sales-auth-link,
+  .jobell-sales-user-link {
+    align-items: center;
+    border-radius: 10px;
+    color: rgba(255, 255, 255, 0.78) !important;
+    display: inline-flex;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    gap: 7px;
+    padding: 9px 11px !important;
+    text-decoration: none;
+    transition: background-color 0.18s ease, color 0.18s ease;
+  }
+
+  .jobell-sales-nav .nav-link:hover,
+  .jobell-sales-nav .nav-link:focus,
+  .jobell-sales-auth-link:hover,
+  .jobell-sales-auth-link:focus,
+  .jobell-sales-user-link:hover,
+  .jobell-sales-user-link:focus {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff !important;
+    text-decoration: none;
+  }
+
+  .jobell-sales-nav .nav-link i,
+  .jobell-sales-auth-link i,
+  .jobell-sales-user-link i {
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .jobell-sales-cart {
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    color: #ffffff;
+    display: inline-flex;
+    height: 40px;
+    justify-content: center;
+    position: relative;
+    text-decoration: none;
+    width: 40px;
+  }
+
+  .jobell-sales-cart:hover,
+  .jobell-sales-cart:focus {
+    background: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    text-decoration: none;
+  }
+
+  .jobell-sales-cart i {
+    font-size: 20px;
+  }
+
+  .jobell-sales-count {
+    background: #f79420;
+    border-radius: 999px;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 900;
+    line-height: 1;
+    min-width: 18px;
+    padding: 4px 5px;
+    position: absolute;
+    right: -6px;
+    text-align: center;
+    top: -6px;
+  }
+
+  .jobell-sales-auth-primary {
+    background: #ffd814;
+    color: #111827 !important;
+  }
+
+  .jobell-sales-auth-primary:hover,
+  .jobell-sales-auth-primary:focus {
+    background: #f7ca00;
+    color: #111827 !important;
+  }
+
+  @media (max-width: 1199.98px) {
+    .jobell-sales-nav .navbar-collapse {
+      background: rgba(2, 6, 23, 0.98);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      box-shadow: 0 18px 42px rgba(2, 6, 23, 0.28);
+      margin-top: 12px;
+      padding: 12px;
+      width: 100%;
+    }
+
+    .jobell-sales-nav-links,
+    .jobell-sales-nav-actions {
+      align-items: stretch;
+      margin: 12px 0 0;
+    }
+
+    .jobell-sales-nav-actions {
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 12px;
+    }
+
+    .jobell-sales-nav .nav-link,
+    .jobell-sales-auth-link,
+    .jobell-sales-user-link {
+      justify-content: flex-start;
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 575.98px) {
+    .jobell-sales-brand-copy {
+      display: none;
+    }
+
+    .jobell-sales-nav .jobell-sales-nav-inner {
+      padding-left: 12px;
+      padding-right: 12px;
+    }
+  }
+</style>
+
+<nav class="navbar navbar-expand-xl fixed-top jobell-sales-nav" data-responsive-navbar>
+  <div class="container-fluid jobell-sales-nav-inner">
+    <a class="jobell-sales-brand" href="/" aria-label="Jobell home">
+      <span class="jobell-sales-brand-mark">
+        <img src="{% static 'images/file.png' %}" alt="Jobell" />
+      </span>
+      <span class="jobell-sales-brand-copy">
+        <strong>Jobell</strong>
+        <small>Sales workspace</small>
+      </span>
+    </a>
+
+    <button class="navbar-toggler jobell-sales-nav-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#jobellLegacyNavbar" aria-controls="jobellLegacyNavbar" aria-expanded="false" aria-label="Toggle navigation">
+      <i class="mdi mdi-menu"></i>
+    </button>
+
+    <div class="collapse navbar-collapse" id="jobellLegacyNavbar" data-navbar-menu>
+      <ul class="navbar-nav jobell-sales-nav-links">
+        <li class="nav-item">
+          <a class="nav-link" href="/"><i class="mdi mdi-home-outline"></i> Home</a>
+        </li>
+        {% if user.is_authenticated and user.profile.role != 'guest' %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'dashboard' %}"><i class="mdi mdi-view-dashboard-outline"></i> Dashboard</a>
+          </li>
+        {% endif %}
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'orders:wishlist' %}"><i class="mdi mdi-heart-outline"></i> Wishlist</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'orders:customer_order_history' %}"><i class="mdi mdi-receipt-text-outline"></i> Orders</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'about_us' %}"><i class="mdi mdi-information-outline"></i> About</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'contact_us' %}"><i class="mdi mdi-headphones"></i> Support</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'blog:blog_list' %}"><i class="mdi mdi-newspaper-variant-outline"></i> Blog</a>
+        </li>
+      </ul>
+
+      <ul class="navbar-nav jobell-sales-nav-actions">
+        <li class="nav-item">
+          <a class="jobell-sales-cart" href="{% url 'orders:cart' %}" aria-label="View cart">
+            <i class="mdi mdi-cart-outline"></i>
+            <span class="jobell-sales-count">{{ cart_count_user|default:0 }}</span>
+          </a>
+        </li>
+        {% if user.is_authenticated %}
+          <li class="nav-item">
+            <a href="{% url 'users-profile' %}" class="jobell-sales-user-link"><i class="mdi mdi-account-outline"></i> My Profile</a>
+          </li>
+          <li class="nav-item">
+            <a href="{% url 'logout' %}" class="jobell-sales-user-link" onclick="return confirm('Are you sure you want to logout?');"><i class="mdi mdi-logout"></i> Logout</a>
+          </li>
+        {% else %}
+          <li class="nav-item">
+            <a href="{% url 'login' %}" class="jobell-sales-auth-link"><i class="mdi mdi-login"></i> Log in</a>
+          </li>
+          <li class="nav-item">
+            <a class="jobell-sales-auth-link jobell-sales-auth-primary" href="{% url 'users-register' %}">Register</a>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<script src="{% static 'js/navbar.js' %}"></script>
+<script>
+  (function () {
+    function initSalesNavbarFallback() {
+      const navbar = document.querySelector('.jobell-sales-nav');
+      if (!navbar) return;
+
+      const toggle = navbar.querySelector('[data-bs-toggle="collapse"][data-bs-target]');
+      const menu = navbar.querySelector('#jobellLegacyNavbar');
+      if (!toggle || !menu) return;
+
+      toggle.addEventListener('click', function (event) {
+        if (window.bootstrap && window.bootstrap.Collapse) return;
+        event.preventDefault();
+        const isOpen = menu.classList.toggle('show');
+        toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initSalesNavbarFallback);
+    } else {
+      initSalesNavbarFallback();
+    }
+  })();
+</script>

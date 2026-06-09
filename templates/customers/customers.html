@@ -1,81 +1,131 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block title %}
+  Customers | Jobell
+{% endblock %}
+
 {% block content %}
   <div class="container-fluid">
-    <div class="row mb-3">
-      <div class="col-md-12 d-flex justify-content-between align-items-center">
-        <a href="{% url 'customers:customers_add' %}" class="btn btn-dark ml-2">
-          <i class="mdi mdi-plus mr-2"></i>
+    <div class="admin-page-head">
+      <div>
+        <span class="admin-eyebrow">People</span>
+        <h1 class="admin-page-title">{{ table_title }}</h1>
+        <p class="admin-muted mb-0">Manage customer contact details and shipping information.</p>
+      </div>
+      <div class="admin-actions">
+        <a href="{% url 'customers:customers_add' %}" class="admin-theme-btn admin-theme-btn-accent">
+          <i class="mdi mdi-account-plus-outline" aria-hidden="true"></i>
           Add Customer
         </a>
-        <div class="d-flex">
-          <button title="Print" type="button" class="btn btn-success ml-2" onclick="printDiv('printMe')"><i class="mdi mdi-printer btn-icon-prepend"></i></button>
-        </div>
+        <button title="Export to Excel" type="button" class="admin-theme-btn admin-theme-btn-soft" onclick="ExportToExcel('xlsx')">
+          <i class="mdi mdi-file-excel" aria-hidden="true"></i>
+          Excel
+        </button>
+        <button title="Print" type="button" class="admin-theme-btn admin-theme-btn-soft" onclick="printDiv('printMe')">
+          <i class="mdi mdi-printer" aria-hidden="true"></i>
+          Print
+        </button>
       </div>
     </div>
 
-    <!-- DataTable -->
-    <div id="printMe" class="card shadow mb-4">
-      <div class="card-header py-3">
-        <h3>{{ table_title|upper }}</h3>
+    <form method="get" action="{% url 'customers:customers_list' %}" class="admin-filter-bar">
+      <div class="flex-grow-1">
+        <label for="customerSearch" class="sr-only">Search customers</label>
+        <input type="search" name="search" id="customerSearch" class="form-control" value="{{ search_query }}" placeholder="Search by name, email, or phone" />
       </div>
-      <div class="card-body">
-        <div class="table-responsive">
-          <table class="my-table" id="dataTable">
+      <button type="submit" class="admin-theme-btn admin-theme-btn-accent">
+        <i class="mdi mdi-magnify" aria-hidden="true"></i>
+        Search
+      </button>
+      {% if search_query %}
+        <a href="{% url 'customers:customers_list' %}" class="admin-theme-btn admin-theme-btn-soft">Clear</a>
+      {% endif %}
+    </form>
+
+    <div id="printMe" class="admin-panel mb-4">
+      <div class="admin-panel-header">
+        <h2>Customer records</h2>
+      </div>
+      <div class="p-3">
+        <div class="admin-table-wrap">
+          <table class="admin-table my-table" id="dataTable">
             <thead>
               <tr>
-                <th>#</th>
                 <th>Name</th>
                 <th>Email</th>
-                <th>Tel</th>
-                <th>Mobile</th>
+                <th>Phone</th>
                 <th>Address</th>
-                <th class="print-hide" colspan="2" class="text-center">Actions</th>
+                <th class="print-hide text-center">Actions</th>
               </tr>
             </thead>
             <tbody>
               {% for c in customers %}
                 <tr>
-                  <td>{{ forloop.counter }}</td>
-                  <td>{{ c.get_full_name }}</td>
-                  <td>{{ c.email }}</td>
-                  <td>{{ c.tel }}</td>
-                  <td>{{ c.mobile }}</td>
-                  <td>{{ c.address }}</td>
-                  <td class="text-center print-hide">
-                    <!-- Update button -->
-                    <a href="{% url 'customers:customers_update' c.id %}" class="text-decoration-none" onclick="return confirm('Are you sure you want to update this record?');"><button type="button" class="btn btn-warning btn-sm" data-bs-toggle="tooltip" title="Update customer"><i class="bi bi-pencil"></i></button></a>
+                  <td>
+                    <span class="admin-item-title">{{ c.get_full_name|default:c.email|default:'Customer' }}</span>
+                    <span class="admin-item-subtitle">Added {{ c.created_at|date:'Y-m-d' }}</span>
                   </td>
+                  <td>{{ c.email|default:'No email' }}</td>
+                  <td>
+                    <span class="admin-item-title">{{ c.mobile|default:'No mobile' }}</span>
+                    <span class="admin-item-subtitle">{{ c.tel|default:'No telephone' }}</span>
+                  </td>
+                  <td class="admin-row-text">{{ c.address|default:'No address' }}</td>
                   <td class="text-center print-hide">
-                    {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
-                      <!-- Delete button and modal -->
-                      <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ c.id }}" title="Delete customer"><i class="bi bi-trash"></i></button>
+                    <div class="admin-icon-actions">
+                      <a href="{% url 'customers:customers_update' c.id %}" class="admin-icon-btn-themed is-gold" data-bs-toggle="tooltip" title="Update customer">
+                        <i class="bi bi-pencil" aria-hidden="true"></i>
+                      </a>
 
-                      <!-- Delete Modal -->
-                      <div class="modal fade" id="deleteModal{{ c.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ c.id }}" aria-hidden="true">
-                        <div class="modal-dialog">
-                          <div class="modal-content">
-                            <div class="modal-header">
-                              <h5 class="modal-title" id="deleteModalLabel{{ c.id }}">Delete Customer</h5>
-                              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">X</button>
-                            </div>
-                            <div class="modal-body">
-                              Are you sure you want to delete the customer: <h3>{{ c.get_full_name }}?</h3>
-                            </div>
-                            <div class="modal-footer">
-                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                              <a href="{% url 'customers:customers_delete' c.id %}" class="text-decoration-none"><button type="button" class="btn btn-danger">Delete</button></a>
+                      {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
+                        <button type="button" class="admin-icon-btn-themed is-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ c.id }}" title="Delete customer"><i class="bi bi-trash" aria-hidden="true"></i></button>
+                        <div class="modal fade" id="deleteModal{{ c.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ c.id }}" aria-hidden="true">
+                          <div class="modal-dialog">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title" id="deleteModalLabel{{ c.id }}">Delete Customer</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">X</button>
+                              </div>
+                              <div class="modal-body">
+                                Delete {{ c.get_full_name|default:c.email|default:'this customer' }} permanently?
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <a href="{% url 'customers:customers_delete' c.id %}" class="btn btn-danger">Delete</a>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    {% endif %}
+                      {% endif %}
+                    </div>
                   </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="5" class="admin-empty-row">No customers found.</td>
                 </tr>
               {% endfor %}
             </tbody>
           </table>
+        </div>
+        <div class="d-flex justify-content-between align-items-center flex-wrap mt-3">
+          <div class="admin-muted mb-2 mb-md-0">Showing {{ customers.start_index }} to {{ customers.end_index }} of {{ customers.paginator.count }} entries</div>
+          <nav aria-label="Customer pagination">
+            <ul class="pagination admin-pagination">
+              {% if customers.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ customers.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Previous</a></li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">Previous</span></li>
+              {% endif %}
+              <li class="page-item active"><span class="page-link">{{ customers.number }} / {{ customers.paginator.num_pages }}</span></li>
+              {% if customers.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ customers.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Next</a></li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">Next</span></li>
+              {% endif %}
+            </ul>
+          </nav>
         </div>
       </div>
     </div>

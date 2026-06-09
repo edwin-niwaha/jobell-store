@@ -31,11 +31,18 @@
               <article class="card h-100 border shadow-sm overflow-hidden">
                 <div class="jobell-blog-media">
                   {% if post.url_content %}
-                    {% with video_id=post.url_content|cut:'https://www.youtube.com/watch?v='|cut:'https://youtu.be/' %}
+                    {% if post.youtube_embed_url %}
                       <div class="embed-responsive embed-responsive-16by9">
-                        <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/{{ video_id }}" title="{{ post.title }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                        <iframe class="embed-responsive-item" src="{{ post.youtube_embed_url }}" title="{{ post.title }}" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
                       </div>
-                    {% endwith %}
+                    {% else %}
+                      <div class="d-flex align-items-center justify-content-center h-100 p-4 text-center">
+                        <a href="{{ post.url_content }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-sm font-weight-bold">
+                          <i class="mdi mdi-youtube" aria-hidden="true"></i>
+                          Watch on YouTube
+                        </a>
+                      </div>
+                    {% endif %}
                   {% else %}
                     <img src="{% static 'images/placeholder.png' %}" class="card-img-top" alt="{{ post.title }}" />
                   {% endif %}
