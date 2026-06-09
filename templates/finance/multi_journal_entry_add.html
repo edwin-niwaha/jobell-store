@@ -1,258 +1,316 @@
 {% extends 'base.html' %}
 
+{% block title %}
+  New Journal Entry | Jobell
+{% endblock %}
+
 {% block content %}
-  <div class="container-fluid">
-    <!-- Back Button -->
-    <div class="row mb-3">
-      <div class="col-12 d-flex justify-content-between align-items-center">
-        <a href="{% url 'dashboard' %}"><button type="button" class="btn btn-info"><span class="me-2">←</span> Go back</button></a>
+  <div class="journal-entry-page">
+    <div class="admin-page-head">
+      <div>
+        <span class="admin-eyebrow">Finance</span>
+        <h1 class="admin-page-title">New journal entry</h1>
+        <p class="admin-muted mb-0">Post a balanced journal entry with at least one debit and one credit line.</p>
+      </div>
+      <div class="admin-actions">
+        <a href="{% url 'fin_dashboard' %}" class="btn btn-outline-dark">
+          <i class="mdi mdi-arrow-left" aria-hidden="true"></i>
+          Dashboard
+        </a>
+        <a href="{% url 'finance:ledger_select_period' %}" class="btn btn-primary text-white">
+          <i class="mdi mdi-book-open-page-variant" aria-hidden="true"></i>
+          Ledger
+        </a>
       </div>
     </div>
 
-    <!-- Form Card -->
-    <div class="row justify-content-center">
-      <div class="col-12 col-lg-12">
-        <div class="card border-0 shadow">
-          <div class="card-header bg-primary text-white py-3">
-            <h3 class="mb-0">New Journal Entry</h3>
-          </div>
-          <div class="card-body p-4 p-lg-5">
-            <form method="post" id="journal-form" class="needs-validation" novalidate>
-              {% csrf_token %}
-              {{ formset.management_form }}
-              {{ journal_form.as_hidden }}
+    <form method="post" id="journal-form" novalidate>
+      {% csrf_token %}
+      {{ formset.management_form }}
 
-              <!-- Journal Entry Fields -->
-              <div class="mb-4 p-3 bg-light rounded-3">
-                <h4 class="text-muted mb-3">Journal Details</h4>
-                <div class="row g-3">
-                  <div class="col-md-12 mb-2">
-                    <label for="{{ journal_form.financial_period.id_for_label }}" class="form-label fw-medium">Finacial Period</label>
-                    {{ journal_form.financial_period }}
-                    {% if journal_form.financial_period.errors %}
-                      <div class="invalid-feedback d-block">
-                        {% for error in journal_form.financial_period.errors %}
-                          {{ error }}
-                        {% endfor %}
-                      </div>
-                    {% endif %}
-                  </div>
-                  <!-- Transaction Date -->
-                  <div class="col-md-6">
-                    <label for="{{ journal_form.transaction_date.id_for_label }}" class="form-label fw-medium">Transaction Date <span class="text-danger">*</span></label>
-                    {{ journal_form.transaction_date }}
-                    {% if journal_form.transaction_date.errors %}
-                      <div class="invalid-feedback d-block">
-                        {% for error in journal_form.transaction_date.errors %}
-                          {{ error }}
-                        {% endfor %}
-                      </div>
-                    {% endif %}
-                  </div>
-                  <!-- Reference Number -->
-                  <div class="col-md-6">
-                    <label for="{{ journal_form.reference_number.id_for_label }}" class="form-label fw-medium">Reference Number</label>
-                    {{ journal_form.reference_number }}
-                    {% if journal_form.reference_number.errors %}
-                      <div class="invalid-feedback d-block">
-                        {% for error in journal_form.reference_number.errors %}
-                          {{ error }}
-                        {% endfor %}
-                      </div>
-                    {% endif %}
-                  </div>
-                  <!-- Payment Method -->
-                  <div class="col-md-6 mt-3">
-                    <label for="{{ journal_form.payment_method.id_for_label }}" class="form-label fw-medium">Payment Method</label>
-                    {{ journal_form.payment_method }}
-                    {% if journal_form.payment_method.errors %}
-                      <div class="invalid-feedback d-block">
-                        {% for error in journal_form.payment_method.errors %}
-                          {{ error }}
-                        {% endfor %}
-                      </div>
-                    {% endif %}
-                  </div>
-                  <!-- Narration -->
-                  <div class="col-md-6">
-                    <label for="{{ journal_form.description.id_for_label }}" class="form-label fw-medium">Narration</label>
-                    {{ journal_form.description }}
-                    {% if journal_form.description.errors %}
-                      <div class="invalid-feedback d-block">
-                        {% for error in journal_form.description.errors %}
-                          {{ error }}
-                        {% endfor %}
-                      </div>
-                    {% endif %}
-                  </div>
-                </div>
-              </div>
+      {% if journal_form.non_field_errors or formset.non_form_errors %}
+        <div class="alert alert-danger" role="alert">
+          {% for error in journal_form.non_field_errors %}
+            <div>{{ error }}</div>
+          {% endfor %}
+          {% for error in formset.non_form_errors %}
+            <div>{{ error }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
 
-              <!-- Formset Header -->
-              <div class="mb-4 p-3 bg-light rounded-3">
-                <div class="row g-3 fw-bold bg-secondary bg-opacity-10 p-3 rounded-3 m-0">
-                  <div class="col-md-4">Account</div>
-                  <div class="col-md-3">Amount</div>
-                  <div class="col-md-3">Transaction Type</div>
-                  <div class="col-md-2 text-center">Actions</div>
-                </div>
-              </div>
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white">
+          <h2 class="h5 font-weight-bold mb-0">Journal details</h2>
+        </div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group col-lg-4">
+              <label class="font-weight-bold" for="{{ journal_form.financial_period.id_for_label }}">Financial period</label>
+              {{ journal_form.financial_period }}
+              {% for error in journal_form.financial_period.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+              {% endfor %}
+            </div>
 
-              <!-- Formset Container -->
-              <div id="formset-container" role="region" aria-label="Transaction entries">
-                {% for form in formset %}
-                  <div class="form-row row g-3 align-items-center mb-3 p-2 rounded-3 {% cycle 'bg-white' 'bg-light' %}" data-form-index="{{ forloop.counter0 }}">
-                    <!-- Account Field -->
-                    <div class="col-md-4">
-                      {{ form.account }}
-                      {% if form.account.errors %}
-                        <div class="invalid-feedback d-block">
-                          {% for error in form.account.errors %}
-                            {{ error }}
-                          {% endfor %}
-                        </div>
-                      {% endif %}
-                    </div>
-                    <!-- Amount Field -->
-                    <div class="col-md-3">
-                      <div class="input-group">
-                        <span class="input-group-text">UgX</span>
-                        {{ form.amount }}
-                      </div>
-                      {% if form.amount.errors %}
-                        <div class="invalid-feedback d-block">
-                          {% for error in form.amount.errors %}
-                            {{ error }}
-                          {% endfor %}
-                        </div>
-                      {% endif %}
-                    </div>
-                    <!-- Transaction Type Field -->
-                    <div class="col-md-3">
-                      {{ form.transaction_type }}
-                      {% if form.transaction_type.errors %}
-                        <div class="invalid-feedback d-block">
-                          {% for error in form.transaction_type.errors %}
-                            {{ error }}
-                          {% endfor %}
-                        </div>
-                      {% endif %}
-                    </div>
-                    <!-- Actions -->
-                    <div class="col-md-2 text-center">
-                      <button type="button" class="btn btn-danger btn-sm remove-form" aria-label="Remove transaction">Delete</button>
-                    </div>
-                    <!-- Hidden Fields -->
-                    {{ form.id.as_hidden }}
-                    {{ form.DELETE.as_hidden }}
-                  </div>
-                {% endfor %}
-              </div>
+            <div class="form-group col-lg-4">
+              <label class="font-weight-bold" for="{{ journal_form.transaction_date.id_for_label }}">Transaction date</label>
+              {{ journal_form.transaction_date }}
+              {% for error in journal_form.transaction_date.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+              {% endfor %}
+            </div>
 
-              <!-- Add Transaction Button -->
-              <div class="mb-4">
-                <button type="button" class="btn btn-success btn-sm add-form">Add Transaction</button>
-              </div>
+            <div class="form-group col-lg-4">
+              <label class="font-weight-bold" for="{{ journal_form.reference_number.id_for_label }}">Reference number</label>
+              {{ journal_form.reference_number }}
+              <small class="form-text text-muted">Leave blank to auto-generate.</small>
+              {% for error in journal_form.reference_number.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+              {% endfor %}
+            </div>
 
-              <!-- Submit Button -->
-              <div class="row">
-                <div class="col-12 d-flex justify-content-center">
-                  <button type="submit" class="btn btn-primary py-2 px-3 w-100 position-relative" id="submit-btn" onclick="return confirm('Are you sure you want to proceed?')">
-                    Post Transactions
-                    <span class="spinner-border spinner-border-sm position-absolute top-50 start-50 translate-middle d-none" role="status" aria-hidden="true"></span>
-                  </button>
-                </div>
-              </div>
-            </form>
+            <div class="form-group col-lg-4">
+              <label class="font-weight-bold" for="{{ journal_form.payment_method.id_for_label }}">Payment method</label>
+              {{ journal_form.payment_method }}
+              {% for error in journal_form.payment_method.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+              {% endfor %}
+            </div>
+
+            <div class="form-group col-lg-8">
+              <label class="font-weight-bold" for="{{ journal_form.description.id_for_label }}">Narration</label>
+              {{ journal_form.description }}
+              {% for error in journal_form.description.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+              {% endfor %}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white d-flex flex-wrap align-items-center justify-content-between">
+          <div>
+            <h2 class="h5 font-weight-bold mb-0">Transaction lines</h2>
+            <small class="text-muted">Debits and credits must balance before posting.</small>
+          </div>
+          <button type="button" class="btn btn-outline-primary btn-sm add-form mt-2 mt-sm-0">
+            <i class="mdi mdi-plus-circle-outline" aria-hidden="true"></i>
+            Add line
+          </button>
+        </div>
+
+        <div class="card-body">
+          <div class="d-none d-lg-flex text-muted small font-weight-bold text-uppercase border-bottom pb-2 mb-3">
+            <div class="col-lg-5 px-2">Account</div>
+            <div class="col-lg-3 px-2">Amount</div>
+            <div class="col-lg-3 px-2">Type</div>
+            <div class="col-lg-1 px-2 text-right">Action</div>
+          </div>
+
+          <div id="formset-container" role="region" aria-label="Transaction entries">
+            {% for form in formset %}
+              <div class="journal-line border rounded p-3 mb-3" data-transaction-row>
+                <div class="form-row align-items-start">
+                  <div class="form-group col-lg-5">
+                    <label class="d-lg-none font-weight-bold" for="{{ form.account.id_for_label }}">Account</label>
+                    {{ form.account }}
+                    {% for error in form.account.errors %}
+                      <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+
+                  <div class="form-group col-lg-3">
+                    <label class="d-lg-none font-weight-bold" for="{{ form.amount.id_for_label }}">Amount</label>
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text">UgX</span>
+                      </div>
+                      {{ form.amount }}
+                    </div>
+                    {% for error in form.amount.errors %}
+                      <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+
+                  <div class="form-group col-lg-3">
+                    <label class="d-lg-none font-weight-bold" for="{{ form.transaction_type.id_for_label }}">Type</label>
+                    {{ form.transaction_type }}
+                    {% for error in form.transaction_type.errors %}
+                      <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+
+                  <div class="form-group col-lg-1 text-lg-right">
+                    <button type="button" class="btn btn-outline-danger btn-sm remove-form" aria-label="Remove transaction line">
+                      <i class="mdi mdi-delete-outline" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                </div>
+                {{ form.id.as_hidden }}
+                {{ form.DELETE.as_hidden }}
+              </div>
+            {% endfor %}
+          </div>
+
+          <template id="empty-form-template">
+            <div class="journal-line border rounded p-3 mb-3" data-transaction-row>
+              <div class="form-row align-items-start">
+                <div class="form-group col-lg-5">
+                  <label class="d-lg-none font-weight-bold" for="{{ formset.empty_form.account.id_for_label }}">Account</label>
+                  {{ formset.empty_form.account }}
+                </div>
+                <div class="form-group col-lg-3">
+                  <label class="d-lg-none font-weight-bold" for="{{ formset.empty_form.amount.id_for_label }}">Amount</label>
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text">UgX</span>
+                    </div>
+                    {{ formset.empty_form.amount }}
+                  </div>
+                </div>
+                <div class="form-group col-lg-3">
+                  <label class="d-lg-none font-weight-bold" for="{{ formset.empty_form.transaction_type.id_for_label }}">Type</label>
+                  {{ formset.empty_form.transaction_type }}
+                </div>
+                <div class="form-group col-lg-1 text-lg-right">
+                  <button type="button" class="btn btn-outline-danger btn-sm remove-form" aria-label="Remove transaction line">
+                    <i class="mdi mdi-delete-outline" aria-hidden="true"></i>
+                  </button>
+                </div>
+              </div>
+              {{ formset.empty_form.id.as_hidden }}
+              {{ formset.empty_form.DELETE.as_hidden }}
+            </div>
+          </template>
+        </div>
+
+        <div class="card-footer bg-white">
+          <div class="row align-items-center">
+            <div class="col-lg-8 mb-3 mb-lg-0">
+              <div class="d-flex flex-wrap">
+                <span class="d-inline-flex align-items-center rounded border bg-white text-dark px-3 py-2 mr-2 mb-2">Debits: UgX <strong class="ml-1" id="debit-total">0.00</strong></span>
+                <span class="d-inline-flex align-items-center rounded border bg-white text-dark px-3 py-2 mr-2 mb-2">Credits: UgX <strong class="ml-1" id="credit-total">0.00</strong></span>
+                <span class="d-inline-flex align-items-center rounded bg-warning text-dark px-3 py-2 mb-2 font-weight-bold" id="balance-status">Not balanced</span>
+              </div>
+            </div>
+            <div class="col-lg-4 text-lg-right">
+              <button type="submit" class="btn btn-primary btn-block text-white" id="submit-btn">
+                <i class="mdi mdi-check-circle-outline" aria-hidden="true"></i>
+                Post journal entry
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
   </div>
 
   <script>
     document.addEventListener('DOMContentLoaded', function () {
+      const form = document.getElementById('journal-form')
       const formsetContainer = document.getElementById('formset-container')
-      const totalFormsInput = document.querySelector('#id_form-TOTAL_FORMS')
+      const totalFormsInput = document.getElementById('id_form-TOTAL_FORMS')
+      const emptyFormTemplate = document.getElementById('empty-form-template')
       const submitBtn = document.getElementById('submit-btn')
-      let formCount = parseInt(totalFormsInput.value)
-    
-      // Initialize Bootstrap tooltips
-      const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
-      ;[...tooltipTriggerList].forEach((tooltipTriggerEl) => new bootstrap.Tooltip(tooltipTriggerEl))
-    
-      // Add new form
+      const debitTotal = document.getElementById('debit-total')
+      const creditTotal = document.getElementById('credit-total')
+      const balanceStatus = document.getElementById('balance-status')
+
+      function lineRows() {
+        return Array.from(formsetContainer.querySelectorAll('[data-transaction-row]'))
+      }
+
+      function renumberRows() {
+        lineRows().forEach((row, index) => {
+          row.querySelectorAll('[name], [id], label[for]').forEach((element) => {
+            if (element.name) element.name = element.name.replace(/form-(\d+|__prefix__)-/, `form-${index}-`)
+            if (element.id) element.id = element.id.replace(/id_form-(\d+|__prefix__)-/, `id_form-${index}-`)
+            if (element.htmlFor) element.htmlFor = element.htmlFor.replace(/id_form-(\d+|__prefix__)-/, `id_form-${index}-`)
+          })
+        })
+        totalFormsInput.value = lineRows().length
+      }
+
+      function parseAmount(row) {
+        const amountInput = row.querySelector('[name$="-amount"]')
+        return Number.parseFloat(amountInput && amountInput.value ? amountInput.value : '0') || 0
+      }
+
+      function updateTotals() {
+        let debits = 0
+        let credits = 0
+
+        lineRows().forEach((row) => {
+          const typeInput = row.querySelector('[name$="-transaction_type"]')
+          const amount = parseAmount(row)
+          if (typeInput && typeInput.value === 'debit') debits += amount
+          if (typeInput && typeInput.value === 'credit') credits += amount
+        })
+
+        debitTotal.textContent = debits.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        creditTotal.textContent = credits.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+        const balanced = debits > 0 && credits > 0 && debits === credits
+        balanceStatus.textContent = balanced ? 'Balanced' : 'Not balanced'
+        balanceStatus.classList.toggle('bg-success', balanced)
+        balanceStatus.classList.toggle('text-white', balanced)
+        balanceStatus.classList.toggle('bg-warning', !balanced)
+        balanceStatus.classList.toggle('text-dark', !balanced)
+      }
+
       document.querySelector('.add-form').addEventListener('click', function () {
-        const newForm = formsetContainer.children[0].cloneNode(true)
-        const formIndex = formCount
-    
-        // Clear input values
-        newForm.querySelectorAll('input, select').forEach((input) => {
-          if (input.type !== 'hidden') {
-            input.value = ''
-            input.classList.remove('is-invalid')
-          }
-        })
-    
-        // Remove existing error messages
-        newForm.querySelectorAll('.invalid-feedback').forEach((error) => error.remove())
-    
-        // Update form attributes
-        newForm.setAttribute('data-form-index', formIndex)
-        newForm.querySelectorAll('[name], [id]').forEach((element) => {
-          if (element.name) {
-            element.name = element.name.replace(/form-\d+-/, `form-${formIndex}-`)
-          }
-          if (element.id) {
-            element.id = element.id.replace(/id_form-\d+-/, `id_form-${formIndex}-`)
-          }
-        })
-    
-        formsetContainer.appendChild(newForm)
-        totalFormsInput.value = ++formCount
+        const formIndex = lineRows().length
+        const html = emptyFormTemplate.innerHTML.replace(/__prefix__/g, formIndex)
+        formsetContainer.insertAdjacentHTML('beforeend', html)
+        renumberRows()
+        updateTotals()
       })
-    
-      // Remove form
-      formsetContainer.addEventListener('click', function (e) {
-        if (e.target.closest('.remove-form')) {
-          const formRows = formsetContainer.querySelectorAll('.form-row')
-          if (formRows.length > 2) {
-            e.target.closest('.form-row').remove()
-            totalFormsInput.value = --formCount
+
+      formsetContainer.addEventListener('click', function (event) {
+        const removeButton = event.target.closest('.remove-form')
+        if (!removeButton) return
+
+        const rows = lineRows()
+        if (rows.length <= 2) {
+          alert('At least two transaction lines are required.')
+          return
+        }
+
+        removeButton.closest('[data-transaction-row]').remove()
+        renumberRows()
+        updateTotals()
+      })
+
+      formsetContainer.addEventListener('input', updateTotals)
+      formsetContainer.addEventListener('change', updateTotals)
+
+      const transactionDate = form.querySelector('[name="transaction_date"]')
+      if (transactionDate) {
+        transactionDate.addEventListener('change', function () {
+          const today = new Date()
+          today.setHours(0, 0, 0, 0)
+          const selectedDate = new Date(this.value)
+          selectedDate.setHours(0, 0, 0, 0)
+
+          if (selectedDate > today) {
+            this.setCustomValidity('Transaction date cannot be in the future.')
+            this.classList.add('is-invalid')
           } else {
-            alert('At least two transactions are required (one debit, one credit).')
+            this.setCustomValidity('')
+            this.classList.remove('is-invalid')
           }
-        }
+        })
+      }
+
+      form.addEventListener('submit', function () {
+        submitBtn.disabled = true
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"></span>Posting...'
       })
-    
-      // Validate transaction date
-      document.querySelector('[name="transaction_date"]').addEventListener('change', function () {
-        const today = new Date()
-        today.setHours(0, 0, 0, 0) // Strip time to compare only the date
-    
-        const selectedDate = new Date(this.value)
-        selectedDate.setHours(0, 0, 0, 0) // Strip time here too
-    
-        if (selectedDate > today) {
-          this.setCustomValidity('Transaction date cannot be in the future.')
-          this.classList.add('is-invalid')
-        } else {
-          this.setCustomValidity('')
-          this.classList.remove('is-invalid')
-        }
-      })
-    
-      // Form submission with loading spinner
-      document.getElementById('journal-form').addEventListener('submit', function (e) {
-        if (!this.checkValidity()) {
-          e.preventDefault()
-          e.stopPropagation()
-          this.classList.add('was-validated')
-        } else {
-          submitBtn.querySelector('.spinner-border').classList.remove('d-none')
-          submitBtn.disabled = true
-        }
-      })
+
+      renumberRows()
+      updateTotals()
     })
   </script>
 {% endblock %}

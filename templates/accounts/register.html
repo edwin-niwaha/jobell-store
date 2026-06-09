@@ -6,148 +6,96 @@
 {% endblock %}
 
 {% block content %}
-  <main class="jobell-register-page">
-    <section class="jobell-register-shell">
-      <div class="jobell-register-card">
-        <div class="jobell-register-header">
-          <span class="jobell-login-kicker">Join Jobell</span>
-          <h1>Create your account</h1>
-          <p>Save delivery addresses, track orders, build a wishlist, and check out faster.</p>
-        </div>
+  <main class="jobell-register-page d-flex align-items-center">
+    <section class="container">
+      <div class="row justify-content-center">
+        <div class="col-12 col-xl-10">
+          <div class="card border shadow-sm overflow-hidden">
+            <div class="card-body p-4 p-md-5">
+              <div class="text-center mb-4">
+                <span class="jobell-login-kicker">Join Jobell</span>
+                <h1 class="h3 font-weight-bold mb-2">Create your account</h1>
+                <p class="text-muted mb-0">Save your details, track orders, and check out faster.</p>
+              </div>
 
-        {% if form.errors %}
-          <div class="jobell-login-alert" role="alert">
-            <i class="mdi mdi-alert-circle-outline" aria-hidden="true"></i>
-            <div>
-              {% for key, value in form.errors.items %}
-                <strong>{{ value }}</strong>
-              {% endfor %}
-            </div>
-          </div>
-        {% endif %}
+              {% if form.errors %}
+                <div class="alert alert-danger d-flex align-items-start" role="alert">
+                  <i class="mdi mdi-alert-circle-outline" aria-hidden="true"></i>
+                  <div class="ml-2">
+                    {% for key, value in form.errors.items %}
+                      <strong>{{ value }}</strong>
+                    {% endfor %}
+                  </div>
+                </div>
+              {% endif %}
 
-        <form method="POST" class="jobell-register-form">
-          {% csrf_token %}
+              <form method="POST">
+                {% csrf_token %}
 
-          <div class="jobell-register-section">
-            <div>
-              <span class="jobell-register-step">1</span>
-              <h2>Your details</h2>
-            </div>
-            <div class="jobell-register-grid">
-              <div class="jobell-login-field">
-                <label for="{{ form.first_name.id_for_label }}">First name</label>
-                <div class="jobell-input-shell">
-                  <i class="mdi mdi-account-outline" aria-hidden="true"></i>
-                  {{ form.first_name }}
+                <div class="mb-4">
+                  <div class="d-flex align-items-center mb-3">
+                    <span class="jobell-register-step">1</span>
+                    <h2 class="h6 font-weight-bold mb-0 ml-2">Your details</h2>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group col-md-6">
+                      <label class="font-weight-bold" for="{{ form.first_name.id_for_label }}">First name</label>
+                      {{ form.first_name }}
+                    </div>
+                    <div class="form-group col-md-6">
+                      <label class="font-weight-bold" for="{{ form.last_name.id_for_label }}">Last name</label>
+                      {{ form.last_name }}
+                    </div>
+                    <div class="form-group col-md-6">
+                      <label class="font-weight-bold" for="{{ form.tel.id_for_label }}">Telephone</label>
+                      {{ form.tel }}
+                    </div>
+                    <div class="form-group col-md-6">
+                      <label class="font-weight-bold" for="{{ form.mobile.id_for_label }}">Mobile</label>
+                      {{ form.mobile }}
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div class="jobell-login-field">
-                <label for="{{ form.last_name.id_for_label }}">Last name</label>
-                <div class="jobell-input-shell">
-                  <i class="mdi mdi-account-outline" aria-hidden="true"></i>
-                  {{ form.last_name }}
-                </div>
-              </div>
-              <div class="jobell-login-field">
-                <label for="{{ form.tel.id_for_label }}">Telephone</label>
-                <div class="jobell-input-shell">
-                  <i class="mdi mdi-phone-outline" aria-hidden="true"></i>
-                  {{ form.tel }}
-                </div>
-              </div>
-              <div class="jobell-login-field">
-                <label for="{{ form.mobile.id_for_label }}">Mobile</label>
-                <div class="jobell-input-shell">
-                  <i class="mdi mdi-cellphone" aria-hidden="true"></i>
-                  {{ form.mobile }}
-                </div>
-              </div>
-            </div>
-          </div>
 
-          <div class="jobell-register-section">
-            <div>
-              <span class="jobell-register-step">2</span>
-              <h2>Login credentials</h2>
-            </div>
-            <div class="jobell-register-grid">
-              <div class="jobell-login-field">
-                <label for="{{ form.username.id_for_label }}">Username</label>
-                <div class="jobell-input-shell">
-                  <i class="mdi mdi-badge-account-outline" aria-hidden="true"></i>
-                  {{ form.username }}
+                <div class="mb-4">
+                  <div class="d-flex align-items-center mb-3">
+                    <span class="jobell-register-step">2</span>
+                    <h2 class="h6 font-weight-bold mb-0 ml-2">Login credentials</h2>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group col-md-6">
+                      <label class="font-weight-bold" for="{{ form.username.id_for_label }}">Username</label>
+                      {{ form.username }}
+                    </div>
+                    <div class="form-group col-md-6">
+                      <label class="font-weight-bold" for="{{ form.email.id_for_label }}">Email</label>
+                      {{ form.email }}
+                    </div>
+                    <div class="form-group col-md-6">
+                      <label class="font-weight-bold" for="{{ form.password1.id_for_label }}">Password</label>
+                      {{ form.password1 }}
+                    </div>
+                    <div class="form-group col-md-6">
+                      <label class="font-weight-bold" for="{{ form.password2.id_for_label }}">Confirm password</label>
+                      {{ form.password2 }}
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div class="jobell-login-field">
-                <label for="{{ form.email.id_for_label }}">Email</label>
-                <div class="jobell-input-shell">
-                  <i class="mdi mdi-email-outline" aria-hidden="true"></i>
-                  {{ form.email }}
-                </div>
-              </div>
-              <div class="jobell-login-field">
-                <label for="{{ form.password1.id_for_label }}">Password</label>
-                <div class="jobell-input-shell">
-                  <i class="mdi mdi-lock-outline" aria-hidden="true"></i>
-                  {{ form.password1 }}
-                </div>
-              </div>
-              <div class="jobell-login-field">
-                <label for="{{ form.password2.id_for_label }}">Confirm password</label>
-                <div class="jobell-input-shell">
-                  <i class="mdi mdi-shield-check-outline" aria-hidden="true"></i>
-                  {{ form.password2 }}
-                </div>
+
+                <button type="submit" class="btn btn-primary btn-block font-weight-bold">
+                  <i class="mdi mdi-account-plus-outline" aria-hidden="true"></i>
+                  Create account
+                </button>
+              </form>
+
+              <div class="border-top mt-4 pt-3 text-center text-muted">
+                <span>Already have an account?</span>
+                <a class="font-weight-bold" href="{% url 'login' %}">Sign in</a>
               </div>
             </div>
           </div>
-
-          <button type="submit" class="jobell-login-submit jobell-register-submit">
-            <i class="mdi mdi-account-plus-outline" aria-hidden="true"></i>
-            Create account
-          </button>
-        </form>
-
-        <div class="jobell-login-footer">
-          <span>Already have an account?</span>
-          <a href="{% url 'login' %}">Sign in</a>
         </div>
       </div>
-
-      <aside class="jobell-register-aside">
-        <div class="jobell-login-brand">
-          <img src="{% static 'images/file.png' %}" alt="Jobell" />
-          <span>
-            <strong>Jobell</strong>
-            <small>Shop smarter with an account</small>
-          </span>
-        </div>
-
-        <div class="jobell-register-copy">
-          <span class="jobell-login-kicker">Premium access</span>
-          <h2>Everything you need for a smoother checkout.</h2>
-          <p>Create an account once, then browse, save, order, and manage delivery details with less repetition.</p>
-        </div>
-
-        <div class="jobell-register-benefits">
-          <div>
-            <i class="mdi mdi-heart-outline" aria-hidden="true"></i>
-            <strong>Wishlist</strong>
-            <span>Keep favorite fragrances ready for later.</span>
-          </div>
-          <div>
-            <i class="mdi mdi-truck-fast-outline" aria-hidden="true"></i>
-            <strong>Fast checkout</strong>
-            <span>Reuse your saved contact and delivery details.</span>
-          </div>
-          <div>
-            <i class="mdi mdi-shield-lock-outline" aria-hidden="true"></i>
-            <strong>Secure account</strong>
-            <span>Track orders from a protected customer profile.</span>
-          </div>
-        </div>
-      </aside>
     </section>
   </main>
 

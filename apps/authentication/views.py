@@ -7,6 +7,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import send_mail
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db import transaction
+from django.db.models import Q
 from django.http import (
     HttpResponseBadRequest,
     HttpResponseRedirect,
@@ -164,9 +165,15 @@ def profile_list(request):
     queryset = Profile.objects.select_related("user").all().order_by("user__username")
 
     # Search functionality
-    search_query = request.GET.get("search")
+    search_query = request.GET.get("search", "").strip()
     if search_query:
-        queryset = queryset.filter(user__username__icontains=search_query)
+        queryset = queryset.filter(
+            Q(user__username__icontains=search_query)
+            | Q(user__first_name__icontains=search_query)
+            | Q(user__last_name__icontains=search_query)
+            | Q(user__email__icontains=search_query)
+            | Q(role__icontains=search_query)
+        )
 
     # Pagination
     paginator = Paginator(queryset, 50)
@@ -187,27 +194,43 @@ def profile_list(request):
         {
             "profiles": profiles,
             "table_title": "Profile List",
+            "search_query": search_query,
+            "profile_total": queryset.count(),
         },
     )
 
 
 # =================================== Update Profile ===================================
 @login_required
+@admin_or_manager_required
 @transaction.atomic
 def update_profile(request, pk, template_name="accounts/profile_update.html"):
-    profile = get_object_or_404(Profile, pk=pk)
+    profile = get_object_or_404(Profile.objects.select_related("user", "branch"), pk=pk)
+    form_name = "Update Profile Role"
 
     if request.method == "POST":
         form = UpdateProfileAllForm(request.POST, instance=profile)
         if form.is_valid():
             form.save()
-            messages.success(request, "Updated successfully!", extra_tags="bg-success")
+            messages.success(
+                request,
+                f"{profile.user.username}'s role was updated successfully.",
+                extra_tags="bg-success",
+            )
             return redirect("profile_list")
+        messages.error(
+            request,
+            "Please correct the errors below.",
+            extra_tags="warning",
+        )
     else:
         form = UpdateProfileAllForm(instance=profile)
 
-    # Render the form in the template
-    context = {"form_name": "Update Profile", "form": form}
+    context = {
+        "form_name": form_name,
+        "form": form,
+        "profile": profile,
+    }
     return render(request, template_name, context)
 
 
@@ -252,7 +275,11 @@ def profile(request):
 @admin_or_manager_required
 @transaction.atomic
 def delete_profile(request, pk):
-    profile = Profile.objects.get(id=pk)
+    if request.method != "POST":
+        messages.warning(request, "Use the delete button to remove a profile.")
+        return HttpResponseRedirect(reverse("profile_list"))
+
+    profile = get_object_or_404(Profile, id=pk)
     profile.delete()
     messages.info(request, "Profile deleted successfully!", extra_tags="bg-danger")
     return HttpResponseRedirect(reverse("profile_list"))
@@ -338,11 +365,37 @@ def contact_us(request):
 @admin_or_manager_required
 @transaction.atomic
 def user_feedback(request):
-    feedback = Contact.objects.all()
+    feedback_queryset = Contact.objects.all()
+    status = request.GET.get("status", "").strip()
+    search_query = request.GET.get("search", "").strip()
+
+    if status == "open":
+        feedback_queryset = feedback_queryset.filter(is_valid=False)
+    elif status == "validated":
+        feedback_queryset = feedback_queryset.filter(is_valid=True)
+
+    if search_query:
+        feedback_queryset = feedback_queryset.filter(
+            Q(name__icontains=search_query)
+            | Q(email__icontains=search_query)
+            | Q(message__icontains=search_query)
+        )
+
+    paginator = Paginator(feedback_queryset, 25)
+    page_number = request.GET.get("page")
+    feedback = paginator.get_page(page_number)
+
     return render(
         request,
         "accounts/user_feedback.html",
-        {"table_title": "User Feedback", "feedback": feedback},
+        {
+            "table_title": "User Feedback",
+            "feedback": feedback,
+            "search_query": search_query,
+            "status": status,
+            "open_feedback_count": Contact.objects.filter(is_valid=False).count(),
+            "validated_feedback_count": Contact.objects.filter(is_valid=True).count(),
+        },
     )
 
 
@@ -351,7 +404,11 @@ def user_feedback(request):
 @admin_or_manager_required
 @transaction.atomic
 def delete_feedback(request, pk):
-    feedback = Contact.objects.get(id=pk)
+    if request.method != "POST":
+        messages.warning(request, "Use the delete button to remove feedback.")
+        return HttpResponseRedirect(reverse("user_feedback"))
+
+    feedback = get_object_or_404(Contact, id=pk)
     feedback.delete()
     messages.info(request, "Record deleted!", extra_tags="bg-danger")
     return HttpResponseRedirect(reverse("user_feedback"))

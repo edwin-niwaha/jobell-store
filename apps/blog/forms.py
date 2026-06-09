@@ -1,5 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
+from django.utils.text import slugify
 from .models import BlogPost, Category, Tag, Comment
 from .validators import validate_youtube_url
 
@@ -101,11 +102,15 @@ class TagForm(forms.ModelForm):
 
     def clean_name(self):
         """Ensure that the tag name is not too short."""
-        name = self.cleaned_data.get("name")
+        name = self.cleaned_data.get("name", "").strip()
         if len(name) < 3:
             raise forms.ValidationError(
                 "The tag name must be at least 3 characters long."
             )
+        if Tag.objects.filter(name__iexact=name).exists():
+            raise forms.ValidationError("A tag with this name already exists.")
+        if Tag.objects.filter(slug=slugify(name)).exists():
+            raise forms.ValidationError("A tag with a similar URL slug already exists.")
         return name
 
 

@@ -383,201 +383,34 @@ textarea:focus {
   border-radius: 8px;
 }
 
-.jobell-login-page {
-  background: linear-gradient(180deg, #0b0b0b 0, #0b0b0b 320px, #f4f1ea 320px, #ffffff 100%);
-  margin-top: -15px;
+.jobell-login-page,
+.jobell-register-page {
+  background: linear-gradient(180deg, #f8faf9 0, #eaeded 100%);
+  margin-top: 0;
   min-height: calc(100vh - 76px);
-  padding: clamp(18px, 4vw, 48px) 14px;
-}
-
-.jobell-login-shell {
-  display: grid;
-  gap: clamp(18px, 4vw, 34px);
-  grid-template-columns: minmax(0, 1.05fr) minmax(360px, 0.75fr);
-  margin: 0 auto;
-  max-width: 1180px;
-}
-
-.jobell-login-hero,
-.jobell-login-card {
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.jobell-login-hero {
-  background:
-    linear-gradient(135deg, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.88)),
-    url("../images/file1.png") center/contain no-repeat,
-    linear-gradient(135deg, #050505, #241a08);
-  border: 1px solid rgba(240, 201, 106, 0.28);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.26);
-  color: #ffffff;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-height: 620px;
-  padding: clamp(24px, 4vw, 44px);
-}
-
-.jobell-login-brand {
-  align-items: center;
-  display: inline-flex;
-  gap: 12px;
-}
-
-.jobell-login-brand img {
-  background: #ffffff;
-  border-radius: 8px;
-  height: 54px;
-  object-fit: contain;
-  width: 54px;
-}
-
-.jobell-login-brand span,
-.jobell-login-brand strong,
-.jobell-login-brand small {
-  display: block;
-}
-
-.jobell-login-brand strong {
-  color: #ffffff;
-  font-size: 20px;
-  font-weight: 950;
-}
-
-.jobell-login-brand small {
-  color: rgba(255, 255, 255, 0.68);
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.jobell-login-copy {
-  max-width: 650px;
+  padding: 32px 0;
 }
 
 .jobell-login-kicker {
-  color: #f0c96a;
+  color: var(--jobell-green);
   display: inline-block;
   font-size: 12px;
   font-weight: 950;
-  letter-spacing: 0.12em;
-  margin-bottom: 10px;
+  letter-spacing: 0;
+  margin-bottom: 8px;
   text-transform: uppercase;
 }
 
-.jobell-login-copy h1 {
-  color: #ffffff;
-  font-size: clamp(38px, 6vw, 68px);
-  font-weight: 950;
-  letter-spacing: 0;
-  line-height: 1;
-  margin: 0;
-}
-
-.jobell-login-copy p {
-  color: rgba(255, 255, 255, 0.75);
-  font-size: 17px;
-  line-height: 1.7;
-  margin: 18px 0 0;
-  max-width: 560px;
-}
-
-.jobell-login-benefits {
-  display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.jobell-login-benefits div {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(240, 201, 106, 0.18);
-  border-radius: 8px;
-  padding: 14px;
-}
-
-.jobell-login-benefits i {
-  color: #f0c96a;
-  display: block;
-  font-size: 24px;
-  margin-bottom: 8px;
-}
-
-.jobell-login-benefits span {
-  color: rgba(255, 255, 255, 0.8);
-  display: block;
-  font-size: 13px;
-  font-weight: 800;
-  line-height: 1.35;
-}
-
-.jobell-login-card {
-  align-self: center;
-  background: #ffffff;
-  border: 1px solid rgba(5, 5, 5, 0.1);
-  box-shadow: 0 24px 58px rgba(5, 5, 5, 0.18);
-  padding: clamp(22px, 4vw, 34px);
-}
-
-.jobell-login-card-header h2 {
-  color: #050505;
-  font-size: clamp(28px, 4vw, 38px);
-  font-weight: 950;
-  line-height: 1.05;
-  margin: 0;
-}
-
-.jobell-login-card-header p {
-  color: #71675d;
-  font-size: 14px;
-  line-height: 1.6;
-  margin: 10px 0 0;
-}
-
-.jobell-login-alert {
-  align-items: flex-start;
-  background: #fff5f3;
-  border: 1px solid rgba(177, 39, 4, 0.2);
-  border-radius: 8px;
-  color: #8b1d08;
-  display: flex;
-  gap: 10px;
-  margin-top: 18px;
-  padding: 12px 14px;
-}
-
-.jobell-login-alert i {
-  font-size: 20px;
-}
-
-.jobell-google-btn,
-.jobell-login-submit {
-  align-items: center;
-  border-radius: 6px;
-  display: inline-flex;
-  font-size: 14px;
-  font-weight: 900;
-  gap: 9px;
+.jobell-login-page .input-group-text {
+  background: var(--jobell-soft);
+  border-color: var(--jobell-line);
+  color: var(--jobell-green);
+  min-width: 44px;
   justify-content: center;
-  min-height: 46px;
-  text-decoration: none;
-  width: 100%;
 }
 
-.jobell-google-btn {
-  background: #ffffff;
-  border: 1px solid rgba(5, 5, 5, 0.14);
-  color: #111111;
-  margin-top: 20px;
-}
-
-.jobell-google-btn:hover {
-  background: #f8f4ec;
-  color: #111111;
-  text-decoration: none;
-}
-
-.jobell-google-btn i {
-  color: #db4437;
+.jobell-login-page .form-check input {
+  margin: 0;
 }
 
 .jobell-login-divider {
@@ -599,189 +432,11 @@ textarea:focus {
   height: 1px;
 }
 
-.jobell-login-form {
-  display: grid;
-  gap: 16px;
-}
-
-.jobell-login-field label,
-.jobell-login-label-row label {
-  color: #111111;
-  font-size: 13px;
-  font-weight: 900;
-  margin: 0 0 7px;
-}
-
-.jobell-login-label-row {
-  align-items: center;
-  display: flex;
-  justify-content: space-between;
-}
-
-.jobell-login-label-row a,
-.jobell-login-footer a {
-  color: #b8860b !important;
-  font-size: 13px;
-  font-weight: 900;
-}
-
-.jobell-input-shell {
-  align-items: center;
-  background: #ffffff;
-  border: 1px solid rgba(5, 5, 5, 0.14);
-  border-radius: 6px;
-  display: flex;
-  gap: 8px;
-  min-height: 46px;
-  padding: 0 12px;
-}
-
-.jobell-input-shell:focus-within {
-  border-color: #c99a2e;
-  box-shadow: 0 0 0 3px rgba(201, 154, 46, 0.18);
-}
-
-.jobell-input-shell i {
-  color: #b8860b;
-  font-size: 20px;
-}
-
-.jobell-input-shell .form-control,
-.jobell-input-shell input {
-  border: 0 !important;
-  box-shadow: none !important;
-  flex: 1;
-  min-height: 44px;
-  padding: 0 !important;
-}
-
-.jobell-input-shell .form-control:focus,
-.jobell-input-shell input:focus {
-  border: 0 !important;
-  box-shadow: none !important;
-}
-
-.jobell-login-remember {
-  align-items: center;
-  color: #71675d;
-  display: flex;
-  font-size: 13px;
-  font-weight: 800;
-  gap: 8px;
-  margin: 0;
-}
-
-.jobell-login-remember input {
-  accent-color: #b8860b;
-}
-
-.jobell-login-submit {
-  background: linear-gradient(180deg, #f0c96a, #c99a2e);
-  border: 1px solid #c99a2e;
-  color: #080808;
-  cursor: pointer;
-  margin-top: 4px;
-  transition: background-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
-}
-
-.jobell-login-submit:hover {
-  background: #f0c96a;
-  box-shadow: 0 14px 28px rgba(5, 5, 5, 0.18);
-  transform: translateY(-1px);
-}
-
-.jobell-login-footer {
-  align-items: center;
-  border-top: 1px solid rgba(5, 5, 5, 0.1);
-  color: #71675d;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
-  margin-top: 24px;
-  padding-top: 20px;
-}
-
-.jobell-register-page {
-  background: linear-gradient(180deg, #0b0b0b 0, #0b0b0b 300px, #f4f1ea 300px, #ffffff 100%);
-  margin-top: -15px;
-  min-height: calc(100vh - 76px);
-  padding: clamp(18px, 4vw, 48px) 14px;
-}
-
-.jobell-register-shell {
-  display: grid;
-  gap: clamp(18px, 4vw, 34px);
-  grid-template-columns: minmax(0, 1fr) minmax(330px, 0.46fr);
-  margin: 0 auto;
-  max-width: 1220px;
-}
-
-.jobell-register-card,
-.jobell-register-aside {
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.jobell-register-card {
-  background: #ffffff;
-  border: 1px solid rgba(5, 5, 5, 0.1);
-  box-shadow: 0 24px 58px rgba(5, 5, 5, 0.18);
-  padding: clamp(22px, 4vw, 36px);
-}
-
-.jobell-register-header {
-  border-bottom: 1px solid rgba(5, 5, 5, 0.1);
-  margin-bottom: 24px;
-  padding-bottom: 20px;
-}
-
-.jobell-register-header h1 {
-  color: #050505;
-  font-size: clamp(30px, 4vw, 46px);
-  font-weight: 950;
-  letter-spacing: 0;
-  line-height: 1.04;
-  margin: 0;
-}
-
-.jobell-register-header p,
-.jobell-register-copy p {
-  color: #71675d;
-  font-size: 15px;
-  line-height: 1.65;
-  margin: 10px 0 0;
-  max-width: 640px;
-}
-
-.jobell-register-form {
-  display: grid;
-  gap: 22px;
-}
-
-.jobell-register-section {
-  display: grid;
-  gap: 14px;
-}
-
-.jobell-register-section > div:first-child {
-  align-items: center;
-  display: flex;
-  gap: 10px;
-}
-
-.jobell-register-section h2 {
-  color: #111111;
-  font-size: 17px;
-  font-weight: 950;
-  margin: 0;
-}
-
 .jobell-register-step {
   align-items: center;
-  background: #050505;
+  background: var(--jobell-green);
   border-radius: 999px;
-  color: #f0c96a;
+  color: #ffffff;
   display: inline-flex;
   flex: 0 0 32px;
   font-size: 13px;
@@ -789,82 +444,6 @@ textarea:focus {
   height: 32px;
   justify-content: center;
   width: 32px;
-}
-
-.jobell-register-grid {
-  display: grid;
-  gap: 16px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.jobell-register-submit {
-  max-width: 260px;
-}
-
-.jobell-register-aside {
-  background:
-    linear-gradient(135deg, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0.92)),
-    url("../images/file1.png") center 18%/220px auto no-repeat,
-    linear-gradient(135deg, #050505, #241a08);
-  border: 1px solid rgba(240, 201, 106, 0.28);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.26);
-  color: #ffffff;
-  display: flex;
-  flex-direction: column;
-  gap: 34px;
-  justify-content: space-between;
-  min-height: 680px;
-  padding: clamp(22px, 3vw, 34px);
-}
-
-.jobell-register-copy {
-  margin-top: auto;
-}
-
-.jobell-register-copy h2 {
-  color: #ffffff;
-  font-size: clamp(30px, 4vw, 44px);
-  font-weight: 950;
-  line-height: 1.05;
-  margin: 0;
-}
-
-.jobell-register-copy p {
-  color: rgba(255, 255, 255, 0.74);
-}
-
-.jobell-register-benefits {
-  display: grid;
-  gap: 12px;
-}
-
-.jobell-register-benefits div {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(240, 201, 106, 0.18);
-  border-radius: 8px;
-  padding: 14px;
-}
-
-.jobell-register-benefits i {
-  color: #f0c96a;
-  display: block;
-  font-size: 24px;
-  margin-bottom: 8px;
-}
-
-.jobell-register-benefits strong {
-  color: #ffffff;
-  display: block;
-  font-size: 14px;
-  font-weight: 950;
-}
-
-.jobell-register-benefits span {
-  color: rgba(255, 255, 255, 0.72);
-  display: block;
-  font-size: 13px;
-  line-height: 1.45;
-  margin-top: 3px;
 }
 
 .about-logo {
@@ -1151,6 +730,26 @@ textarea:focus {
   margin-top: 8px;
 }
 
+.jobell-blog-page {
+  background: var(--jobell-page);
+  min-height: calc(100vh - 76px);
+  padding: 54px 0 10px;
+}
+
+.jobell-blog-media {
+  background: var(--jobell-soft);
+  border-bottom: 1px solid var(--jobell-line);
+  overflow: hidden;
+}
+
+.jobell-blog-media img,
+.jobell-blog-media .embed-responsive {
+  aspect-ratio: 16 / 9;
+  height: 210px;
+  object-fit: cover;
+  width: 100%;
+}
+
 .jobell-footer {
   background: var(--jobell-slate);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -1291,26 +890,6 @@ textarea:focus {
 }
 
 @media (max-width: 900px) {
-  .jobell-register-shell {
-    grid-template-columns: 1fr;
-  }
-
-  .jobell-register-aside {
-    min-height: auto;
-  }
-
-  .jobell-login-shell {
-    grid-template-columns: 1fr;
-  }
-
-  .jobell-login-hero {
-    min-height: auto;
-  }
-
-  .jobell-login-benefits {
-    margin-top: 36px;
-  }
-
   .jobell-footer-grid {
     grid-template-columns: 1fr 1fr;
   }
@@ -1326,41 +905,22 @@ textarea:focus {
     align-items: flex-start;
     display: grid;
   }
+
 }
 
 @media (max-width: 640px) {
-  .jobell-register-page {
-    padding: 10px;
-  }
-
-  .jobell-register-card,
-  .jobell-register-aside {
-    padding: 20px;
-  }
-
-  .jobell-register-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .jobell-register-submit {
-    max-width: none;
-  }
-
+  .jobell-register-page,
   .jobell-login-page {
     padding: 10px;
   }
 
-  .jobell-login-hero,
-  .jobell-login-card {
-    padding: 20px;
+  .jobell-blog-page {
+    padding: 24px 0 10px;
   }
 
-  .jobell-login-copy h1 {
-    font-size: 36px;
-  }
-
-  .jobell-login-benefits {
-    grid-template-columns: 1fr;
+  .jobell-blog-media img,
+  .jobell-blog-media .embed-responsive {
+    height: 190px;
   }
 
   .jobell-brand-copy,

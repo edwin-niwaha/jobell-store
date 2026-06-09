@@ -60,7 +60,7 @@ class RegisterForm(UserCreationForm):
                 "placeholder": "Password",
                 "class": "form-control",
                 "data-toggle": "password",
-                "id": "password",
+                "id": "password1",
             }
         ),
     )
@@ -72,7 +72,7 @@ class RegisterForm(UserCreationForm):
                 "placeholder": "Confirm Password",
                 "class": "form-control",
                 "data-toggle": "password",
-                "id": "password",
+                "id": "password2",
             }
         ),
     )
@@ -82,8 +82,8 @@ class RegisterForm(UserCreationForm):
         widget=forms.TextInput(
             attrs={
                 "placeholder": "Telephone (e.g., +12125552368)",
-                "class": "form-control",
-                "id": "phone-input",
+                "class": "form-control phone-input",
+                "id": "tel-input",
             }
         ),
     )
@@ -92,8 +92,8 @@ class RegisterForm(UserCreationForm):
         widget=forms.TextInput(
             attrs={
                 "placeholder": "Mobile (e.g., +12125552368)",
-                "class": "form-control",
-                "id": "phone-input",
+                "class": "form-control phone-input",
+                "id": "mobile-input",
             }
         ),
     )

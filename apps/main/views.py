@@ -717,36 +717,56 @@ def income_vs_expenses(request):
 @login_required
 @admin_or_manager_or_staff_required
 def testimonials_view(request):
-    # Fetch all testimonials
-    testimonials_list = Testimonial.objects.all()
-
-    # Pagination setup
-    paginator = Paginator(testimonials_list, 20)  # Show 20 testimonials per page
-    page_number = request.GET.get("page")
-    testimonials = paginator.get_page(page_number)
-
     if request.method == "POST":
         # Handle approval or rejection of a testimonial
         testimonial_id = request.POST.get("testimonial_id")
         action = request.POST.get("action")
 
-        if testimonial_id:
-            testimonial = Testimonial.objects.get(id=testimonial_id)
+        testimonial = get_object_or_404(Testimonial, id=testimonial_id)
+        if action in {"approve", "reject"}:
             if action == "approve":
                 testimonial.approved = True
-            elif action == "reject":
+                message = "Testimonial approved."
+            else:
                 testimonial.approved = False
-            elif action == "delete":
-                testimonial.delete()
+                message = "Testimonial moved back to pending."
             testimonial.save()
+            messages.success(request, message, extra_tags="bg-success")
+        else:
+            messages.warning(request, "No testimonial action was taken.")
 
         return redirect("testimonials")  # Redirect to the same page after action
+
+    status = request.GET.get("status", "").strip()
+    search_query = request.GET.get("search", "").strip()
+    testimonials_list = Testimonial.objects.all()
+
+    if status == "approved":
+        testimonials_list = testimonials_list.filter(approved=True)
+    elif status == "pending":
+        testimonials_list = testimonials_list.filter(approved=False)
+
+    if search_query:
+        testimonials_list = testimonials_list.filter(
+            Q(author__icontains=search_query) | Q(text__icontains=search_query)
+        )
+
+    paginator = Paginator(testimonials_list, 20)  # Show 20 testimonials per page
+    page_number = request.GET.get("page")
+    testimonials = paginator.get_page(page_number)
 
     table_title = "Testimonials Management"
     return render(
         request,
         "main/testimonials.html",
-        {"testimonials": testimonials, "table_title": table_title},
+        {
+            "testimonials": testimonials,
+            "table_title": table_title,
+            "search_query": search_query,
+            "status": status,
+            "approved_count": Testimonial.objects.filter(approved=True).count(),
+            "pending_count": Testimonial.objects.filter(approved=False).count(),
+        },
     )
 
 
@@ -778,6 +798,10 @@ def testimonial_update(request, pk):
 @login_required
 @admin_or_manager_or_staff_required
 def testimonial_delete(request, pk):
+    if request.method != "POST":
+        messages.warning(request, "Use the delete button to remove a testimonial.")
+        return redirect("testimonials")
+
     testimonial = get_object_or_404(Testimonial, pk=pk)
 
     try:
@@ -798,7 +822,17 @@ def testimonial_delete(request, pk):
 @login_required
 @admin_or_manager_or_staff_required
 def subscriber_list_view(request):
-    subscriber_list = Subscriber.objects.all().order_by("id")
+    search_query = request.GET.get("search", "").strip()
+    consent = request.GET.get("consent", "").strip()
+    subscriber_list = Subscriber.objects.all()
+
+    if consent == "yes":
+        subscriber_list = subscriber_list.filter(consent=True)
+    elif consent == "no":
+        subscriber_list = subscriber_list.filter(consent=False)
+
+    if search_query:
+        subscriber_list = subscriber_list.filter(email__icontains=search_query)
 
     # Pagination logic
     paginator = Paginator(subscriber_list, 50)
@@ -808,6 +842,10 @@ def subscriber_list_view(request):
     context = {
         "subscribers": subscribers,
         "table_title": "Subscribers List",
+        "search_query": search_query,
+        "consent": consent,
+        "subscriber_total": Subscriber.objects.count(),
+        "consented_count": Subscriber.objects.filter(consent=True).count(),
     }
     return render(request, "main/subscriber.html", context)
 
@@ -818,6 +856,10 @@ def subscriber_list_view(request):
 @login_required
 @admin_or_manager_or_staff_required
 def delete_subscriber_view(request, subscriber_id):
+    if request.method != "POST":
+        messages.warning(request, "Use the delete button to remove a subscriber.")
+        return redirect("subscriber_list")
+
     subscriber = get_object_or_404(Subscriber, id=subscriber_id)
     subscriber.delete()
     messages.success(

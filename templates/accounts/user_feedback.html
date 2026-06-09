@@ -1,92 +1,156 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block title %}
+  User Feedback | Jobell
+{% endblock %}
+
 {% block content %}
-
-<div class="container">
-    <div class="page-header flex-wrap">
-        <h3 class="mb-0"> {{table_title|upper}} <span class="pl-0 h6 pl-sm-2 text-muted d-inline-block"></span></h3>
-        <div class="d-flex">
-            <button title="Export To Excel" type="button" class="btn btn-sm ml-3 btn-success"
-                onclick="ExportToExcel('xlsx')">
-                <i class="mdi mdi-file-excel btn-icon-prepend"></i> </button>
-
-            <button title="Export To Word" type="button" class="btn btn-sm ml-3 btn-success"
-                onclick="Export2Doc('printMe');">
-                <i class="mdi mdi-file-word btn-icon-prepend"></i> </button>
-            <button title="Print" type="button" class="btn btn-sm ml-3 btn-success" onclick=" printDiv('printMe')">
-                <i class="mdi mdi-printer btn-icon-prepend"></i> </button>
-
-        </div>
+  <div class="container-fluid">
+    <div class="admin-page-head">
+      <div>
+        <span class="admin-eyebrow">Support</span>
+        <h1 class="admin-page-title">{{ table_title }}</h1>
+        <p class="admin-muted mb-0">Review customer messages and mark them as handled.</p>
+      </div>
+      <div class="admin-actions">
+        <button title="Export to Excel" type="button" class="admin-theme-btn admin-theme-btn-soft" onclick="ExportToExcel('xlsx')">
+          <i class="mdi mdi-file-excel" aria-hidden="true"></i>
+          Excel
+        </button>
+        <button title="Export to Word" type="button" class="admin-theme-btn admin-theme-btn-soft" onclick="Export2Doc('printMe')">
+          <i class="mdi mdi-file-word" aria-hidden="true"></i>
+          Word
+        </button>
+        <button title="Print" type="button" class="admin-theme-btn admin-theme-btn-accent" onclick="printDiv('printMe')">
+          <i class="mdi mdi-printer" aria-hidden="true"></i>
+          Print
+        </button>
+      </div>
     </div>
-    <hr>
-    <div id="printMe" class="tab-pane show active">
-        <header style="text-align: center;">
-            <hr class="bg-info" style="height: 5px;" />
-        </header>
-        <table class="my-table">
+
+    <div class="admin-stat-grid">
+      <div class="admin-stat">
+        <span>Open</span>
+        <strong>{{ open_feedback_count }}</strong>
+      </div>
+      <div class="admin-stat">
+        <span>Validated</span>
+        <strong>{{ validated_feedback_count }}</strong>
+      </div>
+      <div class="admin-stat">
+        <span>Showing</span>
+        <strong>{{ feedback.paginator.count }}</strong>
+      </div>
+    </div>
+
+    <form method="get" action="{% url 'user_feedback' %}" class="admin-filter-bar">
+      <div class="flex-grow-1">
+        <label for="feedbackSearch" class="sr-only">Search feedback</label>
+        <input type="search" name="search" id="feedbackSearch" class="form-control" value="{{ search_query }}" placeholder="Search by name, email, or message" />
+      </div>
+      <select name="status" class="form-control" aria-label="Feedback status">
+        <option value="" {% if not status %}selected{% endif %}>All statuses</option>
+        <option value="open" {% if status == 'open' %}selected{% endif %}>Open</option>
+        <option value="validated" {% if status == 'validated' %}selected{% endif %}>Validated</option>
+      </select>
+      <button type="submit" class="admin-theme-btn admin-theme-btn-accent">
+        <i class="mdi mdi-filter-outline" aria-hidden="true"></i>
+        Apply
+      </button>
+      {% if search_query or status %}
+        <a href="{% url 'user_feedback' %}" class="admin-theme-btn admin-theme-btn-soft">Clear</a>
+      {% endif %}
+    </form>
+
+    <div id="printMe" class="admin-panel">
+      <div class="admin-panel-header">
+        <h2>Messages</h2>
+      </div>
+      <div class="p-3">
+        <div class="admin-table-wrap">
+          <table class="admin-table my-table">
             <thead>
-                <tr>
-                    <th scope="col">#</th>
-                    <th scope="col">Name</th>
-                    <th scope="col">Email</th>
-                    <th scope="col">Message</th>
-                    <th scope="col">Submitted on</th>
-                    <th scope="col">Clr</th>
-                    <th class="print-hide" colspan="2" scope="col">Action</th>
-                </tr>
+              <tr>
+                <th scope="col">Sender</th>
+                <th scope="col">Message</th>
+                <th scope="col">Submitted</th>
+                <th scope="col">Status</th>
+                <th class="print-hide text-center" scope="col">Actions</th>
+              </tr>
             </thead>
-            <tbody class="table-group-divider">
-                {%for feed in feedback%}
+            <tbody>
+              {% for feed in feedback %}
                 <tr>
-                    <th scope="row">{{forloop.counter}}.</th>
-                    <td>{{feed.name}}</td>
-                    <td>{{feed.email}}</td>
-                    <td>{{feed.message}}</td>
-                    <td>{{feed.created_at}}</td>
-                    <td class="{% if feed.is_valid %}valid-feed{% else %}invalid-feed{% endif %}">
-                        {% if feed.is_valid %}
-                        &#10004;
-                        <!-- Check mark (✔) indicating the feed is valid -->
-                        {% else %}
-                        &#10007;
-                        <!-- Cross mark (❌) indicating the feed is invalid -->
-                        {% endif %}
-                    </td>
-                    <td class="print-hide">
-                        {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
-                        <form action="{% url 'validate_user_feedback' feed.id %}" method="post"
-                            onsubmit="return confirm('Are you sure you want to validate?');">
+                  <td>
+                    <span class="admin-item-title">{{ feed.name }}</span>
+                    <span class="admin-item-subtitle">{{ feed.email }}</span>
+                  </td>
+                  <td class="admin-row-text">{{ feed.message }}</td>
+                  <td>{{ feed.created_at|date:'Y-m-d H:i' }}</td>
+                  <td>
+                    {% if feed.is_valid %}
+                      <span class="admin-badge is-success">Validated</span>
+                    {% else %}
+                      <span class="admin-badge is-warning">Open</span>
+                    {% endif %}
+                  </td>
+                  <td class="print-hide text-center">
+                    <div class="admin-icon-actions">
+                      {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
+                        {% if not feed.is_valid %}
+                          <form action="{% url 'validate_user_feedback' feed.id %}" method="post" class="admin-inline-form" onsubmit="return confirm('Mark this feedback as handled?');">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-warning btn-sm" title="Validate"
-                                {% if feed.is_valid %}hidden{% endif %}>
-                                Validate
+                            <button type="submit" class="admin-icon-btn-themed is-gold" title="Validate">
+                              <i class="mdi mdi-check" aria-hidden="true"></i>
                             </button>
+                          </form>
+                        {% endif %}
+                        <form action="{% url 'delete_feedback' feed.id %}" method="post" class="admin-inline-form" onsubmit="return confirm('Delete this feedback permanently?');">
+                          {% csrf_token %}
+                          <button type="submit" class="admin-icon-btn-themed is-danger" title="Delete">
+                            <i class="bi bi-trash" aria-hidden="true"></i>
+                          </button>
                         </form>
-                        {% else %}
-                        <button class="btn btn-warning btn-sm" onclick="showNoPermissionMessage('edit')"
-                            {% if feed.is_valid %}hidden{% endif %}>
-                            Validate
+                      {% else %}
+                        <button type="button" class="admin-icon-btn-themed is-gold" onclick="showNoPermissionMessage('edit')">
+                          <i class="mdi mdi-check" aria-hidden="true"></i>
                         </button>
-                        {% endif %}
-                    </td>
-
-                    <td class="print-hide">
-                        {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
-                        <a class="btn btn-danger btn-sm" title="Erase" href="{% url 'delete_feedback' feed.id %}"
-                            onclick="return confirm('Are you sure about this? This record will be deleted permanently.');">
-                            <i class="bi bi-trash"></i>
-                        </a>
-                        {% else %}
-                        <button class="btn btn-danger btn-sm disabled" onclick="showNoPermissionMessage('delete')">
-                            <i class="bi bi-trash"></i>
+                        <button type="button" class="admin-icon-btn-themed is-danger" onclick="showNoPermissionMessage('delete')">
+                          <i class="bi bi-trash" aria-hidden="true"></i>
                         </button>
-                        {% endif %}
-                    </td>
-                    {%endfor%}
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="5" class="admin-empty-row">No feedback matches your filters.</td>
+                </tr>
+              {% endfor %}
             </tbody>
-        </table>
-    </div>
-</div>
+          </table>
+        </div>
 
+        <div class="d-flex justify-content-between align-items-center flex-wrap mt-3">
+          <div class="admin-muted mb-2 mb-md-0">Showing {{ feedback.start_index }} to {{ feedback.end_index }} of {{ feedback.paginator.count }} entries</div>
+          <nav aria-label="Feedback pagination">
+            <ul class="pagination admin-pagination">
+              {% if feedback.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ feedback.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status %}&status={{ status }}{% endif %}">Previous</a></li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">Previous</span></li>
+              {% endif %}
+              <li class="page-item active"><span class="page-link">{{ feedback.number }} / {{ feedback.paginator.num_pages }}</span></li>
+              {% if feedback.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ feedback.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status %}&status={{ status }}{% endif %}">Next</a></li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">Next</span></li>
+              {% endif %}
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
 {% endblock content %}

@@ -1,9 +1,10 @@
 from django import forms
 from datetime import date
+import uuid
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 import logging
-from django.forms import modelformset_factory
+from django.forms import BaseModelFormSet, modelformset_factory
 from .models import (
     Transaction,
     JournalEntry,
@@ -464,7 +465,11 @@ class JournalEntryForm(forms.ModelForm):
         self.request = kwargs.pop("request", None)  # Store the request
         super().__init__(*args, **kwargs)
 
-        # Automatically set financial_period based on user's branch
+        self.fields["financial_period"].queryset = FinancialPeriod.objects.filter(
+            status="open"
+        )
+
+        open_period = None
         if self.request and self.request.user.is_authenticated:
             user_branch = getattr(
                 self.request.user, "branch", None
@@ -473,20 +478,13 @@ class JournalEntryForm(forms.ModelForm):
                 open_periods = FinancialPeriod.objects.filter(
                     status="open", branch=user_branch
                 )
-                if open_periods.exists():
-                    self.fields["financial_period"].initial = open_periods.first()
-                else:
-                    self.add_error(
-                        None, "No open financial periods available for your branch."
-                    )
-                    self.fields["financial_period"].queryset = (
-                        FinancialPeriod.objects.none()
-                    )
-            else:
-                self.add_error(None, "User is not associated with any branch.")
-                self.fields["financial_period"].queryset = (
-                    FinancialPeriod.objects.none()
-                )
+                self.fields["financial_period"].queryset = open_periods
+                open_period = open_periods.first()
+
+        if not open_period:
+            open_period = self.fields["financial_period"].queryset.first()
+        if open_period:
+            self.fields["financial_period"].initial = open_period
 
     def clean_transaction_date(self):
         transaction_date = self.cleaned_data.get("transaction_date")
@@ -530,11 +528,10 @@ class JournalEntryForm(forms.ModelForm):
 
     def save(self, commit=True):
         try:
-            # Truncate reference_number to avoid length errors
             reference_number = (
                 self.cleaned_data["reference_number"][:100]
                 if self.cleaned_data["reference_number"]
-                else ""
+                else self._generate_reference_number()
             )
 
             # Get the branch from the logged-in user
@@ -559,12 +556,23 @@ class JournalEntryForm(forms.ModelForm):
             self.add_error(None, e)
             return None
 
+    def _generate_reference_number(self):
+        transaction_date = self.cleaned_data.get("transaction_date") or date.today()
+        while True:
+            reference_number = f"JE-{transaction_date:%Y%m%d}-{uuid.uuid4().hex[:8].upper()}"
+            if not JournalEntry.objects.filter(
+                reference_number=reference_number
+            ).exists():
+                return reference_number
+
 
 # Updated TransactionForm (without JournalEntry fields)
 class TransactionForm(forms.ModelForm):
     account = forms.ModelChoiceField(
         queryset=ChartOfAccounts.objects.filter(
             parent_account__isnull=False,
+            status="active",
+            is_deleted=False,
         ),
         widget=forms.Select(
             attrs={"class": "form-control", "placeholder": "Select Account"}
@@ -609,7 +617,55 @@ class TransactionForm(forms.ModelForm):
         return transaction
 
 
+class BalancedTransactionFormSet(BaseModelFormSet):
+    def clean(self):
+        super().clean()
+        if any(self.errors):
+            return
+
+        total_debits = 0
+        total_credits = 0
+        active_forms = 0
+
+        for form in self.forms:
+            cleaned_data = getattr(form, "cleaned_data", {})
+            if not cleaned_data or cleaned_data.get("DELETE"):
+                continue
+
+            amount = cleaned_data.get("amount")
+            transaction_type = cleaned_data.get("transaction_type")
+            account = cleaned_data.get("account")
+
+            if not amount and not transaction_type and not account:
+                continue
+
+            active_forms += 1
+            if transaction_type == "debit":
+                total_debits += amount or 0
+            elif transaction_type == "credit":
+                total_credits += amount or 0
+
+        if active_forms < 2:
+            raise ValidationError(
+                "Enter at least two transaction lines: one debit and one credit."
+            )
+
+        if total_debits <= 0 or total_credits <= 0:
+            raise ValidationError("Enter at least one debit and one credit amount.")
+
+        if total_debits != total_credits:
+            raise ValidationError(
+                f"Total debits ({total_debits}) must equal total credits ({total_credits})."
+            )
+
+
 # Updated TransactionFormSet
 TransactionFormSet = modelformset_factory(
-    Transaction, form=TransactionForm, extra=2, can_delete=True, min_num=2
+    Transaction,
+    form=TransactionForm,
+    formset=BalancedTransactionFormSet,
+    extra=2,
+    can_delete=True,
+    min_num=2,
+    validate_min=True,
 )

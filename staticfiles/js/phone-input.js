@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
-    // Select all inputs with class 'phone-input'
-    const phoneInputs = document.querySelectorAll('#phone-input')
+    // Support the newer class hook and the older ID hook used by existing forms.
+    const phoneInputs = document.querySelectorAll('.phone-input, #phone-input')
 
     phoneInputs.forEach((phoneInput) => {
         // Set the maximum length attribute for the input

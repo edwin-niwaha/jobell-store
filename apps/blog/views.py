@@ -140,12 +140,15 @@ def blog_create(request):
 @admin_or_manager_or_staff_required
 def add_tag(request):
     """View to handle creating a new tag."""
+    form_title = "Add New Tag"
     form = TagForm(request.POST or None)
     if request.method == "POST":
         if form.is_valid():
-            form.save()
+            tag = form.save()
             messages.success(
-                request, "Tag created successfully!", extra_tags="bg-success"
+                request,
+                f"Tag '{tag.name}' created successfully!",
+                extra_tags="bg-success",
             )
             return redirect(
                 "blog:add_tag"
@@ -153,10 +156,18 @@ def add_tag(request):
         else:
             messages.error(
                 request,
-                "There was an error with the form. Please correct the errors below.",
+                "Please correct the errors below.",
+                extra_tags="warning",
             )
 
-    return render(request, "blog/add_tag.html", {"form": form})
+    return render(
+        request,
+        "blog/add_tag.html",
+        {
+            "form": form,
+            "form_title": form_title,
+        },
+    )
 
 
 # =================================== Blog Edit View ===================================

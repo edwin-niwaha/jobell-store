@@ -1,135 +1,132 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audit Log Report</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-</head>
-<body class="bg-gray-100">
-    <div class="container mx-auto p-4">
-        <div class="flex justify-between items-center mb-4">
-            <h1 class="text-2xl font-bold">Audit Log Report</h1>
-            <a href="{% url 'dashboard' %}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
-                <i class="mdi mdi-arrow-left-bold mr-2"></i>
-                Go back
-            </a>
-        </div>
-        
-        <!-- Filter Form -->
-        <form method="GET" class="mb-4 bg-white p-4 rounded shadow">
-            <div class="flex flex-wrap -mx-2">
-                <div class="w-full md:w-1/3 px-2 mb-4">
-                    <label for="start_date" class="block text-sm font-medium text-gray-700">Start Date</label>
-                    <input type="date" id="start_date" name="start_date" value="{{ start_date|date:'Y-m-d' }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                </div>
-                <div class="w-full md:w-1/3 px-2 mb-4">
-                    <label for="end_date" class="block text-sm font-medium text-gray-700">End Date</label>
-                    <input type="date" id="end_date" name="end_date" value="{{ end_date|date:'Y-m-d' }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                </div>
-                <div class="w-full md:w-1/3 px-2 mb-4">
-                    <label for="user_id" class="block text-sm font-medium text-gray-700">User</label>
-                    <select id="user_id" name="user_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                        <option value="">All Users</option>
-                        {% for user in users %}
-                            <option value="{{ user.id }}" {% if selected_user.id == user.id %}selected{% endif %}>{{ user.username }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </div>
-            <div class="flex justify-end space-x-2">
-                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Filter</button>
-                <button type="submit" name="download" value="1" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Download CSV</button>
-            </div>
-        </form>
-        
-        <!-- Audit Log Table -->
-        <div class="bg-white shadow overflow-hidden rounded-lg">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Model</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Object ID</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    {% for entry in report_data %}
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap">{{ entry.timestamp|date:"Y-m-d H:i:s" }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">{{ entry.user }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">{{ entry.model }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">{{ entry.action }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">{{ entry.object_id }}</td>
-                            <td class="px-6 py-4">{{ entry.details }}</td>
-                        </tr>
-                    {% empty %}
-                        <tr>
-                            <td colspan="6" class="px-6 py-4 text-center text-gray-500">No audit logs found.</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+{% extends 'base.html' %}
 
-        <!-- Pagination -->
-        {% if report_data.has_other_pages %}
-        <div class="mt-4 flex justify-between items-center">
-            <div>
-                <span class="text-sm text-gray-700">
-                    Showing {{ report_data.start_index }} to {{ report_data.end_index }} of {{ report_data.paginator.count }} entries
-                </span>
-            </div>
-            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                {% if report_data.has_previous %}
-                    <a href="?page=1{% if start_date %}&start_date={{ start_date|date:'Y-m-d' }}{% endif %}{% if end_date %}&end_date={{ end_date|date:'Y-m-d' }}{% endif %}{% if user_id %}&user_id={{ user_id }}{% endif %}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                        First
-                    </a>
-                    <a href="?page={{ report_data.previous_page_number }}{% if start_date %}&start_date={{ start_date|date:'Y-m-d' }}{% endif %}{% if end_date %}&end_date={{ end_date|date:'Y-m-d' }}{% endif %}{% if user_id %}&user_id={{ user_id }}{% endif %}" class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                        Previous
-                    </a>
-                {% else %}
-                    <span class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">
-                        First
-                    </span>
-                    <span class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">
-                        Previous
-                    </span>
-                {% endif %}
+{% block title %}
+  Audit Logs | Jobell
+{% endblock %}
 
-                {% for num in report_data.paginator.page_range %}
-                    {% if report_data.number == num %}
-                        <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-blue-500 text-sm font-medium text-white">
-                            {{ num }}
-                        </span>
-                    {% elif num > report_data.number|add:-3 and num < report_data.number|add:3 %}
-                        <a href="?page={{ num }}{% if start_date %}&start_date={{ start_date|date:'Y-m-d' }}{% endif %}{% if end_date %}&end_date={{ end_date|date:'Y-m-d' }}{% endif %}{% if user_id %}&user_id={{ user_id }}{% endif %}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-                            {{ num }}
-                        </a>
-                    {% endif %}
-                {% endfor %}
-
-                {% if report_data.has_next %}
-                    <a href="?page={{ report_data.next_page_number }}{% if start_date %}&start_date={{ start_date|date:'Y-m-d' }}{% endif %}{% if end_date %}&end_date={{ end_date|date:'Y-m-d' }}{% endif %}{% if user_id %}&user_id={{ user_id }}{% endif %}" class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                        Next
-                    </a>
-                    <a href="?page={{ report_data.paginator.num_pages }}{% if start_date %}&start_date={{ start_date|date:'Y-m-d' }}{% endif %}{% if end_date %}&end_date={{ end_date|date:'Y-m-d' }}{% endif %}{% if user_id %}&user_id={{ user_id }}{% endif %}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                        Last
-                    </a>
-                {% else %}
-                    <span class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">
-                        Next
-                    </span>
-                    <span class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">
-                        Last
-                    </span>
-                {% endif %}
-            </nav>
-        </div>
-        {% endif %}
+{% block content %}
+  <div class="container-fluid">
+    <div class="admin-page-head">
+      <div>
+        <span class="admin-eyebrow">Financials</span>
+        <h1 class="admin-page-title">Audit Log Report</h1>
+        <p class="admin-muted mb-0">Trace financial record changes by date, user, model, and action.</p>
+      </div>
+      <div class="admin-actions">
+        <a href="{% url 'dashboard' %}" class="admin-theme-btn admin-theme-btn-dark">
+          <i class="mdi mdi-arrow-left" aria-hidden="true"></i>
+          Dashboard
+        </a>
+        <button title="Export to Excel" type="button" class="admin-theme-btn admin-theme-btn-soft" onclick="ExportToExcel('xlsx')">
+          <i class="mdi mdi-file-excel" aria-hidden="true"></i>
+          Excel
+        </button>
+        <button title="Export to Word" type="button" class="admin-theme-btn admin-theme-btn-soft" onclick="Export2Doc('printMe')">
+          <i class="mdi mdi-file-word" aria-hidden="true"></i>
+          Word
+        </button>
+        <button title="Print" type="button" class="admin-theme-btn admin-theme-btn-accent" onclick="printDiv('printMe')">
+          <i class="mdi mdi-printer" aria-hidden="true"></i>
+          Print
+        </button>
+      </div>
     </div>
-</body>
-</html>
+
+    <form method="get" class="admin-filter-bar">
+      <div>
+        <label for="start_date" class="admin-muted d-block mb-1">Start date</label>
+        <input type="date" id="start_date" name="start_date" value="{{ start_date|date:'Y-m-d' }}" class="form-control" />
+      </div>
+      <div>
+        <label for="end_date" class="admin-muted d-block mb-1">End date</label>
+        <input type="date" id="end_date" name="end_date" value="{{ end_date|date:'Y-m-d' }}" class="form-control" />
+      </div>
+      <div>
+        <label for="user_id" class="admin-muted d-block mb-1">User</label>
+        <select id="user_id" name="user_id" class="form-control">
+          <option value="">All users</option>
+          {% for user_option in users %}
+            <option value="{{ user_option.id }}" {% if selected_user.id == user_option.id %}selected{% endif %}>{{ user_option.username }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="align-self-end d-flex flex-wrap" style="gap: 0.6rem;">
+        <button type="submit" class="admin-theme-btn admin-theme-btn-accent">
+          <i class="mdi mdi-filter-outline" aria-hidden="true"></i>
+          Filter
+        </button>
+        <button type="submit" name="download" value="1" class="admin-theme-btn admin-theme-btn-soft">
+          <i class="mdi mdi-download" aria-hidden="true"></i>
+          CSV
+        </button>
+      </div>
+    </form>
+
+    <div id="printMe" class="admin-panel mb-4">
+      <div class="admin-panel-header">
+        <h2>{{ audit_total }} audit entr{{ audit_total|pluralize:'y,ies' }}</h2>
+      </div>
+      <div class="p-3">
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>User</th>
+                <th>Model</th>
+                <th>Action</th>
+                <th>Object ID</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for entry in report_data %}
+                <tr>
+                  <td>{{ entry.timestamp|date:'Y-m-d H:i:s' }}</td>
+                  <td>{{ entry.user }}</td>
+                  <td>{{ entry.model }}</td>
+                  <td>
+                    {% if entry.action == 'CREATE' %}
+                      <span class="admin-badge is-success">Create</span>
+                    {% elif entry.action == 'UPDATE' %}
+                      <span class="admin-badge is-info">Update</span>
+                    {% elif entry.action == 'DELETE' %}
+                      <span class="admin-badge is-danger">Delete</span>
+                    {% else %}
+                      <span class="admin-badge is-muted">{{ entry.action }}</span>
+                    {% endif %}
+                  </td>
+                  <td>{{ entry.object_id }}</td>
+                  <td class="admin-row-text">{{ entry.details }}</td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="6" class="admin-empty-row">No audit logs match your filters.</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center flex-wrap mt-3">
+          <div class="admin-muted mb-2 mb-md-0">Showing {{ report_data.start_index }} to {{ report_data.end_index }} of {{ report_data.paginator.count }} entries</div>
+          <nav aria-label="Audit log pagination">
+            <ul class="pagination admin-pagination">
+              {% if report_data.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ report_data.previous_page_number }}{% if start_date %}&start_date={{ start_date|date:'Y-m-d' }}{% endif %}{% if end_date %}&end_date={{ end_date|date:'Y-m-d' }}{% endif %}{% if user_id %}&user_id={{ user_id }}{% endif %}">Previous</a></li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">Previous</span></li>
+              {% endif %}
+              <li class="page-item active"><span class="page-link">{{ report_data.number }} / {{ report_data.paginator.num_pages }}</span></li>
+              {% if report_data.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ report_data.next_page_number }}{% if start_date %}&start_date={{ start_date|date:'Y-m-d' }}{% endif %}{% if end_date %}&end_date={{ end_date|date:'Y-m-d' }}{% endif %}{% if user_id %}&user_id={{ user_id }}{% endif %}">Next</a></li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">Next</span></li>
+              {% endif %}
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

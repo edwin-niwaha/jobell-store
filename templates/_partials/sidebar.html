@@ -41,13 +41,13 @@
         <ul class="nav flex-column sub-menu">
           <li class="nav-item">
             <a class="nav-link" href="{% url 'orders:orders_to_be_processed' %}">
-              <i class="mdi mdi-truck-fast-outline menu-icon"></i>
+              <i class="mdi mdi-truck-fast menu-icon"></i>
               Open Orders
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{% url 'orders:all_orders' %}">
-              <i class="mdi mdi-receipt-text-outline menu-icon"></i>
+              <i class="mdi mdi-receipt menu-icon"></i>
               All Orders
             </a>
           </li>
@@ -76,7 +76,7 @@
     <li class="nav-item">
       {% if perms.shipping.view_deliveryrate or perms.shipping.add_deliveryrate or perms.shipping.change_deliveryrate or perms.shipping.view_pickupstation or perms.shipping.add_pickupstation or perms.shipping.change_pickupstation %}
         <a class="nav-link" data-bs-toggle="collapse" href="#shippingMenu" aria-expanded="false" aria-controls="shippingMenu">
-          <i class="mdi mdi-truck-delivery-outline menu-icon"></i>
+          <i class="mdi mdi-truck-delivery menu-icon"></i>
           <span class="menu-title">Shipping</span>
           <i class="menu-arrow"></i>
         </a>
@@ -93,7 +93,7 @@
             {% if perms.shipping.add_deliveryrate %}
               <li class="nav-item">
                 <a class="nav-link" href="{% url 'shipping:delivery_rate_add' %}">
-                  <i class="mdi mdi-plus-circle-outline menu-icon"></i>
+                  <i class="mdi mdi-plus-circle menu-icon"></i>
                   Add Shipping Fee
                 </a>
               </li>
@@ -101,7 +101,7 @@
             {% if perms.shipping.view_pickupstation or perms.shipping.add_pickupstation or perms.shipping.change_pickupstation %}
               <li class="nav-item">
                 <a class="nav-link" href="{% url 'shipping:pickup_station_list' %}">
-                  <i class="mdi mdi-store-marker-outline menu-icon"></i>
+                  <i class="mdi mdi-storefront menu-icon"></i>
                   Pickup Stations
                 </a>
               </li>
@@ -109,7 +109,7 @@
             {% if perms.shipping.add_pickupstation %}
               <li class="nav-item">
                 <a class="nav-link" href="{% url 'shipping:pickup_station_add' %}">
-                  <i class="mdi mdi-map-marker-plus-outline menu-icon"></i>
+                  <i class="mdi mdi-map-marker-plus menu-icon"></i>
                   Add Pickup Station
                 </a>
               </li>
@@ -118,7 +118,7 @@
         </div>
       {% else %}
         <a class="nav-link" href="#" onclick="showMessageSettings(event)">
-          <i class="mdi mdi-truck-delivery-outline menu-icon"></i>
+          <i class="mdi mdi-truck-delivery menu-icon"></i>
           <span class="menu-title">Shipping</span>
         </a>
       {% endif %}
@@ -137,12 +137,6 @@
             <a class="nav-link" href="{% url 'products:products_list' %}">
               <i class="mdi mdi-package menu-icon"></i>
               Products
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'products:shop_homepage' %}">
-              <i class="mdi mdi-storefront-outline menu-icon"></i>
-              Storefront
             </a>
           </li>
           <li class="nav-item">

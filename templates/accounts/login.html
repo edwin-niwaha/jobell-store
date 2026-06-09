@@ -6,102 +6,76 @@
 {% endblock %}
 
 {% block content %}
-  <main class="jobell-login-page">
-    <section class="jobell-login-shell">
-      <div class="jobell-login-hero" aria-label="Jobell account sign in">
-        <div class="jobell-login-brand">
-          <img src="{% static 'images/file.png' %}" alt="Jobell" />
-          <span>
-            <strong>Jobell</strong>
-            <small>Premium fragrance store</small>
-          </span>
-        </div>
+  <main class="jobell-login-page d-flex align-items-center">
+    <section class="container">
+      <div class="row justify-content-center">
+        <div class="col-12 col-sm-10 col-md-8 col-lg-6 col-xl-6">
+          <div class="card border shadow-sm overflow-hidden">
+            <div class="card-body p-4 p-md-5">
+              <div class="text-center mb-3">
+                <span class="jobell-login-kicker">Account access</span>
+                <h2 class="h3 font-weight-bold mb-2">Sign in</h2>
+                <p class="text-muted mb-0">Use your Jobell account credentials below.</p>
+              </div>
 
-        <div class="jobell-login-copy">
-          <span class="jobell-login-kicker">Welcome back</span>
-          <h1>Sign in and continue shopping.</h1>
-          <p>Access your cart, wishlist, saved addresses, and order history from one secure account.</p>
-        </div>
+              {% if form.errors %}
+                <div class="alert alert-danger d-flex align-items-start" role="alert">
+                  <i class="mdi mdi-alert-circle-outline" aria-hidden="true"></i>
+                  <div class="ml-2">
+                    {% for key, value in form.errors.items %}
+                      <strong>{{ value }}</strong>
+                    {% endfor %}
+                  </div>
+                </div>
+              {% endif %}
 
-        <div class="jobell-login-benefits">
-          <div>
-            <i class="mdi mdi-cart-outline" aria-hidden="true"></i>
-            <span>Keep your cart synced</span>
-          </div>
-          <div>
-            <i class="mdi mdi-map-marker-outline" aria-hidden="true"></i>
-            <span>Use saved delivery addresses</span>
-          </div>
-          <div>
-            <i class="mdi mdi-receipt-text-outline" aria-hidden="true"></i>
-            <span>Track every order</span>
-          </div>
-        </div>
-      </div>
+              <a href="{% url 'social:begin' 'google-oauth2' %}" class="btn btn-outline-dark btn-block font-weight-bold">
+                <i class="fab fa-google text-danger mr-2" aria-hidden="true"></i>
+                <span>Sign in with Google</span>
+              </a>
 
-      <div class="jobell-login-card">
-        <div class="jobell-login-card-header">
-          <span class="jobell-login-kicker">Account access</span>
-          <h2>Sign in</h2>
-          <p>Use your Jobell account credentials below.</p>
-        </div>
+              <div class="jobell-login-divider my-3">
+                <span>or sign in with username</span>
+              </div>
 
-        {% if form.errors %}
-          <div class="jobell-login-alert" role="alert">
-            <i class="mdi mdi-alert-circle-outline" aria-hidden="true"></i>
-            <div>
-              {% for key, value in form.errors.items %}
-                <strong>{{ value }}</strong>
-              {% endfor %}
+              <form method="POST">
+                {% csrf_token %}
+
+                <div class="form-group">
+                  <label class="font-weight-bold" for="{{ form.username.id_for_label }}">Username</label>
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text"><i class="mdi mdi-account-outline" aria-hidden="true"></i></span>
+                    </div>
+                    {{ form.username }}
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <label class="font-weight-bold" for="{{ form.password.id_for_label }}">Password</label>
+                    <a class="small font-weight-bold" href="{% url 'password_reset' %}">Forgot password?</a>
+                  </div>
+                  {{ form.password }}
+                </div>
+
+                <label class="form-check d-flex align-items-center mb-3">
+                  {{ form.remember_me }}
+                  <span class="form-check-label ml-2 text-muted">Remember me on this device</span>
+                </label>
+
+                <button name="login" class="btn btn-primary btn-block font-weight-bold" id="login" type="submit">
+                  <i class="mdi mdi-login" aria-hidden="true"></i>
+                  Sign in
+                </button>
+              </form>
+
+              <div class="border-top mt-4 pt-3 text-center text-muted">
+                <span>New to Jobell?</span>
+                <a class="font-weight-bold" href="{% url 'users-register' %}">Create an account</a>
+              </div>
             </div>
           </div>
-        {% endif %}
-
-        <a href="{% url 'social:begin' 'google-oauth2' %}" class="jobell-google-btn">
-          <i class="fab fa-google" aria-hidden="true"></i>
-          <span>Sign in with Google</span>
-        </a>
-
-        <div class="jobell-login-divider">
-          <span>or sign in with username</span>
-        </div>
-
-        <form method="POST" class="jobell-login-form">
-          {% csrf_token %}
-
-          <div class="jobell-login-field">
-            <label for="{{ form.username.id_for_label }}">Username</label>
-            <div class="jobell-input-shell">
-              <i class="mdi mdi-account-outline" aria-hidden="true"></i>
-              {{ form.username }}
-            </div>
-          </div>
-
-          <div class="jobell-login-field">
-            <div class="jobell-login-label-row">
-              <label for="{{ form.password.id_for_label }}">Password</label>
-              <a href="{% url 'password_reset' %}">Forgot password?</a>
-            </div>
-            <div class="jobell-input-shell">
-              <i class="mdi mdi-lock-outline" aria-hidden="true"></i>
-              {{ form.password }}
-            </div>
-          </div>
-
-          <label class="jobell-login-remember">
-            {{ form.remember_me }}
-            <span>Remember me on this device</span>
-          </label>
-
-          <button name="login" class="jobell-login-submit" id="login" type="submit">
-            <i class="mdi mdi-login" aria-hidden="true"></i>
-            Sign in
-          </button>
-        </form>
-
-        <div class="jobell-login-footer">
-          <span>New to Jobell?</span>
-          <a href="{% url 'users-register' %}">Create an account</a>
         </div>
       </div>
     </section>

@@ -1,38 +1,68 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 
+{% block title %}
+  {{ form_name }} | Jobell
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid">
-    <div class="row mb-3">
-        <div class="col-md-12 d-flex justify-content-between align-items-center">
-            <a href="{% url 'profile_list' %}">
-                <button type="button" class="btn btn-info font-weight-bold">
-                    <i class="mdi mdi-arrow-left-bold mr-2"></i>
-                    Go back
-                </button>
-            </a>
-        </div>
+  <div class="container-fluid">
+    <div class="admin-page-head">
+      <div>
+        <span class="admin-eyebrow">Authentication</span>
+        <h1 class="admin-page-title">{{ form_name }}</h1>
+        <p class="admin-muted mb-0">Adjust staff access for {{ profile.user.get_full_name|default:profile.user.username }}.</p>
+      </div>
+      <div class="admin-actions">
+        <a href="{% url 'profile_list' %}" class="admin-theme-btn admin-theme-btn-dark">
+          <i class="mdi mdi-arrow-left" aria-hidden="true"></i>
+          Profiles
+        </a>
+      </div>
     </div>
-    <div class="row">
-        <div class="col-12">
-            <div class="card card-secondary">
-                <div class="card-header">
-                    <h3>{{ table_title|upper }}</h3>
-                </div>
-                <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
-                        {{ form|crispy }}
-                        <div class="form-group mt-4 mb-0">
-                            <button type="submit" class="btn btn-dark btn-block"
-                                onclick="return confirm('Are you sure you want to proceed?') && validateForm()">
-                                Update Role
-                            </button>
-                        </div>
-                    </form>
-                </div>
+
+    <div class="admin-form-layout">
+      <section class="admin-panel">
+        <div class="admin-panel-header">
+          <h2>Role details</h2>
+        </div>
+        <div class="p-4">
+          <div class="d-flex align-items-center mb-4">
+            {% if profile.avatar %}
+              <img class="admin-avatar mr-3" src="{{ profile.avatar.url }}" alt="{{ profile.user.get_full_name|default:profile.user.username }}" />
+            {% else %}
+              <span class="admin-avatar mr-3">{{ profile.user.username|first|upper }}</span>
+            {% endif %}
+            <div>
+              <span class="admin-item-title">{{ profile.user.get_full_name|default:profile.user.username }}</span>
+              <span class="admin-item-subtitle">{{ profile.user.email|default:'No email address' }}</span>
             </div>
+          </div>
+
+          <form method="post" class="admin-compact-form" novalidate>
+            {% csrf_token %}
+            {{ form|crispy }}
+
+            <div class="admin-form-actions">
+              <a href="{% url 'profile_list' %}" class="admin-theme-btn admin-theme-btn-soft">Cancel</a>
+              <button type="submit" class="admin-theme-btn admin-theme-btn-accent">
+                <i class="mdi mdi-content-save-outline" aria-hidden="true"></i>
+                Save role
+              </button>
+            </div>
+          </form>
         </div>
+      </section>
+
+      <aside class="admin-panel p-4">
+        <span class="admin-eyebrow">Current Access</span>
+        <h2 class="h5 font-weight-bold">{{ profile.get_role_display }}</h2>
+        <div class="admin-help-list mt-3">
+          <span><i class="mdi mdi-account-key-outline" aria-hidden="true"></i> Administrators and managers can edit staff access.</span>
+          <span><i class="mdi mdi-shield-check-outline" aria-hidden="true"></i> Keep high-permission roles limited to trusted users.</span>
+          <span><i class="mdi mdi-store-outline" aria-hidden="true"></i> Branch assignment is shown on the profile list when available.</span>
+        </div>
+      </aside>
     </div>
-</div>
+  </div>
 {% endblock content %}

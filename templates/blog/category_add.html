@@ -1,44 +1,60 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 
+{% block title %}
+  Add Blog Category | Jobell
+{% endblock %}
+
 {% block content %}
-  <div class="container-fluid">
-    <div class="row mb-3">
-      <div class="col-md-12 d-flex justify-content-between align-items-center">
-        <a href="{% url 'blog:blog_list' %}">
-          <button type="button" class="btn btn-info font-weight-bold">
-            <i class="mdi mdi-arrow-left-bold mr-2"></i>
-            Go back
-          </button>
+  <div class="blog-admin-form-page">
+    <div class="admin-page-head">
+      <div>
+        <span class="admin-eyebrow">Blog</span>
+        <h1 class="admin-page-title">{{ form_title }}</h1>
+        <p class="admin-muted mb-0">Create a clear content category for grouping journal posts.</p>
+      </div>
+      <div class="admin-actions">
+        <a href="{% url 'blog:blog_list' %}" class="btn btn-outline-dark">
+          <i class="mdi mdi-arrow-left" aria-hidden="true"></i>
+          Blog
         </a>
-        <div class="d-flex">
-          <a href="{% url 'blog:blog_create' %}" class="btn btn-dark ml-2">
-            <i class="mdi mdi-plus mr-2"></i>
-            Create Blog
-          </a>
-        </div>
+        <a href="{% url 'blog:blog_create' %}" class="btn btn-primary text-white">
+          <i class="mdi mdi-plus-circle-outline" aria-hidden="true"></i>
+          New post
+        </a>
       </div>
     </div>
-    <div class="row">
-      <div class="col-12">
-        <div class="card card-secondary">
-          <div class="card-header">
-            <h3>{{ form_title }}</h3>
-          </div>
-          <div class="card-body">
-            <form method="post">
-              {% csrf_token %}
 
-              <!-- Render Form Fields using Crispy Forms -->
-              {{ form|crispy }}
+    <div class="admin-form-layout">
+      <div class="admin-panel">
+        <div class="admin-panel-header">
+          <h2>Category details</h2>
+        </div>
+        <div class="p-4">
+          <form method="post" class="admin-compact-form" novalidate>
+            {% csrf_token %}
+            {{ form|crispy }}
 
-              <div class="form-group mt-4 mb-0">
-                <button type="submit" class="btn btn-dark btn-block" onclick="return confirm('Are you sure you want to proceed?')">Add Category</button>
-              </div>
-            </form>
-          </div>
+            <div class="admin-form-actions">
+              <a href="{% url 'blog:blog_list' %}" class="btn btn-light">Cancel</a>
+              <button type="submit" class="btn btn-primary text-white">
+                <i class="mdi mdi-check-circle-outline" aria-hidden="true"></i>
+                Save category
+              </button>
+            </div>
+          </form>
         </div>
       </div>
+
+      <aside class="admin-panel p-4">
+        <span class="admin-eyebrow">Tips</span>
+        <h2 class="h5 font-weight-bold">Keep categories simple</h2>
+        <div class="admin-help-list mt-3">
+          <span><i class="mdi mdi-format-title" aria-hidden="true"></i> Use short names customers can scan quickly.</span>
+          <span><i class="mdi mdi-tag-outline" aria-hidden="true"></i> Avoid duplicate category names.</span>
+          <span><i class="mdi mdi-newspaper-variant-outline" aria-hidden="true"></i> Categories appear on blog cards and detail pages.</span>
+        </div>
+      </aside>
     </div>
   </div>
 {% endblock %}

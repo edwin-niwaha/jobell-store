@@ -1,118 +1,156 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block title %}
+  Testimonials | Jobell
+{% endblock %}
+
 {% block content %}
   <div class="container-fluid">
-    <div class="row mb-3">
-      <div class="col-md-12 d-flex justify-content-between align-items-center">
-        <a href="{% url 'dashboard' %}">
-          <button type="button" class="btn btn-info font-weight-bold">
-            <i class="mdi mdi-arrow-left-bold mr-2"></i>
-            Go back
-          </button>
+    <div class="admin-page-head">
+      <div>
+        <span class="admin-eyebrow">Community</span>
+        <h1 class="admin-page-title">{{ table_title }}</h1>
+        <p class="admin-muted mb-0">Approve customer stories before they appear on the storefront.</p>
+      </div>
+      <div class="admin-actions">
+        <a href="{% url 'dashboard' %}" class="admin-theme-btn admin-theme-btn-dark">
+          <i class="mdi mdi-arrow-left" aria-hidden="true"></i>
+          Dashboard
         </a>
-        <div class="d-flex">
-          <button title="Print" type="button" class="btn btn-success ml-2" onclick="printDiv('printMe')"><i class="mdi mdi-printer btn-icon-prepend"></i></button>
-        </div>
+        <button title="Export to Excel" type="button" class="admin-theme-btn admin-theme-btn-soft" onclick="ExportToExcel('xlsx')">
+          <i class="mdi mdi-file-excel" aria-hidden="true"></i>
+          Excel
+        </button>
+        <button title="Export to Word" type="button" class="admin-theme-btn admin-theme-btn-soft" onclick="Export2Doc('printMe')">
+          <i class="mdi mdi-file-word" aria-hidden="true"></i>
+          Word
+        </button>
+        <button title="Print" type="button" class="admin-theme-btn admin-theme-btn-accent" onclick="printDiv('printMe')">
+          <i class="mdi mdi-printer" aria-hidden="true"></i>
+          Print
+        </button>
       </div>
     </div>
 
-    <!-- DataTable -->
-    <div id="printMe" class="card shadow mb-4">
-      <div class="card-header py-3">
-        <h3>{{ table_title|upper }}</h3>
+    <div class="admin-stat-grid">
+      <div class="admin-stat">
+        <span>Pending</span>
+        <strong>{{ pending_count }}</strong>
       </div>
-      <div class="card-body">
-        <div class="table-responsive">
-          <table class="my-table" id="dataTable">
+      <div class="admin-stat">
+        <span>Approved</span>
+        <strong>{{ approved_count }}</strong>
+      </div>
+      <div class="admin-stat">
+        <span>Showing</span>
+        <strong>{{ testimonials.paginator.count }}</strong>
+      </div>
+    </div>
+
+    <form method="get" action="{% url 'testimonials' %}" class="admin-filter-bar">
+      <div class="flex-grow-1">
+        <label for="testimonialSearch" class="sr-only">Search testimonials</label>
+        <input type="search" name="search" id="testimonialSearch" class="form-control" value="{{ search_query }}" placeholder="Search by author or testimonial" />
+      </div>
+      <select name="status" class="form-control" aria-label="Testimonial status">
+        <option value="" {% if not status %}selected{% endif %}>All statuses</option>
+        <option value="pending" {% if status == 'pending' %}selected{% endif %}>Pending</option>
+        <option value="approved" {% if status == 'approved' %}selected{% endif %}>Approved</option>
+      </select>
+      <button type="submit" class="admin-theme-btn admin-theme-btn-accent">
+        <i class="mdi mdi-filter-outline" aria-hidden="true"></i>
+        Apply
+      </button>
+      {% if search_query or status %}
+        <a href="{% url 'testimonials' %}" class="admin-theme-btn admin-theme-btn-soft">Clear</a>
+      {% endif %}
+    </form>
+
+    <div id="printMe" class="admin-panel mb-4">
+      <div class="admin-panel-header">
+        <h2>Testimonials</h2>
+      </div>
+      <div class="p-3">
+        <div class="admin-table-wrap">
+          <table class="admin-table my-table" id="dataTable">
             <thead>
               <tr>
-                <th>#</th>
                 <th>Author</th>
                 <th>Testimonial</th>
                 <th class="text-center print-hide">Status</th>
-                <th colspan="3" class="text-center print-hide">Action</th>
+                <th class="text-center print-hide">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {% if testimonials %}
-                {% for testimonial in testimonials %}
-                  <tr>
-                    <td>{{ forloop.counter }}</td>
-                    <td>{{ testimonial.author }}</td>
-                    <td>{{ testimonial.text }}</td>
-                    <td>
-                      {% if testimonial.approved %}
-                        <span class="badge bg-success">Approved</span>
-                      {% else %}
-                        <span class="badge bg-danger">Not Approved</span>
-                      {% endif %}
-                    </td>
+              {% for testimonial in testimonials %}
+                <tr>
+                  <td>
+                    <span class="admin-item-title">{{ testimonial.author }}</span>
+                    <span class="admin-item-subtitle">{{ testimonial.created_at|date:'Y-m-d H:i' }}</span>
+                  </td>
+                  <td class="admin-row-text">{{ testimonial.text }}</td>
+                  <td class="text-center">
+                    {% if testimonial.approved %}
+                      <span class="admin-badge is-success">Approved</span>
+                    {% else %}
+                      <span class="admin-badge is-warning">Pending</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center print-hide">
                     {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
-                      <td class="text-center print-hide">
-                        <form method="post" style="display:inline;">
+                      <div class="admin-icon-actions">
+                        <form method="post" class="admin-inline-form">
                           {% csrf_token %}
                           <input type="hidden" name="testimonial_id" value="{{ testimonial.id }}" />
                           {% if not testimonial.approved %}
-                            <button type="submit" name="action" value="approve" class="btn btn-success btn-sm" title="Approve"><i class="fas fa-check"></i></button>
+                            <button type="submit" name="action" value="approve" class="admin-icon-btn-themed is-gold" title="Approve">
+                              <i class="fas fa-check" aria-hidden="true"></i>
+                            </button>
                           {% else %}
-                            <button type="submit" name="action" value="reject" class="btn btn-warning btn-sm" title="Reject"><i class="fas fa-times"></i></button>
+                            <button type="submit" name="action" value="reject" class="admin-icon-btn-themed is-dark" title="Move to pending">
+                              <i class="fas fa-times" aria-hidden="true"></i>
+                            </button>
                           {% endif %}
                         </form>
-                      </td>
-                      <td class="text-center print-hide">
-                        <a href="{% url 'testimonial_update' testimonial.id %}" class="btn btn-primary btn-sm" title="Update"><i class="fas fa-edit"></i></a>
-                      </td>
-                      <td class="text-center print-hide">
-                        <a href="{% url 'testimonial_delete' testimonial.id %}" class="btn btn-danger btn-sm" title="Delete" onclick="return confirm('Are you sure you want to delete this testimonial?');"><i class="fas fa-trash"></i></a>
-                      </td>
+                        <a href="{% url 'testimonial_update' testimonial.id %}" class="admin-icon-btn-themed is-gold" title="Edit">
+                          <i class="fas fa-edit" aria-hidden="true"></i>
+                        </a>
+                        <form method="post" action="{% url 'testimonial_delete' testimonial.id %}" class="admin-inline-form" onsubmit="return confirm('Delete this testimonial permanently?');">
+                          {% csrf_token %}
+                          <button type="submit" class="admin-icon-btn-themed is-danger" title="Delete">
+                            <i class="fas fa-trash" aria-hidden="true"></i>
+                          </button>
+                        </form>
+                      </div>
+                    {% else %}
+                      <span class="admin-muted">No actions</span>
                     {% endif %}
-                  </tr>
-                {% endfor %}
-              {% else %}
-                <tr>
-                  <td colspan="7" class="text-center">No testimonials available</td>
+                  </td>
                 </tr>
-              {% endif %}
+              {% empty %}
+                <tr>
+                  <td colspan="4" class="admin-empty-row">No testimonials match your filters.</td>
+                </tr>
+              {% endfor %}
             </tbody>
           </table>
         </div>
 
-        <!-- Pagination Controls -->
-        <div class="d-flex justify-content-between align-items-center mt-3">
-          <div>Showing {{ testimonials.start_index }} to {{ testimonials.end_index }} of {{ testimonials.paginator.count }} entries</div>
-          <nav>
-            <ul class="pagination">
+        <div class="d-flex justify-content-between align-items-center flex-wrap mt-3">
+          <div class="admin-muted mb-2 mb-md-0">Showing {{ testimonials.start_index }} to {{ testimonials.end_index }} of {{ testimonials.paginator.count }} entries</div>
+          <nav aria-label="Testimonials pagination">
+            <ul class="pagination admin-pagination">
               {% if testimonials.has_previous %}
-                <li class="page-item">
-                  <a class="page-link" href="?page={{ testimonials.previous_page_number }}" aria-label="Previous"><span aria-hidden="true">&laquo;</span></a>
-                </li>
+                <li class="page-item"><a class="page-link" href="?page={{ testimonials.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status %}&status={{ status }}{% endif %}">Previous</a></li>
               {% else %}
-                <li class="page-item disabled">
-                  <span class="page-link">&laquo;</span>
-                </li>
+                <li class="page-item disabled"><span class="page-link">Previous</span></li>
               {% endif %}
-
-              {% for page in testimonials.paginator.page_range %}
-                {% if page == testimonials.number %}
-                  <li class="page-item active">
-                    <span class="page-link">{{ page }}</span>
-                  </li>
-                {% else %}
-                  <li class="page-item">
-                    <a class="page-link" href="?page={{ page }}">{{ page }}</a>
-                  </li>
-                {% endif %}
-              {% endfor %}
-
+              <li class="page-item active"><span class="page-link">{{ testimonials.number }} / {{ testimonials.paginator.num_pages }}</span></li>
               {% if testimonials.has_next %}
-                <li class="page-item">
-                  <a class="page-link" href="?page={{ testimonials.next_page_number }}" aria-label="Next"><span aria-hidden="true">&raquo;</span></a>
-                </li>
+                <li class="page-item"><a class="page-link" href="?page={{ testimonials.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status %}&status={{ status }}{% endif %}">Next</a></li>
               {% else %}
-                <li class="page-item disabled">
-                  <span class="page-link">&raquo;</span>
-                </li>
+                <li class="page-item disabled"><span class="page-link">Next</span></li>
               {% endif %}
             </ul>
           </nav>

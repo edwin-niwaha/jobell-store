@@ -1,118 +1,142 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block title %}
+  Profile List | Jobell
+{% endblock %}
+
 {% block content %}
   <div class="container-fluid">
-    <div class="row mb-3">
-      <div class="col-md-12 d-flex justify-content-between align-items-center">
-        <a href="{% url 'dashboard' %}">
-          <button type="button" class="btn btn-info font-weight-bold">
-            <i class="mdi mdi-arrow-left-bold mr-2"></i>
-            Go back
-          </button>
+    <div class="admin-page-head">
+      <div>
+        <span class="admin-eyebrow">Authentication</span>
+        <h1 class="admin-page-title">{{ table_title }}</h1>
+        <p class="admin-muted mb-0">Manage staff accounts, roles, and profile access.</p>
+      </div>
+      <div class="admin-actions">
+        <a href="{% url 'dashboard' %}" class="admin-theme-btn admin-theme-btn-dark">
+          <i class="mdi mdi-arrow-left" aria-hidden="true"></i>
+          Dashboard
         </a>
-        <div class="d-flex">
-          <form method="GET" action="{% url 'profile_list' %}">
-            <input type="text" name="search" id="searchInput" onkeyup="searchTable()" placeholder="Search..." style="border-radius: 5px; height: 35px;" />
-          </form>
-          <button title="Export To Excel" type="button" class="btn btn-sm ml-3 btn-success" onclick="ExportToExcel('xlsx')"><i class="mdi mdi-file-excel btn-icon-prepend"></i></button>
-          <button title="Export To Word" type="button" class="btn btn-sm ml-3 btn-success" onclick="Export2Doc('printMe')"><i class="mdi mdi-file-word btn-icon-prepend"></i></button>
-          <button title="Print" type="button" class="btn btn-success ml-2" onclick="printDiv('printMe')"><i class="mdi mdi-printer btn-icon-prepend"></i></button>
-        </div>
+        <button title="Export to Excel" type="button" class="admin-theme-btn admin-theme-btn-soft" onclick="ExportToExcel('xlsx')">
+          <i class="mdi mdi-file-excel" aria-hidden="true"></i>
+          Excel
+        </button>
+        <button title="Export to Word" type="button" class="admin-theme-btn admin-theme-btn-soft" onclick="Export2Doc('printMe')">
+          <i class="mdi mdi-file-word" aria-hidden="true"></i>
+          Word
+        </button>
+        <button title="Print" type="button" class="admin-theme-btn admin-theme-btn-accent" onclick="printDiv('printMe')">
+          <i class="mdi mdi-printer" aria-hidden="true"></i>
+          Print
+        </button>
       </div>
     </div>
 
-    <!-- DataTable -->
-    <div id="printMe" class="card shadow mb-4">
-      <div class="card-header py-3">
-        <h3>{{ table_title|upper }}</h3>
+    <form method="get" action="{% url 'profile_list' %}" class="admin-filter-bar">
+      <div class="flex-grow-1">
+        <label for="profileSearch" class="sr-only">Search profiles</label>
+        <input type="search" name="search" id="profileSearch" class="form-control" value="{{ search_query }}" placeholder="Search by name, email, username, or role" />
       </div>
-      <div class="card-body">
-        <div class="table-responsive">
-          <table class="table table-bordered my-table" id="dataTable">
-            <thead class="thead-light">
+      <button type="submit" class="admin-theme-btn admin-theme-btn-accent">
+        <i class="mdi mdi-magnify" aria-hidden="true"></i>
+        Search
+      </button>
+      {% if search_query %}
+        <a href="{% url 'profile_list' %}" class="admin-theme-btn admin-theme-btn-soft">Clear</a>
+      {% endif %}
+    </form>
+
+    <div id="printMe" class="admin-panel mb-4">
+      <div class="admin-panel-header">
+        <h2>{{ profile_total }} profile{{ profile_total|pluralize }}</h2>
+      </div>
+      <div class="p-3">
+        <div class="admin-table-wrap">
+          <table class="admin-table my-table" id="dataTable">
+            <thead>
               <tr>
-                <th scope="col">Avatar</th>
-                <th scope="col">First Name</th>
-                <th scope="col">Last Name</th>
-                <th scope="col">Email</th>
+                <th scope="col">Profile</th>
+                <th scope="col">Contact</th>
                 <th scope="col">Username</th>
                 <th scope="col">Role</th>
-                <th class="print-hide" scope="col" colspan="3">Action</th>
+                <th class="print-hide text-center" scope="col">Actions</th>
               </tr>
             </thead>
-            <tbody class="table-group-divider">
+            <tbody>
               {% for profile in profiles %}
                 <tr>
                   <td>
-                    {% if profile.avatar %}
-                      <a onclick="return confirm('Are you sure you want to update the profile picture?');"><img class="rounded-circle account-img" height="50" width="50" src="{{ profile.avatar.url }}" alt="" /></a>
-                    {% else %}
-                      No Picture!
-                    {% endif %}
+                    <div class="d-flex align-items-center">
+                      {% if profile.avatar %}
+                        <img class="admin-avatar mr-3" src="{{ profile.avatar.url }}" alt="{{ profile.user.get_full_name|default:profile.user.username }}" />
+                      {% else %}
+                        <span class="admin-avatar mr-3">{{ profile.user.username|first|upper }}</span>
+                      {% endif %}
+                      <div>
+                        <span class="admin-item-title">{{ profile.user.get_full_name|default:profile.user.username }}</span>
+                        <span class="admin-item-subtitle">{{ profile.branch|default:'No branch assigned' }}</span>
+                      </div>
+                    </div>
                   </td>
-                  <td>{{ profile.user.first_name }}</td>
-                  <td>{{ profile.user.last_name }}</td>
-                  <td>{{ profile.user.email }}</td>
+                  <td>
+                    <span class="admin-item-title">{{ profile.user.email|default:'No email' }}</span>
+                    <span class="admin-item-subtitle">{{ profile.mobile|default:profile.tel }}</span>
+                  </td>
                   <td>{{ profile.user.username }}</td>
-                  <td>{{ profile.get_role_display }}</td>
-                  <td class="print-hide">
-                    {% if user.profile.role == 'administrator' or user.profile.role == 'manager' or user.profile.role == 'staff' %}
-                      <a class="btn btn-primary btn-sm" title="Edit" href="{% url 'update_profile' profile.id %}" onclick="return confirm('Are you sure you want to update this record? ');"><i class="bi bi-pencil"></i></a>
-                    {% else %}
-                      <button class="btn btn-primary btn-sm" onclick="showNoPermissionMessage('edit')"><i class="bi bi-pencil"></i></button>
-                    {% endif %}
+                  <td><span class="admin-badge is-info">{{ profile.get_role_display }}</span></td>
+                  <td class="print-hide text-center">
+                    <div class="admin-icon-actions">
+                      {% if user.profile.role == 'administrator' or user.profile.role == 'manager' or user.profile.role == 'staff' %}
+                        <a class="admin-icon-btn-themed is-gold" title="Edit" href="{% url 'update_profile' profile.id %}">
+                          <i class="bi bi-pencil" aria-hidden="true"></i>
+                        </a>
+                      {% else %}
+                        <button type="button" class="admin-icon-btn-themed is-gold" onclick="showNoPermissionMessage('edit')">
+                          <i class="bi bi-pencil" aria-hidden="true"></i>
+                        </button>
+                      {% endif %}
+                      {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
+                        <form method="post" action="{% url 'delete_profile' profile.id %}" class="admin-inline-form" onsubmit="return confirm('Delete this profile permanently?');">
+                          {% csrf_token %}
+                          <button type="submit" class="admin-icon-btn-themed is-danger" title="Delete">
+                            <i class="bi bi-trash" aria-hidden="true"></i>
+                          </button>
+                        </form>
+                      {% else %}
+                        <button type="button" class="admin-icon-btn-themed is-danger" onclick="showNoPermissionMessage('delete')">
+                          <i class="bi bi-trash" aria-hidden="true"></i>
+                        </button>
+                      {% endif %}
+                    </div>
                   </td>
-                  <td class="print-hide">
-                    {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
-                      <a class="btn btn-danger btn-sm" title="Erase" href="{% url 'delete_profile' profile.id %}" onclick="return confirm('Are you sure about this? This record will be deleted permanently.');"><i class="bi bi-trash"></i></a>
-                    {% else %}
-                      <button class="btn btn-danger btn-sm" onclick="showNoPermissionMessage('delete')"><i class="bi bi-trash"></i></button>
-                    {% endif %}
-                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="5" class="admin-empty-row">No profiles match your filters.</td>
                 </tr>
               {% endfor %}
             </tbody>
           </table>
+        </div>
 
-          <hr class="bg-info" style="height: 3px;" />
-
-          <!-- Pagination links &raquo; -->
-          <div class="pagination">
-            <span class="step-links">
+        <div class="d-flex justify-content-between align-items-center flex-wrap mt-3">
+          <div class="admin-muted mb-2 mb-md-0">Showing {{ profiles.start_index }} to {{ profiles.end_index }} of {{ profiles.paginator.count }} entries</div>
+          <nav aria-label="Profile pagination">
+            <ul class="pagination admin-pagination">
               {% if profiles.has_previous %}
-                <a href="?page=1">
-                  <!-- first -->
-                  <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 16 16">
-                    <path fill="#2375e1" d="M14 3.002a1 1 0 0 0-1.578-.816l-7 4.963a1 1 0 0 0-.007 1.628l7 5.037A1 1 0 0 0 14 13.003zM2 2.5a.5.5 0 0 1 1 0v11a.5.5 0 0 1-1 0z" />
-                  </svg>
-                </a>
-                <a href="?page={{ profiles.previous_page_number }}">
-                  <!-- previous -->
-                  <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 20 20">
-                    <path fill="#2375e1" d="m4 10l9 9l1.4-1.5L7 10l7.4-7.5L13 1z" />
-                  </svg>
-                </a>
+                <li class="page-item"><a class="page-link" href="?page={{ profiles.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Previous</a></li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">Previous</span></li>
               {% endif %}
-
-              <span class="current">Page {{ profiles.number }} of {{ profiles.paginator.num_pages }}.</span>
-
+              <li class="page-item active"><span class="page-link">{{ profiles.number }} / {{ profiles.paginator.num_pages }}</span></li>
               {% if profiles.has_next %}
-                <a href="?page={{ profiles.next_page_number }}">
-                  <!-- Next -->
-                  <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 20 20">
-                    <path fill="#2375e1" d="M7 1L5.6 2.5L13 10l-7.4 7.5L7 19l9-9z" />
-                  </svg>
-                </a>
-                <a href="?page={{ profiles.paginator.num_pages }}">
-                  <!-- last -->
-                  <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 28 28">
-                    <path fill="#2375e1" d="M23.5 3.75a.75.75 0 0 1 1.5 0v20.5a.75.75 0 0 1-1.5 0zM3 5.254C3 3.438 5.041 2.37 6.533 3.406l12.504 8.68a2.25 2.25 0 0 1 .013 3.688l-12.504 8.81C5.056 25.634 3 24.57 3 22.745z" />
-                  </svg>
-                </a>
+                <li class="page-item"><a class="page-link" href="?page={{ profiles.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Next</a></li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">Next</span></li>
               {% endif %}
-            </span>
-          </div>
+            </ul>
+          </nav>
         </div>
       </div>
     </div>

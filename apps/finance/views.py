@@ -1,3 +1,4 @@
+import csv
 import logging
 from datetime import datetime
 from decimal import Decimal
@@ -370,43 +371,17 @@ def expense_transaction_create_view(request):
 @transaction.atomic
 def multi_journal_view(request):
     if request.method == "POST":
-        journal_form = JournalEntryForm(request.POST)
+        journal_form = JournalEntryForm(request.POST, request=request)
         formset = TransactionFormSet(request.POST)
         logger.debug("Received POST request with data: %s", request.POST)
 
         if journal_form.is_valid() and formset.is_valid():
             logger.info("Journal form and formset are valid. Processing transactions.")
             journal_entry = journal_form.save()
-            transactions = formset.save(commit=False)
-
-            total_debits = 0
-            total_credits = 0
-
-            for form in formset.forms:
-                transaction = form.save(commit=False, journal_entry=journal_entry)
-                logger.debug("Processing transaction: %s", transaction)
-
-                if transaction.transaction_type == "debit":
-                    total_debits += transaction.amount
-                elif transaction.transaction_type == "credit":
-                    total_credits += transaction.amount
-
-            logger.info(
-                "Total debits: %s, Total credits: %s", total_debits, total_credits
-            )
-
-            if total_debits != total_credits:
-                logger.error(
-                    "Debits (%s) do not equal credits (%s).",
-                    total_debits,
-                    total_credits,
-                )
+            if journal_entry is None:
                 messages.error(
-                    request,
-                    "Total debits must equal total credits.",
-                    extra_tags="danger",
+                    request, "Unable to create the journal entry.", extra_tags="danger"
                 )
-                journal_entry.delete()
                 return render(
                     request,
                     "finance/multi_journal_entry_add.html",
@@ -418,6 +393,8 @@ def multi_journal_view(request):
                 )
 
             for form in formset.forms:
+                if not form.cleaned_data or form.cleaned_data.get("DELETE"):
+                    continue
                 form.save(journal_entry=journal_entry)
                 logger.debug("Saved transaction for form: %s", form.cleaned_data)
 
@@ -439,7 +416,7 @@ def multi_journal_view(request):
             )
     else:
         logger.debug("Rendering formset for GET request.")
-        journal_form = JournalEntryForm()
+        journal_form = JournalEntryForm(request=request)
         formset = TransactionFormSet(queryset=Transaction.objects.none())
 
     return render(
@@ -1427,42 +1404,40 @@ def audit_log_view(request):
         )
         end_date = datetime.strptime(end_date, "%Y-%m-%d").date() if end_date else None
     except ValueError:
-        return HttpResponse("Invalid date format. Use YYYY-MM-DD.", status=400)
+        messages.error(request, "Invalid date format. Use YYYY-MM-DD.", extra_tags="bg-danger")
+        start_date = None
+        end_date = None
 
-    user = User.objects.get(id=user_id) if user_id else None
-    if user_id and not user:
-        return HttpResponse("User not found.", status=404)
+    user = None
+    if user_id:
+        user = User.objects.filter(id=user_id).first()
+        if not user:
+            messages.error(request, "Selected user was not found.", extra_tags="bg-danger")
+            user_id = ""
 
     report_data = generate_audit_log_report(start_date, end_date, user)
 
     if request.GET.get("download"):
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = 'attachment; filename="audit_log_report.csv"'
-        response.write("Timestamp,User,Model,Action,Object ID,Details\n")
+        writer = csv.writer(response)
+        writer.writerow(["Timestamp", "User", "Model", "Action", "Object ID", "Details"])
         for entry in report_data:
-            response.write(
-                ",".join(
-                    [
-                        entry["timestamp"].strftime("%Y-%m-%d %H:%M:%S"),
-                        entry["user"],
-                        entry["model"],
-                        entry["action"],
-                        str(entry["object_id"]),
-                        f'"{entry['details'].replace('"', '""')}"',
-                    ]
-                )
-                + "\n"
+            writer.writerow(
+                [
+                    entry["timestamp"].strftime("%Y-%m-%d %H:%M:%S"),
+                    entry["user"],
+                    entry["model"],
+                    entry["action"],
+                    entry["object_id"],
+                    entry["details"],
+                ]
             )
         return response
 
     # Pagination
     paginator = Paginator(report_data, 10)  # Show 10 entries per page
-    try:
-        report_data_paginated = paginator.page(page)
-    except PageNotAnInteger:
-        report_data_paginated = paginator.page(1)
-    except EmptyPage:
-        report_data_paginated = paginator.page(paginator.num_pages)
+    report_data_paginated = paginator.get_page(page)
 
     context = {
         "report_data": report_data_paginated,
@@ -1470,5 +1445,7 @@ def audit_log_view(request):
         "start_date": start_date,
         "end_date": end_date,
         "selected_user": user,
+        "user_id": user_id,
+        "audit_total": len(report_data),
     }
     return render(request, "finance/audit_logs.html", context)

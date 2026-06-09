@@ -1,94 +1,134 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block title %}
+  Subscribers | Jobell
+{% endblock %}
+
 {% block content %}
   <div class="container-fluid">
-    <div class="row mb-3">
-      <div class="col-md-12 d-flex justify-content-between align-items-center">
-        <a href="{% url 'send_bulk_email' %}">
-          <button type="button" class="btn btn-info font-weight-bold">
-            <i class="mdi mdi-email"></i>
-            Send Email
-          </button>
+    <div class="admin-page-head">
+      <div>
+        <span class="admin-eyebrow">Marketing</span>
+        <h1 class="admin-page-title">{{ table_title }}</h1>
+        <p class="admin-muted mb-0">Manage newsletter recipients and consent status.</p>
+      </div>
+      <div class="admin-actions">
+        <a href="{% url 'send_bulk_email' %}" class="admin-theme-btn admin-theme-btn-accent">
+          <i class="mdi mdi-email" aria-hidden="true"></i>
+          Send email
         </a>
-        <div class="d-flex">
-          <button title="Print" type="button" class="btn btn-success ml-2" onclick="printDiv('printMe')"><i class="mdi mdi-printer btn-icon-prepend"></i></button>
-        </div>
+        <button title="Export to Excel" type="button" class="admin-theme-btn admin-theme-btn-soft" onclick="ExportToExcel('xlsx')">
+          <i class="mdi mdi-file-excel" aria-hidden="true"></i>
+          Excel
+        </button>
+        <button title="Export to Word" type="button" class="admin-theme-btn admin-theme-btn-soft" onclick="Export2Doc('printMe')">
+          <i class="mdi mdi-file-word" aria-hidden="true"></i>
+          Word
+        </button>
+        <button title="Print" type="button" class="admin-theme-btn admin-theme-btn-soft" onclick="printDiv('printMe')">
+          <i class="mdi mdi-printer" aria-hidden="true"></i>
+          Print
+        </button>
       </div>
     </div>
 
-    <!-- DataTable -->
-    <div id="printMe" class="card shadow mb-4">
-      <div class="card-header py-3">
-        <h3>{{ table_title|upper }}</h3>
+    <div class="admin-stat-grid">
+      <div class="admin-stat">
+        <span>Total</span>
+        <strong>{{ subscriber_total }}</strong>
       </div>
-      <div class="card-body">
-        <div class="table-responsive">
-          <table class="my-table" id="dataTable">
+      <div class="admin-stat">
+        <span>Consented</span>
+        <strong>{{ consented_count }}</strong>
+      </div>
+      <div class="admin-stat">
+        <span>Showing</span>
+        <strong>{{ subscribers.paginator.count }}</strong>
+      </div>
+    </div>
+
+    <form method="get" action="{% url 'subscriber_list' %}" class="admin-filter-bar">
+      <div class="flex-grow-1">
+        <label for="subscriberSearch" class="sr-only">Search subscribers</label>
+        <input type="search" name="search" id="subscriberSearch" class="form-control" value="{{ search_query }}" placeholder="Search by email" />
+      </div>
+      <select name="consent" class="form-control" aria-label="Consent status">
+        <option value="" {% if not consent %}selected{% endif %}>All consent statuses</option>
+        <option value="yes" {% if consent == 'yes' %}selected{% endif %}>Consented</option>
+        <option value="no" {% if consent == 'no' %}selected{% endif %}>No consent</option>
+      </select>
+      <button type="submit" class="admin-theme-btn admin-theme-btn-accent">
+        <i class="mdi mdi-filter-outline" aria-hidden="true"></i>
+        Apply
+      </button>
+      {% if search_query or consent %}
+        <a href="{% url 'subscriber_list' %}" class="admin-theme-btn admin-theme-btn-soft">Clear</a>
+      {% endif %}
+    </form>
+
+    <div id="printMe" class="admin-panel mb-4">
+      <div class="admin-panel-header">
+        <h2>Subscriber records</h2>
+      </div>
+      <div class="p-3">
+        <div class="admin-table-wrap">
+          <table class="admin-table my-table" id="dataTable">
             <thead>
               <tr>
-                <th>#</th>
-                <th>Subscriber Email</th>
-                <th>Subscribed On</th>
-                <th>Actions</th>
+                <th>Email</th>
+                <th>Subscribed</th>
+                <th>Consent</th>
+                <th class="print-hide text-center">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {% if subscribers %}
-                {% for subscriber in subscribers %}
-                  <tr>
-                    <td>{{ forloop.counter }}</td>
-                    <td>{{ subscriber.email }}</td>
-                    <td>{{ subscriber.created_at|date:'Y-m-d H:i' }}</td>
-                    <td class="text-center">
-                      <a href="{% url 'delete_subscriber' subscriber.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this subscriber?');"><i class="mdi mdi-delete"></i></a>
-                    </td>
-                  </tr>
-                {% endfor %}
-              {% else %}
+              {% for subscriber in subscribers %}
                 <tr>
-                  <td colspan="7" class="text-center">No subscribers available</td>
+                  <td>
+                    <span class="admin-item-title">{{ subscriber.email }}</span>
+                    <span class="admin-item-subtitle">Updated {{ subscriber.updated_at|date:'Y-m-d H:i' }}</span>
+                  </td>
+                  <td>{{ subscriber.created_at|date:'Y-m-d H:i' }}</td>
+                  <td>
+                    {% if subscriber.consent %}
+                      <span class="admin-badge is-success">Consented</span>
+                    {% else %}
+                      <span class="admin-badge is-muted">No consent</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center print-hide">
+                    <form method="post" action="{% url 'delete_subscriber' subscriber.id %}" class="admin-inline-form" onsubmit="return confirm('Delete this subscriber permanently?');">
+                      {% csrf_token %}
+                      <button type="submit" class="admin-icon-btn-themed is-danger" title="Delete subscriber">
+                        <i class="mdi mdi-delete" aria-hidden="true"></i>
+                      </button>
+                    </form>
+                  </td>
                 </tr>
-              {% endif %}
+              {% empty %}
+                <tr>
+                  <td colspan="4" class="admin-empty-row">No subscribers match your filters.</td>
+                </tr>
+              {% endfor %}
             </tbody>
           </table>
         </div>
 
-        <!-- Pagination Controls -->
-        <div class="d-flex justify-content-between align-items-center mt-3">
-          <div>Showing {{ subscribers.start_index }} to {{ subscribers.end_index }} of {{ subscribers.paginator.count }} entries</div>
-          <nav>
-            <ul class="pagination">
+        <div class="d-flex justify-content-between align-items-center flex-wrap mt-3">
+          <div class="admin-muted mb-2 mb-md-0">Showing {{ subscribers.start_index }} to {{ subscribers.end_index }} of {{ subscribers.paginator.count }} entries</div>
+          <nav aria-label="Subscribers pagination">
+            <ul class="pagination admin-pagination">
               {% if subscribers.has_previous %}
-                <li class="page-item">
-                  <a class="page-link" href="?page={{ subscribers.previous_page_number }}" aria-label="Previous"><span aria-hidden="true">&laquo;</span></a>
-                </li>
+                <li class="page-item"><a class="page-link" href="?page={{ subscribers.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if consent %}&consent={{ consent }}{% endif %}">Previous</a></li>
               {% else %}
-                <li class="page-item disabled">
-                  <span class="page-link">&laquo;</span>
-                </li>
+                <li class="page-item disabled"><span class="page-link">Previous</span></li>
               {% endif %}
-
-              {% for page in subscribers.paginator.page_range %}
-                {% if page == subscribers.number %}
-                  <li class="page-item active">
-                    <span class="page-link">{{ page }}</span>
-                  </li>
-                {% else %}
-                  <li class="page-item">
-                    <a class="page-link" href="?page={{ page }}">{{ page }}</a>
-                  </li>
-                {% endif %}
-              {% endfor %}
-
+              <li class="page-item active"><span class="page-link">{{ subscribers.number }} / {{ subscribers.paginator.num_pages }}</span></li>
               {% if subscribers.has_next %}
-                <li class="page-item">
-                  <a class="page-link" href="?page={{ subscribers.next_page_number }}" aria-label="Next"><span aria-hidden="true">&raquo;</span></a>
-                </li>
+                <li class="page-item"><a class="page-link" href="?page={{ subscribers.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if consent %}&consent={{ consent }}{% endif %}">Next</a></li>
               {% else %}
-                <li class="page-item disabled">
-                  <span class="page-link">&raquo;</span>
-                </li>
+                <li class="page-item disabled"><span class="page-link">Next</span></li>
               {% endif %}
             </ul>
           </nav>
