@@ -41,10 +41,23 @@ SITE_URL = os.getenv("SITE_URL", f"https://{BASE_DOMAIN}")
 
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-development-only-change-me")
 DEBUG = env_bool("DEBUG", False)
-ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", ["localhost", "127.0.0.1", BASE_DOMAIN])
+# ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", ["localhost", "127.0.0.1", BASE_DOMAIN])
+ALLOWED_HOSTS = env_list(
+    "ALLOWED_HOSTS",
+    ["localhost", "127.0.0.1", BASE_DOMAIN, f"www.{BASE_DOMAIN}"],
+)
+# CSRF_TRUSTED_ORIGINS = env_list(
+#     "CSRF_TRUSTED_ORIGINS",
+#     [f"https://{BASE_DOMAIN}", "http://localhost", "http://127.0.0.1"],
+# )
 CSRF_TRUSTED_ORIGINS = env_list(
     "CSRF_TRUSTED_ORIGINS",
-    [f"https://{BASE_DOMAIN}", "http://localhost", "http://127.0.0.1"],
+    [
+        f"https://{BASE_DOMAIN}",
+        f"https://www.{BASE_DOMAIN}",
+        "http://localhost",
+        "http://127.0.0.1",
+    ],
 )
 CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS", [SITE_URL])
 
