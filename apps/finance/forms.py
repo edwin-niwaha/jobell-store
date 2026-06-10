@@ -141,6 +141,26 @@ class ImportCOAForm(forms.Form):
     excel_file.widget.attrs["class"] = "form-control-file"
 
 
+# =================================== FinancialPeriodForm ===================================
+class FinancialPeriodForm(forms.ModelForm):
+    class Meta:
+        model = FinancialPeriod
+        fields = ["name", "start_date", "end_date", "status", "branch"]
+        widgets = {
+            "name": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "e.g. FY 2026 Q1"}
+            ),
+            "start_date": forms.DateInput(
+                attrs={"class": "form-control", "type": "date"}
+            ),
+            "end_date": forms.DateInput(
+                attrs={"class": "form-control", "type": "date"}
+            ),
+            "status": forms.Select(attrs={"class": "form-control"}),
+            "branch": forms.Select(attrs={"class": "form-control"}),
+        }
+
+
 # =================================== IncomeTransactionForm ===================================
 class IncomeTransactionForm(forms.ModelForm):
     financial_period = forms.ModelChoiceField(

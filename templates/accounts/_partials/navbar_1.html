@@ -1,7 +1,7 @@
 {% load static %}
 
 <style>
-  .jobell-sales-nav {
+  .platform-sales-nav {
     background: #020617;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 10px 26px rgba(2, 6, 23, 0.2);
@@ -9,14 +9,14 @@
     padding: 0;
   }
 
-  .jobell-sales-nav .jobell-sales-nav-inner {
+  .platform-sales-nav .platform-sales-nav-inner {
     align-items: center;
     gap: 18px;
     max-width: 1500px;
     padding: 10px 18px;
   }
 
-  .jobell-sales-brand {
+  .platform-sales-brand {
     align-items: center;
     display: inline-flex;
     gap: 12px;
@@ -24,11 +24,11 @@
     text-decoration: none;
   }
 
-  .jobell-sales-brand:hover {
+  .platform-sales-brand:hover {
     text-decoration: none;
   }
 
-  .jobell-sales-brand-mark {
+  .platform-sales-brand-mark {
     align-items: center;
     background: #ffffff;
     border-radius: 12px;
@@ -39,30 +39,30 @@
     width: 46px;
   }
 
-  .jobell-sales-brand-mark img {
+  .platform-sales-brand-mark img {
     height: 100%;
     object-fit: contain;
     width: 100%;
   }
 
-  .jobell-sales-brand-copy {
+  .platform-sales-brand-copy {
     display: grid;
     line-height: 1.1;
   }
 
-  .jobell-sales-brand-copy strong {
+  .platform-sales-brand-copy strong {
     color: #ffffff;
     font-size: 18px;
     font-weight: 900;
   }
 
-  .jobell-sales-brand-copy small {
+  .platform-sales-brand-copy small {
     color: rgba(255, 255, 255, 0.62);
     font-size: 12px;
     font-weight: 700;
   }
 
-  .jobell-sales-nav-toggle {
+  .platform-sales-nav-toggle {
     align-items: center;
     border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 10px;
@@ -74,28 +74,28 @@
     width: 42px;
   }
 
-  .jobell-sales-nav-toggle i {
+  .platform-sales-nav-toggle i {
     font-size: 24px;
   }
 
-  .jobell-sales-nav-links,
-  .jobell-sales-nav-actions {
+  .platform-sales-nav-links,
+  .platform-sales-nav-actions {
     align-items: center;
     gap: 6px;
   }
 
-  .jobell-sales-nav-links {
+  .platform-sales-nav-links {
     margin-left: 18px;
     margin-right: auto;
   }
 
-  .jobell-sales-nav-actions {
+  .platform-sales-nav-actions {
     margin-left: auto;
   }
 
-  .jobell-sales-nav .nav-link,
-  .jobell-sales-auth-link,
-  .jobell-sales-user-link {
+  .platform-sales-nav .nav-link,
+  .platform-sales-auth-link,
+  .platform-sales-user-link {
     align-items: center;
     border-radius: 10px;
     color: rgba(255, 255, 255, 0.78) !important;
@@ -109,25 +109,25 @@
     transition: background-color 0.18s ease, color 0.18s ease;
   }
 
-  .jobell-sales-nav .nav-link:hover,
-  .jobell-sales-nav .nav-link:focus,
-  .jobell-sales-auth-link:hover,
-  .jobell-sales-auth-link:focus,
-  .jobell-sales-user-link:hover,
-  .jobell-sales-user-link:focus {
+  .platform-sales-nav .nav-link:hover,
+  .platform-sales-nav .nav-link:focus,
+  .platform-sales-auth-link:hover,
+  .platform-sales-auth-link:focus,
+  .platform-sales-user-link:hover,
+  .platform-sales-user-link:focus {
     background: rgba(255, 255, 255, 0.1);
     color: #ffffff !important;
     text-decoration: none;
   }
 
-  .jobell-sales-nav .nav-link i,
-  .jobell-sales-auth-link i,
-  .jobell-sales-user-link i {
+  .platform-sales-nav .nav-link i,
+  .platform-sales-auth-link i,
+  .platform-sales-user-link i {
     font-size: 18px;
     line-height: 1;
   }
 
-  .jobell-sales-cart {
+  .platform-sales-cart {
     align-items: center;
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.12);
@@ -141,18 +141,18 @@
     width: 40px;
   }
 
-  .jobell-sales-cart:hover,
-  .jobell-sales-cart:focus {
+  .platform-sales-cart:hover,
+  .platform-sales-cart:focus {
     background: rgba(255, 255, 255, 0.18);
     color: #ffffff;
     text-decoration: none;
   }
 
-  .jobell-sales-cart i {
+  .platform-sales-cart i {
     font-size: 20px;
   }
 
-  .jobell-sales-count {
+  .platform-sales-count {
     background: #f79420;
     border-radius: 999px;
     color: #ffffff;
@@ -167,19 +167,19 @@
     top: -6px;
   }
 
-  .jobell-sales-auth-primary {
+  .platform-sales-auth-primary {
     background: #ffd814;
     color: #111827 !important;
   }
 
-  .jobell-sales-auth-primary:hover,
-  .jobell-sales-auth-primary:focus {
+  .platform-sales-auth-primary:hover,
+  .platform-sales-auth-primary:focus {
     background: #f7ca00;
     color: #111827 !important;
   }
 
   @media (max-width: 1199.98px) {
-    .jobell-sales-nav .navbar-collapse {
+    .platform-sales-nav .navbar-collapse {
       background: rgba(2, 6, 23, 0.98);
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 14px;
@@ -189,55 +189,55 @@
       width: 100%;
     }
 
-    .jobell-sales-nav-links,
-    .jobell-sales-nav-actions {
+    .platform-sales-nav-links,
+    .platform-sales-nav-actions {
       align-items: stretch;
       margin: 12px 0 0;
     }
 
-    .jobell-sales-nav-actions {
+    .platform-sales-nav-actions {
       border-top: 1px solid rgba(255, 255, 255, 0.1);
       padding-top: 12px;
     }
 
-    .jobell-sales-nav .nav-link,
-    .jobell-sales-auth-link,
-    .jobell-sales-user-link {
+    .platform-sales-nav .nav-link,
+    .platform-sales-auth-link,
+    .platform-sales-user-link {
       justify-content: flex-start;
       width: 100%;
     }
   }
 
   @media (max-width: 575.98px) {
-    .jobell-sales-brand-copy {
+    .platform-sales-brand-copy {
       display: none;
     }
 
-    .jobell-sales-nav .jobell-sales-nav-inner {
+    .platform-sales-nav .platform-sales-nav-inner {
       padding-left: 12px;
       padding-right: 12px;
     }
   }
 </style>
 
-<nav class="navbar navbar-expand-xl fixed-top jobell-sales-nav" data-responsive-navbar>
-  <div class="container-fluid jobell-sales-nav-inner">
-    <a class="jobell-sales-brand" href="/" aria-label="Jobell home">
-      <span class="jobell-sales-brand-mark">
-        <img src="{% static 'images/file.png' %}" alt="Jobell" />
+<nav class="navbar navbar-expand-xl fixed-top platform-sales-nav" data-responsive-navbar>
+  <div class="container-fluid platform-sales-nav-inner">
+    <a class="platform-sales-brand" href="/" aria-label="{{ site_name|upper }} home">
+      <span class="platform-sales-brand-mark">
+        <img src="{% static 'images/file.png' %}" alt="{{ site_name|upper }}" />
       </span>
-      <span class="jobell-sales-brand-copy">
-        <strong>Jobell</strong>
+      <span class="platform-sales-brand-copy">
+        <strong>{{ site_name|upper }}</strong>
         <small>Sales workspace</small>
       </span>
     </a>
 
-    <button class="navbar-toggler jobell-sales-nav-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#jobellLegacyNavbar" aria-controls="jobellLegacyNavbar" aria-expanded="false" aria-label="Toggle navigation">
+    <button class="navbar-toggler platform-sales-nav-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#legacyNavbar" aria-controls="legacyNavbar" aria-expanded="false" aria-label="Toggle navigation">
       <i class="mdi mdi-menu"></i>
     </button>
 
-    <div class="collapse navbar-collapse" id="jobellLegacyNavbar" data-navbar-menu>
-      <ul class="navbar-nav jobell-sales-nav-links">
+    <div class="collapse navbar-collapse" id="legacyNavbar" data-navbar-menu>
+      <ul class="navbar-nav platform-sales-nav-links">
         <li class="nav-item">
           <a class="nav-link" href="/"><i class="mdi mdi-home-outline"></i> Home</a>
         </li>
@@ -263,26 +263,26 @@
         </li>
       </ul>
 
-      <ul class="navbar-nav jobell-sales-nav-actions">
+      <ul class="navbar-nav platform-sales-nav-actions">
         <li class="nav-item">
-          <a class="jobell-sales-cart" href="{% url 'orders:cart' %}" aria-label="View cart">
+          <a class="platform-sales-cart" href="{% url 'orders:cart' %}" aria-label="View cart">
             <i class="mdi mdi-cart-outline"></i>
-            <span class="jobell-sales-count">{{ cart_count_user|default:0 }}</span>
+            <span class="platform-sales-count">{{ cart_count_user|default:0 }}</span>
           </a>
         </li>
         {% if user.is_authenticated %}
           <li class="nav-item">
-            <a href="{% url 'users-profile' %}" class="jobell-sales-user-link"><i class="mdi mdi-account-outline"></i> My Profile</a>
+            <a href="{% url 'users-profile' %}" class="platform-sales-user-link"><i class="mdi mdi-account-outline"></i> My Profile</a>
           </li>
           <li class="nav-item">
-            <a href="{% url 'logout' %}" class="jobell-sales-user-link" onclick="return confirm('Are you sure you want to logout?');"><i class="mdi mdi-logout"></i> Logout</a>
+            <a href="{% url 'logout' %}" class="platform-sales-user-link" onclick="return confirm('Are you sure you want to logout?');"><i class="mdi mdi-logout"></i> Logout</a>
           </li>
         {% else %}
           <li class="nav-item">
-            <a href="{% url 'login' %}" class="jobell-sales-auth-link"><i class="mdi mdi-login"></i> Log in</a>
+            <a href="{% url 'login' %}" class="platform-sales-auth-link"><i class="mdi mdi-login"></i> Log in</a>
           </li>
           <li class="nav-item">
-            <a class="jobell-sales-auth-link jobell-sales-auth-primary" href="{% url 'users-register' %}">Register</a>
+            <a class="platform-sales-auth-link platform-sales-auth-primary" href="{% url 'users-register' %}">Register</a>
           </li>
         {% endif %}
       </ul>
@@ -294,11 +294,11 @@
 <script>
   (function () {
     function initSalesNavbarFallback() {
-      const navbar = document.querySelector('.jobell-sales-nav');
+      const navbar = document.querySelector('.platform-sales-nav');
       if (!navbar) return;
 
       const toggle = navbar.querySelector('[data-bs-toggle="collapse"][data-bs-target]');
-      const menu = navbar.querySelector('#jobellLegacyNavbar');
+      const menu = navbar.querySelector('#legacyNavbar');
       if (!toggle || !menu) return;
 
       toggle.addEventListener('click', function (event) {

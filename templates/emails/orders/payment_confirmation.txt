@@ -1,0 +1,14 @@
+{{ site_name }}
+
+Hi {{ customer_name }},
+
+Your payment for order #{{ order_number }} is confirmed.
+
+Amount paid: UGX {{ total }}
+Payment method: {{ payment_method }}
+Payment status: {{ payment_status }}
+
+Items:
+{% for item in items %}- {{ item.product.name }} ({{ item.product_volume.variant_label }}) x {{ item.quantity }}: UGX {{ item.total }}
+{% endfor %}
+View order: {{ order_url }}

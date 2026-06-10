@@ -6,8 +6,8 @@
     <div class="admin-page-head">
       <div>
         <span class="admin-eyebrow">Orders</span>
-        <h1 class="admin-page-title">All orders</h1>
-        <p class="admin-muted mb-0">Search, filter, inspect, and manage customer orders.</p>
+        <h1 class="admin-page-title">Cashier orders</h1>
+        <p class="admin-muted mb-0">Find orders, confirm payment, and move open orders through fulfillment.</p>
       </div>
 
       <div class="admin-actions print-hide">
@@ -17,7 +17,26 @@
       </div>
     </div>
 
-    <form method="get" action="{% url 'orders:all_orders' %}" class="admin-search print-hide">
+    <div class="admin-stat-grid cashier-stat-grid">
+      <div class="admin-stat">
+        <span>Total</span>
+        <strong>{{ all_count|intcomma }}</strong>
+      </div>
+      <div class="admin-stat">
+        <span>Pending</span>
+        <strong>{{ pending_count|intcomma }}</strong>
+      </div>
+      <div class="admin-stat">
+        <span>Delivery</span>
+        <strong>{{ delivery_count|intcomma }}</strong>
+      </div>
+      <div class="admin-stat">
+        <span>Unpaid</span>
+        <strong>{{ payment_pending_count|intcomma }}</strong>
+      </div>
+    </div>
+
+    <form method="get" action="{% url 'orders:all_orders' %}" class="admin-search cashier-filter print-hide">
       <div class="row g-2 align-items-end">
         <div class="col-md-4">
           <label class="font-weight-bold small text-muted text-uppercase">Status</label>
@@ -37,9 +56,19 @@
           <input type="text" name="search" value="{{ search_query }}" class="form-control" placeholder="Search by order ID or customer" />
         </div>
         <div class="col-md-2 d-flex gap-2">
-          <button class="btn btn-primary w-100" type="submit"><i class="mdi mdi-search"></i></button>
+          <button class="btn btn-primary w-100" type="submit"><i class="mdi mdi-search mr-1"></i>Apply</button>
         </div>
       </div>
+      {% if search_query or status_filter %}
+        <div class="fulfillment-filter-note">
+          <span>
+            {% if search_query %}Search: <strong>{{ search_query }}</strong>{% endif %}
+            {% if search_query and status_filter %} · {% endif %}
+            {% if status_filter %}Status: <strong>{{ status_filter|default:'All active statuses' }}</strong>{% endif %}
+          </span>
+          <a href="{% url 'orders:all_orders' %}" class="btn btn-light btn-sm">Reset filters</a>
+        </div>
+      {% endif %}
     </form>
 
     <div class="admin-panel mb-4">
@@ -57,22 +86,26 @@
                 <th>Customer</th>
                 <th>Date</th>
                 <th>Status</th>
+                <th>Payment</th>
                 <th class="text-right">Total</th>
-                <th class="text-center print-hide">Actions</th>
+                <th class="text-right print-hide">Actions</th>
               </tr>
             </thead>
             <tbody>
               {% for order in orders %}
-                <tr>
+                <tr class="fulfillment-row{% if order.status == 'Pending' %} is-pending{% endif %}">
                   <td>
-                    <span class="admin-item-title">#{{ order.id }}</span>
+                    <span class="fulfillment-order-id">#{{ order.id }}</span>
                     <span class="admin-item-subtitle">{{ order.get_payment_method_display }}</span>
                   </td>
                   <td>
                     <span class="admin-item-title">{{ order.customer.get_full_name|default:'Customer' }}</span>
                     <span class="admin-item-subtitle">{{ order.customer.mobile|default:order.customer.email }}</span>
                   </td>
-                  <td>{{ order.created_at|date:"d M Y, H:i A" }}</td>
+                  <td>
+                    <span class="admin-item-title">{{ order.created_at|date:"d M Y" }}</span>
+                    <span class="admin-item-subtitle">{{ order.created_at|naturaltime }}</span>
+                  </td>
                   <td>
                     {% if order.status == 'Pending' %}
                       <span class="admin-badge is-pending">Pending</span>
@@ -86,14 +119,27 @@
                       <span class="admin-badge is-muted">{{ order.status }}</span>
                     {% endif %}
                   </td>
+                  <td>
+                    {% if order.payment_status == 'completed' %}
+                      <span class="admin-badge is-delivered">Paid</span>
+                    {% elif order.payment_status == 'failed' %}
+                      <span class="admin-badge is-danger">Failed</span>
+                    {% else %}
+                      <span class="admin-badge is-pending">Pending</span>
+                    {% endif %}
+                  </td>
                   <td class="text-right"><strong>UGX {{ order.total_amount|floatformat:"0"|intcomma }}</strong></td>
-                  <td class="text-center print-hide">
+                  <td class="text-right print-hide">
                     <span class="admin-icon-actions">
-                      <a href="{% url 'orders:order_report' order.id %}" class="btn btn-primary btn-sm admin-icon-btn" title="View details" aria-label="View order {{ order.id }}">
+                      {% if order.status == 'Pending' or order.status == 'Out for Delivery' %}
+                        <a href="{% url 'orders:order_process' order.id %}" class="btn btn-sm admin-process-action" title="Process order" aria-label="Process order {{ order.id }}">
+                          <i class="mdi mdi-truck-fast-outline"></i>
+                          <span>Process</span>
+                        </a>
+                      {% endif %}
+                      <a href="{% url 'orders:order_report' order.id %}" class="btn btn-light btn-sm admin-view-action" title="View details" aria-label="View order {{ order.id }}">
                         <i class="mdi mdi-eye-outline"></i>
-                      </a>
-                      <a href="{% url 'orders:order_process' order.id %}" class="btn btn-success btn-sm admin-icon-btn" title="Process order" aria-label="Process order {{ order.id }}">
-                        <i class="mdi mdi-truck-fast-outline"></i>
+                        <span>View</span>
                       </a>
                       {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
                         <button type="button" class="btn btn-danger btn-sm admin-icon-btn" data-bs-toggle="modal" data-bs-target="#deleteModal{{ order.id }}" title="Delete order" aria-label="Delete order {{ order.id }}">
@@ -125,7 +171,7 @@
                 </tr>
               {% empty %}
                 <tr>
-                  <td colspan="6">
+                  <td colspan="7">
                     <div class="admin-empty">
                       <div class="admin-empty-icon"><i class="mdi mdi-receipt-text-outline"></i></div>
                       <h2 class="h4 font-weight-bold">No orders found</h2>

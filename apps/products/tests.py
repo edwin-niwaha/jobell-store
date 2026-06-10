@@ -12,7 +12,7 @@ class ProductModelTests(TestCase):
     def setUp(self):
         self.category = Category.objects.create(name="Perfume")
         self.supplier = Supplier.objects.create(
-            name="Jobell Supplier",
+            name="Example Supplier",
             contact_name="Jane Supplier",
             email="supplier@example.com",
             address="Kampala",

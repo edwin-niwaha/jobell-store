@@ -1,0 +1,13 @@
+{{ site_name }}
+
+Hi {{ customer_name }},
+
+Order #{{ order_number }} has been updated.
+{% if old_status %}Previous status: {{ old_status }}
+{% endif %}Current status: {{ new_status }}
+
+Payment: {{ payment_method }} ({{ payment_status }})
+Delivery: {{ shipping_method }}
+Address: {{ delivery_address|default:"To be confirmed" }}
+
+Track order: {{ order_url }}

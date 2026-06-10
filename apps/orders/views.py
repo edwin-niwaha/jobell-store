@@ -1,6 +1,3 @@
-from django.core.mail import EmailMultiAlternatives
-from django.core.mail import send_mail
-from django.utils.html import strip_tags
 from django.core.paginator import Paginator
 from django.db.models import Q, Avg, Sum
 from django.conf import settings
@@ -20,6 +17,12 @@ from django.utils import timezone
 from django.db import transaction
 from .models import Cart, CartItem, Order, OrderDetail, Wishlist
 from .services import cart_total, create_order_from_cart, get_or_create_cart
+from .tasks import (
+    send_admin_new_order_notification,
+    send_order_confirmation_email,
+    send_order_status_email,
+    send_payment_confirmation_email,
+)
 from apps.products.models import Product, ProductVolume, ProductImage
 from apps.products.selectors import build_storefront_product_card
 
@@ -34,6 +37,19 @@ from apps.authentication.decorators import (
     admin_required,
     admin_or_manager_or_staff_required,
 )
+
+
+def _queue_order_placed_emails(order_id):
+    send_order_confirmation_email.delay(order_id)
+    send_admin_new_order_notification.delay(order_id)
+
+
+def _queue_order_status_email(order_id, old_status, new_status):
+    send_order_status_email.delay(
+        order_id,
+        old_status=old_status,
+        new_status=new_status,
+    )
 
 
 logger = logging.getLogger(__name__)
@@ -350,7 +366,7 @@ def product_details_view(request, product_uuid):
             image_url = (
                 volume.image.url
                 if volume.image
-                else "https://placehold.co/600x600/f8fafc/111827?text=Jobell"
+                else "https://placehold.co/600x600/f8fafc/111827?text=Product"
             )
             volume_data = {
                 "id": product_volume.id,
@@ -955,8 +971,8 @@ def remove_from_cart(request, item_id):
 #     total_price,
 #     is_customer=True,
 # ):
-#     customer_order_history_url = "https://jobellinc.com/orders/order-history/"
-#     orders_to_be_processed_url = "https://jobellinc.com/orders/to-be-processed/"
+#     customer_order_history_url = "https://example.com/orders/order-history/"
+#     orders_to_be_processed_url = "https://example.com/orders/to-be-processed/"
 #     subject = "Your Order has been Placed" if is_customer else "New Order to Process"
 
 #     if is_customer:
@@ -1412,6 +1428,9 @@ def checkout_view(request):
             placed_order_ids.append(order.id)
             request.session["placed_order_ids"] = placed_order_ids[-10:]
             request.session.modified = True
+            transaction.on_commit(
+                lambda order_id=order.id: _queue_order_placed_emails(order_id)
+            )
 
             messages.success(
                 request,
@@ -1597,12 +1616,23 @@ def get_access_token():
 
 # =================================== confirm_payment ===================================
 def confirm_payment_view(request, order_id):
-    order = get_object_or_404(Order, id=order_id, customer__user=request.user)
-    customer = order.customer
+    with transaction.atomic():
+        order = get_object_or_404(
+            Order.objects.select_for_update().select_related("customer"),
+            id=order_id,
+            customer__user=request.user,
+        )
+        customer = order.customer
 
-    # Update payment status
-    order.payment_status = "completed"
-    order.save()
+        # Update payment status
+        if order.payment_status != "completed":
+            order.payment_status = "completed"
+            order.save(update_fields=["payment_status", "updated_at"])
+            transaction.on_commit(
+                lambda order_id=order.id: send_payment_confirmation_email.delay(
+                    order_id
+                )
+            )
 
     # Prepare the context
     context = {
@@ -1666,9 +1696,12 @@ def order_confirmation_view(request, order_id):
 @admin_or_manager_or_staff_required
 def orders_to_be_processed_view(request):
     search_query = request.GET.get("search", "")
-    orders = Order.objects.select_related("customer").filter(
+    open_orders = Order.objects.select_related("customer").filter(
         status__in=["Pending", "Out for Delivery"]
-    ).order_by("created_at")
+    )
+    pending_count = open_orders.filter(status="Pending").count()
+    out_for_delivery_count = open_orders.filter(status="Out for Delivery").count()
+    orders = open_orders.order_by("created_at")
 
     # Apply search filter if search query is provided
     if search_query:
@@ -1688,7 +1721,13 @@ def orders_to_be_processed_view(request):
     return render(
         request,
         "orders/orders_to_be_processed.html",
-        {"orders": page_obj, "table_title": table_title, "search_query": search_query},
+        {
+            "orders": page_obj,
+            "table_title": table_title,
+            "search_query": search_query,
+            "pending_count": pending_count,
+            "out_for_delivery_count": out_for_delivery_count,
+        },
     )
 
 
@@ -1737,11 +1776,20 @@ def all_orders_view(request):
     # Get the search term from the GET request
     search_query = request.GET.get("search", "")
 
+    base_orders = Order.objects.select_related("customer").all()
+    cashier_metrics = {
+        "all_count": base_orders.count(),
+        "pending_count": base_orders.filter(status="Pending").count(),
+        "delivery_count": base_orders.filter(status="Out for Delivery").count(),
+        "delivered_count": base_orders.filter(status="Delivered").count(),
+        "payment_pending_count": base_orders.filter(payment_status="pending").count(),
+    }
+
     # Filter orders based on status and search term
     if status_filter == "All" or status_filter == "":
-        orders = Order.objects.select_related("customer").all()
+        orders = base_orders
     else:
-        orders = Order.objects.select_related("customer").filter(status=status_filter)
+        orders = base_orders.filter(status=status_filter)
 
     if search_query:
         orders = orders.filter(
@@ -1760,6 +1808,7 @@ def all_orders_view(request):
         "orders": page_obj,
         "status_filter": status_filter,
         "search_query": search_query,
+        **cashier_metrics,
     }
 
     return render(request, "orders/all_orders.html", context)
@@ -1771,7 +1820,7 @@ def all_orders_view(request):
 def order_report_view(request, order_id):
     # Fetch order with its details, and prefetch related volumes through ProductVolume
     order = get_object_or_404(
-        Order.objects.select_related("customer").prefetch_related(
+        Order.objects.select_related("customer", "pickup_station").prefetch_related(
             "details__product",
             "details__product_volume__volume",
         ),
@@ -1821,6 +1870,7 @@ def order_process_view(request, order_id):
     if request.method == "POST":
         form = OrderStatusForm(request.POST, instance=order)
         if form.is_valid():
+            previous_status = order.status
             order_status = form.cleaned_data[
                 "status"
             ]  # Assuming 'status' is the field in the form
@@ -1830,11 +1880,15 @@ def order_process_view(request, order_id):
             )
 
             # Send email to the customer
-            if order.customer:  # Assuming `order.customer` is the customer's email
-                send_order_status_email(
-                    recipient_name=order.customer.first_name,
-                    recipient_email=order.customer.email,
-                    order_status=order_status,
+            if order.customer and order.customer.email:
+                transaction.on_commit(
+                    lambda order_id=order.id,
+                    old_status=previous_status,
+                    new_status=order_status: _queue_order_status_email(
+                        order_id,
+                        old_status,
+                        new_status,
+                    )
                 )
 
             return redirect("orders:orders_to_be_processed")
@@ -1854,51 +1908,6 @@ def order_process_view(request, order_id):
         form = OrderStatusForm(instance=order)
 
     return render(request, "orders/order_process.html", {"order": order, "form": form})
-
-
-# Send email to customer when the order changes
-def send_order_status_email(recipient_name, recipient_email, order_status):
-    # Send a stylish email to the customer when their order status is updated.
-    subject = f"Your Order Status Has Been Updated: {order_status}"
-
-    # Link to the order history
-    order_history_url = "https://jobellinc.com/orders/order-history/"
-
-    # Stylish HTML email body
-    email_body = f"""
-    <html>
-    <body style="font-family: Arial, sans-serif; color: #333;">
-        <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-            <h2 style="color: #2E86C1; text-align: center;">Your Order Status Has Been Updated</h2>
-            <p>Hi <strong>{recipient_name}</strong>,</p>
-            <p>We wanted to let you know that the status of your order has been updated. Your current order status is: <strong>{order_status}</strong>.</p>
-            <p>We are committed to keeping you informed throughout the process. If you have any questions or need further assistance regarding your order, please don't hesitate to reach out to us.</p>
-            
-            <div style="text-align: center; margin: 20px 0;">
-                <a href="{order_history_url}" style="background-color: #2E86C1; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 5px;">View Order History</a>
-            </div>
-
-            <p>In the meantime, feel free to explore our latest products:</p>
-            <div style="text-align: center; margin: 20px 0;">
-                <a href="https://jobellinc.com/" style="background-color: #C0392B; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 5px;">View Products</a>
-            </div>
-
-            <p>Thank you for choosing us, and we look forward to serving you again soon!</p>
-            <p style="color: #888;">Warm regards,<br>The Jobel Inc. Team<br>Customer Support</p>
-        </div>
-    </body>
-    </html>
-    """
-
-    from_email = getattr(settings, "EMAIL_HOST_USER", None)
-    recipient_list = [recipient_email]
-
-    # Send the HTML email
-    try:
-        send_mail(subject, "", from_email, recipient_list, html_message=email_body)
-        logger.info(f"Email sent to {recipient_email}")
-    except Exception as e:
-        logger.error(f"Error sending email to {recipient_email}: {str(e)}")
 
 
 # =================================== Sale delete view ===================================

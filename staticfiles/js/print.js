@@ -16,7 +16,7 @@ function ExportToExcel(type, fn, dl) {
   var wb = XLSX.utils.table_to_book(elt, { sheet: "sheet1" });
   return dl
     ? XLSX.write(wb, { bookType: type, bookSST: true, type: "base64" })
-    : XLSX.writeFile(wb, fn || "jobell_rpt." + (type || "xlsx"));
+    : XLSX.writeFile(wb, fn || "report." + (type || "xlsx"));
 }
 
 // Convert to word document
@@ -31,7 +31,7 @@ function Export2Doc(element, filename = "") {
     "data:application/vnd.ms-word;charset=utf-8," + encodeURIComponent(html);
 
   //file name
-  filename = filename ? filename + ".doc" : "jobell_rpt.doc";
+  filename = filename ? filename + ".doc" : "report.doc";
 
   // Creates the  download link element dynamically
   var downloadLink = document.createElement("a");

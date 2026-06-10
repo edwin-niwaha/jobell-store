@@ -1,25 +1,25 @@
 {% load static %}
 
-<footer class="jobell-footer">
-  <div class="jobell-footer-shell">
-    <div class="jobell-footer-grid">
-      <div class="jobell-footer-brand">
-        <a class="jobell-footer-logo" href="{% url 'users-home' %}">
-          <img src="{% static 'images/file.png' %}" alt="Jobell" />
+<footer class="platform-footer">
+  <div class="platform-footer-shell">
+    <div class="platform-footer-grid">
+      <div class="platform-footer-brand">
+        <a class="platform-footer-logo" href="{% url 'users-home' %}">
+          <img src="{% static 'images/file.png' %}" alt="{{ site_name|upper }}" />
           <span>
-            <strong>Jobell</strong>
+            <strong>{{ site_name|upper }}</strong>
             <small>Shop - Scent - Deliver</small>
           </span>
         </a>
         <p>Exquisite fragrances, body care, and home scent essentials with a storefront built for simple discovery and confident checkout.</p>
-        <div class="jobell-footer-socials">
+        <div class="platform-footer-socials">
           <a href="https://wa.me/256777337491" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-          <a href="https://instagram.com/jobell_inc" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="https://instagram.com/app_inc" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
           <a href="https://www.linkedin.com/in/christbell-ainomugisha-452965232/" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
         </div>
       </div>
 
-      <div class="jobell-footer-column">
+      <div class="platform-footer-column">
         <h6>Shop</h6>
         <a href="{% url 'products:shop_homepage' %}">All products</a>
         <a href="{% url 'orders:wishlist' %}">Wishlist</a>
@@ -27,7 +27,7 @@
         <a href="{% url 'blog:blog_list' %}">Blog</a>
       </div>
 
-      <div class="jobell-footer-column">
+      <div class="platform-footer-column">
         <h6>Support</h6>
         <a href="{% url 'about_us' %}">About us</a>
         <a href="{% url 'contact_us' %}">Contact us</a>
@@ -39,16 +39,16 @@
         {% endif %}
       </div>
 
-      <div class="jobell-footer-contact">
+      <div class="platform-footer-contact">
         <h6>Contact</h6>
         <p><i class="mdi mdi-map-marker-outline"></i> Makerere, Kampala</p>
         <p><i class="mdi mdi-phone-outline"></i> +256 777-337-491</p>
-        <p><i class="mdi mdi-email-outline"></i> jobellinc@gmail.com</p>
+        <p><i class="mdi mdi-email-outline"></i> {{ support_email }}</p>
       </div>
     </div>
 
-    <div class="jobell-footer-bottom">
-      <p>Copyright &copy; <span id="year"></span> Jobell Inc. All rights reserved.</p>
+    <div class="platform-footer-bottom">
+      <p>Copyright &copy; <span id="year"></span> {{ company_name|upper }}. All rights reserved.</p>
       <a target="_blank" rel="noopener" href="https://perpetual-web-vert.vercel.app/">Crafted by Perpetual Tech</a>
     </div>
   </div>

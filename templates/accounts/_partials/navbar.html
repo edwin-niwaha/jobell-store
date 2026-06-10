@@ -1,23 +1,23 @@
 {% load static %}
 
-<nav class="navbar navbar-expand-xl fixed-top jobell-store-nav" data-responsive-navbar>
-  <div class="container-fluid jobell-nav-inner">
-    <a class="jobell-brand" href="{% url 'users-home' %}" aria-label="Jobell home">
-      <span class="jobell-brand-mark">
-        <img src="{% static 'images/file.png' %}" alt="Jobell" />
+<nav class="navbar navbar-expand-xl fixed-top platform-store-nav" data-responsive-navbar>
+  <div class="container-fluid platform-nav-inner">
+    <a class="platform-brand" href="{% url 'users-home' %}" aria-label="{{ site_name|upper }} home">
+      <span class="platform-brand-mark">
+        <img src="{% static 'images/file.png' %}" alt="{{ site_name|upper }}" />
       </span>
-      <span class="jobell-brand-copy">
-        <strong>Jobell</strong>
+      <span class="platform-brand-copy">
+        <strong>{{ site_name|upper }}</strong>
         <small>Storefront</small>
       </span>
     </a>
 
-    <button class="navbar-toggler jobell-nav-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#jobellNavbar" aria-controls="jobellNavbar" aria-expanded="false" aria-label="Toggle navigation">
+    <button class="navbar-toggler platform-nav-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#siteNavbar" aria-controls="siteNavbar" aria-expanded="false" aria-label="Toggle navigation">
       <i class="mdi mdi-menu"></i>
     </button>
 
-    <div class="collapse navbar-collapse" id="jobellNavbar" data-navbar-menu>
-      <ul class="navbar-nav jobell-nav-links">
+    <div class="collapse navbar-collapse" id="siteNavbar" data-navbar-menu>
+      <ul class="navbar-nav platform-nav-links">
         <li class="nav-item">
           <a class="nav-link" href="{% url 'products:shop_homepage' %}"><i class="mdi mdi-storefront-outline"></i> Shop</a>
         </li>
@@ -48,29 +48,29 @@
         {% endif %}
       </ul>
 
-      <ul class="navbar-nav jobell-nav-actions">
+      <ul class="navbar-nav platform-nav-actions">
         <li class="nav-item">
-          <a class="jobell-icon-action" href="{% url 'orders:cart' %}" aria-label="View cart">
+          <a class="platform-icon-action" href="{% url 'orders:cart' %}" aria-label="View cart">
             <i class="mdi mdi-cart-outline"></i>
-            <span class="jobell-count-badge" data-cart-count>{{ cart_count_user|default:0 }}</span>
+            <span class="platform-count-badge" data-cart-count>{{ cart_count_user|default:0 }}</span>
           </a>
         </li>
         {% if user.is_authenticated %}
           <li class="nav-item dropdown">
-            <a class="jobell-user-menu dropdown-toggle" href="#" id="jobellUserMenu" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              <span class="jobell-avatar">
+            <a class="platform-user-menu dropdown-toggle" href="#" id="userMenu" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <span class="platform-avatar">
                 {% if user.profile.avatar %}
                   <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" />
                 {% else %}
                   {{ user.username|first|upper }}
                 {% endif %}
               </span>
-              <span class="jobell-user-copy">
+              <span class="platform-user-copy">
                 <small>Hello</small>
                 <strong>{{ user.username|title }}</strong>
               </span>
             </a>
-            <div class="dropdown-menu dropdown-menu-right jobell-dropdown" aria-labelledby="jobellUserMenu">
+            <div class="dropdown-menu dropdown-menu-right platform-dropdown" aria-labelledby="userMenu">
               <a class="dropdown-item" href="{% url 'users-profile' %}"><i class="mdi mdi-account-outline"></i> My profile</a>
               <a class="dropdown-item" href="{% url 'password_change' %}"><i class="mdi mdi-shield-key-outline"></i> Security</a>
               <div class="dropdown-divider"></div>
@@ -79,10 +79,10 @@
           </li>
         {% else %}
           <li class="nav-item">
-            <a class="jobell-auth-link" href="{% url 'login' %}"><i class="mdi mdi-login"></i> Log in</a>
+            <a class="platform-auth-link" href="{% url 'login' %}"><i class="mdi mdi-login"></i> Log in</a>
           </li>
           <li class="nav-item">
-            <a class="jobell-auth-link jobell-auth-primary" href="{% url 'users-register' %}">Register</a>
+            <a class="platform-auth-link platform-auth-primary" href="{% url 'users-register' %}">Register</a>
           </li>
         {% endif %}
       </ul>

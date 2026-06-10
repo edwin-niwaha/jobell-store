@@ -3,15 +3,15 @@
 {% load crispy_forms_tags %}
 
 {% block title %}
-  Blog | Jobell
+  Blog | {{ site_name|upper }}
 {% endblock %}
 
 {% block content %}
-  <main class="jobell-blog-page">
+  <main class="platform-blog-page">
     <section class="container">
       <div class="bg-white border rounded shadow-sm p-4 mb-4 d-md-flex align-items-center justify-content-between">
         <div>
-          <span class="jobell-page-kicker">Jobell Journal</span>
+          <span class="platform-page-kicker">{{ site_name|upper }} Journal</span>
           <h1 class="h2 font-weight-bold mb-2">Latest stories and guides</h1>
           <p class="text-muted mb-0">Fresh notes on fragrance, body care, home scent, and shopping well.</p>
         </div>
@@ -29,7 +29,7 @@
           {% for post in page_obj %}
             <div class="col-md-6 col-xl-4 mb-4">
               <article class="card h-100 border shadow-sm overflow-hidden">
-                <div class="jobell-blog-media">
+                <div class="platform-blog-media">
                   {% if post.url_content %}
                     {% if post.youtube_embed_url %}
                       <div class="embed-responsive embed-responsive-16by9">
@@ -44,7 +44,7 @@
                       </div>
                     {% endif %}
                   {% else %}
-                    <img src="{% static 'images/placeholder.png' %}" class="card-img-top" alt="{{ post.title }}" />
+                    <img src="{% static 'images/no-image.png' %}" class="card-img-top" alt="{{ post.title }}" />
                   {% endif %}
                 </div>
 
@@ -123,12 +123,12 @@
           </nav>
         {% endif %}
       {% else %}
-        <div class="jobell-status-panel mx-auto bg-white border rounded shadow-sm">
-          <div class="jobell-status-icon">
+        <div class="platform-status-panel mx-auto bg-white border rounded shadow-sm">
+          <div class="platform-status-icon">
             <i class="mdi mdi-newspaper-variant-outline" aria-hidden="true"></i>
           </div>
           <h2>No posts yet</h2>
-          <p>Fresh Jobell stories will appear here once they are published.</p>
+          <p>Fresh {{ site_name|upper }} stories will appear here once they are published.</p>
         </div>
       {% endif %}
     </section>

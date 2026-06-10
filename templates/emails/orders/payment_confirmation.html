@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+<body style="margin:0;background:#f6f7f9;color:#1f2933;font-family:Arial,sans-serif;">
+  <div style="max-width:680px;margin:0 auto;padding:28px 16px;">
+    <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;padding:24px;">
+      <h1 style="margin:0 0 8px;font-size:24px;color:#111827;">{{ site_name }}</h1>
+      <p style="margin:0 0 18px;">Hi {{ customer_name }}, your payment for order #{{ order_number }} is confirmed.</p>
+      <p style="font-size:18px;margin:0 0 16px;">Amount paid: <strong>UGX {{ total }}</strong></p>
+      <p style="margin:4px 0;">Payment method: {{ payment_method }}</p>
+      <p style="margin:4px 0 18px;">Payment status: {{ payment_status }}</p>
+
+      <table style="width:100%;border-collapse:collapse;margin-bottom:18px;">
+        <tbody>
+          {% for item in items %}
+            <tr>
+              <td style="border-bottom:1px solid #f1f3f5;padding:8px;">{{ item.product.name }} ({{ item.product_volume.variant_label }})</td>
+              <td align="right" style="border-bottom:1px solid #f1f3f5;padding:8px;">x {{ item.quantity }}</td>
+              <td align="right" style="border-bottom:1px solid #f1f3f5;padding:8px;">UGX {{ item.total }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <p style="margin:0 0 18px;">
+        <a href="{{ order_url }}" style="background:#111827;color:#ffffff;text-decoration:none;padding:11px 18px;border-radius:6px;display:inline-block;">View order</a>
+      </p>
+      <p style="margin:0;color:#6b7280;font-size:13px;">We will keep you updated as your order moves forward.</p>
+    </div>
+  </div>
+</body>
+</html>

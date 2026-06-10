@@ -25,7 +25,7 @@ CORS_ALLOWED_ORIGINS = env_list(  # noqa: F405
 if not env_bool("USE_DATABASE_URL", False):  # noqa: F405
     DATABASES["default"] = {  # noqa: F405
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("DB_NAME", "jobell_db"),  # noqa: F405
+        "NAME": os.getenv("DB_NAME", "platform_db"),  # noqa: F405
         "USER": os.getenv("DB_USER", "postgres"),  # noqa: F405
         "PASSWORD": os.getenv("DB_PASSWORD", ""),  # noqa: F405
         "HOST": os.getenv("DB_HOST", "localhost"),  # noqa: F405

@@ -96,6 +96,41 @@ python manage.py runserver
 -Open your browser and go to:
 http://127.0.0.1:8000
 
+## Async Email Worker
+
+Order confirmation, payment confirmation, order status updates, and admin new-order notifications are queued with Celery and sent through Resend.
+
+Set these environment variables locally or copy `.env.example` to `.env` and fill in real values:
+
+```bash
+CELERY_BROKER_URL=redis://localhost:6379/0
+CELERY_RESULT_BACKEND=redis://localhost:6379/1
+RESEND_API_KEY=
+DEFAULT_FROM_EMAIL="My Store <noreply@example.com>"
+RESEND_FROM_EMAIL="My Store <noreply@example.com>"
+SITE_NAME=My Store
+SITE_URL=http://127.0.0.1:8000
+ADMIN_ORDER_EMAILS=owner@example.com,manager@example.com
+```
+
+Start Redis:
+
+```bash
+redis-server
+```
+
+Start Django:
+
+```bash
+python manage.py runserver
+```
+
+Start the Celery worker:
+
+```bash
+celery -A core worker -l info
+```
+
 - Additional Notes
 - Ensure your environment variables are set up correctly, especially for sensitive information like - - API keys and database passwords.
 - For production, consider using a web server like Gunicorn with Nginx or Apache.

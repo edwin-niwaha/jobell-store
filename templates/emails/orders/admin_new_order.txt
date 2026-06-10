@@ -1,0 +1,16 @@
+New {{ site_name }} order
+
+Order #{{ order_number }} was placed by {{ customer_name }} on {{ order_date|date:"M j, Y, g:i A" }}.
+
+Items:
+{% for item in items %}- {{ item.product.name }} ({{ item.product_volume.variant_label }}) x {{ item.quantity }}: UGX {{ item.total }}
+{% endfor %}
+Subtotal: UGX {{ subtotal }}
+Delivery fee: UGX {{ shipping_fee }}
+Total: UGX {{ total }}
+
+Payment: {{ payment_method }} ({{ payment_status }})
+Delivery: {{ shipping_method }}
+Address: {{ delivery_address|default:"To be confirmed" }}
+
+Open order: {{ order_url }}

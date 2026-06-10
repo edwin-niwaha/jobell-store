@@ -78,7 +78,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function updateCartCount(count) {
     if (count === undefined || count === null) return;
-    document.querySelectorAll("[data-cart-count], .jobell-count-badge").forEach(function (badge) {
+    document.querySelectorAll("[data-cart-count], .platform-count-badge").forEach(function (badge) {
       badge.textContent = count;
     });
   }

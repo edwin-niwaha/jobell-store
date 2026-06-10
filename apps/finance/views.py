@@ -2,6 +2,7 @@ import csv
 import logging
 from datetime import datetime
 from decimal import Decimal
+from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -17,6 +18,7 @@ from datetime import date
 from openpyxl import load_workbook
 from .forms import (
     ChartOfAccountsForm,
+    FinancialPeriodForm,
     IncomeTransactionForm,
     ExpenseTransactionForm,
     JournalEntryForm,
@@ -35,6 +37,94 @@ from apps.authentication.decorators import (
 
 
 logger = logging.getLogger(__name__)
+
+
+# =================================== Financial Period Settings ===================================
+@login_required
+@admin_required
+def financial_period_list_view(request):
+    periods = FinancialPeriod.objects.select_related("branch").order_by(
+        "-start_date", "-id"
+    )
+    form = FinancialPeriodForm()
+
+    return render(
+        request,
+        "finance/financial_periods.html",
+        {
+            "periods": periods,
+            "form": form,
+            "form_title": "Add financial period",
+            "open_count": periods.filter(status="open").count(),
+            "closed_count": periods.filter(status="closed").count(),
+            "locked_count": periods.filter(status="locked").count(),
+        },
+    )
+
+
+@login_required
+@admin_required
+def financial_period_create_view(request):
+    if request.method != "POST":
+        return redirect("finance:financial_periods")
+
+    form = FinancialPeriodForm(request.POST)
+    periods = FinancialPeriod.objects.select_related("branch").order_by(
+        "-start_date", "-id"
+    )
+    if form.is_valid():
+        period = form.save(commit=False)
+        period.save(user=request.user)
+        messages.success(request, "Financial period added.", extra_tags="bg-success")
+        return redirect("finance:financial_periods")
+
+    messages.error(request, "Please correct the financial period details.")
+    return render(
+        request,
+        "finance/financial_periods.html",
+        {
+            "periods": periods,
+            "form": form,
+            "form_title": "Add financial period",
+            "open_count": periods.filter(status="open").count(),
+            "closed_count": periods.filter(status="closed").count(),
+            "locked_count": periods.filter(status="locked").count(),
+        },
+    )
+
+
+@login_required
+@admin_required
+def financial_period_update_view(request, period_id):
+    period = get_object_or_404(FinancialPeriod, id=period_id)
+    if request.method == "POST":
+        form = FinancialPeriodForm(request.POST, instance=period)
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request, "Financial period updated.", extra_tags="bg-success"
+            )
+            return redirect("finance:financial_periods")
+        messages.error(request, "Please correct the financial period details.")
+    else:
+        form = FinancialPeriodForm(instance=period)
+
+    periods = FinancialPeriod.objects.select_related("branch").order_by(
+        "-start_date", "-id"
+    )
+    return render(
+        request,
+        "finance/financial_periods.html",
+        {
+            "periods": periods,
+            "form": form,
+            "form_title": f"Update {period.name}",
+            "editing_period": period,
+            "open_count": periods.filter(status="open").count(),
+            "closed_count": periods.filter(status="closed").count(),
+            "locked_count": periods.filter(status="locked").count(),
+        },
+    )
 
 
 # =================================== Account List view ===================================
@@ -780,9 +870,9 @@ def profit_loss_statement_view(request):
     start_date = None
     end_date = None
     selected_branch = None
-    company_name = "Jobell Inc."
+    company_name = settings.COMPANY_NAME
     company_location = "Kampala, Uganda"
-    company_contact = "Phone: (+256) 777-337-491 | Email: jobellinc@gmail.com"
+    company_contact = f"Phone: {settings.SUPPORT_PHONE or 'N/A'} | Email: {settings.SUPPORT_EMAIL}"
 
     if form.is_valid():
         # Extract the start date, end date, and branch from the form
@@ -1115,9 +1205,9 @@ def balance_sheet_view(request):
         "current_date": (
             selected_period.end_date if selected_period else timezone.now().date()
         ),
-        "company_name": "Jobell Inc",
+        "company_name": settings.COMPANY_NAME,
         "company_location": "Kampala, Uganda",
-        "company_contact": "Phone: (+256) 777-337-491 | Email: jobellinc@gmail.com",
+        "company_contact": f"Phone: {settings.SUPPORT_PHONE or 'N/A'} | Email: {settings.SUPPORT_EMAIL}",
         "financial_period_name": (
             selected_period.name if selected_period else "Current Period"
         ),

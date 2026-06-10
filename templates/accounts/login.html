@@ -2,20 +2,20 @@
 {% load static %}
 
 {% block title %}
-  Sign in | Jobell
+  Sign in | {{ site_name|upper }}
 {% endblock %}
 
 {% block content %}
-  <main class="jobell-login-page d-flex align-items-center">
+  <main class="platform-login-page d-flex align-items-center">
     <section class="container">
       <div class="row justify-content-center">
         <div class="col-12 col-sm-10 col-md-8 col-lg-6 col-xl-6">
           <div class="card border shadow-sm overflow-hidden">
             <div class="card-body p-4 p-md-5">
               <div class="text-center mb-3">
-                <span class="jobell-login-kicker">Account access</span>
+                <span class="platform-login-kicker">Account access</span>
                 <h2 class="h3 font-weight-bold mb-2">Sign in</h2>
-                <p class="text-muted mb-0">Use your Jobell account credentials below.</p>
+                <p class="text-muted mb-0">Use your {{ site_name|upper }} account credentials below.</p>
               </div>
 
               {% if form.errors %}
@@ -34,7 +34,7 @@
                 <span>Sign in with Google</span>
               </a>
 
-              <div class="jobell-login-divider my-3">
+              <div class="platform-login-divider my-3">
                 <span>or sign in with username</span>
               </div>
 
@@ -71,7 +71,7 @@
               </form>
 
               <div class="border-top mt-4 pt-3 text-center text-muted">
-                <span>New to Jobell?</span>
+                <span>New to {{ site_name|upper }}?</span>
                 <a class="font-weight-bold" href="{% url 'users-register' %}">Create an account</a>
               </div>
             </div>

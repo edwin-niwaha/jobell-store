@@ -5,12 +5,12 @@
 {% endblock %}
 
 {% block content %}
-  <section class="jobell-info-page jobell-centered-page">
-    <div class="jobell-info-panel jobell-status-panel">
-      <span class="jobell-status-icon"><i class="mdi mdi-check"></i></span>
+  <section class="platform-info-page platform-centered-page">
+    <div class="platform-info-panel platform-status-panel">
+      <span class="platform-status-icon"><i class="mdi mdi-check"></i></span>
       <h1>Successfully logged out</h1>
-      <p>Thanks for visiting Jobell. Your account session has ended.</p>
-      <a href="{% url 'login' %}" class="jobell-page-button">Log in again</a>
+      <p>Thanks for visiting {{ site_name|upper }}. Your account session has ended.</p>
+      <a href="{% url 'login' %}" class="platform-page-button">Log in again</a>
     </div>
   </section>
 {% endblock %}

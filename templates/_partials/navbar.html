@@ -7,33 +7,33 @@
     --navbar-black: #050505;
   }
 
-  .jobell-navbar {
+  .platform-navbar {
     background: var(--navbar-black);
     box-shadow: 0 4px 18px rgba(0, 0, 0, .18);
     z-index: 1030;
   }
 
-  .jobell-navbar .navbar-menu-wrapper {
+  .platform-navbar .navbar-menu-wrapper {
     width: 100%;
     min-height: 64px;
     padding: 0 1rem;
   }
 
-  .jobell-navbar .nav-link {
+  .platform-navbar .nav-link {
     color: #fff;
     position: relative;
   }
 
-  .jobell-navbar .nav-link:hover,
-  .jobell-navbar .nav-link:focus {
+  .platform-navbar .nav-link:hover,
+  .platform-navbar .nav-link:focus {
     color: var(--premium-gold);
   }
 
-  .jobell-navbar .mdi {
+  .platform-navbar .mdi {
     font-size: 22px;
   }
 
-  .jobell-navbar .count {
+  .platform-navbar .count {
     position: absolute;
     top: 8px;
     right: 4px;
@@ -49,7 +49,7 @@
     font-weight: 700;
   }
 
-  .jobell-navbar .dropdown-menu {
+  .platform-navbar .dropdown-menu {
     border: 0;
     border-radius: 14px;
     margin-top: 12px;
@@ -57,13 +57,13 @@
     overflow: hidden;
   }
 
-  .jobell-dropdown-menu {
+  .platform-dropdown-menu {
     width: 340px;
     max-height: 420px;
     overflow-y: auto;
   }
 
-  .jobell-dropdown-title {
+  .platform-dropdown-title {
     background: #111;
     color: var(--premium-gold);
     font-weight: 800;
@@ -71,21 +71,21 @@
     margin: 0;
   }
 
-  .jobell-navbar .dropdown-item {
+  .platform-navbar .dropdown-item {
     white-space: normal;
     padding: 12px 18px;
   }
 
-  .jobell-navbar .dropdown-item:hover {
+  .platform-navbar .dropdown-item:hover {
     background: #fff8e6;
   }
 
-  .jobell-navbar .badge-gold {
+  .platform-navbar .badge-gold {
     background: var(--premium-gold);
     color: #fff;
   }
 
-  .jobell-navbar .nav-profile-img {
+  .platform-navbar .nav-profile-img {
     width: 36px;
     height: 36px;
     object-fit: cover;
@@ -93,25 +93,25 @@
     border: 2px solid var(--premium-gold);
   }
 
-  .jobell-navbar .profile-name {
+  .platform-navbar .profile-name {
     color: #fff;
     font-weight: 700;
   }
 
-  .jobell-navbar .profile-name small {
+  .platform-navbar .profile-name small {
     color: #d6d6d6 !important;
   }
 
-  .jobell-navbar .dropdown-toggle::after {
+  .platform-navbar .dropdown-toggle::after {
     display: none;
   }
 
   @media (max-width: 575.98px) {
-    .jobell-dropdown-menu {
+    .platform-dropdown-menu {
       width: 300px;
     }
 
-    .jobell-navbar .profile-name {
+    .platform-navbar .profile-name {
       display: none;
     }
   }
@@ -129,35 +129,35 @@
     padding-right: 15px;
   }
 
-  .jobell-navbar .navbar-menu-wrapper {
+  .platform-navbar .navbar-menu-wrapper {
     padding-left: 1rem;
     padding-right: 1rem;
     width: 100%;
     overflow: visible;
   }
 
-  .jobell-navbar {
+  .platform-navbar {
     overflow: visible;
   }
 
-  .jobell-navbar .dropdown-menu {
+  .platform-navbar .dropdown-menu {
     z-index: 3000;
   }
 
   @media (min-width: 992px) {
-    .jobell-navbar {
+    .platform-navbar {
       left: 260px;
       width: calc(100% - 260px);
     }
 
-    .sidebar-icon-only .jobell-navbar {
+    .sidebar-icon-only .platform-navbar {
       left: 70px;
       width: calc(100% - 70px);
     }
   }
 
   @media (max-width: 991.98px) {
-    .jobell-navbar {
+    .platform-navbar {
       left: 0;
       width: 100%;
     }
@@ -172,7 +172,7 @@
 </style>
 </style>
 
-<nav class="navbar jobell-navbar col-lg-12 col-12 p-lg-0 fixed-top d-flex flex-row" data-dashboard-navbar>
+<nav class="navbar platform-navbar col-lg-12 col-12 p-lg-0 fixed-top d-flex flex-row" data-dashboard-navbar>
   <div class="navbar-menu-wrapper d-flex align-items-center justify-content-between">
 
     <a class="navbar-brand brand-logo-mini align-self-center d-lg-none" href="{% url 'dashboard' %}">
@@ -199,8 +199,8 @@
           {% endif %}
         </a>
 
-        <div class="dropdown-menu navbar-dropdown preview-list jobell-dropdown-menu" aria-labelledby="orderDropdown">
-          <h6 class="jobell-dropdown-title">Customer Orders</h6>
+        <div class="dropdown-menu navbar-dropdown preview-list platform-dropdown-menu" aria-labelledby="orderDropdown">
+          <h6 class="platform-dropdown-title">Customer Orders</h6>
 
           {% if pending_and_out_for_delivery %}
             {% for order in pending_and_out_for_delivery %}
@@ -241,8 +241,8 @@
           {% endif %}
         </a>
 
-        <div class="dropdown-menu navbar-dropdown preview-list jobell-dropdown-menu" aria-labelledby="lowStockDropdown">
-          <h6 class="jobell-dropdown-title">Low Stock Alerts</h6>
+        <div class="dropdown-menu navbar-dropdown preview-list platform-dropdown-menu" aria-labelledby="lowStockDropdown">
+          <h6 class="platform-dropdown-title">Low Stock Alerts</h6>
 
           {% if low_stock_products %}
             {% for product in low_stock_products %}
@@ -276,8 +276,8 @@
           {% endif %}
         </a>
 
-        <div class="dropdown-menu navbar-dropdown preview-list jobell-dropdown-menu" aria-labelledby="feedbackDropdown">
-          <h6 class="jobell-dropdown-title">User Feedback</h6>
+        <div class="dropdown-menu navbar-dropdown preview-list platform-dropdown-menu" aria-labelledby="feedbackDropdown">
+          <h6 class="platform-dropdown-title">User Feedback</h6>
 
           {% if user_feedback %}
             {% for feedback in user_feedback %}
@@ -317,7 +317,7 @@
           {% if user.profile.avatar %}
             <img class="nav-profile-img mr-2" src="{{ user.profile.avatar.url }}" alt="Profile">
           {% else %}
-            <img class="nav-profile-img mr-2" src="{% static 'assets/images/faces/default-user.png' %}" alt="Profile">
+            <img class="nav-profile-img mr-2" src="{% static 'assets/images/faces/face1.jpg' %}" alt="Profile">
           {% endif %}
 
           <span class="profile-name">
@@ -328,7 +328,7 @@
           </span>
         </a>
 
-        <div class="dropdown-menu dropdown-menu-right navbar-dropdown jobell-dropdown-menu profile-dropdown-menu" aria-labelledby="profileDropdown">          <h6 class="jobell-dropdown-title">My Account</h6>
+        <div class="dropdown-menu dropdown-menu-right navbar-dropdown platform-dropdown-menu profile-dropdown-menu" aria-labelledby="profileDropdown">          <h6 class="platform-dropdown-title">My Account</h6>
 
           <a class="dropdown-item" href="{% url 'profile_list' %}">
             <i class="mdi mdi-settings mr-2 text-warning"></i> Profiles

@@ -7,7 +7,7 @@
       <div>
         <span class="admin-eyebrow">Fulfillment</span>
         <h1 class="admin-page-title">{{ table_title|default:'Orders to be processed' }}</h1>
-        <p class="admin-muted mb-0">Prioritize pending orders and move them through delivery quickly.</p>
+        <p class="admin-muted mb-0">Work the oldest orders first, confirm details, and move each order into the next fulfillment step.</p>
       </div>
 
       <div class="admin-actions print-hide">
@@ -20,33 +20,41 @@
       </div>
     </div>
 
-    <div class="admin-stat-grid">
-      <div class="admin-stat">
+    <div class="admin-stat-grid fulfillment-stat-grid">
+      <div class="admin-stat fulfillment-stat is-total">
         <span>Queue</span>
         <strong>{{ orders.paginator.count|intcomma }}</strong>
+        <small>matching open orders</small>
       </div>
-      <div class="admin-stat">
+      <div class="admin-stat fulfillment-stat is-pending">
+        <span>Needs action</span>
+        <strong>{{ pending_count|intcomma }}</strong>
+        <small>pending orders</small>
+      </div>
+      <div class="admin-stat fulfillment-stat is-delivery">
+        <span>In delivery</span>
+        <strong>{{ out_for_delivery_count|intcomma }}</strong>
+        <small>already dispatched</small>
+      </div>
+      <div class="admin-stat fulfillment-stat">
         <span>Page</span>
         <strong>{{ orders.number }} / {{ orders.paginator.num_pages }}</strong>
-      </div>
-      <div class="admin-stat">
-        <span>Status scope</span>
-        <strong>Open</strong>
-      </div>
-      <div class="admin-stat">
-        <span>Action</span>
-        <strong>Process</strong>
+        <small>showing up to 25</small>
       </div>
     </div>
 
-    <form method="get" action="{% url 'orders:orders_to_be_processed' %}" class="admin-search print-hide">
+    <form method="get" action="{% url 'orders:orders_to_be_processed' %}" class="admin-search fulfillment-search print-hide">
+      <label for="orderQueueSearch">Find an order</label>
       <div class="input-group">
-        <input type="text" name="search" value="{{ search_query }}" class="form-control" placeholder="Search by order ID or customer" />
+        <input id="orderQueueSearch" type="text" name="search" value="{{ search_query }}" class="form-control" placeholder="Order ID, first name, or last name" />
         <button class="btn btn-primary" type="submit"><i class="mdi mdi-search"></i> Search</button>
-        {% if search_query %}
-          <a href="{% url 'orders:orders_to_be_processed' %}" class="btn btn-light">Clear</a>
-        {% endif %}
       </div>
+      {% if search_query %}
+        <div class="fulfillment-filter-note">
+          <span>Filtered by <strong>{{ search_query }}</strong></span>
+          <a href="{% url 'orders:orders_to_be_processed' %}" class="btn btn-light btn-sm">Clear search</a>
+        </div>
+      {% endif %}
     </form>
 
     <div id="printMe" class="admin-panel mb-4">
@@ -63,16 +71,17 @@
                 <th>Order</th>
                 <th>Customer</th>
                 <th>Date</th>
+                <th>Age</th>
                 <th>Status</th>
                 <th class="text-right">Total</th>
-                <th class="text-center print-hide">Actions</th>
+                <th class="text-right print-hide">Actions</th>
               </tr>
             </thead>
             <tbody>
               {% for order in orders %}
-                <tr>
+                <tr class="fulfillment-row{% if order.status == 'Pending' %} is-pending{% endif %}">
                   <td>
-                    <span class="admin-item-title">#{{ order.id }}</span>
+                    <span class="fulfillment-order-id">#{{ order.id }}</span>
                     <span class="admin-item-subtitle">{{ order.get_payment_method_display }}</span>
                   </td>
                   <td>
@@ -80,6 +89,9 @@
                     <span class="admin-item-subtitle">{{ order.customer.mobile|default:order.customer.email }}</span>
                   </td>
                   <td>{{ order.created_at|date:'d M Y, H:i A' }}</td>
+                  <td>
+                    <span class="fulfillment-age">{{ order.created_at|naturaltime }}</span>
+                  </td>
                   <td>
                     {% if order.status == 'Pending' %}
                       <span class="admin-badge is-pending">Pending</span>
@@ -94,13 +106,15 @@
                     {% endif %}
                   </td>
                   <td class="text-right"><strong>UGX {{ order.total_amount|floatformat:'0'|intcomma }}</strong></td>
-                  <td class="text-center print-hide">
+                  <td class="text-right print-hide">
                     <span class="admin-icon-actions">
-                      <a href="{% url 'orders:order_report' order.id %}" class="btn btn-info btn-sm admin-icon-btn" title="View order" aria-label="View order {{ order.id }}">
-                        <i class="mdi mdi-eye-outline"></i>
-                      </a>
-                      <a href="{% url 'orders:order_process' order.id %}" class="btn btn-success btn-sm admin-icon-btn" title="Process order" aria-label="Process order {{ order.id }}">
+                      <a href="{% url 'orders:order_process' order.id %}" class="btn btn-sm admin-process-action" title="Process order" aria-label="Process order {{ order.id }}">
                         <i class="mdi mdi-truck-fast-outline"></i>
+                        <span>Process order</span>
+                      </a>
+                      <a href="{% url 'orders:order_report' order.id %}" class="btn btn-light btn-sm admin-view-action" title="View order" aria-label="View order {{ order.id }}">
+                        <i class="mdi mdi-eye-outline"></i>
+                        <span>View</span>
                       </a>
                       {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
                         <button type="button" class="btn btn-danger btn-sm admin-icon-btn" data-bs-toggle="modal" data-bs-target="#deleteModal{{ order.id }}" title="Delete order" aria-label="Delete order {{ order.id }}">
@@ -132,11 +146,14 @@
                 </tr>
               {% empty %}
                 <tr>
-                  <td colspan="6">
+                  <td colspan="7">
                     <div class="admin-empty">
                       <div class="admin-empty-icon"><i class="mdi mdi-truck-check-outline"></i></div>
-                      <h2 class="h4 font-weight-bold">No open orders</h2>
-                      <p class="admin-muted">Pending and out-for-delivery orders will appear here.</p>
+                      <h2 class="h4 font-weight-bold">{% if search_query %}No matching open orders{% else %}No open orders{% endif %}</h2>
+                      <p class="admin-muted">{% if search_query %}Try another order ID or customer name.{% else %}Pending and out-for-delivery orders will appear here.{% endif %}</p>
+                      {% if search_query %}
+                        <a href="{% url 'orders:orders_to_be_processed' %}" class="btn btn-dark">Show full queue</a>
+                      {% endif %}
                     </div>
                   </td>
                 </tr>

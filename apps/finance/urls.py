@@ -4,6 +4,21 @@ from . import views
 app_name = "finance"
 
 urlpatterns = [
+    path(
+        "financial-periods/",
+        views.financial_period_list_view,
+        name="financial_periods",
+    ),
+    path(
+        "financial-periods/add/",
+        views.financial_period_create_view,
+        name="financial_period_add",
+    ),
+    path(
+        "financial-periods/<int:period_id>/edit/",
+        views.financial_period_update_view,
+        name="financial_period_update",
+    ),
     path("add-account/", views.add_chart_of_account_view, name="add_chart_of_account"),
     path("accounts/", views.chart_of_accounts_list_view, name="chart_of_accounts_list"),
     path("import-accounts/", views.import_coa_data, name="import_coa_data"),

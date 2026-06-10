@@ -6,33 +6,33 @@
 {% endblock %}
 
 {% block content %}
-  <section class="jobell-info-page">
-    <div class="jobell-info-hero">
+  <section class="platform-info-page">
+    <div class="platform-info-hero">
       <div>
-        <span class="jobell-page-kicker">Support</span>
+        <span class="platform-page-kicker">Support</span>
         <h1>Get in touch</h1>
-        <p>Questions about an order, delivery, product details, or returns? Send us a message and the Jobell team will help.</p>
+        <p>Questions about an order, delivery, product details, or returns? Send us a message and the {{ site_name|upper }} team will help.</p>
       </div>
-      <a class="jobell-page-action" href="{% url 'products:shop_homepage' %}">Continue shopping</a>
+      <a class="platform-page-action" href="{% url 'products:shop_homepage' %}">Continue shopping</a>
     </div>
 
-    <div class="jobell-contact-grid">
-      <aside class="jobell-info-panel">
+    <div class="platform-contact-grid">
+      <aside class="platform-info-panel">
         <h2>Contact details</h2>
-        <div class="jobell-contact-list">
+        <div class="platform-contact-list">
           <p><i class="mdi mdi-map-marker-outline"></i><span>Makerere, Kampala</span></p>
           <p><i class="mdi mdi-phone-outline"></i><span>+256 777-337-491</span></p>
           <p><i class="mdi mdi-whatsapp"></i><a href="https://wa.me/256777337491" target="_blank" rel="noopener">WhatsApp support</a></p>
-          <p><i class="mdi mdi-email-outline"></i><a href="mailto:jobellinc@gmail.com">jobellinc@gmail.com</a></p>
+          <p><i class="mdi mdi-email-outline"></i><a href="mailto:{{ support_email }}">{{ support_email }}</a></p>
         </div>
       </aside>
 
-      <div class="jobell-info-panel">
+      <div class="platform-info-panel">
         <h2>Send a message</h2>
         <form id="contact-form" method="post" action="{% url 'contact_us' %}">
           {% csrf_token %}
           {{ form|crispy }}
-          <button type="submit" class="jobell-page-button" onclick="return confirm('Are you sure you want to proceed?') && validateForm()">Send message</button>
+          <button type="submit" class="platform-page-button" onclick="return confirm('Are you sure you want to proceed?') && validateForm()">Send message</button>
         </form>
       </div>
     </div>

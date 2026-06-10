@@ -295,10 +295,10 @@ def send_contact_email(name, email):
         "Your message has been received, and our team is already on it. "
         "Expect a response soon as we work to assist you promptly.\n\n"
         "In the meantime, feel free to browse our available products here:\n"
-        "👉 [View Products](https://jobellinc.com/)\n\n"
+        "👉 [View Products](https://example.com/)\n\n"
         "If you have additional questions or concerns, let us know—we're here to help!\n\n"
         "Warm regards,\n"
-        "The Jobell Inc. Team\n"
+        f"The {settings.COMPANY_NAME} Team\n"
         "Management"
     )
 

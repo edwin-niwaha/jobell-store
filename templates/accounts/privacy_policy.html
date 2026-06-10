@@ -5,17 +5,17 @@
 {% endblock %}
 
 {% block content %}
-  <section class="jobell-info-page">
-    <div class="jobell-info-hero">
+  <section class="platform-info-page">
+    <div class="platform-info-hero">
       <div>
-        <span class="jobell-page-kicker">Privacy</span>
+        <span class="platform-page-kicker">Privacy</span>
         <h1>Privacy Policy</h1>
-        <p>How Jobell collects, uses, and protects customer information while you browse, shop, and contact our team.</p>
+        <p>How {{ site_name|upper }} collects, uses, and protects customer information while you browse, shop, and contact our team.</p>
       </div>
-      <a class="jobell-page-action" href="{% url 'contact_us' %}">Contact support</a>
+      <a class="platform-page-action" href="{% url 'contact_us' %}">Contact support</a>
     </div>
 
-    <div class="jobell-info-panel jobell-policy-panel">
+    <div class="platform-info-panel platform-policy-panel">
       <h2>Cookies management</h2>
       <p>We use cookies to improve your experience on our website. By using our services, you agree to the use of cookies.</p>
 
@@ -59,7 +59,7 @@
       <p>We may update this policy from time to time. Changes will be posted on this page.</p>
 
       <h2>9. Contact us</h2>
-      <p>For privacy questions, contact <a href="mailto:jobellinc@gmail.com">jobellinc@gmail.com</a> or call +256 777-337-491.</p>
+      <p>For privacy questions, contact <a href="mailto:{{ support_email }}">{{ support_email }}</a> or call +256 777-337-491.</p>
     </div>
   </section>
 {% endblock %}

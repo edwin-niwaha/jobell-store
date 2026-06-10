@@ -34,9 +34,9 @@
 
       <!-- Header Information -->
       <div class="text-center border-bottom pb-3 mb-4">
-        <h1 class="fw-bold">{{ company_name|default:'Jobell Inc' }}</h1>
+        <h1 class="fw-bold">{{ company_name|default:branding.company_name }}</h1>
         <h3 class="fw-semibold">{{ company_address|default:'Kampala, Uganda' }}</h3>
-        <p>{{ company_phone|default:'Phone: (+256) 777-337-491' }} | {{ company_email|default:'Email: jobellinc@gmail.com' }}</p>
+        <p>{{ company_phone|default:branding.support_phone }} | {{ company_email|default:branding.support_email }}</p>
         <h2 class="fs-4">{{ table_title }}</h2>
         <p>As of {{ date|date:'F d, Y' }}</p>
         {% if financial_period %}

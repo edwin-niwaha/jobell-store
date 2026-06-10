@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const audio = document.getElementById('welcome-audio')
     const playButton = document.getElementById('play-audio')
     const pauseButton = document.getElementById('pause-audio')
-    const carousel = document.querySelector('[data-jobell-hero-carousel]')
+    const carousel = document.querySelector('[data-app-hero-carousel]')
 
     // Automatically play the audio on page load
     if (audio) {
@@ -22,10 +22,10 @@ document.addEventListener('DOMContentLoaded', function () {
     })
 
     if (carousel) {
-        const slides = Array.from(carousel.querySelectorAll('[data-jobell-slide]'))
-        const dots = Array.from(carousel.querySelectorAll('[data-jobell-dot]'))
-        const previousButton = carousel.querySelector('[data-jobell-prev]')
-        const nextButton = carousel.querySelector('[data-jobell-next]')
+        const slides = Array.from(carousel.querySelectorAll('[data-app-slide]'))
+        const dots = Array.from(carousel.querySelectorAll('[data-app-dot]'))
+        const previousButton = carousel.querySelector('[data-app-prev]')
+        const nextButton = carousel.querySelector('[data-app-next]')
         const autoplayDelay = 5500
         let activeIndex = slides.findIndex((slide) => slide.classList.contains('is-active'))
         let autoplayTimer

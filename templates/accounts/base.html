@@ -35,10 +35,17 @@
     <link rel="stylesheet" href="{% static 'css/video.css' %}" />
     <title>
       {% block title %}
-        JOBELL INC
+        {{ company_name|upper }}
       {% endblock %}
     </title>
     <style>
+      :root {
+        --primary-color: {{ primary_color|default:'#D4AF37' }};
+        --secondary-color: {{ secondary_color|default:'#000000' }};
+        --text-color: {{ text_color|default:'#212529' }};
+        --border-radius: {{ border_radius|default:'12px' }};
+      }
+
       .fixed-marquee {
         position: fixed;
         top: 56px; /* Height of the navbar */
@@ -68,7 +75,7 @@
     </style>
   </head>
 
-  <body class="jobell-account-body">
+  <body class="platform-account-body">
     <!-- ========== Topbar Start ========== -->
     {% block topbar %}
       {% include 'accounts/_partials/navbar.html' %}
@@ -85,7 +92,7 @@
     {% comment %} {% include '_partials/cookies.html' %} {% endcomment %}
 
     <!-- Content -->
-    <div class="jobell-page-content">
+    <div class="platform-page-content">
       {% block content %}
 
       {% endblock %}
@@ -95,7 +102,7 @@
     {% block footer %}
       {% include '_partials/home_footer.html' %}
       <!-- Chat Button -->
-      <button id="load-chat" class="jobell-chat-button" type="button"><i class="mdi mdi-message-text-outline"></i> Chat with us</button>
+      <button id="load-chat" class="platform-chat-button" type="button"><i class="mdi mdi-message-text-outline"></i> Chat with us</button>
     {% endblock %}
     <!-- ============================================= -->
 

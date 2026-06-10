@@ -21,7 +21,7 @@
               {% if product.default_image %}
                 <a href="{% url 'orders:product_detail' product.uuid %}"><img src="{{ product.default_image.image.url }}" alt="{{ product.name }}" class="d-block w-100 rounded-pill img-fluid product-image" style="max-height: 200px; object-fit: contain;" /></a>
               {% else %}
-                <a href="{% url 'orders:product_detail' product.uuid %}"><img src="{% static 'images/default-product.jpg' %}" alt="Default Product Image" class="d-block w-100 rounded-pill img-fluid" style="max-height: 200px; object-fit: contain;" /></a>
+                <a href="{% url 'orders:product_detail' product.uuid %}"><img src="{% static 'images/no-image.png' %}" alt="Default Product Image" class="d-block w-100 rounded-pill img-fluid" style="max-height: 200px; object-fit: contain;" /></a>
               {% endif %}
 
               <div class="card-body">

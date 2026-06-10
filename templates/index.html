@@ -3,30 +3,30 @@
 {% load humanize %}
 
 {% block title %}
-  Jobell Store
+  {{ site_name|upper }} Store
 {% endblock %}
 
 {% block content %}
   <link rel="stylesheet" href="{% static 'css/home.css' %}?v=4" />
 
-  <div class="jobell-home">
-    <main class="jobell-shell">
-      <section class="jobell-hero">
-        <div class="jobell-hero-copy">
-          <span class="jobell-eyebrow">Jobell Storefront</span>
+  <div class="platform-home">
+    <main class="platform-shell">
+      <section class="platform-hero">
+        <div class="platform-hero-copy">
+          <span class="platform-eyebrow">{{ site_name|upper }} Storefront</span>
           <h1>Discover Luxury Fragrances</h1>
           <p>Premium scents crafted for confidence, elegance, and unforgettable impressions.</p>
 
-          <div class="jobell-actions">
-            <a href="{% url 'products:shop_homepage' %}" class="jobell-btn jobell-btn-accent">
+          <div class="platform-actions">
+            <a href="{% url 'products:shop_homepage' %}" class="platform-btn platform-btn-accent">
               Shop now
             </a>
-            <a href="#jobell-categories" class="jobell-btn jobell-btn-secondary">
+            <a href="#platform-categories" class="platform-btn platform-btn-secondary">
               Browse categories
             </a>
           </div>
 
-          <div class="jobell-stats" aria-label="Store summary">
+          <div class="platform-stats" aria-label="Store summary">
             <div>
               <strong>{{ active_products_count|default:0 }}</strong>
               <span>Products</span>
@@ -42,13 +42,13 @@
           </div>
         </div>
 
-        <div class="jobell-hero-carousel" data-jobell-hero-carousel aria-label="Featured products slideshow">
+        <div class="platform-hero-carousel" data-app-hero-carousel aria-label="Featured products slideshow">
           {% if products_with_images %}
-            <div class="jobell-hero-slides">
+            <div class="platform-hero-slides">
               {% for product_info in products_with_images|slice:':8' %}
                 {% with product=product_info.product images=product_info.images min_price=product_info.min_price max_price=product_info.max_price %}
-                  <article class="jobell-hero-slide {% if forloop.first %}is-active{% endif %}" data-jobell-slide>
-                    <a class="jobell-hero-media" href="{% url 'orders:product_detail' product.uuid %}" aria-label="View {{ product.name }}">
+                  <article class="platform-hero-slide {% if forloop.first %}is-active{% endif %}" data-app-slide>
+                    <a class="platform-hero-media" href="{% url 'orders:product_detail' product.uuid %}" aria-label="View {{ product.name }}">
                       {% if product_info.image_url %}
                         <img src="{{ product_info.image_url }}" alt="{{ product.name }}" />
                       {% elif images %}
@@ -59,8 +59,8 @@
                         <img src="{% static 'images/no-image.png' %}" alt="No image available" />
                       {% endif %}
                     </a>
-                    <div class="jobell-hero-product">
-                      <span class="jobell-eyebrow">Featured fragrance</span>
+                    <div class="platform-hero-product">
+                      <span class="platform-eyebrow">Featured fragrance</span>
                       <h2>{{ product.name }}</h2>
                       <p>
                         {% if product.category %}{{ product.category }}{% else %}Premium selection{% endif %}
@@ -73,48 +73,48 @@
                           Price not available
                         {% endif %}
                       </strong>
-                      <a class="jobell-btn jobell-btn-accent" href="{% url 'orders:product_detail' product.uuid %}">View product</a>
+                      <a class="platform-btn platform-btn-accent" href="{% url 'orders:product_detail' product.uuid %}">View product</a>
                     </div>
                   </article>
                 {% endwith %}
               {% endfor %}
             </div>
-            <button class="jobell-hero-arrow jobell-hero-arrow-prev" type="button" data-jobell-prev aria-label="Show previous featured product">
+            <button class="platform-hero-arrow platform-hero-arrow-prev" type="button" data-app-prev aria-label="Show previous featured product">
               <i class="mdi mdi-chevron-left" aria-hidden="true"></i>
             </button>
-            <button class="jobell-hero-arrow jobell-hero-arrow-next" type="button" data-jobell-next aria-label="Show next featured product">
+            <button class="platform-hero-arrow platform-hero-arrow-next" type="button" data-app-next aria-label="Show next featured product">
               <i class="mdi mdi-chevron-right" aria-hidden="true"></i>
             </button>
-            <div class="jobell-hero-dots" aria-label="Featured product slides">
+            <div class="platform-hero-dots" aria-label="Featured product slides">
               {% for product_info in products_with_images|slice:':8' %}
-                <button class="jobell-hero-dot {% if forloop.first %}is-active{% endif %}" type="button" data-jobell-dot="{{ forloop.counter0 }}" aria-label="Show slide {{ forloop.counter }}" {% if forloop.first %}aria-current="true"{% endif %}></button>
+                <button class="platform-hero-dot {% if forloop.first %}is-active{% endif %}" type="button" data-app-dot="{{ forloop.counter0 }}" aria-label="Show slide {{ forloop.counter }}" {% if forloop.first %}aria-current="true"{% endif %}></button>
               {% endfor %}
             </div>
           {% else %}
-            <div class="jobell-empty-panel">Featured products will appear here once available.</div>
+            <div class="platform-empty-panel">Featured products will appear here once available.</div>
           {% endif %}
         </div>
       </section>
 
-      <section class="jobell-category-feature" id="jobell-categories">
-        <input id="home-category-toggle" class="jobell-category-toggle" type="checkbox" checked aria-label="Expand categories" />
+      <section class="platform-category-feature" id="platform-categories">
+        <input id="home-category-toggle" class="platform-category-toggle" type="checkbox" checked aria-label="Expand categories" />
 
-        <aside class="jobell-category-panel">
-          <div class="jobell-panel-heading">
+        <aside class="platform-category-panel">
+          <div class="platform-panel-heading">
             <div>
               <h2>Shop by category</h2>
               <p>Popular departments</p>
             </div>
-            <label class="jobell-icon-button" for="home-category-toggle" title="Collapse or expand categories">
+            <label class="platform-icon-button" for="home-category-toggle" title="Collapse or expand categories">
               <i class="mdi mdi-menu" aria-hidden="true"></i>
             </label>
           </div>
 
-          <div class="jobell-category-list">
+          <div class="platform-category-list">
             {% if categories %}
               {% for category in categories|slice:':6' %}
-                <a class="jobell-category-link" href="{% url 'products:shop_homepage' %}?category={{ category.id }}">
-                  <span class="jobell-category-icon">
+                <a class="platform-category-link" href="{% url 'products:shop_homepage' %}?category={{ category.id }}">
+                  <span class="platform-category-icon">
                     {% if category.image_url %}
                       <img src="{{ category.image_url }}" alt="{{ category.name }}" />
                     {% elif category.icon.url %}
@@ -123,87 +123,87 @@
                       <img src="{% static 'images/no-image.png' %}" alt="{{ category.name }}" />
                     {% endif %}
                   </span>
-                  <span class="jobell-category-text">
+                  <span class="platform-category-text">
                     <strong>{{ category.name }}</strong>
                     <small>Browse collection</small>
                   </span>
                 </a>
               {% endfor %}
             {% else %}
-              <p class="jobell-muted">Categories will appear here once available.</p>
+              <p class="platform-muted">Categories will appear here once available.</p>
             {% endif %}
           </div>
         </aside>
 
-        <div class="jobell-panel jobell-featured-panel">
-          <div class="jobell-section-heading">
+        <div class="platform-panel platform-featured-panel">
+          <div class="platform-section-heading">
             <div>
-              <span class="jobell-eyebrow">Handpicked</span>
+              <span class="platform-eyebrow">Handpicked</span>
               <h2>Featured Collection</h2>
             </div>
             <a href="{% url 'products:shop_homepage' %}">See more</a>
           </div>
 
           {% if products_with_images %}
-            <div class="jobell-product-scroll">
+            <div class="platform-product-scroll">
               {% for product_info in products_with_images|slice:':12' %}
                 {% include 'partials/home_product_tile.html' with product_info=product_info %}
               {% endfor %}
             </div>
           {% else %}
-            <p class="jobell-muted">No featured products available yet.</p>
+            <p class="platform-muted">No featured products available yet.</p>
           {% endif %}
         </div>
       </section>
 
-      <section class="jobell-panel">
-        <div class="jobell-section-heading">
+      <section class="platform-panel">
+        <div class="platform-section-heading">
           <div>
-            <span class="jobell-eyebrow">Fresh picks</span>
+            <span class="platform-eyebrow">Fresh picks</span>
             <h2>New Arrivals</h2>
           </div>
           <a href="{% url 'products:shop_homepage' %}">View all</a>
         </div>
 
         {% if products_with_images %}
-          <div class="jobell-product-grid">
+          <div class="platform-product-grid">
             {% for product_info in products_with_images|slice:':8' %}
               {% include 'partials/home_product_tile.html' with product_info=product_info grid=True %}
             {% endfor %}
           </div>
         {% else %}
-          <p class="jobell-muted">Products will appear here once available.</p>
+          <p class="platform-muted">Products will appear here once available.</p>
         {% endif %}
       </section>
 
-      <section class="jobell-service-grid">
-        <div class="jobell-service-card">
+      <section class="platform-service-grid">
+        <div class="platform-service-card">
           <h3><i class="mdi mdi-truck-fast-outline" aria-hidden="true"></i> Fast delivery</h3>
           <p>Reliable delivery from order to doorstep.</p>
         </div>
 
-        <div class="jobell-service-card">
+        <div class="platform-service-card">
           <h3><i class="mdi mdi-shield-check-outline" aria-hidden="true"></i> Secure checkout</h3>
           <p>A simple and safe purchase flow for every order.</p>
         </div>
 
-        <div class="jobell-service-card jobell-service-cta">
+        <div class="platform-service-card platform-service-cta">
           <div>
             <h3>Need more?</h3>
             <p>Browse the full catalog and discover more fragrances for your routine.</p>
           </div>
-          <a href="{% url 'products:shop_homepage' %}" class="jobell-btn jobell-btn-accent">Explore products</a>
+          <a href="{% url 'products:shop_homepage' %}" class="platform-btn platform-btn-accent">Explore products</a>
         </div>
       </section>
 
-      <section class="jobell-community-grid">
-        <div class="jobell-panel">
-          <div class="jobell-section-heading">
+      <section class="platform-community-grid">
+        <div class="platform-panel">
+          <div class="platform-section-heading">
             <div>
-              <span class="jobell-eyebrow">Testimonials</span>
+              <span class="platform-eyebrow">Testimonials</span>
               <h2>Customer voices</h2>
             </div>
-            <button class="jobell-link-button" type="button" data-toggle="modal" data-target="#addTestimonialModal" data-bs-toggle="modal" data-bs-target="#addTestimonialModal">
+            <button class="platform-link-button" type="button" data-toggle="modal" data-target="#addTestimonialModal" data-bs-toggle="modal" data-bs-target="#addTestimonialModal">
               Share yours
             </button>
           </div>
@@ -213,7 +213,7 @@
               <div class="carousel-inner">
                 {% for testimonial in testimonials %}
                   <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                    <blockquote class="jobell-testimonial">
+                    <blockquote class="platform-testimonial">
                       <p>&ldquo;{{ testimonial.text }}&rdquo;</p>
                       <footer>{{ testimonial.author }}</footer>
                     </blockquote>
@@ -222,27 +222,27 @@
               </div>
             </div>
           {% else %}
-            <p class="jobell-muted">Testimonials will appear here once approved.</p>
+            <p class="platform-muted">Testimonials will appear here once approved.</p>
           {% endif %}
         </div>
 
-        <div class="jobell-panel jobell-newsletter-panel">
-          <div class="jobell-section-heading">
+        <div class="platform-panel platform-newsletter-panel">
+          <div class="platform-section-heading">
             <div>
-              <span class="jobell-eyebrow">Updates</span>
+              <span class="platform-eyebrow">Updates</span>
               <h2>Newsletter</h2>
             </div>
           </div>
 
-          <p class="jobell-muted">Subscribe for exclusive offers and fragrance updates.</p>
+          <p class="platform-muted">Subscribe for exclusive offers and fragrance updates.</p>
 
-          <form class="jobell-newsletter" method="POST" action="{% url 'users-home' %}">
+          <form class="platform-newsletter" method="POST" action="{% url 'users-home' %}">
             {% csrf_token %}
             {{ newsletter_form.email }}
-            <button class="jobell-btn jobell-btn-accent" name="submit_newsletter" value="1" type="submit">
+            <button class="platform-btn platform-btn-accent" name="submit_newsletter" value="1" type="submit">
               Subscribe
             </button>
-            <label class="jobell-consent">
+            <label class="platform-consent">
               {{ newsletter_form.consent }}
               <span>I agree to receive emails.</span>
             </label>
@@ -260,7 +260,7 @@
 
   <div class="modal fade" id="addTestimonialModal" tabindex="-1" aria-labelledby="addTestimonialModalLabel" aria-hidden="true">
     <div class="modal-dialog">
-      <div class="modal-content jobell-modal">
+      <div class="modal-content platform-modal">
         <div class="modal-header">
           <h5 class="modal-title" id="addTestimonialModalLabel">Share your testimonial</h5>
           <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close">
@@ -279,13 +279,13 @@
               <label for="{{ testimonial_form.author.id_for_label }}">Your name</label>
               {{ testimonial_form.author }}
             </div>
-            <button type="submit" class="jobell-btn jobell-btn-accent w-100">Submit</button>
+            <button type="submit" class="platform-btn platform-btn-accent w-100">Submit</button>
           </form>
         </div>
       </div>
     </div>
   </div>
 
-  <audio id="welcome-audio" src="{% static 'audio/jobell_welcome.mp3' %}" preload="auto"></audio>
+  <audio id="welcome-audio" src="{% static 'audio/welcome.mp3' %}" preload="auto"></audio>
   <script src="{% static 'js/welcome.js' %}?v=2"></script>
 {% endblock %}

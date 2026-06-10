@@ -93,7 +93,7 @@
         amount: amount,
         currency: 'UGX',
         payment_options: 'card, mobilemoneyuganda, ussd',
-        redirect_url: `https://jobellinc.com/orders/comfirm_payment/${orderId}`,
+        redirect_url: `{{ site_url }}/orders/comfirm_payment/${orderId}`,
         meta: {
           order_id: orderId,
           consumer_mac: '92a3-912ba-1192a'

@@ -23,8 +23,20 @@ def env_list(name, default=None):
     return [item.strip() for item in value.split(",") if item.strip()]
 
 
-SITE_NAME = os.getenv("SITE_NAME", "Jobell Inc")
-BASE_DOMAIN = os.getenv("BASE_DOMAIN", "jobellinc.com")
+from .branding import (  # noqa: E402
+    BORDER_RADIUS,
+    COMPANY_NAME,
+    LOGO_URL,
+    PRIMARY_COLOR,
+    SECONDARY_COLOR,
+    SITE_NAME,
+    SUPPORT_EMAIL,
+    SUPPORT_PHONE,
+    TEXT_COLOR,
+)
+
+
+BASE_DOMAIN = os.getenv("BASE_DOMAIN", "example.com")
 SITE_URL = os.getenv("SITE_URL", f"https://{BASE_DOMAIN}")
 
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-development-only-change-me")
@@ -106,6 +118,7 @@ TEMPLATES = [
                 "apps.authentication.context_processors.pending_orders_context",
                 "apps.authentication.context_processors.cart_count_user_context",
                 "apps.finance.context_processors.open_financial_periods",
+                "apps.common.context_processors.branding",
             ],
         },
     },
@@ -122,7 +135,7 @@ DATABASES = {
     if DATABASE_URL
     else {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("DB_NAME", "jobell_db"),
+        "NAME": os.getenv("DB_NAME", "platform_db"),
         "USER": os.getenv("DB_USER", "postgres"),
         "PASSWORD": os.getenv("DB_PASSWORD", ""),
         "HOST": os.getenv("DB_HOST", "localhost"),
@@ -211,7 +224,30 @@ EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
 EMAIL_HOST_USER = os.getenv("EMAIL_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_PASS")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "webmaster@localhost")
+EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "10"))
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
+RESEND_API_URL = os.getenv("RESEND_API_URL", "https://api.resend.com/emails")
+RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", DEFAULT_FROM_EMAIL)
 ED_EMAIL = os.getenv("ED_EMAIL", "")
+ADMIN_ORDER_EMAILS = env_list("ADMIN_ORDER_EMAILS", [ED_EMAIL] if ED_EMAIL else [])
+
+
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", REDIS_URL)
+CELERY_RESULT_BACKEND = os.getenv(
+    "CELERY_RESULT_BACKEND",
+    os.getenv("REDIS_RESULT_URL", "redis://localhost:6379/1"),
+)
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = os.getenv("TIME_ZONE", "Africa/Kampala")
+CELERY_ENABLE_UTC = True
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_TASK_TIME_LIMIT = int(os.getenv("CELERY_TASK_TIME_LIMIT", "60"))
+CELERY_TASK_SOFT_TIME_LIMIT = int(os.getenv("CELERY_TASK_SOFT_TIME_LIMIT", "45"))
+CELERY_WORKER_PREFETCH_MULTIPLIER = int(os.getenv("CELERY_WORKER_PREFETCH_MULTIPLIER", "1"))
+CELERY_TASK_ACKS_LATE = env_bool("CELERY_TASK_ACKS_LATE", True)
 
 
 LANGUAGE_CODE = "en-us"
