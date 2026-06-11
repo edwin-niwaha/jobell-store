@@ -1,7 +1,12 @@
 from django.contrib import admin
 from django.core.exceptions import ValidationError
+from django.db import transaction
 
 from .models import Cart, CartItem, Order, OrderDetail, OrderPayment, Wishlist
+from .notifications import (
+    queue_order_status_changed_emails,
+    queue_payment_status_changed_emails,
+)
 from .services import mark_order_paid_and_capture_sale
 
 
@@ -11,12 +16,24 @@ def confirm_payment_received(modeladmin, request, queryset):
     skipped = 0
     failed = 0
     for order in queryset.select_related("customer"):
+        old_payment_status = order.payment_status
         try:
             payment, sale, sale_created = mark_order_paid_and_capture_sale(
                 order,
                 provider="cash" if order.payment_method == "cod" else "mobile_money",
                 received_by=request.user,
             )
+            order.refresh_from_db(fields=["payment_status"])
+            if old_payment_status != order.payment_status:
+                transaction.on_commit(
+                    lambda order_id=order.id,
+                    old_status=old_payment_status,
+                    new_status=order.payment_status: queue_payment_status_changed_emails(
+                        order_id,
+                        old_status,
+                        new_status,
+                    )
+                )
             if sale_created:
                 confirmed += 1
             else:
@@ -89,6 +106,51 @@ class OrderAdmin(admin.ModelAdmin):
     date_hierarchy = "created_at"
     inlines = (OrderDetailInline,)
     actions = (confirm_payment_received,)
+
+    def get_readonly_fields(self, request, obj=None):
+        return (
+            *super().get_readonly_fields(request, obj),
+            "email_notification_summary",
+        )
+
+    @admin.display(description="Email notifications")
+    def email_notification_summary(self, obj):
+        if obj is None:
+            return "Notifications are sent after order creation and status/payment transitions."
+        customer_email = obj.customer.email if obj.customer_id else ""
+        return (
+            f"Customer: {customer_email or 'missing'} | "
+            f"Admin recipients: configured via JOBELL_ORDER_EMAIL/ADMIN_ORDER_EMAILS | "
+            "Failures are written to logs/app.log"
+        )
+
+    def save_model(self, request, obj, form, change):
+        old_status = None
+        old_payment_status = None
+        if change and obj.pk:
+            previous = Order.objects.filter(pk=obj.pk).values("status", "payment_status").first()
+            if previous:
+                old_status = previous["status"]
+                old_payment_status = previous["payment_status"]
+
+        super().save_model(request, obj, form, change)
+
+        if change and old_status is not None and old_status != obj.status:
+            transaction.on_commit(
+                lambda order_id=obj.id,
+                old=old_status,
+                new=obj.status: queue_order_status_changed_emails(order_id, old, new)
+            )
+        if (
+            change
+            and old_payment_status is not None
+            and old_payment_status != obj.payment_status
+        ):
+            transaction.on_commit(
+                lambda order_id=obj.id,
+                old=old_payment_status,
+                new=obj.payment_status: queue_payment_status_changed_emails(order_id, old, new)
+            )
 
 
 @admin.register(OrderPayment)

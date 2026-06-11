@@ -113,6 +113,8 @@ class CartItem(models.Model):
 class Order(models.Model):
     ORDER_STATUS_CHOICES = [
         ("Pending", "Pending"),
+        ("Processing", "Processing"),
+        ("Shipped", "Shipped"),
         ("Out for Delivery", "Out for Delivery"),
         ("Delivered", "Delivered"),
         ("Canceled", "Canceled"),

@@ -36,6 +36,7 @@ from .branding import (  # noqa: E402
 )
 
 
+SUPPORT_EMAIL = os.getenv("SUPPORT_EMAIL", SUPPORT_EMAIL)
 BASE_DOMAIN = os.getenv("BASE_DOMAIN", "example.com")
 SITE_URL = os.getenv("SITE_URL", f"https://{BASE_DOMAIN}")
 
@@ -236,13 +237,23 @@ EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
 EMAIL_HOST_USER = os.getenv("EMAIL_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_PASS")
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "webmaster@localhost")
+DEFAULT_FROM_EMAIL = os.getenv(
+    "DEFAULT_FROM_EMAIL",
+    "Jobell Inc <noreply@jobellinc.com>",
+)
+SERVER_EMAIL = os.getenv("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
 EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "10"))
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 RESEND_API_URL = os.getenv("RESEND_API_URL", "https://api.resend.com/emails")
 RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", DEFAULT_FROM_EMAIL)
+JOBELL_ORDER_EMAIL = os.getenv("JOBELL_ORDER_EMAIL", "jobellinc@gmail.com")
 ED_EMAIL = os.getenv("ED_EMAIL", "")
-ADMIN_ORDER_EMAILS = env_list("ADMIN_ORDER_EMAILS", [ED_EMAIL] if ED_EMAIL else [])
+ADMIN_ORDER_EMAILS = env_list(
+    "ADMIN_ORDER_EMAILS",
+    [email for email in [JOBELL_ORDER_EMAIL, ED_EMAIL] if email],
+)
+ORDER_EMAIL_USE_CELERY = env_bool("ORDER_EMAIL_USE_CELERY", True)
+ORDER_EMAIL_CELERY_PING_TIMEOUT = float(os.getenv("ORDER_EMAIL_CELERY_PING_TIMEOUT", "0.35"))
 
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")

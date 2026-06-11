@@ -26,11 +26,10 @@ from .services import (
     get_or_create_cart,
     mark_order_paid_and_capture_sale,
 )
-from .tasks import (
-    send_admin_new_order_notification,
-    send_order_confirmation_email,
-    send_order_status_email,
-    send_payment_confirmation_email,
+from .notifications import (
+    queue_order_created_emails,
+    queue_order_status_changed_emails,
+    queue_payment_status_changed_emails,
 )
 from apps.products.models import Product, ProductVolume, ProductImage
 from apps.products.selectors import build_storefront_product_card
@@ -49,16 +48,15 @@ from apps.authentication.decorators import (
 
 
 def _queue_order_placed_emails(order_id):
-    send_order_confirmation_email.delay(order_id)
-    send_admin_new_order_notification.delay(order_id)
+    queue_order_created_emails(order_id)
 
 
 def _queue_order_status_email(order_id, old_status, new_status):
-    send_order_status_email.delay(
-        order_id,
-        old_status=old_status,
-        new_status=new_status,
-    )
+    queue_order_status_changed_emails(order_id, old_status, new_status)
+
+
+def _queue_payment_status_email(order_id, old_status, new_status):
+    queue_payment_status_changed_emails(order_id, old_status, new_status)
 
 
 logger = logging.getLogger(__name__)
@@ -1633,6 +1631,7 @@ def get_access_token():
 @require_POST
 def confirm_payment_view(request, order_id):
     order = get_object_or_404(Order.objects.select_related("customer"), id=order_id)
+    old_payment_status = order.payment_status
     try:
         payment, sale, sale_created = mark_order_paid_and_capture_sale(
             order,
@@ -1643,9 +1642,17 @@ def confirm_payment_view(request, order_id):
         messages.error(request, exc, extra_tags="bg-danger text-white")
         return redirect("orders:order_process", order_id=order.id)
 
-    transaction.on_commit(
-        lambda order_id=order.id: send_payment_confirmation_email.delay(order_id)
-    )
+    order.refresh_from_db(fields=["payment_status"])
+    if old_payment_status != order.payment_status:
+        transaction.on_commit(
+            lambda order_id=order.id,
+            old_status=old_payment_status,
+            new_status=order.payment_status: _queue_payment_status_email(
+                order_id,
+                old_status,
+                new_status,
+            )
+        )
     if sale_created:
         messages.success(
             request,
@@ -1709,9 +1716,20 @@ def _complete_flutterwave_payment(order, payload, transaction_id):
     amount = Decimal(str(data.get("amount") or order.total_amount))
     currency = data.get("currency") or "UGX"
 
+    old_payment_status = order.payment_status
     if status not in {"successful", "completed"}:
         order.payment_status = "failed"
         order.save(update_fields=["payment_status", "updated_at"])
+        if old_payment_status != order.payment_status:
+            transaction.on_commit(
+                lambda order_id=order.id,
+                old_status=old_payment_status,
+                new_status=order.payment_status: _queue_payment_status_email(
+                    order_id,
+                    old_status,
+                    new_status,
+                )
+            )
         raise ValidationError("The payment was not completed.")
     if tx_ref and tx_ref != order.transaction_id:
         raise ValidationError(
@@ -1728,9 +1746,17 @@ def _complete_flutterwave_payment(order, payload, transaction_id):
         transaction_id=tx_ref or "",
         external_id=str(transaction_id or data.get("id") or ""),
     )
-    transaction.on_commit(
-        lambda order_id=order.id: send_payment_confirmation_email.delay(order_id)
-    )
+    order.refresh_from_db(fields=["payment_status"])
+    if old_payment_status != order.payment_status:
+        transaction.on_commit(
+            lambda order_id=order.id,
+            old_status=old_payment_status,
+            new_status=order.payment_status: _queue_payment_status_email(
+                order_id,
+                old_status,
+                new_status,
+            )
+        )
     return payment, sale, sale_created
 
 
@@ -1843,7 +1869,7 @@ def order_confirmation_view(request, order_id):
 def orders_to_be_processed_view(request):
     search_query = request.GET.get("search", "")
     open_orders = Order.objects.select_related("customer").filter(
-        status__in=["Pending", "Out for Delivery"]
+        status__in=["Pending", "Processing", "Shipped", "Out for Delivery"]
     )
     pending_count = open_orders.filter(status="Pending").count()
     out_for_delivery_count = open_orders.filter(status="Out for Delivery").count()
@@ -1889,7 +1915,9 @@ def customer_order_history_view(request):
         )
         total_orders = orders.count()
         delivered_orders = orders.filter(status="Delivered").count()
-        pending_orders = orders.filter(status__in=["Pending", "Out for Delivery"]).count()
+        pending_orders = orders.filter(
+            status__in=["Pending", "Processing", "Shipped", "Out for Delivery"]
+        ).count()
 
         return render(
             request,
@@ -1991,7 +2019,7 @@ def order_detail_view(request, order_id):
         customer=request.user.customer,
     )
 
-    statuses = ["Pending", "Out for Delivery", "Delivered"]
+    statuses = ["Pending", "Processing", "Shipped", "Out for Delivery", "Delivered"]
     current_status_index = statuses.index(order.status) if order.status in statuses else -1
 
     return render(

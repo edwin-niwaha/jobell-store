@@ -1,0 +1,60 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ email_title|default:event_title|default:site_name }}</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f1ea;color:#151515;font-family:Arial,Helvetica,sans-serif;-webkit-text-size-adjust:100%;text-size-adjust:100%;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background:#f4f1ea;margin:0;padding:0;">
+    <tr>
+      <td align="center" style="padding:24px 12px;">
+        <table role="presentation" width="680" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:680px;border-collapse:separate;border-spacing:0;">
+          <tr>
+            <td style="background:#050505;border-radius:18px 18px 0 0;padding:22px 24px;border-bottom:4px solid #d4af37;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td valign="middle" style="vertical-align:middle;">
+                    {% if logo_url %}
+                      <img src="{{ logo_url }}" width="112" alt="{{ company_name|default:site_name }}" style="display:block;max-width:112px;height:auto;border:0;margin:0 0 8px;">
+                    {% endif %}
+                    <div style="font-size:22px;line-height:28px;font-weight:700;color:#ffffff;letter-spacing:0;">{{ company_name|default:site_name }}</div>
+                    <div style="font-size:12px;line-height:18px;color:#d4af37;text-transform:uppercase;letter-spacing:1.8px;">Premium order care</div>
+                  </td>
+                  <td align="right" valign="middle" style="vertical-align:middle;text-align:right;">
+                    <div style="display:inline-block;border:1px solid #d4af37;border-radius:999px;padding:8px 12px;color:#f7e7ad;font-size:12px;line-height:14px;">
+                      Order #{{ order_number }}
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="background:#ffffff;border-left:1px solid #eadfca;border-right:1px solid #eadfca;padding:0;">
+              {% block content %}{% endblock %}
+            </td>
+          </tr>
+          <tr>
+            <td style="background:#111111;border-radius:0 0 18px 18px;padding:22px 24px;color:#d8d8d8;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td style="font-size:13px;line-height:20px;">
+                    <strong style="color:#ffffff;">{{ company_name|default:site_name }}</strong><br>
+                    {% if support_email %}Support: <a href="mailto:{{ support_email }}" style="color:#d4af37;text-decoration:none;">{{ support_email }}</a>{% endif %}
+                    {% if support_phone %}<br>Phone: <span style="color:#f7e7ad;">{{ support_phone }}</span>{% endif %}
+                  </td>
+                  <td align="right" style="font-size:12px;line-height:18px;color:#9ca3af;text-align:right;">
+                    Thank you for choosing {{ site_name }}.<br>
+                    {% if site_url %}<a href="{{ site_url }}" style="color:#d4af37;text-decoration:none;">{{ site_url }}</a>{% endif %}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

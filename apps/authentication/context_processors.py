@@ -52,9 +52,9 @@ def low_stock_alerts_context(request):
 
 
 def pending_orders_context(request):
-    # Fetch orders with statuses "Pending" or "Out for Delivery"
+    # Fetch orders that still need fulfilment attention.
     pending_and_out_for_delivery = Order.objects.filter(
-        status__in=["Pending", "Out for Delivery"]
+        status__in=["Pending", "Processing", "Shipped", "Out for Delivery"]
     ).select_related("customer")
 
     # Count the total number of pending and Out for Delivery orders

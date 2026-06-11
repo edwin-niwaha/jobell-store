@@ -1,13 +1,18 @@
-{{ site_name }}
+{% load humanize %}{{ company_name|default:site_name }}
+
+Order status update
 
 Hi {{ customer_name }},
 
-Order #{{ order_number }} has been updated.
-{% if old_status %}Previous status: {{ old_status }}
-{% endif %}Current status: {{ new_status }}
+Order #{{ order_number }} is now {{ new_status|default:order.status }}{% if old_status %} (previously {{ old_status }}){% endif %}.
 
 Payment: {{ payment_method }} ({{ payment_status }})
-Delivery: {{ shipping_method }}
-Address: {{ delivery_address|default:"To be confirmed" }}
+Delivery address: {{ delivery_address|default:"To be confirmed" }}
+
+Items
+{% if item_rows %}{% for item in item_rows %}- {{ item.product_name }}{% if item.variant_label %} ({{ item.variant_label }}){% endif %} | Qty {{ item.quantity }} | Total UGX {{ item.line_total|floatformat:0|intcomma }}
+{% endfor %}{% else %}{% for item in items %}- {{ item.product.name }} ({{ item.product_volume.variant_label }}) | Qty {{ item.quantity }} | Total UGX {{ item.total|floatformat:0|intcomma }}
+{% endfor %}{% endif %}
+Grand total: UGX {{ grand_total|default:total|floatformat:0|intcomma }}
 
 Track order: {{ order_url }}

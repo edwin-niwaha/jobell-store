@@ -1,49 +1,21 @@
-<!doctype html>
-<html>
-<body style="margin:0;background:#f6f7f9;color:#1f2933;font-family:Arial,sans-serif;">
-  <div style="max-width:680px;margin:0 auto;padding:28px 16px;">
-    <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;padding:24px;">
-      <h1 style="margin:0 0 8px;font-size:24px;color:#111827;">{{ site_name }}</h1>
-      <p style="margin:0 0 20px;">Hi {{ customer_name }}, your order has been received.</p>
-
-      <h2 style="font-size:18px;margin:0 0 12px;">Order #{{ order_number }}</h2>
-      <p style="margin:0 0 18px;color:#4b5563;">Placed on {{ order_date|date:"M j, Y, g:i A" }}</p>
-
-      <table style="width:100%;border-collapse:collapse;margin-bottom:18px;">
-        <thead>
-          <tr>
-            <th align="left" style="border-bottom:1px solid #e5e7eb;padding:8px;">Item</th>
-            <th align="right" style="border-bottom:1px solid #e5e7eb;padding:8px;">Qty</th>
-            <th align="right" style="border-bottom:1px solid #e5e7eb;padding:8px;">Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in items %}
-            <tr>
-              <td style="border-bottom:1px solid #f1f3f5;padding:8px;">
-                {{ item.product.name }}<br>
-                <span style="color:#6b7280;font-size:13px;">{{ item.product_volume.variant_label }}</span>
-              </td>
-              <td align="right" style="border-bottom:1px solid #f1f3f5;padding:8px;">{{ item.quantity }}</td>
-              <td align="right" style="border-bottom:1px solid #f1f3f5;padding:8px;">UGX {{ item.total }}</td>
-            </tr>
-          {% endfor %}
-        </tbody>
+{% extends "emails/base.html" %}
+{% block content %}
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+  <tr>
+    <td style="padding:28px 24px 10px;">
+      <div style="display:inline-block;background:#fff8df;border:1px solid #d4af37;border-radius:999px;padding:7px 11px;color:#7a5b00;font-size:12px;line-height:14px;text-transform:uppercase;letter-spacing:1px;">Order confirmed</div>
+      <h1 style="margin:14px 0 8px;font-size:28px;line-height:34px;color:#050505;font-weight:700;">Your order has been received</h1>
+      <p style="margin:0 0 18px;font-size:15px;line-height:24px;color:#374151;">Hi {{ customer_name }}, thank you for shopping with {{ site_name }}. We have received your order and will keep you updated.</p>
+      {% include "emails/orders/_order_summary.html" %}
+      {% include "emails/orders/_order_items.html" %}
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:4px 0 12px;">
+        <tr>
+          <td style="background:#050505;border-radius:10px;">
+            <a href="{{ order_url }}" style="display:inline-block;padding:13px 22px;color:#ffffff;text-decoration:none;font-size:14px;line-height:18px;font-weight:700;">View order</a>
+          </td>
+        </tr>
       </table>
-
-      <p style="margin:4px 0;">Subtotal: <strong>UGX {{ subtotal }}</strong></p>
-      <p style="margin:4px 0;">Delivery fee: <strong>UGX {{ shipping_fee }}</strong></p>
-      <p style="margin:4px 0 18px;font-size:18px;">Total: <strong>UGX {{ total }}</strong></p>
-
-      <p style="margin:4px 0;">Payment: {{ payment_method }} ({{ payment_status }})</p>
-      <p style="margin:4px 0;">Delivery: {{ shipping_method }}</p>
-      <p style="margin:4px 0 22px;">Address: {{ delivery_address|default:"To be confirmed" }}</p>
-
-      <p style="margin:0 0 18px;">
-        <a href="{{ order_url }}" style="background:#111827;color:#ffffff;text-decoration:none;padding:11px 18px;border-radius:6px;display:inline-block;">View order</a>
-      </p>
-      <p style="margin:0;color:#6b7280;font-size:13px;">Thank you for shopping with {{ site_name }}.</p>
-    </div>
-  </div>
-</body>
-</html>
+    </td>
+  </tr>
+</table>
+{% endblock %}

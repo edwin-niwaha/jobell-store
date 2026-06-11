@@ -3,9 +3,9 @@
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
   <tr>
     <td style="padding:28px 24px 10px;">
-      <div style="display:inline-block;background:#050505;border:1px solid #d4af37;border-radius:999px;padding:7px 11px;color:#f7e7ad;font-size:12px;line-height:14px;text-transform:uppercase;letter-spacing:1px;">New order</div>
-      <h1 style="margin:14px 0 8px;font-size:28px;line-height:34px;color:#050505;font-weight:700;">New {{ site_name }} order</h1>
-      <p style="margin:0 0 18px;font-size:15px;line-height:24px;color:#374151;">Order #{{ order_number }} was placed by {{ customer_name }} and is ready for review.</p>
+      <div style="display:inline-block;background:#050505;border:1px solid #d4af37;border-radius:999px;padding:7px 11px;color:#f7e7ad;font-size:12px;line-height:14px;text-transform:uppercase;letter-spacing:1px;">Admin alert</div>
+      <h1 style="margin:14px 0 8px;font-size:28px;line-height:34px;color:#050505;font-weight:700;">{{ event_title|default:"Order notification" }}</h1>
+      <p style="margin:0 0 18px;font-size:15px;line-height:24px;color:#374151;">{{ event_message|default:"An order needs staff attention." }}</p>
       {% include "emails/orders/_order_summary.html" %}
       {% include "emails/orders/_order_items.html" %}
       <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:4px 0 12px;">

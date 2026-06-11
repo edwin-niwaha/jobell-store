@@ -3,6 +3,7 @@ from email.utils import formataddr, parseaddr
 
 import requests
 from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
 
 
 logger = logging.getLogger(__name__)
@@ -45,10 +46,6 @@ def send_transactional_email(
         logger.warning("Email skipped because no recipients were provided: %s", subject)
         return None
 
-    api_key = getattr(settings, "RESEND_API_KEY", "")
-    if not api_key:
-        raise EmailConfigurationError("RESEND_API_KEY is not configured.")
-
     sender = _format_sender(
         from_email
         or getattr(settings, "RESEND_FROM_EMAIL", "")
@@ -56,6 +53,25 @@ def send_transactional_email(
     )
     if not sender:
         raise EmailConfigurationError("DEFAULT_FROM_EMAIL or RESEND_FROM_EMAIL is not configured.")
+
+    api_key = getattr(settings, "RESEND_API_KEY", "")
+    if not api_key:
+        try:
+            message = EmailMultiAlternatives(
+                subject=subject,
+                body=text_body or "",
+                from_email=sender,
+                to=recipients,
+                reply_to=_as_list(reply_to) or None,
+            )
+            if html_body:
+                message.attach_alternative(html_body, "text/html")
+            sent_count = message.send(fail_silently=False)
+        except Exception as exc:
+            logger.exception("Failed to send SMTP email '%s'.", subject)
+            raise EmailServiceError("SMTP email request failed.") from exc
+        logger.info("SMTP email sent to %s: %s", ", ".join(recipients), subject)
+        return {"backend": "smtp", "sent_count": sent_count}
 
     payload = {
         "from": sender,

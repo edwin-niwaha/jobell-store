@@ -1,19 +1,28 @@
-{{ site_name }}
+{% load humanize %}{{ company_name|default:site_name }}
+
+Your order has been received
 
 Hi {{ customer_name }},
 
-Your order #{{ order_number }} has been received.
-Placed on {{ order_date|date:"M j, Y, g:i A" }}
+Thank you for shopping with {{ site_name }}. We have received order #{{ order_number }}.
 
-Items:
-{% for item in items %}- {{ item.product.name }} ({{ item.product_volume.variant_label }}) x {{ item.quantity }}: UGX {{ item.total }}
-{% endfor %}
-Subtotal: UGX {{ subtotal }}
-Delivery fee: UGX {{ shipping_fee }}
-Total: UGX {{ total }}
-
-Payment: {{ payment_method }} ({{ payment_status }})
-Delivery: {{ shipping_method }}
+Order summary
+Date: {{ order_date|date:"M j, Y, g:i A" }}
+Phone: {{ customer_phone|default:"Not provided" }}
+Email: {{ customer_email|default:"Not provided" }}
 Address: {{ delivery_address|default:"To be confirmed" }}
+Payment: {{ payment_method }} ({{ payment_status }})
+Status: {{ new_status|default:order.status }}
+
+Items
+{% if item_rows %}{% for item in item_rows %}- {{ item.product_name }}{% if item.variant_label %} ({{ item.variant_label }}){% endif %} | Qty {{ item.quantity }} | Unit UGX {{ item.unit_price|floatformat:0|intcomma }} | Total UGX {{ item.line_total|floatformat:0|intcomma }}
+{% endfor %}{% else %}{% for item in items %}- {{ item.product.name }} ({{ item.product_volume.variant_label }}) | Qty {{ item.quantity }} | Total UGX {{ item.total|floatformat:0|intcomma }}
+{% endfor %}{% endif %}
+Subtotal: UGX {{ subtotal|floatformat:0|intcomma }}
+Delivery fee: UGX {{ shipping_fee|floatformat:0|intcomma }}
+Discount: UGX {{ discount_total|default:discount|floatformat:0|intcomma }}
+Tax: UGX {{ tax_amount|floatformat:0|intcomma }}
+Grand total: UGX {{ grand_total|default:total|floatformat:0|intcomma }}
 
 View order: {{ order_url }}
+Support: {{ support_email|default:"support" }}{% if support_phone %} | {{ support_phone }}{% endif %}

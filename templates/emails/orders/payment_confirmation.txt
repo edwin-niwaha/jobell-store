@@ -1,14 +1,20 @@
-{{ site_name }}
+{% load humanize %}{{ company_name|default:site_name }}
+
+Payment update
 
 Hi {{ customer_name }},
 
-Your payment for order #{{ order_number }} is confirmed.
+Your payment status for order #{{ order_number }} is {{ payment_status }}.
 
-Amount paid: UGX {{ total }}
 Payment method: {{ payment_method }}
-Payment status: {{ payment_status }}
+Order status: {{ new_status|default:order.status }}
+Grand total: UGX {{ grand_total|default:total|floatformat:0|intcomma }}
+Amount paid: UGX {{ amount_paid|floatformat:0|intcomma }}
+Balance due: UGX {{ balance_due|floatformat:0|intcomma }}
 
-Items:
-{% for item in items %}- {{ item.product.name }} ({{ item.product_volume.variant_label }}) x {{ item.quantity }}: UGX {{ item.total }}
-{% endfor %}
+Items
+{% if item_rows %}{% for item in item_rows %}- {{ item.product_name }}{% if item.variant_label %} ({{ item.variant_label }}){% endif %} | Qty {{ item.quantity }} | Unit UGX {{ item.unit_price|floatformat:0|intcomma }} | Total UGX {{ item.line_total|floatformat:0|intcomma }}
+{% endfor %}{% else %}{% for item in items %}- {{ item.product.name }} ({{ item.product_volume.variant_label }}) | Qty {{ item.quantity }} | Total UGX {{ item.total|floatformat:0|intcomma }}
+{% endfor %}{% endif %}
+
 View order: {{ order_url }}

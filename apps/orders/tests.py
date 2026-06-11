@@ -2,8 +2,10 @@ from decimal import Decimal
 from unittest.mock import patch
 
 from django.contrib.auth.models import User
+from django.core import mail
 from django.db import IntegrityError
-from django.test import TestCase
+from django.template.loader import render_to_string
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from apps.authentication.models import Profile
@@ -16,6 +18,12 @@ from apps.orders.services import (
     create_order_from_cart,
     mark_order_paid_and_capture_sale,
 )
+from apps.orders.notifications import (
+    _order_context,
+    queue_order_status_changed_emails,
+    queue_payment_status_changed_emails,
+)
+from core.services.email_service import EmailServiceError
 from apps.products.models import Category, Product, ProductVolume, Volume
 from apps.sales.models import Sale, SaleDetail
 from apps.shipping.models import DeliveryRate, PickupStation
@@ -65,6 +73,16 @@ class EcommerceFlowTests(TestCase):
             stock_quantity=5,
             max_quantity_per_order=3,
         )
+
+    def _cart_with_item(self, user=None, session_key=None, quantity=1):
+        cart = Cart.objects.create(user=user, session_key=session_key)
+        CartItem.objects.create(
+            cart=cart,
+            product=self.product,
+            volume=self.variant,
+            quantity=quantity,
+        )
+        return cart
 
     def test_cart_total_uses_variant_discounted_price(self):
         cart = Cart.objects.create(user=self.user)
@@ -369,6 +387,184 @@ class EcommerceFlowTests(TestCase):
         self.assertFalse(Sale.objects.filter(order=order).exists())
         self.variant.refresh_from_db()
         self.assertEqual(self.variant.stock_quantity, 5)
+
+    @override_settings(
+        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+        RESEND_API_KEY="",
+        ORDER_EMAIL_USE_CELERY=False,
+        ADMIN_ORDER_EMAILS=["jobellinc@gmail.com"],
+        JOBELL_ORDER_EMAIL="sales@jobellinc.com",
+        DEFAULT_FROM_EMAIL="Jobell Inc <noreply@jobellinc.com>",
+        RESEND_FROM_EMAIL="Jobell Inc <noreply@jobellinc.com>",
+    )
+    def test_order_creation_sends_customer_and_admin_emails(self):
+        station = PickupStation.objects.create(
+            name="Main Pickup",
+            city="Kampala",
+            area="Central",
+            address="Shop 1",
+        )
+        self._cart_with_item(user=self.user)
+        self.client.force_login(self.user)
+
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(
+                reverse("orders:checkout"),
+                {
+                    "first_name": "Buyer",
+                    "last_name": "",
+                    "email": "buyer@example.com",
+                    "mobile": "+256777337491",
+                    "address": "",
+                    "delivery_region": "",
+                    "delivery_city": "",
+                    "delivery_area": "",
+                    "shipping_method": "pickup",
+                    "pickup_station": station.id,
+                    "payment_method": "cod",
+                },
+            )
+
+        order = Order.objects.get(customer__user=self.user)
+        self.assertRedirects(
+            response,
+            reverse("orders:order_confirmation", args=[order.id]),
+            fetch_redirect_response=False,
+        )
+        self.assertEqual(len(mail.outbox), 2)
+        recipients = {recipient for message in mail.outbox for recipient in message.to}
+        self.assertEqual(recipients, {"buyer@example.com", "jobellinc@gmail.com", "sales@jobellinc.com"})
+        self.assertTrue(any(f"order #{order.id}" in message.subject.lower() for message in mail.outbox))
+
+    @override_settings(
+        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+        RESEND_API_KEY="",
+        ORDER_EMAIL_USE_CELERY=False,
+        ADMIN_ORDER_EMAILS=["jobellinc@gmail.com"],
+        JOBELL_ORDER_EMAIL="sales@jobellinc.com",
+    )
+    def test_status_change_sends_customer_and_admin_emails(self):
+        cart = self._cart_with_item(user=self.user)
+        order = create_order_from_cart(cart, payment_method="cod")
+
+        order.status = "Processing"
+        order.save(update_fields=["status", "updated_at"])
+        queue_order_status_changed_emails(order.id, "Pending", "Processing")
+
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertIn("Processing", mail.outbox[0].body)
+        recipients = {recipient for message in mail.outbox for recipient in message.to}
+        self.assertEqual(recipients, {"buyer@example.com", "jobellinc@gmail.com", "sales@jobellinc.com"})
+
+    @override_settings(
+        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+        RESEND_API_KEY="",
+        ORDER_EMAIL_USE_CELERY=False,
+        ADMIN_ORDER_EMAILS=["jobellinc@gmail.com"],
+    )
+    def test_payment_status_change_sends_customer_and_admin_emails(self):
+        cart = self._cart_with_item(user=self.user)
+        order = create_order_from_cart(cart, payment_method="mobile")
+        old_status = order.payment_status
+        mark_order_paid_and_capture_sale(order, provider="flutterwave", transaction_id="flw-email-1")
+        order.refresh_from_db()
+
+        queue_payment_status_changed_emails(order.id, old_status, order.payment_status)
+
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertTrue(all("Payment completed" in message.subject for message in mail.outbox))
+
+    @override_settings(
+        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+        RESEND_API_KEY="",
+        ORDER_EMAIL_USE_CELERY=False,
+        ADMIN_ORDER_EMAILS=["jobellinc@gmail.com"],
+    )
+    def test_duplicate_order_save_does_not_send_duplicate_emails(self):
+        cart = self._cart_with_item(user=self.user)
+        order = create_order_from_cart(cart, payment_method="cod")
+        order.save()
+
+        self.assertEqual(mail.outbox, [])
+
+    @override_settings(
+        RESEND_API_KEY="",
+        ORDER_EMAIL_USE_CELERY=False,
+        ADMIN_ORDER_EMAILS=["jobellinc@gmail.com"],
+    )
+    @patch("apps.orders.notifications.send_transactional_email")
+    def test_email_failure_does_not_rollback_order_creation(self, send_email):
+        send_email.side_effect = EmailServiceError("boom")
+        station = PickupStation.objects.create(
+            name="Main Pickup",
+            city="Kampala",
+            area="Central",
+            address="Shop 1",
+        )
+        self._cart_with_item(user=self.user)
+        self.client.force_login(self.user)
+
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(
+                reverse("orders:checkout"),
+                {
+                    "first_name": "Buyer",
+                    "last_name": "",
+                    "email": "buyer@example.com",
+                    "mobile": "+256777337491",
+                    "address": "",
+                    "delivery_region": "",
+                    "delivery_city": "",
+                    "delivery_area": "",
+                    "shipping_method": "pickup",
+                    "pickup_station": station.id,
+                    "payment_method": "cod",
+                },
+            )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(Order.objects.filter(customer__user=self.user).exists())
+
+    @override_settings(
+        SITE_URL="https://jobellinc.com",
+        LOGO_URL="/static/images/no-image.png",
+        SUPPORT_EMAIL="support@jobellinc.com",
+        SUPPORT_PHONE="+256 777 337491",
+    )
+    def test_all_order_email_templates_render_with_premium_context(self):
+        cart = self._cart_with_item(user=self.user)
+        order = create_order_from_cart(cart, payment_method="cod")
+        order.status = "Delivered"
+        order.total_amount = Decimal("1250000.00")
+        order.shipping_fee = Decimal("25000.00")
+        order.save(update_fields=["status", "total_amount", "shipping_fee", "updated_at"])
+
+        contexts = [
+            _order_context(order, "Order received", "Thank you for your order.", None, "Pending"),
+            _order_context(order, "Payment completed", "Payment has been received.", "pending", "completed"),
+            _order_context(order, "Order processing", "Your order is being prepared.", "Pending", "Processing"),
+            _order_context(order, "Order shipped", "Your order has been shipped.", "Processing", "Shipped"),
+            _order_context(order, "Out for delivery", "Your order is out for delivery.", "Shipped", "Out for Delivery"),
+            _order_context(order, "Delivered", "Your order has been delivered.", "Out for Delivery", "Delivered"),
+            _order_context(order, "Cancelled", "Your order has been cancelled.", "Pending", "Canceled"),
+        ]
+        templates = [
+            "admin_new_order",
+            "admin_order_notification",
+            "order_confirmation",
+            "order_notification",
+            "order_status_update",
+            "payment_confirmation",
+        ]
+
+        for context in contexts:
+            for template_name in templates:
+                html = render_to_string(f"emails/orders/{template_name}.html", context)
+                text = render_to_string(f"emails/orders/{template_name}.txt", context)
+                self.assertIn("UGX 1,250,000", html)
+                self.assertIn("UGX 1,250,000", text)
+                self.assertIn("https://jobellinc.com", html)
+                self.assertIn("Order", text)
 
     def test_logged_in_customer_can_place_manual_mobile_money_order_with_evidence(self):
         station = PickupStation.objects.create(

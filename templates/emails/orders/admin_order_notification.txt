@@ -1,17 +1,18 @@
-{% load humanize %}New {{ site_name }} order
+{% load humanize %}{{ company_name|default:site_name }} admin notification
 
-Order #{{ order_number }} was placed by {{ customer_name }}.
+{{ event_title|default:"Order notification" }}
+{{ event_message|default:"An order needs staff attention." }}
 
-Customer
-Name: {{ customer_name }}
+Order summary
+Order: #{{ order_number }}
+Date: {{ order_date|date:"M j, Y, g:i A" }}
+Customer: {{ customer_name }}
 Phone: {{ customer_phone|default:"Not provided" }}
 Email: {{ customer_email|default:"Not provided" }}
 Address: {{ delivery_address|default:"To be confirmed" }}
-
-Order
-Date: {{ order_date|date:"M j, Y, g:i A" }}
-Payment: {{ payment_method }} ({{ payment_status }})
-Status: {{ new_status|default:order.status }}
+Payment method: {{ payment_method }}
+Payment status: {{ payment_status }}
+Order status: {{ new_status|default:order.status }}
 
 Items
 {% if item_rows %}{% for item in item_rows %}- {{ item.product_name }}{% if item.variant_label %} ({{ item.variant_label }}){% endif %} | Qty {{ item.quantity }} | Unit UGX {{ item.unit_price|floatformat:0|intcomma }} | Total UGX {{ item.line_total|floatformat:0|intcomma }}
