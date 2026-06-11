@@ -160,18 +160,45 @@
                 <span class="checkout-option-icon"><i class="fas fa-mobile-alt" aria-hidden="true"></i></span>
                 <span class="checkout-option-body">
                   <strong>Mobile Money</strong>
-                  <small>We will track the payment as pending until confirmed.</small>
+                  <small>Send money manually, then add your transaction evidence.</small>
                 </span>
                 <span class="checkout-radio-dot" aria-hidden="true"></span>
               </label>
             </div>
 
             <div id="mobileMoneyFields" class="checkout-inline-panel">
+              <div class="checkout-payment-instructions">
+                <span class="checkout-payment-icon"><i class="fas fa-mobile-alt" aria-hidden="true"></i></span>
+                <div class="checkout-payment-copy-body">
+                  <span>Send Mobile Money to</span>
+<div class="d-flex align-items-center gap-2">
+    <strong id="manualMobileMoneyNumber" class="fs-5 fw-bold">
+        {{ manual_mobile_money_number }}
+    </strong>
+
+    {% if manual_mobile_money_number %}
+    <button type="button"
+            class="btn p-0 border-0 bg-transparent text-warning shadow-none checkout-copy-number"
+            data-copy-mobile-number="{{ manual_mobile_money_number }}">
+        <i class="mdi mdi-content-copy fs-5"></i>
+    </button>
+    {% endif %}
+</div>
+                  <span class="checkout-copy-status" id="copyMobileMoneyStatus" aria-live="polite"></span>
+                  <small>Online Mobile Money checkout is not active yet. Your payment will be confirmed after staff review.</small>
+                </div>
+              </div>
               <div class="checkout-field">
                 <label for="{{ form.mobile_money_number.id_for_label }}">Mobile Money number</label>
                 {{ form.mobile_money_number }}
                 {% if form.mobile_money_number.help_text %}<small class="checkout-help">{{ form.mobile_money_number.help_text }}</small>{% endif %}
                 {% for error in form.mobile_money_number.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
+              </div>
+              <div class="checkout-field">
+                <label for="{{ form.payment_evidence.id_for_label }}">Payment evidence</label>
+                {{ form.payment_evidence }}
+                {% if form.payment_evidence.help_text %}<small class="checkout-help">{{ form.payment_evidence.help_text }}</small>{% endif %}
+                {% for error in form.payment_evidence.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
               </div>
             </div>
           </section>
@@ -185,8 +212,12 @@
                   <span class="store-eyebrow">Customer</span>
                   <h2 class="modal-title" id="contactModalLabel">Contact details</h2>
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
+                <button type="button"
+                        class="border-0 bg-transparent p-0"
+                        data-bs-dismiss="modal"
+                        aria-label="Close">
+                    <i class="mdi mdi-close fs-3"></i>
+                </button>              </div>
               <div class="modal-body">
                 <div class="checkout-field-grid">
                   <div class="checkout-field">
@@ -230,8 +261,12 @@
                   <span class="store-eyebrow">Address</span>
                   <h2 class="modal-title" id="addressModalLabel">Delivery address</h2>
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
+                <button type="button"
+                        class="btn btn-link text-dark p-0 border-0"
+                        data-bs-dismiss="modal"
+                        aria-label="Close">
+                    <i class="mdi mdi-close fs-3"></i>
+                </button>              </div>
               <div class="modal-body">
                 {% if form.saved_address %}
                   <div class="checkout-saved-row mb-3">
@@ -293,7 +328,6 @@
               <div>
                 <small>Checkout status</small>
                 <strong>Ready for secure review</strong>
-                <p>Totals are calculated on the server before the order is created.</p>
               </div>
             </div>
 
@@ -396,6 +430,8 @@
       const addressSummaryText = document.getElementById('addressSummaryText')
       const contactModal = document.getElementById('contactModal')
       const addressModal = document.getElementById('addressModal')
+      const copyMobileMoneyBtn = document.querySelector('[data-copy-mobile-number]')
+      const copyMobileMoneyStatus = document.getElementById('copyMobileMoneyStatus')
       const savedAddresses = checkoutAddressData ? JSON.parse(checkoutAddressData.textContent) : []
       let deliverySummaryTimer = null
 
@@ -484,6 +520,50 @@
       mobileMoney?.addEventListener('change', togglePaymentFields)
       togglePaymentFields()
 
+      function copyTextToClipboard(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+          return navigator.clipboard.writeText(text)
+        }
+
+        const copyField = document.createElement('textarea')
+        copyField.value = text
+        copyField.setAttribute('readonly', '')
+        copyField.style.position = 'fixed'
+        copyField.style.top = '-9999px'
+        document.body.appendChild(copyField)
+        copyField.select()
+
+        try {
+          document.execCommand('copy')
+          return Promise.resolve()
+        } catch (error) {
+          return Promise.reject(error)
+        } finally {
+          document.body.removeChild(copyField)
+        }
+      }
+
+      copyMobileMoneyBtn?.addEventListener('click', function () {
+        const number = copyMobileMoneyBtn.dataset.copyMobileNumber
+        if (!number) return
+
+        copyTextToClipboard(number)
+          .then(function () {
+            copyMobileMoneyBtn.classList.add('is-copied')
+            copyMobileMoneyBtn.innerHTML = '<i class="mdi mdi-check" aria-hidden="true"></i>'
+            if (copyMobileMoneyStatus) copyMobileMoneyStatus.textContent = 'Mobile Money number copied.'
+
+            window.setTimeout(function () {
+              copyMobileMoneyBtn.classList.remove('is-copied')
+              copyMobileMoneyBtn.innerHTML = '<i class="mdi mdi-content-copy" aria-hidden="true"></i>'
+              if (copyMobileMoneyStatus) copyMobileMoneyStatus.textContent = ''
+            }, 2200)
+          })
+          .catch(function () {
+            if (copyMobileMoneyStatus) copyMobileMoneyStatus.textContent = 'Could not copy. Please select the number manually.'
+          })
+      })
+
       function toggleShippingFields() {
         if (!pickupFields || !shipPickup) return
         pickupFields.classList.toggle('d-none', !shipPickup.checked)
@@ -527,6 +607,9 @@
       updateAddressBtn?.addEventListener('click', function () {
         if (updateSavedAddress) updateSavedAddress.value = '1'
         populateSelectedAddress()
+        if (window.bootstrap && addressModal) {
+          window.bootstrap.Modal.getOrCreateInstance(addressModal).hide()
+        }
       })
 
       populateSelectedAddress()

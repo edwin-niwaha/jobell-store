@@ -874,6 +874,104 @@
   padding: 1rem;
 }
 
+.checkout-payment-instructions {
+  align-items: center;
+  background: #ecfdf5;
+  border: 1px solid rgba(6, 125, 98, 0.18);
+  border-radius: 0.85rem;
+  color: #064e3b;
+  display: flex;
+  gap: 0.85rem;
+  margin-bottom: 0.9rem;
+  padding: 0.85rem;
+}
+
+.checkout-payment-icon {
+  align-items: center;
+  background: #067d62;
+  border-radius: 999px;
+  color: #fff;
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 2.4rem;
+  justify-content: center;
+  width: 2.4rem;
+}
+
+.checkout-payment-instructions span,
+.checkout-payment-instructions small {
+  display: block;
+}
+
+.checkout-payment-copy-body {
+  min-width: 0;
+  width: 100%;
+}
+
+.checkout-payment-number-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.35rem;
+  margin: 0.1rem 0;
+}
+
+.checkout-payment-instructions strong {
+  color: #052e24;
+  display: block;
+  font-size: 1.08rem;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.checkout-copy-number {
+  align-items: center;
+  background: rgba(6, 125, 98, 0.1);
+  border: 0;
+  border-radius: 999px;
+  color: #064e3b;
+  cursor: pointer;
+  display: inline-flex;
+  flex: 0 0 28px;
+  font-size: 1rem;
+  justify-content: center;
+  height: 28px;
+  padding: 0;
+  position: relative;
+  width: 28px;
+  transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.checkout-copy-number i {
+  line-height: 1;
+}
+
+.checkout-copy-number:hover,
+.checkout-copy-number.is-copied {
+  background: #067d62;
+  box-shadow: 0 8px 18px rgba(6, 125, 98, 0.2);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.checkout-copy-number:focus-visible {
+  box-shadow: 0 0 0 0.2rem rgba(6, 125, 98, 0.2);
+  outline: 0;
+}
+
+.checkout-copy-status {
+  color: #065f46;
+  font-size: 0.78rem;
+  font-weight: 850;
+  min-height: 1.1rem;
+}
+
+.checkout-payment-instructions small {
+  color: #047857;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
 .checkout-delivery-status {
   align-items: center;
   background: #ecfdf5;

@@ -3,20 +3,29 @@ from django.db.models import Q, Avg, Sum
 from django.conf import settings
 from django.contrib import messages
 from decimal import Decimal
+import json
 import requests
 import uuid
 from django.http import JsonResponse
+from django.http import HttpResponseForbidden
 import logging
 import base64
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils import timezone
 from django.db import transaction
 from .models import Cart, CartItem, Order, OrderDetail, Wishlist
-from .services import cart_total, create_order_from_cart, get_or_create_cart
+from .services import (
+    cart_total,
+    create_order_from_cart,
+    get_or_create_cart,
+    mark_order_paid_and_capture_sale,
+)
 from .tasks import (
     send_admin_new_order_notification,
     send_order_confirmation_email,
@@ -53,6 +62,7 @@ def _queue_order_status_email(order_id, old_status, new_status):
 
 
 logger = logging.getLogger(__name__)
+MANUAL_MOBILE_MONEY_NUMBER = "0777337491"
 
 
 def _safe_redirect_target(request, fallback):
@@ -1206,6 +1216,7 @@ def _checkout_context(
         "delivery_available": delivery_available,
         "delivery_quote_message": delivery_quote_message,
         "checkout_addresses": _checkout_addresses_for(request),
+        "manual_mobile_money_number": MANUAL_MOBILE_MONEY_NUMBER,
     }
 
 
@@ -1284,6 +1295,7 @@ def checkout_delivery_summary(request):
     )
 
 
+@login_required
 def checkout_view(request):
     cart = get_or_create_cart(request)
     cart = (
@@ -1386,6 +1398,7 @@ def checkout_view(request):
                     mobile_money_number=form.cleaned_data.get(
                         "mobile_money_number", ""
                     ),
+                    payment_evidence=form.cleaned_data.get("payment_evidence", ""),
                     shipping_data={
                         "shipping_method": shipping_method,
                         "shipping_fee": shipping_fee,
@@ -1615,48 +1628,180 @@ def get_access_token():
 
 
 # =================================== confirm_payment ===================================
+@login_required
+@admin_or_manager_or_staff_required
+@require_POST
 def confirm_payment_view(request, order_id):
-    with transaction.atomic():
-        order = get_object_or_404(
-            Order.objects.select_for_update().select_related("customer"),
-            id=order_id,
-            customer__user=request.user,
+    order = get_object_or_404(Order.objects.select_related("customer"), id=order_id)
+    try:
+        payment, sale, sale_created = mark_order_paid_and_capture_sale(
+            order,
+            provider="cash" if order.payment_method == "cod" else "mobile_money",
+            received_by=request.user,
         )
-        customer = order.customer
+    except ValidationError as exc:
+        messages.error(request, exc, extra_tags="bg-danger text-white")
+        return redirect("orders:order_process", order_id=order.id)
 
-        # Update payment status
-        if order.payment_status != "completed":
-            order.payment_status = "completed"
-            order.save(update_fields=["payment_status", "updated_at"])
-            transaction.on_commit(
-                lambda order_id=order.id: send_payment_confirmation_email.delay(
-                    order_id
-                )
-            )
-
-    # Prepare the context
-    context = {
-        "order": order,
-        "customer": customer,
-    }
-
-    # Add success message
-    messages.success(request, "Payment made successfully", extra_tags="bg-success")
-
-    return render(request, "orders/customer_order_history.html", context)
+    transaction.on_commit(
+        lambda order_id=order.id: send_payment_confirmation_email.delay(order_id)
+    )
+    if sale_created:
+        messages.success(
+            request,
+            "Payment received. The sale and stock update have been recorded.",
+            extra_tags="bg-success",
+        )
+    else:
+        messages.info(
+            request,
+            "Payment was already confirmed for this order.",
+            extra_tags="bg-info",
+        )
+    return redirect("orders:order_process", order_id=order.id)
 
 
 # =================================== payment_flutter_view ===================================
 @login_required
-def payment_flutter_view(request):
-    unique_tx_ref = f"txref-{uuid.uuid4()}"  # Generate a unique transaction reference
+def payment_flutter_view(request, order_id):
+    order = get_object_or_404(
+        Order.objects.select_related("customer"),
+        id=order_id,
+        customer__user=request.user,
+        payment_method="mobile",
+    )
+    if order.payment_status == "completed":
+        messages.info(request, "This order has already been paid.")
+        return redirect("orders:order_confirmation", order_id=order.id)
+    if not order.transaction_id:
+        order.transaction_id = f"JBL-{order.id}-{uuid.uuid4().hex[:12]}"
+        order.save(update_fields=["transaction_id", "updated_at"])
     context = {
-        "unique_tx_ref": unique_tx_ref,
+        "order": order,
+        "unique_tx_ref": order.transaction_id,
         "public_key": getattr(settings, "FLUTTERWAVE_PUBLIC_KEY", ""),
         "currency": "UGX",
         "form_title": "Secure Flutterwave Payment",
+        "redirect_url": request.build_absolute_uri(
+            reverse("orders:flutterwave_callback")
+        ),
     }
     return render(request, "orders/payment_flutter.html", context)
+
+
+def _verify_flutterwave_transaction(transaction_id):
+    secret_key = getattr(settings, "FLUTTERWAVE_SECRET_KEY", "")
+    if not secret_key:
+        raise ValidationError("Online payment is not fully configured yet.")
+    response = requests.get(
+        f"https://api.flutterwave.com/v3/transactions/{transaction_id}/verify",
+        headers={"Authorization": f"Bearer {secret_key}"},
+        timeout=20,
+    )
+    response.raise_for_status()
+    return response.json()
+
+
+def _complete_flutterwave_payment(order, payload, transaction_id):
+    data = payload.get("data") or payload
+    status = (data.get("status") or payload.get("status") or "").lower()
+    tx_ref = data.get("tx_ref") or payload.get("tx_ref") or order.transaction_id
+    amount = Decimal(str(data.get("amount") or order.total_amount))
+    currency = data.get("currency") or "UGX"
+
+    if status not in {"successful", "completed"}:
+        order.payment_status = "failed"
+        order.save(update_fields=["payment_status", "updated_at"])
+        raise ValidationError("The payment was not completed.")
+    if tx_ref and tx_ref != order.transaction_id:
+        raise ValidationError(
+            f"The payment reference did not match this order ({tx_ref} != {order.transaction_id})."
+        )
+    if amount < order.total_amount:
+        raise ValidationError("The payment amount was less than the order total.")
+
+    payment, sale, sale_created = mark_order_paid_and_capture_sale(
+        order,
+        provider="flutterwave",
+        amount=amount,
+        currency=currency,
+        transaction_id=tx_ref or "",
+        external_id=str(transaction_id or data.get("id") or ""),
+    )
+    transaction.on_commit(
+        lambda order_id=order.id: send_payment_confirmation_email.delay(order_id)
+    )
+    return payment, sale, sale_created
+
+
+@login_required
+def flutterwave_callback_view(request):
+    tx_ref = request.GET.get("tx_ref", "")
+    transaction_id = request.GET.get("transaction_id") or request.GET.get("id")
+    order = Order.objects.select_related("customer").filter(
+        transaction_id=tx_ref,
+        payment_method="mobile",
+    ).first()
+    if order is not None and order.customer.user_id != request.user.id:
+        order = None
+    if order is None:
+        order = Order.objects.select_related("customer").filter(
+            customer__user=request.user,
+            payment_method="mobile",
+            payment_status="pending",
+        ).order_by("-created_at").first()
+    if order is None:
+        order = Order.objects.select_related("customer").filter(
+            id__in=request.session.get("placed_order_ids", []),
+            customer__user=request.user,
+            payment_method="mobile",
+        ).order_by("-created_at").first()
+    if order is None:
+        messages.error(request, "We could not find that payment request.")
+        return redirect("orders:customer_order_history")
+    try:
+        payload = _verify_flutterwave_transaction(transaction_id)
+        _complete_flutterwave_payment(order, payload, transaction_id)
+    except (ValidationError, requests.RequestException) as exc:
+        logger.warning("Flutterwave callback failed for order %s: %s", order.id, exc)
+        messages.error(
+            request,
+            "We could not confirm your payment. Please contact support if money was deducted.",
+            extra_tags="bg-danger text-white",
+        )
+        return redirect("orders:payment_flutter", order_id=order.id)
+
+    messages.success(request, "Payment confirmed. Your order is ready for processing.")
+    return redirect("orders:order_confirmation", order_id=order.id)
+
+
+@csrf_exempt
+@require_POST
+def flutterwave_webhook_view(request):
+    expected_hash = getattr(settings, "FLUTTERWAVE_WEBHOOK_SECRET_HASH", "")
+    if expected_hash and request.headers.get("verif-hash") != expected_hash:
+        return HttpResponseForbidden("Invalid signature")
+
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except (TypeError, ValueError):
+        return JsonResponse({"ok": False, "message": "Invalid payload"}, status=400)
+
+    data = payload.get("data") or {}
+    tx_ref = data.get("tx_ref") or payload.get("tx_ref")
+    transaction_id = data.get("id") or payload.get("id") or payload.get("transaction_id")
+    order = Order.objects.select_related("customer").filter(
+        transaction_id=tx_ref,
+        payment_method="mobile",
+    ).first()
+    if not order:
+        return JsonResponse({"ok": True})
+
+    try:
+        _complete_flutterwave_payment(order, payload, transaction_id)
+    except ValidationError as exc:
+        logger.warning("Flutterwave webhook ignored for order %s: %s", order.id, exc)
+    return JsonResponse({"ok": True})
 
 
 # =================================== order_confirmation_view ===================================
@@ -1687,6 +1832,7 @@ def order_confirmation_view(request, order_id):
             "order": order,
             "order_subtotal": subtotal,
             "order_other_fee": other_fee,
+            "manual_mobile_money_number": MANUAL_MOBILE_MONEY_NUMBER,
         },
     )
 

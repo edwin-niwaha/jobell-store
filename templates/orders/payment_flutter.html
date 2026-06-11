@@ -18,30 +18,28 @@
             <form method="POST" action="https://checkout.flutterwave.com/v3/hosted/pay" onsubmit="return validatePaymentForm();">
               {% csrf_token %}
 
-              <!-- Customer Name -->
               <div class="mb-3">
                 <label for="customer_name" class="form-label fw-semibold">Customer Name</label>
-                <input type="text" id="customer_name" name="customer[name]" class="form-control form-control-lg shadow-sm" placeholder="Enter your full name" aria-label="Customer Name" required />
+                <input type="text" id="customer_name" name="customer[name]" class="form-control form-control-lg shadow-sm" value="{{ order.customer.get_full_name }}" aria-label="Customer Name" readonly required />
               </div>
 
-              <!-- Customer Email -->
               <div class="mb-3">
                 <label for="customer_email" class="form-label fw-semibold">Customer Email</label>
-                <input type="email" id="customer_email" name="customer[email]" class="form-control form-control-lg shadow-sm" placeholder="Enter your email" aria-label="Customer Email" required />
+                <input type="email" id="customer_email" name="customer[email]" class="form-control form-control-lg shadow-sm" value="{{ order.customer.email|default:'' }}" aria-label="Customer Email" readonly required />
               </div>
 
-              <!-- Amount -->
               <div class="mb-3">
                 <label for="amount" class="form-label fw-semibold">Amount (UGX)</label>
-                <input type="number" id="amount" name="amount" class="form-control form-control-lg shadow-sm" placeholder="Enter amount" min="1" aria-label="Amount" required />
+                <input type="number" id="amount" name="amount" class="form-control form-control-lg shadow-sm" value="{{ order.total_amount|floatformat:'0' }}" min="1" aria-label="Amount" readonly required />
                 <div class="form-text text-danger d-none" id="amount-error">Please enter a valid amount greater than zero.</div>
               </div>
 
-              <!-- Hidden Fields -->
               <input type="hidden" name="public_key" value="{{ public_key }}" />
               <input type="hidden" name="tx_ref" value="{{ unique_tx_ref }}" />
               <input type="hidden" name="currency" value="{{ currency }}" />
-              <input type="hidden" name="meta[source]" value="docs-html-test" />
+              <input type="hidden" name="redirect_url" value="{{ redirect_url }}" />
+              <input type="hidden" name="meta[order_id]" value="{{ order.id }}" />
+              <input type="hidden" name="meta[source]" value="jobell-store" />
 
               <!-- Submit Button -->
               <div class="d-grid mt-4">

@@ -180,6 +180,47 @@ class Order(models.Model):
         return self.total_amount
 
 
+class OrderPayment(models.Model):
+    PROVIDER_CHOICES = [
+        ("cash", "Cash"),
+        ("flutterwave", "Flutterwave"),
+        ("mobile_money", "Mobile Money"),
+        ("other", "Other"),
+    ]
+
+    order = models.ForeignKey(Order, related_name="payments", on_delete=models.CASCADE)
+    provider = models.CharField(max_length=30, choices=PROVIDER_CHOICES)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    currency = models.CharField(max_length=10, default="UGX")
+    transaction_id = models.CharField(max_length=120, blank=True, db_index=True)
+    external_id = models.CharField(max_length=120, blank=True, db_index=True)
+    received_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="recorded_order_payments",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["order", "created_at"], name="ordpay_order_created_idx"),
+            models.Index(fields=["provider", "created_at"], name="ordpay_provider_cr_idx"),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["provider", "transaction_id"],
+                condition=~Q(transaction_id=""),
+                name="uniq_order_payment_provider_tx",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.get_provider_display()} payment for Order {self.order_id}"
+
+
 class OrderDetail(models.Model):
     order = models.ForeignKey(Order, related_name="details", on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)

@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView, PasswordChangeView, PasswordResetView
 from django.contrib.messages.views import SuccessMessageMixin
@@ -14,6 +15,7 @@ from django.http import (
 )
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 
 from apps.authentication.decorators import (
@@ -33,6 +35,7 @@ from .models import (
     Profile,
     Contact,
 )
+from apps.orders.services import merge_session_cart_into_user_cart
 
 import logging
 
@@ -92,17 +95,27 @@ class RegisterView(View):
         form = self.form_class(request.POST)
 
         if form.is_valid():
+            guest_session_key = request.session.session_key
             user = form.save()  # Save the user and get the instance
 
             # Auto-create a Profile for the user
-            Profile.objects.create(user=user)
+            Profile.objects.get_or_create(user=user)
+            login(request, user)
+            merge_session_cart_into_user_cart(guest_session_key, user)
 
             username = form.cleaned_data.get("username")
             messages.success(
                 request, f"Account created for {username}", extra_tags="bg-success"
             )
 
-            return redirect(to="login")
+            next_url = request.POST.get("next") or request.GET.get("next")
+            if next_url and url_has_allowed_host_and_scheme(
+                next_url,
+                allowed_hosts={request.get_host()},
+                require_https=request.is_secure(),
+            ):
+                return redirect(next_url)
+            return redirect(to=settings.LOGIN_REDIRECT_URL)
 
         return render(request, self.template_name, {"form": form})
 
@@ -115,6 +128,7 @@ class CustomLoginView(LoginView):
 
     def form_valid(self, form):
         user = form.get_user()
+        guest_session_key = self.request.session.session_key
 
         # Check if the user has a profile, create one if it doesn't exist
         if not hasattr(user, "profile"):
@@ -127,7 +141,9 @@ class CustomLoginView(LoginView):
             self.request.session.set_expiry(0)
             self.request.session.modified = True
 
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        merge_session_cart_into_user_cart(guest_session_key, user)
+        return response
 
 
 # =================================== Reset password View  ===================================

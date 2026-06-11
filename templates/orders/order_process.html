@@ -31,7 +31,7 @@
       </div>
       <div class="admin-stat">
         <span>Payment</span>
-        <strong>{{ order.get_payment_method_display }}</strong>
+        <strong>{{ order.get_payment_method_display }} / {{ order.get_payment_status_display }}</strong>
       </div>
       <div class="admin-stat">
         <span>Date</span>
@@ -130,6 +130,23 @@
             </form>
           </div>
         </section>
+
+        {% if order.payment_status != 'completed' %}
+          <section class="admin-panel mt-4">
+            <div class="admin-panel-header">
+              <h2>Payment</h2>
+            </div>
+            <div class="card-body">
+              <p class="admin-muted">Confirm only after payment has been received.</p>
+              <form method="post" action="{% url 'orders:confirm_payment' order.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary btn-lg w-100" onclick="return confirm('Confirm payment received for this order?')">
+                  <i class="mdi mdi-cash-check mr-2"></i>Confirm payment received
+                </button>
+              </form>
+            </div>
+          </section>
+        {% endif %}
       </div>
     </div>
   </div>

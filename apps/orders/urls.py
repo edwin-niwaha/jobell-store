@@ -68,5 +68,19 @@ urlpatterns = [
         views.confirm_payment_view,
         name="confirm_payment",
     ),
-    path("payment/flutter/", views.payment_flutter_view, name="payment_flutter"),
+    path(
+        "payment/flutter/<int:order_id>/",
+        views.payment_flutter_view,
+        name="payment_flutter",
+    ),
+    path(
+        "payment/flutter/callback/",
+        views.flutterwave_callback_view,
+        name="flutterwave_callback",
+    ),
+    path(
+        "payment/flutter/webhook/",
+        views.flutterwave_webhook_view,
+        name="flutterwave_webhook",
+    ),
 ]

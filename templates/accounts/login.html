@@ -40,6 +40,9 @@
 
               <form method="POST">
                 {% csrf_token %}
+                {% if next %}
+                  <input type="hidden" name="next" value="{{ next }}">
+                {% endif %}
 
                 <div class="form-group">
                   <label class="font-weight-bold" for="{{ form.username.id_for_label }}">Username</label>
@@ -72,7 +75,7 @@
 
               <div class="border-top mt-4 pt-3 text-center text-muted">
                 <span>New to {{ site_name|upper }}?</span>
-                <a class="font-weight-bold" href="{% url 'users-register' %}">Create an account</a>
+                <a class="font-weight-bold" href="{% url 'users-register' %}{% if next %}?next={{ next|urlencode }}{% endif %}">Create an account</a>
               </div>
             </div>
           </div>

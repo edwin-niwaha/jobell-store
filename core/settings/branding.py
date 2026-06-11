@@ -2,7 +2,7 @@ import os
 
 
 SITE_NAME = os.getenv("SITE_NAME", "Jobell Store")
-COMPANY_NAME = os.getenv("COMPANY_NAME", "Jobell Inc.")
+COMPANY_NAME = os.getenv("COMPANY_NAME", "Jobell Inc")
 PRIMARY_COLOR = os.getenv("PRIMARY_COLOR", "#D4AF37")
 SECONDARY_COLOR = os.getenv("SECONDARY_COLOR", "#000000")
 TEXT_COLOR = os.getenv("TEXT_COLOR", "#212529")

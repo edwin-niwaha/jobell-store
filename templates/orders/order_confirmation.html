@@ -48,7 +48,13 @@
               <p class="store-muted small mb-0">
                 {{ order.status }}
                 {% if order.payment_method == 'mobile' and order.mobile_money_number %}
-                  <br>{{ order.mobile_money_number }}
+                  <br>Paid from: {{ order.mobile_money_number }}
+                {% endif %}
+                {% if order.payment_method == 'mobile' %}
+                  <br>Send to: {{ manual_mobile_money_number }}
+                  {% if order.transaction_id %}
+                    <br>Evidence: {{ order.transaction_id }}
+                  {% endif %}
                 {% endif %}
               </p>
             </section>
