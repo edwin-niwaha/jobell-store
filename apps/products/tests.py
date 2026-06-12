@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.db import IntegrityError
 from django.test import TestCase
 
+from apps.products.forms import ProductVolumeForm, VolumeForm
 from apps.products.models import Category, Product, ProductVolume, Volume
 from apps.products.selectors import build_storefront_product_card
 from apps.supplier.models import Supplier
@@ -111,3 +112,66 @@ class ProductModelTests(TestCase):
         self.assertEqual(card["min_price"], Decimal("45.00"))
         self.assertEqual(card["max_price"], Decimal("45.00"))
         self.assertEqual(card["min_original_price"], Decimal("60.00"))
+
+    def test_volume_form_rejects_duplicate_ml(self):
+        form = VolumeForm(
+            data={
+                "ml": "50",
+                "cost": "10.00",
+                "price": "20.00",
+            }
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("already exists", form.errors["ml"][0])
+
+    def test_product_volume_form_requires_variant_specific_prices(self):
+        product = Product.objects.create(
+            name="9PM",
+            description="Evening scent.",
+            status="ACTIVE",
+            category=self.category,
+            supplier=self.supplier,
+        )
+
+        form = ProductVolumeForm(
+            data={
+                "volume": self.volume.id,
+                "product_type": "Mini",
+                "stock_quantity": "5",
+            },
+            product=product,
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("price", form.errors)
+        self.assertIn("unit_cost", form.errors)
+
+    def test_product_volume_form_rejects_duplicate_product_variant(self):
+        product = Product.objects.create(
+            name="Khamrah",
+            description="Spiced scent.",
+            status="ACTIVE",
+            category=self.category,
+            supplier=self.supplier,
+        )
+        ProductVolume.objects.create(
+            product=product,
+            volume=self.volume,
+            product_type="Mini",
+            price=Decimal("25000.00"),
+            unit_cost=Decimal("15000.00"),
+        )
+
+        form = ProductVolumeForm(
+            data={
+                "volume": self.volume.id,
+                "product_type": "Mini",
+                "price": "30000.00",
+                "unit_cost": "18000.00",
+            },
+            product=product,
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("already has Mini - 50ML", form.non_field_errors()[0])

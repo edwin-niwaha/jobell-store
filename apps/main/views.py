@@ -45,7 +45,7 @@ def index(request):
     active_products = active_products_queryset().order_by(
         "-is_featured", "-created_at", "name"
     )
-    categories = list(Category.objects.filter(products__status="ACTIVE").distinct()[:12])
+    categories = list(Category.objects.filter(is_active=True).order_by("name"))
     category_icon_map = {
         "gift": {
             "url": "https://cdn-icons-png.flaticon.com/512/104/104671.png",
@@ -256,9 +256,7 @@ def index(request):
             "products_with_images": products_with_images,
             "categories": categories,
             "active_products_count": active_products.count(),
-            "categories_count": Category.objects.filter(products__status="ACTIVE")
-            .distinct()
-            .count(),
+            "categories_count": Category.objects.filter(is_active=True).count(),
             "featured_count": featured_count,
             "user": request.user,
             "page_obj": page_obj,
@@ -443,8 +441,7 @@ def dashboard(request):
             product_volume = item.product_volume
 
             # Determine volume and price details
-            volume = product_volume.volume if product_volume else None
-            cost = volume.cost if volume else 0
+            cost = product_volume.effective_cost if product_volume else 0
             discounted_price = item.price  # Price directly from SaleDetail
 
             # Calculate and accumulate profit

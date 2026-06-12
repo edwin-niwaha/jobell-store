@@ -259,7 +259,7 @@ def sales_report_view(request):
         for item in sale.items.all():
             product_volume = item.product_volume
             if product_volume and product_volume.volume:
-                cogs += product_volume.volume.cost * item.quantity
+                cogs += product_volume.effective_cost * item.quantity
 
     # Calculate stock balance
     stock_balance = (
@@ -279,16 +279,16 @@ def sales_report_view(request):
             product = item.product
             product_volume = item.product_volume
             original_price = (
-                product_volume.volume.price if product_volume else product.price
+                product_volume.effective_price if product_volume else product.price
             )
             discounted_price = item.price
             item_profit = (
-                (Decimal(discounted_price) - product_volume.volume.cost) * item.quantity
+                (Decimal(discounted_price) - product_volume.effective_cost) * item.quantity
                 if product_volume and product_volume.volume
                 else 0
             )
             item_cost = (
-                product_volume.volume.cost * item.quantity
+                product_volume.effective_cost * item.quantity
                 if product_volume and product_volume.volume
                 else 0
             )
@@ -302,7 +302,7 @@ def sales_report_view(request):
                     "volume": product_volume.volume.ml if product_volume else None,
                     "original_price": original_price,
                     "price": discounted_price,
-                    "cost": product_volume.volume.cost if product_volume else 0,
+                    "cost": product_volume.effective_cost if product_volume else 0,
                     "quantity": item.quantity,
                     "total": item.total_detail,
                 }
@@ -413,8 +413,8 @@ def sales_add_view(request):
                             product_volume = product_obj.productvolume_set.get(
                                 id=volume_id
                             )
-                            price = float(product_volume.volume.price)
-                            cost = float(product_volume.volume.cost)
+                            price = float(product_volume.current_price)
+                            cost = float(product_volume.effective_cost)
                         else:
                             price = float(product_data["price"])
                             cost = float(

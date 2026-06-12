@@ -83,10 +83,10 @@
                           {% for product_volume in product.productvolume_set.all %}
                             {% if product_volume.discount_value %}
                               {% with discounted_price=product_volume.get_discounted_price %}
-                                <option value="{{ product.id }}-{{ product_volume.id }}" data-product-id="{{ product.id }}" data-volume-id="{{ product_volume.id }}" data-price="{{ discounted_price }}" data-cost="{{ product_volume.volume.cost }}" data-name="{{ product.name }}" data-volume="{{ product_volume.volume.ml }}" data-discount="{{ product_volume.discount_value }}">{{ product.name }} - {{ product_volume.volume.ml }}ML - Price: {{ discounted_price|floatformat:'2'|intcomma }} ({{ product_volume.discount_value }}% Off) - {{ product_volume.product_type }}</option>
+                                <option value="{{ product.id }}-{{ product_volume.id }}" data-product-id="{{ product.id }}" data-volume-id="{{ product_volume.id }}" data-price="{{ discounted_price }}" data-cost="{{ product_volume.effective_cost }}" data-name="{{ product.name }}" data-volume="{{ product_volume.variant_label }}" data-discount="{{ product_volume.discount_value }}">{{ product.name }} - {{ product_volume.variant_label }} - Price: {{ discounted_price|floatformat:'2'|intcomma }} ({{ product_volume.discount_value }}% Off)</option>
                               {% endwith %}
                             {% else %}
-                              <option value="{{ product.id }}-{{ product_volume.id }}" data-product-id="{{ product.id }}" data-volume-id="{{ product_volume.id }}" data-price="{{ product_volume.volume.price }}" data-cost="{{ product_volume.volume.cost }}" data-name="{{ product.name }}" data-volume="{{ product_volume.volume.ml }}">{{ product.name }} - {{ product_volume.volume.ml }}ML - Price: {{ product_volume.volume.price|floatformat:'2'|intcomma }} - {{ product_volume.product_type }}</option>
+                              <option value="{{ product.id }}-{{ product_volume.id }}" data-product-id="{{ product.id }}" data-volume-id="{{ product_volume.id }}" data-price="{{ product_volume.effective_price }}" data-cost="{{ product_volume.effective_cost }}" data-name="{{ product.name }}" data-volume="{{ product_volume.variant_label }}">{{ product.name }} - {{ product_volume.variant_label }} - Price: {{ product_volume.effective_price|floatformat:'2'|intcomma }}</option>
                             {% endif %}
                           {% endfor %}
                         {% endfor %}
@@ -243,7 +243,7 @@
           <tr>
             <td>${++productIndex}</td>
             <td>${productName}</td>
-            <td>${productVolume}ML</td>
+            <td>${productVolume}</td>
             <td>${productPrice.toFixed(2)}</td>
             <td><input type="number" class="form-control quantity-input" value="1" min="1" data-price="${productPrice}" data-cost="${productCost}" data-product-id="${productId}" data-volume-id="${volumeId}" data-composite-id="${compositeId}"></td>
             <td class="product-total">${productPrice.toFixed(2)}</td>

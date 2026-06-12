@@ -13,7 +13,7 @@
           </button>
         </a>
         <div class="d-flex">
-          <a href="{% url 'products:add_product_volume' product.id %}" class="btn btn-success ml-3 font-weight-bold">Manage Volumes for - <i style="color: gold;">{{ product.name }}</i></a>
+          <a href="{% url 'products:add_product_volume' product.id %}" class="btn btn-success ml-3 font-weight-bold">Add Variant for - <i style="color: gold;">{{ product.name }}</i></a>
           <button title="Print" type="button" class="btn btn-success ml-2" onclick="printDiv('printMe')"><i class="mdi mdi-printer btn-icon-prepend"></i></button>
         </div>
       </div>
@@ -33,7 +33,7 @@
     <!-- DataTable -->
     <div id="printMe" class="card shadow mb-4">
       <div class="card-header py-3">
-        <h2>Volumes for <span class="text-primary">{{ product.name }}</span></h2>
+        <h2>Variants for <span class="text-primary">{{ product.name }}</span></h2>
       </div>
       <div class="card-body">
         <div class="table-responsive">
@@ -42,8 +42,8 @@
               <tr>
                 <th>#</th>
                 <th>Image</th>
-                <th>Type</th>
-                <th>Volume</th>
+                <th>Variant</th>
+                <th>Volume / Bottle Size</th>
                 <th class="text-right">Cost Price</th>
                 <th class="text-right">Selling Price</th>
                 <th class="text-right">Discount</th>
@@ -62,10 +62,10 @@
                       <span>No Image</span>
                     {% endif %}
                   </td>
-                  <td>{{ product_volume.product_type }}</td>
+                  <td>{{ product_volume.variant_label }}</td>
                   <td>{{ product_volume.volume.ml }} ML</td>
-                  <td class="text-right">{{ product_volume.volume.cost|floatformat:'2'|intcomma }}</td>
-                  <td class="text-right">{{ product_volume.volume.price|floatformat:'2'|intcomma }}</td>
+                  <td class="text-right">{{ product_volume.effective_cost|floatformat:'2'|intcomma }}</td>
+                  <td class="text-right">{{ product_volume.effective_price|floatformat:'2'|intcomma }}</td>
                   <td class="text-right">{{ product_volume.discount_value|default:'0' }}%</td>
                   <td class="text-right">{{ product_volume.get_discounted_price|floatformat:'2'|intcomma }}</td>
                   <td class="text-center print-hide">
@@ -83,10 +83,7 @@
                               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">X</button>
                             </div>
                             <div class="modal-body">
-                              Are you sure you want to delete the record: <h3>
-                                {{ product_volume.product_type }} of
-                                {{ product_volume.volume.ml }}ML ?
-                              </h3>
+                              Are you sure you want to delete the record: <h3>{{ product_volume.variant_label }}?</h3>
                             </div>
                             <div class="modal-footer">
                               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

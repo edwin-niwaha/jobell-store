@@ -35,7 +35,8 @@ GENDER_CHOICES = [
 
 # Define choices for product type
 PRODUCT_TYPE_CHOICES = [
-    ("", "-- Choose product type --"),
+    ("", "-- Choose variant type --"),
+    ("Mini", "Mini"),
     ("Roll-On", "Roll-On"),
     ("Spray", "Spray"),
     ("Diffuser", "Diffuser"),
@@ -407,6 +408,31 @@ class ProductVolume(models.Model):
 
     def __str__(self):
         return f"{self.product.name} - {self.variant_label} (SKU: {self.sku or 'Pending'})"
+
+    def clean(self):
+        super().clean()
+        if not self.product_id or not self.volume_id or not self.product_type:
+            return
+
+        duplicate = (
+            ProductVolume.objects.filter(
+                product_id=self.product_id,
+                volume_id=self.volume_id,
+                product_type=self.product_type,
+            )
+            .exclude(pk=self.pk)
+            .exists()
+        )
+        if duplicate:
+            raise ValidationError(
+                {
+                    "product_type": (
+                        f"{self.product.name} already has "
+                        f"{self.product_type} - {self.volume.ml}ML. "
+                        "Edit that variant instead of adding another one."
+                    )
+                }
+            )
 
     def save(self, *args, **kwargs):
         if not self.name and self.volume_id:

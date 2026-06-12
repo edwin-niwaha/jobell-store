@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block content %}
-  <link rel="stylesheet" href="{% static 'css/home.css' %}?v=4" />
+  <link rel="stylesheet" href="{% static 'css/home.css' %}?v=5" />
 
   <div class="platform-home">
     <main class="platform-shell">
@@ -99,22 +99,17 @@
       </section>
 
       <section class="platform-category-feature" id="platform-categories">
-        <input id="home-category-toggle" class="platform-category-toggle" type="checkbox" checked aria-label="Expand categories" />
-
         <aside class="platform-category-panel">
           <div class="platform-panel-heading">
             <div>
               <h2>Shop by category</h2>
-              <p>Popular departments</p>
+              <p>{{ categories_count|default:0 }} departments available</p>
             </div>
-            <label class="platform-icon-button" for="home-category-toggle" title="Collapse or expand categories">
-              <i class="mdi mdi-menu" aria-hidden="true"></i>
-            </label>
           </div>
 
-          <div class="platform-category-list">
+          <div class="platform-category-list" aria-label="Product categories">
             {% if categories %}
-              {% for category in categories|slice:':6' %}
+              {% for category in categories %}
                 <a class="platform-category-link" href="{% url 'products:shop_homepage' %}?category={{ category.id }}">
                   <span class="platform-category-icon">
                     {% if category.image_url %}

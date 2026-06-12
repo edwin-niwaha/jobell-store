@@ -93,6 +93,15 @@ class VolumeForm(forms.ModelForm):
             "ml": "Volume in ML",
         }
 
+    def clean_ml(self):
+        ml = self.cleaned_data["ml"]
+        duplicate = Volume.objects.filter(ml=ml).exclude(pk=self.instance.pk).exists()
+        if duplicate:
+            raise ValidationError(
+                f"{ml}ML already exists. Reuse the existing volume and set product-specific prices on the variant."
+            )
+        return ml
+
     def clean_image(self):
         image = self.cleaned_data.get("image")
         return image
@@ -105,77 +114,75 @@ class ProductVolumeForm(forms.ModelForm):
     class Meta:
         model = ProductVolume
         fields = [
-            "name",
-            "sku",
             "volume",
             "product_type",
             "price",
             "unit_cost",
-            "discount_value",
-            "color",
-            "size",
-            "scent",
+            "stock_quantity",
+            "sku",
             "barcode",
             "variant_image",
-            "attributes",
-            "stock_quantity",
-            "max_quantity_per_order",
-            "is_active",
-            "sort_order",
         ]
         widgets = {
-            "name": forms.TextInput(
+            "volume": forms.Select(attrs={"class": "form-control"}),
+            "product_type": forms.Select(attrs={"class": "form-control"}),
+            "price": forms.NumberInput(
                 attrs={
                     "class": "form-control",
-                    "placeholder": "Leave blank to use type and volume",
+                    "step": "0.01",
+                    "min": "0",
+                    "placeholder": "e.g. 25000",
                 }
+            ),
+            "unit_cost": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "step": "0.01",
+                    "min": "0",
+                    "placeholder": "e.g. 18000",
+                }
+            ),
+            "stock_quantity": forms.NumberInput(
+                attrs={"class": "form-control", "min": "0", "placeholder": "Optional"}
             ),
             "sku": forms.TextInput(
                 attrs={
                     "class": "form-control",
-                    "placeholder": "Leave blank to auto-generate",
+                    "placeholder": "Optional. Leave blank to auto-generate.",
                 }
             ),
-            "volume": forms.Select(attrs={"class": "form-control"}),
-            "product_type": forms.Select(attrs={"class": "form-control"}),
-            "price": forms.NumberInput(
-                attrs={"class": "form-control", "step": "0.01", "min": "0"}
+            "barcode": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "Optional barcode"}
             ),
-            "unit_cost": forms.NumberInput(
-                attrs={"class": "form-control", "step": "0.01", "min": "0"}
+            "variant_image": forms.FileInput(
+                attrs={"class": "form-control", "accept": "image/*"}
             ),
-            "discount_value": forms.NumberInput(
-                attrs={"class": "form-control", "step": "0.01", "min": "0"}
-            ),
-            "color": forms.TextInput(attrs={"class": "form-control", "placeholder": "Optional color/shade"}),
-            "size": forms.TextInput(attrs={"class": "form-control", "placeholder": "Optional size"}),
-            "scent": forms.TextInput(attrs={"class": "form-control", "placeholder": "Optional scent"}),
-            "barcode": forms.TextInput(attrs={"class": "form-control", "placeholder": "Optional barcode"}),
-            "variant_image": forms.FileInput(attrs={"class": "form-control", "accept": "image/*"}),
-            "attributes": forms.Textarea(attrs={"class": "form-control", "rows": 3, "placeholder": '{"material": "glass"}'}),
-            "stock_quantity": forms.NumberInput(
-                attrs={"class": "form-control", "min": "0"}
-            ),
-            "max_quantity_per_order": forms.NumberInput(
-                attrs={"class": "form-control", "min": "1"}
-            ),
-            "sort_order": forms.NumberInput(attrs={"class": "form-control", "min": "0"}),
-            "is_active": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+        }
+        labels = {
+            "volume": "Volume / Bottle Size",
+            "product_type": "Variant Type",
+            "price": "Selling Price for this Variant",
+            "unit_cost": "Cost Price for this Variant",
+            "stock_quantity": "Stock Quantity",
+            "sku": "SKU",
+            "barcode": "Barcode",
+            "variant_image": "Variant Image",
         }
 
     def __init__(self, *args, **kwargs):
         self.product = kwargs.pop("product", None)
         super().__init__(*args, **kwargs)
-        # Dynamically populate the volume choices
         self.fields["volume"].queryset = Volume.objects.all().order_by("ml")
+        self.fields["volume"].empty_label = "Select a shared volume"
+        self.fields["volume"].label_from_instance = lambda volume: f"{volume.ml}ML"
+        self.fields["price"].required = True
+        self.fields["unit_cost"].required = True
+        self.fields["stock_quantity"].required = False
 
     def clean(self):
         cleaned_data = super().clean()
         volume = cleaned_data.get("volume")
         product_type = cleaned_data.get("product_type")
-        color = cleaned_data.get("color", "")
-        size = cleaned_data.get("size", "")
-        scent = cleaned_data.get("scent", "")
         sku = cleaned_data.get("sku")
         barcode = cleaned_data.get("barcode")
 
@@ -184,13 +191,10 @@ class ProductVolumeForm(forms.ModelForm):
                 product=self.product,
                 volume=volume,
                 product_type=product_type,
-                color=color,
-                size=size,
-                scent=scent,
             ).exclude(id=self.instance.id)
             if duplicate_qs.exists():
                 raise ValidationError(
-                    "Oops! This exact variation already exists for this product."
+                    f"{self.product.name} already has {product_type} - {volume.ml}ML. Edit that variant instead."
                 )
         if sku and ProductVolume.objects.filter(sku=sku).exclude(id=self.instance.id).exists():
             raise ValidationError("This SKU is already assigned to another variant.")
@@ -202,6 +206,8 @@ class ProductVolumeForm(forms.ModelForm):
         product_volume = super().save(commit=False)
         if self.product:
             product_volume.product = self.product
+        if not product_volume.name or {"volume", "product_type"} & set(self.changed_data):
+            product_volume.name = product_volume.variant_label
         if commit:
             product_volume.save()
         return product_volume

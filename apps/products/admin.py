@@ -32,22 +32,15 @@ class ProductVolumeInline(admin.TabularInline):
     model = ProductVolume
     extra = 1
     fields = (
-        "name",
-        "sku",
-        "product_type",
         "volume",
+        "product_type",
         "price",
         "unit_cost",
-        "discount_value",
-        "color",
-        "size",
-        "scent",
+        "stock_quantity",
+        "sku",
         "barcode",
         "variant_image",
-        "stock_quantity",
-        "max_quantity_per_order",
         "is_active",
-        "sort_order",
     )
     readonly_fields = ()
     show_change_link = True
@@ -86,12 +79,8 @@ class ProductVolumeAdmin(admin.ModelAdmin):
         "variant_label",
         "sku",
         "effective_price",
+        "effective_cost",
         "discount_value",
-        "color",
-        "size",
-        "scent",
-        "barcode",
-        "variant_image",
         "stock_quantity",
         "is_active",
         "sort_order",
@@ -105,6 +94,54 @@ class ProductVolumeAdmin(admin.ModelAdmin):
         "gross_profit_amount",
         "gross_margin_percent",
         "is_in_stock",
+    )
+    fieldsets = (
+        (
+            "Variant",
+            {
+                "fields": (
+                    "product",
+                    "volume",
+                    "product_type",
+                    "price",
+                    "unit_cost",
+                    "stock_quantity",
+                    "sku",
+                    "barcode",
+                    "variant_image",
+                    "is_active",
+                )
+            },
+        ),
+        (
+            "Advanced",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "name",
+                    "discount_value",
+                    "color",
+                    "size",
+                    "scent",
+                    "attributes",
+                    "max_quantity_per_order",
+                    "sort_order",
+                ),
+            },
+        ),
+        (
+            "Read-only metrics",
+            {
+                "fields": (
+                    "variant_label",
+                    "effective_price",
+                    "effective_cost",
+                    "gross_profit_amount",
+                    "gross_margin_percent",
+                    "is_in_stock",
+                )
+            },
+        ),
     )
 
 

@@ -399,8 +399,8 @@ def product_volume_list_view(request, product_id):
 
     # Calculate totals
     total_ml = sum(volume.volume.ml for volume in product_volumes)
-    total_cost = sum(volume.volume.cost for volume in product_volumes)
-    total_price = sum(volume.volume.price for volume in product_volumes)
+    total_cost = sum(volume.effective_cost or 0 for volume in product_volumes)
+    total_price = sum(volume.effective_price or 0 for volume in product_volumes)
 
     # Calculate totals for discount_value and get_discounted_price
     total_discount_value = sum(volume.discount_value or 0 for volume in product_volumes)
@@ -432,13 +432,9 @@ def add_product_volume_view(request, product_id):
     product = get_object_or_404(Product, id=product_id)
 
     if request.method == "POST":
-        form = ProductVolumeForm(request.POST, request.FILES)
-        form.product = product  # Set the product explicitly before validation
+        form = ProductVolumeForm(request.POST, request.FILES, product=product)
 
         if form.is_valid():
-            volume = form.cleaned_data["volume"]
-            product_type = form.cleaned_data["product_type"]
-
             try:
                 with transaction.atomic():
                     form.save()
@@ -457,8 +453,7 @@ def add_product_volume_view(request, product_id):
             messages.error(request, "Please correct the errors below.")
 
     else:
-        form = ProductVolumeForm()
-        form.product = product  # Set the product explicitly for the initial form
+        form = ProductVolumeForm(product=product)
 
     return render(
         request, "products/volumes_add.html", {"form": form, "product": product}
@@ -1087,8 +1082,8 @@ def product_volumes_list_view(request):
 
     # Calculate totals (if necessary)
     total_ml = sum(volume.volume.ml for volume in volumes)
-    total_cost = sum(volume.volume.cost for volume in volumes)
-    total_price = sum(volume.volume.price for volume in volumes)
+    total_cost = sum(volume.effective_cost or 0 for volume in volumes)
+    total_price = sum(volume.effective_price or 0 for volume in volumes)
 
     # Calculate totals for discount_value and get_discounted_price
     total_discount_value = sum(volume.discount_value or 0 for volume in volumes)
