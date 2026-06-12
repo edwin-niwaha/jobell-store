@@ -2,6 +2,7 @@ from .base import *  # noqa: F401,F403
 
 
 DEBUG = False
+WHITENOISE_MANIFEST_STRICT = env_bool("WHITENOISE_MANIFEST_STRICT", False)  # noqa: F405
 
 SECRET_KEY = os.environ["SECRET_KEY"]  # noqa: F405
 ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", [BASE_DOMAIN, f"www.{BASE_DOMAIN}"])  # noqa: F405
