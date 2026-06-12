@@ -60,6 +60,9 @@ coverage.xml
 .pytest_cache/
 cover/
 
+# Generated email previews
+tmp_email_previews/
+
 # Translations
 *.mo
 *.pot
