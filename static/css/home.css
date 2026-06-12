@@ -351,8 +351,9 @@
 
 .platform-category-feature {
     align-items: stretch;
-    display: flex;
+    display: grid;
     gap: 18px;
+    grid-template-columns: 320px minmax(0, 1fr);
     margin-top: 24px;
 }
 
@@ -368,11 +369,11 @@
 .platform-category-panel {
     display: flex;
     flex-direction: column;
-    flex: 0 0 320px;
-    height: 100%;
+    height: auto;
+    min-height: 0;
     overflow: hidden;
     padding: 22px;
-    width: 320px;
+    width: 100%;
 }
 
 .platform-panel {
@@ -438,6 +439,7 @@
     margin-top: 18px;
     flex: 1 1 auto;
     max-height: var(--platform-category-list-max, 550px);
+    min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
     padding-right: 8px;
