@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models.functions import Lower
 
 
 class Testimonial(models.Model):
@@ -28,6 +29,18 @@ class Subscriber(models.Model):
             models.Index(fields=["email"], name="subscriber_email_idx"),
             models.Index(fields=["consent", "created_at"], name="sub_consent_cr_idx"),
         ]
+        constraints = [
+            models.UniqueConstraint(Lower("email"), name="subscriber_email_ci_unique"),
+        ]
+
+    def clean(self):
+        super().clean()
+        if self.email:
+            self.email = self.email.strip().lower()
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)
 
     def __str__(self):
         return self.email

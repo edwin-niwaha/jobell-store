@@ -377,6 +377,191 @@ button.admin-theme-btn-soft:focus,
   overflow-x: auto;
 }
 
+.subscriber-admin-page .admin-page-head {
+  align-items: center;
+  margin-bottom: 0.85rem;
+}
+
+.subscriber-admin-page .admin-page-title {
+  font-size: 1.75rem;
+}
+
+.subscriber-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.55rem;
+}
+
+.subscriber-summary span {
+  align-items: baseline;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(5, 5, 5, 0.1);
+  border-radius: 999px;
+  color: var(--admin-muted);
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 800;
+  gap: 0.3rem;
+  line-height: 1;
+  padding: 0.42rem 0.65rem;
+}
+
+.subscriber-summary strong {
+  color: var(--admin-black);
+  font-size: 0.95rem;
+  font-weight: 950;
+}
+
+.subscriber-admin-page .admin-actions {
+  gap: 0.45rem;
+}
+
+.subscriber-admin-page .admin-theme-btn {
+  min-height: 38px;
+  padding: 0.55rem 0.82rem;
+}
+
+.subscriber-icon-action {
+  aspect-ratio: 1;
+  min-width: 38px;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.subscriber-page-count {
+  color: #f7e7ad;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.subscriber-panel-body {
+  padding: 0.8rem 0.9rem 0.95rem;
+}
+
+.subscriber-toolbar {
+  align-items: center;
+  background: linear-gradient(180deg, #ffffff, #fbf7ec);
+  border: 1px solid rgba(5, 5, 5, 0.1);
+  border-radius: 10px;
+  box-shadow: 0 10px 24px rgba(5, 5, 5, 0.06);
+  display: grid;
+  gap: 0.45rem;
+  grid-template-columns: minmax(280px, 1fr) minmax(150px, 180px) minmax(92px, auto) auto;
+  margin-bottom: 0.65rem;
+  padding: 0.45rem;
+}
+
+.subscriber-search {
+  position: relative;
+}
+
+.subscriber-search .mdi {
+  color: var(--admin-gold);
+  font-size: 1rem;
+  left: 0.72rem;
+  pointer-events: none;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.subscriber-search .form-control {
+  padding-left: 2.1rem;
+}
+
+.subscriber-toolbar .form-control,
+.subscriber-consent-filter {
+  background-color: #ffffff;
+  border: 1px solid rgba(5, 5, 5, 0.12);
+  border-radius: 6px;
+  height: 38px;
+  min-height: 38px;
+}
+
+.subscriber-toolbar .form-control {
+  font-weight: 700;
+}
+
+.subscriber-consent-filter {
+  color: var(--admin-black);
+  font-weight: 800;
+}
+
+.subscriber-toolbar .form-control:focus,
+.subscriber-consent-filter:focus {
+  border-color: var(--admin-gold);
+  box-shadow: 0 0 0 0.18rem rgba(201, 154, 46, 0.16);
+}
+
+.subscriber-table {
+  border-spacing: 0 0.42rem;
+  min-width: 760px;
+}
+
+.subscriber-table thead th {
+  background: var(--admin-black);
+  border-bottom: 3px solid var(--admin-gold);
+  color: #ffffff;
+  font-size: 0.74rem;
+  letter-spacing: 0.09em;
+  padding: 0.62rem 0.72rem;
+}
+
+.subscriber-table thead th:first-child {
+  border-radius: 8px 0 0 8px;
+}
+
+.subscriber-table thead th:last-child {
+  border-radius: 0 8px 8px 0;
+}
+
+.subscriber-table tbody td {
+  padding: 0.58rem 0.72rem;
+}
+
+.subscriber-table tbody td:first-child {
+  width: 128px;
+}
+
+.subscriber-table tbody td:nth-child(3),
+.subscriber-table tbody td:nth-child(4) {
+  white-space: nowrap;
+  width: 154px;
+}
+
+.subscriber-table .admin-item-title {
+  display: inline-block;
+  font-size: 0.9rem;
+  line-height: 1.25;
+}
+
+.subscriber-apply-btn,
+.subscriber-clear-btn {
+  height: 38px;
+  min-height: 38px !important;
+}
+
+.subscriber-clear-btn {
+  aspect-ratio: 1;
+  min-width: 38px;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.subscriber-pagination-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: space-between;
+  margin-top: 0.65rem;
+}
+
+.subscriber-pagination-row .pagination {
+  margin-bottom: 0;
+}
+
 .admin-row-text {
   color: #25211b;
   line-height: 1.45;
@@ -1166,8 +1351,20 @@ button.admin-theme-btn-soft:focus,
     flex-direction: column;
   }
 
+  .subscriber-admin-page .admin-page-head {
+    align-items: stretch;
+  }
+
   .admin-actions {
     justify-content: flex-start;
+  }
+
+  .subscriber-admin-page .admin-actions {
+    justify-content: flex-start;
+  }
+
+  .subscriber-toolbar {
+    grid-template-columns: minmax(220px, 1fr) minmax(145px, 180px) auto auto;
   }
 
   .admin-stat-grid {
@@ -1197,6 +1394,38 @@ button.admin-theme-btn-soft:focus,
 }
 
 @media (max-width: 575.98px) {
+  .subscriber-summary {
+    gap: 0.35rem;
+  }
+
+  .subscriber-summary span {
+    flex: 1 1 calc(50% - 0.35rem);
+    justify-content: center;
+  }
+
+  .subscriber-admin-page .admin-actions {
+    display: grid;
+    grid-template-columns: 1fr repeat(3, 38px);
+  }
+
+  .subscriber-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .subscriber-apply-btn,
+  .subscriber-clear-btn {
+    width: 100%;
+  }
+
+  .subscriber-panel-body {
+    padding: 0.65rem;
+  }
+
+  .subscriber-pagination-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
   .admin-stat-grid,
   .cashier-stat-grid,
   .financial-period-stat-grid,

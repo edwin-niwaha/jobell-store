@@ -1,0 +1,8 @@
+New contact message
+
+A customer sent a message through the {{ site_name }} contact form.
+
+Name: {{ contact_name }}
+Email: {{ contact_email }}
+Submitted: {{ submitted_at|date:"M j, Y H:i" }}
+Message: {{ contact_message }}

@@ -5,7 +5,6 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView, PasswordChangeView, PasswordResetView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.mail import send_mail
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db import transaction
 from django.db.models import Q
@@ -35,6 +34,7 @@ from .models import (
     Profile,
     Contact,
 )
+from .notifications import queue_contact_emails
 from apps.orders.services import merge_session_cart_into_user_cart
 
 import logging
@@ -301,45 +301,6 @@ def delete_profile(request, pk):
     return HttpResponseRedirect(reverse("profile_list"))
 
 
-# ===================================  Contact Us  ===================================
-def send_contact_email(name, email):
-    subject = "We've Received Your Message"
-
-    message = (
-        f"Hi {name},\n\n"
-        "Thank you for reaching out to us! 🌟\n\n"
-        "Your message has been received, and our team is already on it. "
-        "Expect a response soon as we work to assist you promptly.\n\n"
-        "In the meantime, feel free to browse our available products here:\n"
-        "👉 [View Products](https://example.com/)\n\n"
-        "If you have additional questions or concerns, let us know—we're here to help!\n\n"
-        "Warm regards,\n"
-        f"The {settings.COMPANY_NAME} Team\n"
-        "Management"
-    )
-
-    from_email = getattr(settings, "EMAIL_HOST_USER", None)
-    recipients = [email]  # Send to user
-
-    # Send confirmation email to user
-    try:
-        send_mail(subject, message, from_email, recipients)
-    except Exception as e:
-        logger.error(f"Error sending email to {email}: {str(e)}")
-        return False
-
-    # Send notification email to ED_EMAIL
-    if hasattr(settings, "ED_EMAIL") and settings.ED_EMAIL:
-        admin_subject = f"New Contact Form Submission from {name}"
-        admin_message = f"New message received from {name} ({email}). Please check the system for details."
-
-        try:
-            send_mail(admin_subject, admin_message, from_email, [settings.ED_EMAIL])
-        except Exception as e:
-            logger.error(f"Error sending email to {settings.ED_EMAIL}: {str(e)}")
-
-    return True
-
 
 def contact_us(request):
     form = ContactForm()
@@ -356,19 +317,23 @@ def contact_us(request):
         form = ContactForm(request.POST)
         if form.is_valid():
             instance = form.save()
-            email_sent = send_contact_email(instance.name, instance.email)
-
-            if email_sent:
+            try:
+                transaction.on_commit(
+                    lambda contact_id=instance.id: queue_contact_emails(contact_id)
+                )
+            except Exception:
+                logger.exception("Failed to queue contact emails for feedback %s.", instance.id)
+                messages.error(
+                    request,
+                    "Your message was saved, but email delivery could not be queued. Please try again later.",
+                    extra_tags="bg-danger",
+                )
+            else:
+                logger.info("Contact feedback saved and email task scheduled: %s", instance.email)
                 messages.success(
                     request,
                     "Your message has been sent successfully. We will get back to you soon!",
                     extra_tags="bg-success",
-                )
-            else:
-                messages.error(
-                    request,
-                    "Sorry, an error occurred while sending your message. Please try again later.",
-                    extra_tags="bg-danger",
                 )
 
             return HttpResponseRedirect(reverse("contact_us"))

@@ -1,11 +1,11 @@
 import json
 import logging
 from django.conf import settings
-from django.core.mail import send_mail
 from django.http import JsonResponse
 from decimal import Decimal
 from datetime import date, timedelta, datetime
 from django.utils import timezone
+from django.db import IntegrityError, transaction
 from django.db.models.functions import TruncMonth
 from django.db.models.functions import ExtractYear
 from django.contrib.auth.decorators import login_required
@@ -24,6 +24,7 @@ from apps.finance.models import ChartOfAccounts, Transaction, FinancialPeriod
 
 from .models import Testimonial, Subscriber
 from .forms import TestimonialForm, NewsletterForm, EmailForm
+from .notifications import queue_bulk_newsletter_email, queue_newsletter_subscription_emails
 from apps.products.forms import ProductFilterForm
 
 from apps.authentication.decorators import (
@@ -35,12 +36,6 @@ from .utils import (
 )
 
 logger = logging.getLogger(__name__)
-
-import logging
-
-# Set up logging
-logger = logging.getLogger(__name__)
-
 
 # =================================== Home User view  ===================================
 def index(request):
@@ -195,7 +190,15 @@ def index(request):
     testimonial_form = TestimonialForm(request.POST or None)
     newsletter_form = NewsletterForm(request.POST or None)
 
-    if request.method == "POST" and testimonial_form.is_valid():
+    is_newsletter_submission = (
+        request.method == "POST"
+        and (
+            "submit_newsletter" in request.POST
+            or ("email" in request.POST and "consent" in request.POST)
+        )
+    )
+
+    if request.method == "POST" and not is_newsletter_submission and testimonial_form.is_valid():
         testimonial_form.save()
         messages.success(
             request,
@@ -205,14 +208,41 @@ def index(request):
         return redirect("users-home")
 
     # Handle Newsletter Form Submission
-    if "submit_newsletter" in request.POST and newsletter_form.is_valid():
-        newsletter_form.save()
-        messages.success(
-            request,
-            "Thank you for subscribing to our newsletter!",
-            extra_tags="bg-success",
-        )
-        return redirect("users-home")
+    if is_newsletter_submission and newsletter_form.is_valid():
+        try:
+            subscriber = newsletter_form.save()
+        except IntegrityError:
+            logger.info(
+                "Duplicate newsletter subscription rejected for %s.",
+                newsletter_form.cleaned_data.get("email"),
+            )
+            newsletter_form.add_error("email", "This email is already subscribed.")
+        else:
+            transaction.on_commit(
+                lambda subscriber_id=subscriber.id: queue_newsletter_subscription_emails(
+                    subscriber_id
+                )
+            )
+            logger.info(
+                "Newsletter subscriber saved and email task scheduled: %s",
+                subscriber.email,
+            )
+            messages.success(
+                request,
+                "Thank you for subscribing to our newsletter!",
+                extra_tags="bg-success",
+            )
+            return redirect("users-home")
+
+    elif is_newsletter_submission:
+        logger.info("Newsletter subscription rejected: %s", newsletter_form.errors.as_json())
+
+    if (
+        request.method == "POST"
+        and not is_newsletter_submission
+        and not testimonial_form.is_valid()
+    ):
+        logger.info("Testimonial submission rejected: %s", testimonial_form.errors.as_json())
 
     # Fetch all testimonials to display in the template
     testimonials = Testimonial.objects.filter(approved=True)
@@ -878,28 +908,24 @@ def send_bulk_email_view(request):
         form = EmailForm(request.POST)
         if form.is_valid():
             subject = form.cleaned_data["subject"]
-            message = form.cleaned_data["message"]  # This will be rich text
-            from_email = settings.EMAIL_HOST_USER
+            message = form.cleaned_data["message"]
 
             # Fetch all subscriber emails
-            recipients = list(Subscriber.objects.values_list("email", flat=True))
+            recipients = list(
+                Subscriber.objects.filter(consent=True).values_list("email", flat=True)
+            )
 
             if recipients:
-                send_mail(
-                    subject,
-                    message,
-                    from_email,
-                    recipients,
-                    fail_silently=False,
-                    html_message=message,  # Send the message as HTML content
+                transaction.on_commit(
+                    lambda: queue_bulk_newsletter_email(subject, message, recipients)
                 )
                 messages.success(
                     request,
-                    "Email sent successfully to all subscribers.",
+                    "Email queued successfully for all consenting subscribers.",
                     extra_tags="bg-success",
                 )
             else:
-                messages.warning(request, "No subscribers to send email to.")
+                messages.warning(request, "No consenting subscribers to send email to.")
             return redirect("send_bulk_email")  # Prevent resubmission
 
     else:

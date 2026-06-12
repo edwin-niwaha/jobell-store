@@ -1,0 +1,31 @@
+{% extends "emails/base.html" %}
+{% block content %}
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+  <tr>
+    <td style="padding:28px 24px 10px;">
+      <div style="display:inline-block;background:#fff8df;border:1px solid #d4af37;border-radius:999px;padding:7px 11px;color:#7a5b00;font-size:12px;line-height:14px;text-transform:uppercase;letter-spacing:1px;">Received</div>
+      <h1 style="margin:14px 0 8px;font-size:28px;line-height:34px;color:#050505;font-weight:700;">We received your message</h1>
+      <p style="margin:0 0 18px;font-size:15px;line-height:24px;color:#374151;">Hi {{ contact_name }}, thank you for contacting {{ site_name }}. Our team has your message and will get back to you soon.</p>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 18px;border:1px solid #eadfca;border-radius:14px;overflow:hidden;">
+        <tr>
+          <td style="background:#050505;color:#f7e7ad;padding:12px 16px;font-size:13px;line-height:18px;font-weight:700;">Your message</td>
+        </tr>
+        <tr>
+          <td style="padding:14px 16px;background:#fffaf0;">
+            <p style="margin:0 0 6px;font-size:14px;line-height:22px;color:#111111;"><strong>Email:</strong> {{ contact_email }}</p>
+            <p style="margin:0 0 6px;font-size:14px;line-height:22px;color:#111111;"><strong>Submitted:</strong> {{ submitted_at|date:"M j, Y H:i" }}</p>
+            <p style="margin:0;font-size:14px;line-height:22px;color:#111111;">{{ contact_message }}</p>
+          </td>
+        </tr>
+      </table>
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:4px 0 12px;">
+        <tr>
+          <td style="background:#050505;border-radius:10px;">
+            <a href="{{ site_url }}" style="display:inline-block;padding:13px 22px;color:#ffffff;text-decoration:none;font-size:14px;line-height:18px;font-weight:700;">Visit Jobell</a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+{% endblock %}

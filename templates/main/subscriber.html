@@ -6,79 +6,70 @@
 {% endblock %}
 
 {% block content %}
-  <div class="container-fluid">
+  <div class="container-fluid subscriber-admin-page">
     <div class="admin-page-head">
       <div>
         <span class="admin-eyebrow">Marketing</span>
         <h1 class="admin-page-title">{{ table_title }}</h1>
-        <p class="admin-muted mb-0">Manage newsletter recipients and consent status.</p>
+        <div class="subscriber-summary" aria-label="Subscriber summary">
+          <span><strong>{{ subscriber_total }}</strong> total</span>
+          <span><strong>{{ consented_count }}</strong> consented</span>
+          <span><strong>{{ subscribers.paginator.count }}</strong> matching</span>
+        </div>
       </div>
       <div class="admin-actions">
         <a href="{% url 'send_bulk_email' %}" class="admin-theme-btn admin-theme-btn-accent">
           <i class="mdi mdi-email" aria-hidden="true"></i>
           Send email
         </a>
-        <button title="Export to Excel" type="button" class="admin-theme-btn admin-theme-btn-soft" onclick="ExportToExcel('xlsx')">
+        <button title="Export to Excel" aria-label="Export to Excel" type="button" class="admin-theme-btn admin-theme-btn-soft subscriber-icon-action" onclick="ExportToExcel('xlsx')">
           <i class="mdi mdi-file-excel" aria-hidden="true"></i>
-          Excel
         </button>
-        <button title="Export to Word" type="button" class="admin-theme-btn admin-theme-btn-soft" onclick="Export2Doc('printMe')">
+        <button title="Export to Word" aria-label="Export to Word" type="button" class="admin-theme-btn admin-theme-btn-soft subscriber-icon-action" onclick="Export2Doc('printMe')">
           <i class="mdi mdi-file-word" aria-hidden="true"></i>
-          Word
         </button>
-        <button title="Print" type="button" class="admin-theme-btn admin-theme-btn-soft" onclick="printDiv('printMe')">
+        <button title="Print" aria-label="Print subscriber records" type="button" class="admin-theme-btn admin-theme-btn-soft subscriber-icon-action" onclick="printDiv('printMe')">
           <i class="mdi mdi-printer" aria-hidden="true"></i>
-          Print
         </button>
       </div>
     </div>
-
-    <div class="admin-stat-grid">
-      <div class="admin-stat">
-        <span>Total</span>
-        <strong>{{ subscriber_total }}</strong>
-      </div>
-      <div class="admin-stat">
-        <span>Consented</span>
-        <strong>{{ consented_count }}</strong>
-      </div>
-      <div class="admin-stat">
-        <span>Showing</span>
-        <strong>{{ subscribers.paginator.count }}</strong>
-      </div>
-    </div>
-
-    <form method="get" action="{% url 'subscriber_list' %}" class="admin-filter-bar">
-      <div class="flex-grow-1">
-        <label for="subscriberSearch" class="sr-only">Search subscribers</label>
-        <input type="search" name="search" id="subscriberSearch" class="form-control" value="{{ search_query }}" placeholder="Search by email" />
-      </div>
-      <select name="consent" class="form-control" aria-label="Consent status">
-        <option value="" {% if not consent %}selected{% endif %}>All consent statuses</option>
-        <option value="yes" {% if consent == 'yes' %}selected{% endif %}>Consented</option>
-        <option value="no" {% if consent == 'no' %}selected{% endif %}>No consent</option>
-      </select>
-      <button type="submit" class="admin-theme-btn admin-theme-btn-accent">
-        <i class="mdi mdi-filter-outline" aria-hidden="true"></i>
-        Apply
-      </button>
-      {% if search_query or consent %}
-        <a href="{% url 'subscriber_list' %}" class="admin-theme-btn admin-theme-btn-soft">Clear</a>
-      {% endif %}
-    </form>
 
     <div id="printMe" class="admin-panel mb-4">
       <div class="admin-panel-header">
         <h2>Subscriber records</h2>
+        <span class="subscriber-page-count">Page {{ subscribers.number }} of {{ subscribers.paginator.num_pages }}</span>
       </div>
-      <div class="p-3">
+      <div class="subscriber-panel-body">
+        <form method="get" action="{% url 'subscriber_list' %}" class="subscriber-toolbar print-hide">
+          <div class="subscriber-search">
+            <i class="mdi mdi-magnify" aria-hidden="true"></i>
+            <label for="subscriberSearch" class="sr-only">Search subscribers</label>
+            <input type="search" name="search" id="subscriberSearch" class="form-control" value="{{ search_query }}" placeholder="Search by email" />
+          </div>
+          <select name="consent" class="form-control subscriber-consent-filter" aria-label="Consent status">
+            <option value="" {% if not consent %}selected{% endif %}>All statuses</option>
+            <option value="yes" {% if consent == 'yes' %}selected{% endif %}>Consented</option>
+            <option value="no" {% if consent == 'no' %}selected{% endif %}>No consent</option>
+          </select>
+          <button type="submit" class="admin-theme-btn admin-theme-btn-accent subscriber-apply-btn">
+            <i class="mdi mdi-filter-outline" aria-hidden="true"></i>
+            <span>Apply</span>
+          </button>
+          {% if search_query or consent %}
+            <a href="{% url 'subscriber_list' %}" class="admin-theme-btn admin-theme-btn-soft subscriber-clear-btn" title="Clear filters" aria-label="Clear filters">
+              <i class="mdi mdi-close" aria-hidden="true"></i>
+            </a>
+          {% endif %}
+        </form>
+
         <div class="admin-table-wrap">
-          <table class="admin-table my-table" id="dataTable">
+          <table class="admin-table subscriber-table my-table" id="dataTable">
             <thead>
               <tr>
+                <th>Consent</th>
                 <th>Email</th>
                 <th>Subscribed</th>
-                <th>Consent</th>
+                <th>Updated</th>
                 <th class="print-hide text-center">Actions</th>
               </tr>
             </thead>
@@ -86,17 +77,17 @@
               {% for subscriber in subscribers %}
                 <tr>
                   <td>
-                    <span class="admin-item-title">{{ subscriber.email }}</span>
-                    <span class="admin-item-subtitle">Updated {{ subscriber.updated_at|date:'Y-m-d H:i' }}</span>
-                  </td>
-                  <td>{{ subscriber.created_at|date:'Y-m-d H:i' }}</td>
-                  <td>
                     {% if subscriber.consent %}
                       <span class="admin-badge is-success">Consented</span>
                     {% else %}
                       <span class="admin-badge is-muted">No consent</span>
                     {% endif %}
                   </td>
+                  <td>
+                    <span class="admin-item-title">{{ subscriber.email }}</span>
+                  </td>
+                  <td>{{ subscriber.created_at|date:'Y-m-d H:i' }}</td>
+                  <td>{{ subscriber.updated_at|date:'Y-m-d H:i' }}</td>
                   <td class="text-center print-hide">
                     <form method="post" action="{% url 'delete_subscriber' subscriber.id %}" class="admin-inline-form" onsubmit="return confirm('Delete this subscriber permanently?');">
                       {% csrf_token %}
@@ -108,15 +99,15 @@
                 </tr>
               {% empty %}
                 <tr>
-                  <td colspan="4" class="admin-empty-row">No subscribers match your filters.</td>
+                  <td colspan="5" class="admin-empty-row">No subscribers match your filters.</td>
                 </tr>
               {% endfor %}
             </tbody>
           </table>
         </div>
 
-        <div class="d-flex justify-content-between align-items-center flex-wrap mt-3">
-          <div class="admin-muted mb-2 mb-md-0">Showing {{ subscribers.start_index }} to {{ subscribers.end_index }} of {{ subscribers.paginator.count }} entries</div>
+        <div class="subscriber-pagination-row">
+          <div class="admin-muted">Showing {{ subscribers.start_index }} to {{ subscribers.end_index }} of {{ subscribers.paginator.count }} entries</div>
           <nav aria-label="Subscribers pagination">
             <ul class="pagination admin-pagination">
               {% if subscribers.has_previous %}

@@ -52,11 +52,11 @@ class NewsletterForm(forms.ModelForm):
 
     class Meta:
         model = Subscriber
-        fields = ["email"]
+        fields = ["email", "consent"]
 
     def clean_email(self):
-        email = self.cleaned_data.get("email")
-        if Subscriber.objects.filter(email=email).exists():
+        email = (self.cleaned_data.get("email") or "").strip().lower()
+        if Subscriber.objects.filter(email__iexact=email).exists():
             raise forms.ValidationError("This email is already subscribed.")
         return email
 

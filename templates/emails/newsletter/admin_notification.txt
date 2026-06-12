@@ -1,0 +1,9 @@
+New newsletter subscriber
+
+A customer has joined the {{ site_name }} newsletter list.
+
+Email: {{ subscriber_email }}
+Consent: {% if subscriber.consent %}Yes{% else %}No{% endif %}
+Subscribed: {{ subscribed_at|date:"M j, Y H:i" }}
+
+Site: {{ site_url }}

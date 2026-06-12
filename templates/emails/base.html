@@ -19,12 +19,14 @@
                       <img src="{{ logo_url }}" width="112" alt="{{ company_name|default:site_name }}" style="display:block;max-width:112px;height:auto;border:0;margin:0 0 8px;">
                     {% endif %}
                     <div style="font-size:22px;line-height:28px;font-weight:700;color:#ffffff;letter-spacing:0;">{{ company_name|default:site_name }}</div>
-                    <div style="font-size:12px;line-height:18px;color:#d4af37;text-transform:uppercase;letter-spacing:1.8px;">Premium order care</div>
+                    <div style="font-size:12px;line-height:18px;color:#d4af37;text-transform:uppercase;letter-spacing:1.8px;">{{ header_eyebrow|default:"Premium order care" }}</div>
                   </td>
                   <td align="right" valign="middle" style="vertical-align:middle;text-align:right;">
-                    <div style="display:inline-block;border:1px solid #d4af37;border-radius:999px;padding:8px 12px;color:#f7e7ad;font-size:12px;line-height:14px;">
-                      Order #{{ order_number }}
-                    </div>
+                    {% if order_number or header_badge %}
+                      <div style="display:inline-block;border:1px solid #d4af37;border-radius:999px;padding:8px 12px;color:#f7e7ad;font-size:12px;line-height:14px;">
+                        {% if order_number %}Order #{{ order_number }}{% else %}{{ header_badge }}{% endif %}
+                      </div>
+                    {% endif %}
                   </td>
                 </tr>
               </table>

@@ -3,7 +3,7 @@
 {% load humanize %}
 
 {% block title %}
-  {{ site_name|upper }} Store
+  {{ site_name|upper }} STORE
 {% endblock %}
 
 {% block content %}
@@ -26,20 +26,22 @@
             </a>
           </div>
 
-          <div class="platform-stats" aria-label="Store summary">
+        <div class="platform-stats d-flex align-items-center gap-2 gap-md-4 text-center" aria-label="Store summary">
             <div>
-              <strong>{{ active_products_count|default:0 }}</strong>
-              <span>Products</span>
+                <strong class="d-block fs-6">{{ active_products_count|default:0 }}</strong>
+                <span class="small text-muted">Products</span>
             </div>
+
             <div>
-              <strong>{{ categories_count|default:0 }}</strong>
-              <span>Categories</span>
+                <strong class="d-block fs-6">{{ categories_count|default:0 }}</strong>
+                <span class="small text-muted">Categories</span>
             </div>
+
             <div>
-              <strong>{{ featured_count|default:0 }}</strong>
-              <span>Featured</span>
+                <strong class="d-block fs-6">{{ featured_count|default:0 }}</strong>
+                <span class="small text-muted">Featured</span>
             </div>
-          </div>
+        </div>
         </div>
 
         <div class="platform-hero-carousel" data-app-hero-carousel aria-label="Featured products slideshow">
@@ -236,10 +238,11 @@
 
           <p class="platform-muted">Subscribe for exclusive offers and fragrance updates.</p>
 
-          <form class="platform-newsletter" method="POST" action="{% url 'users-home' %}">
+          <form class="platform-newsletter" method="POST" action="{% url 'users-home' %}" data-newsletter-form>
             {% csrf_token %}
+            <input type="hidden" name="submit_newsletter" value="1">
             {{ newsletter_form.email }}
-            <button class="platform-btn platform-btn-accent" name="submit_newsletter" value="1" type="submit">
+            <button class="platform-btn platform-btn-accent" type="submit">
               Subscribe
             </button>
             <label class="platform-consent">
@@ -288,4 +291,5 @@
 
   <audio id="welcome-audio" src="{% static 'audio/welcome.mp3' %}" preload="auto"></audio>
   <script src="{% static 'js/welcome.js' %}?v=2"></script>
+  <script src="{% static 'js/newsletter.js' %}?v=1"></script>
 {% endblock %}
