@@ -51,7 +51,18 @@ def _product_identity_filter(cleaned_data):
 def shop_homepage_view(request):
     # Initialize the filter form
     form = ProductFilterForm(request.GET)
-    categories = Category.objects.filter(is_active=True, products__status="ACTIVE").distinct().order_by("name")
+    categories = (
+        Category.objects.filter(is_active=True, products__status="ACTIVE")
+        .annotate(
+            active_product_count=Count(
+                "products",
+                filter=Q(products__status="ACTIVE"),
+                distinct=True,
+            )
+        )
+        .distinct()
+        .order_by("name")
+    )
     selected_category = None
 
     # Start with all active products

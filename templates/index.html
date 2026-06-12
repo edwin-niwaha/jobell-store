@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block content %}
-  <link rel="stylesheet" href="{% static 'css/home.css' %}?v=9" />
+  <link rel="stylesheet" href="{% static 'css/home.css' %}?v=11" />
 
   <div class="platform-home">
     <main class="platform-shell">
@@ -98,59 +98,70 @@
         </div>
       </section>
 
-      <section class="platform-category-feature" id="platform-categories" data-category-feature>
-        <aside class="platform-category-panel">
-          <div class="platform-panel-heading">
-            <div>
-              <h2>Shop by category</h2>
-              <p>{{ categories_count|default:0 }} categories available</p>
+      <section class="platform-panel platform-category-panel" id="platform-categories">
+        <div class="platform-section-heading">
+          <div>
+            <h2>Shop by category</h2>
+            <p>{{ categories_count|default:0 }} categories available</p>
+          </div>
+
+          {% if categories %}
+            <div class="platform-scroll-actions d-none d-md-flex" aria-label="Category scroll controls">
+              <button class="platform-scroll-btn" type="button" data-scroll-target="[data-category-scroll]" data-scroll-direction="-1" aria-label="Scroll categories left">
+                <i class="mdi mdi-chevron-left" aria-hidden="true"></i>
+              </button>
+              <button class="platform-scroll-btn" type="button" data-scroll-target="[data-category-scroll]" data-scroll-direction="1" aria-label="Scroll categories right">
+                <i class="mdi mdi-chevron-right" aria-hidden="true"></i>
+              </button>
             </div>
-          </div>
+          {% endif %}
+        </div>
 
-          <div class="platform-category-list" aria-label="Product categories">
-            {% if categories %}
-              {% for category in categories %}
-                <a class="platform-category-link" href="{% url 'products:shop_homepage' %}?category={{ category.id }}">
-                  <span class="platform-category-icon">
-                    {% if category.image_url %}
-                      <img src="{{ category.image_url }}" alt="{{ category.name }}" />
-                    {% elif category.icon %}
-                      <img src="{{ category.icon.url }}" alt="{{ category.name }}" />
-                    {% else %}
-                      <img src="{% static 'images/no-image.png' %}" alt="{{ category.name }}" />
-                    {% endif %}
-                  </span>
-                  <span class="platform-category-text">
-                    <strong>{{ category.name }}</strong>
+        {% if categories %}
+          <div class="platform-category-scroll d-flex flex-nowrap" data-category-scroll aria-label="Product categories">
+            {% for category in categories %}
+              <a class="platform-category-card" href="{% url 'products:shop_homepage' %}?category={{ category.id }}">
+                <span class="platform-category-media">
+                  {% if category.image_url %}
+                    <img src="{{ category.image_url }}" alt="{{ category.name }}" />
+                  {% else %}
+                    <i class="mdi mdi-spray-bottle" aria-hidden="true"></i>
+                  {% endif %}
+                </span>
+                <span class="platform-category-copy">
+                  <strong>{{ category.name }}</strong>
+                  {% if category.active_product_count %}
+                    <small>{{ category.active_product_count }} product{{ category.active_product_count|pluralize }}</small>
+                  {% else %}
                     <small>Browse collection</small>
-                  </span>
-                </a>
-              {% endfor %}
-            {% else %}
-              <p class="platform-muted">Categories will appear here once available.</p>
-            {% endif %}
+                  {% endif %}
+                </span>
+              </a>
+            {% endfor %}
           </div>
-        </aside>
+        {% else %}
+          <p class="platform-muted">Categories will appear here once available.</p>
+        {% endif %}
+      </section>
 
-        <div class="platform-panel platform-featured-panel" data-featured-card>
-          <div class="platform-section-heading">
+      <section class="platform-panel platform-featured-panel" data-featured-card>
+        <div class="platform-section-heading">
             <div>
               <span class="platform-eyebrow">Handpicked</span>
               <h2>Featured Collection</h2>
             </div>
-            <a href="{% url 'products:shop_homepage' %}">See more</a>
-          </div>
-
-          {% if products_with_images %}
-            <div class="platform-product-scroll">
-              {% for product_info in products_with_images|slice:':12' %}
-                {% include 'partials/home_product_tile.html' with product_info=product_info %}
-              {% endfor %}
-            </div>
-          {% else %}
-            <p class="platform-muted">No featured products available yet.</p>
-          {% endif %}
+          <a href="{% url 'products:shop_homepage' %}">See more</a>
         </div>
+
+        {% if products_with_images %}
+          <div class="platform-product-scroll">
+            {% for product_info in products_with_images|slice:':12' %}
+              {% include 'partials/home_product_tile.html' with product_info=product_info %}
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="platform-muted">No featured products available yet.</p>
+        {% endif %}
       </section>
 
       <section class="platform-panel">
@@ -287,36 +298,14 @@
   <audio id="welcome-audio" src="{% static 'audio/welcome.mp3' %}" preload="auto"></audio>
   <script>
     (function () {
-      const section = document.querySelector('[data-category-feature]');
-      if (!section) return;
-
-      const featuredCard = section.querySelector('[data-featured-card]');
-      const categoryPanel = section.querySelector('.platform-category-panel');
-      const heading = section.querySelector('.platform-panel-heading');
-      const categoryList = section.querySelector('.platform-category-list');
-
-      function syncCategoryHeight() {
-        if (!featuredCard || !categoryPanel || !heading || !categoryList || window.innerWidth <= 900) {
-          section.style.removeProperty('--platform-category-list-max');
-          return;
-        }
-
-        const featuredHeight = featuredCard.getBoundingClientRect().height;
-        const panelStyle = window.getComputedStyle(categoryPanel);
-        const panelVerticalPadding = parseFloat(panelStyle.paddingTop) + parseFloat(panelStyle.paddingBottom);
-        const listTopGap = parseFloat(window.getComputedStyle(categoryList).marginTop);
-        const headingHeight = heading.getBoundingClientRect().height;
-        const availableHeight = featuredHeight - headingHeight - panelVerticalPadding - listTopGap;
-
-        section.style.setProperty('--platform-category-list-max', Math.max(220, availableHeight) + 'px');
-      }
-
-      syncCategoryHeight();
-      window.addEventListener('resize', syncCategoryHeight);
-
-      if ('ResizeObserver' in window && featuredCard) {
-        new ResizeObserver(syncCategoryHeight).observe(featuredCard);
-      }
+      document.querySelectorAll('[data-scroll-target]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          var target = document.querySelector(button.getAttribute('data-scroll-target'));
+          if (!target) return;
+          var direction = parseInt(button.getAttribute('data-scroll-direction'), 10) || 1;
+          target.scrollBy({ left: direction * Math.round(target.clientWidth * 0.8), behavior: 'smooth' });
+        });
+      });
     })();
   </script>
   <script src="{% static 'js/welcome.js' %}?v=2"></script>

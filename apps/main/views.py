@@ -45,51 +45,17 @@ def index(request):
     active_products = active_products_queryset().order_by(
         "-is_featured", "-created_at", "name"
     )
-    categories = list(Category.objects.filter(is_active=True).order_by("name"))
-    category_icon_map = {
-        "gift": {
-            "url": "https://cdn-icons-png.flaticon.com/512/104/104671.png",
-            "credit": "Freepik",
-            "source": "https://www.flaticon.com/free-icon/gift_104671",
-        },
-        "body": {
-            "url": "https://cdn-icons-png.flaticon.com/512/2351/2351666.png",
-            "credit": "Made by Made Premium",
-            "source": "https://www.flaticon.com/free-icon/cosmetics_2351666",
-        },
-        "cosmetic": {
-            "url": "https://cdn-icons-png.flaticon.com/512/2351/2351666.png",
-            "credit": "Made by Made Premium",
-            "source": "https://www.flaticon.com/free-icon/cosmetics_2351666",
-        },
-        "care": {
-            "url": "https://cdn-icons-png.flaticon.com/512/5512/5512237.png",
-            "credit": "Smashicons",
-            "source": "https://www.flaticon.com/free-icon/bottle_5512237",
-        },
-        "home": {
-            "url": "https://cdn-icons-png.flaticon.com/512/9658/9658309.png",
-            "credit": "Nuricon",
-            "source": "https://www.flaticon.com/free-icon/diffuser_9658309",
-        },
-        "diffuser": {
-            "url": "https://cdn-icons-png.flaticon.com/512/9658/9658309.png",
-            "credit": "Nuricon",
-            "source": "https://www.flaticon.com/free-icon/diffuser_9658309",
-        },
-        "default": {
-            "url": "https://cdn-icons-png.flaticon.com/512/2371/2371049.png",
-            "credit": "Freepik",
-            "source": "https://www.flaticon.com/free-icon/perfume_2371049",
-        },
-    }
-    for category in categories:
-        category_name = category.name.lower()
-        category.icon = category_icon_map["default"]
-        for key, icon in category_icon_map.items():
-            if key != "default" and key in category_name:
-                category.icon = icon
-                break
+    categories = list(
+        Category.objects.filter(is_active=True)
+        .annotate(
+            active_product_count=Count(
+                "products",
+                filter=Q(products__status="ACTIVE"),
+                distinct=True,
+            )
+        )
+        .order_by("name")
+    )
     featured_count = active_products.filter(is_featured=True).count()
 
     # Prefer featured products on the landing page, but fall back to active products
@@ -256,7 +222,7 @@ def index(request):
             "products_with_images": products_with_images,
             "categories": categories,
             "active_products_count": active_products.count(),
-            "categories_count": Category.objects.filter(is_active=True).count(),
+            "categories_count": len(categories),
             "featured_count": featured_count,
             "user": request.user,
             "page_obj": page_obj,
