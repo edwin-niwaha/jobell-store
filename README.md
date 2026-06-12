@@ -134,3 +134,6 @@ celery -A core worker -l info
 - Additional Notes
 - Ensure your environment variables are set up correctly, especially for sensitive information like - - API keys and database passwords.
 - For production, consider using a web server like Gunicorn with Nginx or Apache.
+
+
+python manage.py collectstatic --noinput

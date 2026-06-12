@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block content %}
-  <link rel="stylesheet" href="{% static 'css/home.css' %}?v=6" />
+  <link rel="stylesheet" href="{% static 'css/home.css' %}?v=8" />
 
   <div class="platform-home">
     <main class="platform-shell">
@@ -114,7 +114,7 @@
                   <span class="platform-category-icon">
                     {% if category.image_url %}
                       <img src="{{ category.image_url }}" alt="{{ category.name }}" />
-                    {% elif category.icon.url %}
+                    {% elif category.icon %}
                       <img src="{{ category.icon.url }}" alt="{{ category.name }}" />
                     {% else %}
                       <img src="{% static 'images/no-image.png' %}" alt="{{ category.name }}" />
@@ -293,19 +293,22 @@
       const featuredCard = section.querySelector('[data-featured-card]');
       const categoryPanel = section.querySelector('.platform-category-panel');
       const heading = section.querySelector('.platform-panel-heading');
+      const categoryList = section.querySelector('.platform-category-list');
 
       function syncCategoryHeight() {
-        if (!featuredCard || !categoryPanel || !heading || window.innerWidth <= 900) {
+        if (!featuredCard || !categoryPanel || !heading || !categoryList || window.innerWidth <= 900) {
           section.style.removeProperty('--platform-category-list-max');
           return;
         }
 
+        const featuredHeight = featuredCard.getBoundingClientRect().height;
         const panelStyle = window.getComputedStyle(categoryPanel);
         const panelVerticalPadding = parseFloat(panelStyle.paddingTop) + parseFloat(panelStyle.paddingBottom);
-        const listTopGap = parseFloat(window.getComputedStyle(section.querySelector('.platform-category-list')).marginTop);
-        const availableHeight = featuredCard.getBoundingClientRect().height - heading.getBoundingClientRect().height - panelVerticalPadding - listTopGap;
+        const listTopGap = parseFloat(window.getComputedStyle(categoryList).marginTop);
+        const headingHeight = heading.getBoundingClientRect().height;
+        const availableHeight = featuredHeight - headingHeight - panelVerticalPadding - listTopGap;
 
-        section.style.setProperty('--platform-category-list-max', Math.max(180, availableHeight) + 'px');
+        section.style.setProperty('--platform-category-list-max', Math.max(220, availableHeight) + 'px');
       }
 
       syncCategoryHeight();

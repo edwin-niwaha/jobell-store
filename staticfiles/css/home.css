@@ -369,6 +369,7 @@
     display: flex;
     flex-direction: column;
     flex: 0 0 320px;
+    height: 100%;
     overflow: hidden;
     padding: 22px;
     width: 320px;
@@ -435,25 +436,32 @@
     display: grid;
     gap: 12px;
     margin-top: 18px;
-    max-height: var(--platform-category-list-max, 430px);
+    flex: 1 1 auto;
+    max-height: var(--platform-category-list-max, 550px);
     overflow-y: auto;
-    padding-right: 6px;
-    scrollbar-color: var(--app-gold) var(--app-soft);
-    scrollbar-width: thin;
+    overflow-x: hidden;
+    padding-right: 8px;
+    scrollbar-color: var(--app-gold) #f1ede4;
+    scrollbar-width: auto;
 }
 
 .platform-category-list::-webkit-scrollbar {
-    width: 8px;
+    width: 12px;
 }
 
 .platform-category-list::-webkit-scrollbar-track {
-    background: var(--app-soft);
+    background: #f1ede4;
     border-radius: 999px;
 }
 
 .platform-category-list::-webkit-scrollbar-thumb {
-    background: var(--app-gold);
+    background: linear-gradient(180deg, var(--app-gold-dark), var(--app-gold));
+    border: 2px solid #f1ede4;
     border-radius: 999px;
+}
+
+.platform-category-list::-webkit-scrollbar-thumb:hover {
+    background: var(--app-gold-dark);
 }
 
 .platform-category-link {
@@ -491,12 +499,19 @@
 }
 
 .platform-category-text {
+    color: var(--app-black) !important;
+    display: block !important;
+    flex: 1 1 auto;
     min-width: 0;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
 .platform-category-text strong,
 .platform-category-text small {
-    display: block;
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
 .platform-category-text strong {
