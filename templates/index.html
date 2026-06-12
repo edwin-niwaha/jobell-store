@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block content %}
-  <link rel="stylesheet" href="{% static 'css/home.css' %}?v=5" />
+  <link rel="stylesheet" href="{% static 'css/home.css' %}?v=6" />
 
   <div class="platform-home">
     <main class="platform-shell">
@@ -98,12 +98,12 @@
         </div>
       </section>
 
-      <section class="platform-category-feature" id="platform-categories">
+      <section class="platform-category-feature" id="platform-categories" data-category-feature>
         <aside class="platform-category-panel">
           <div class="platform-panel-heading">
             <div>
               <h2>Shop by category</h2>
-              <p>{{ categories_count|default:0 }} departments available</p>
+              <p>{{ categories_count|default:0 }} categories available</p>
             </div>
           </div>
 
@@ -132,7 +132,7 @@
           </div>
         </aside>
 
-        <div class="platform-panel platform-featured-panel">
+        <div class="platform-panel platform-featured-panel" data-featured-card>
           <div class="platform-section-heading">
             <div>
               <span class="platform-eyebrow">Handpicked</span>
@@ -285,6 +285,37 @@
   </div>
 
   <audio id="welcome-audio" src="{% static 'audio/welcome.mp3' %}" preload="auto"></audio>
+  <script>
+    (function () {
+      const section = document.querySelector('[data-category-feature]');
+      if (!section) return;
+
+      const featuredCard = section.querySelector('[data-featured-card]');
+      const categoryPanel = section.querySelector('.platform-category-panel');
+      const heading = section.querySelector('.platform-panel-heading');
+
+      function syncCategoryHeight() {
+        if (!featuredCard || !categoryPanel || !heading || window.innerWidth <= 900) {
+          section.style.removeProperty('--platform-category-list-max');
+          return;
+        }
+
+        const panelStyle = window.getComputedStyle(categoryPanel);
+        const panelVerticalPadding = parseFloat(panelStyle.paddingTop) + parseFloat(panelStyle.paddingBottom);
+        const listTopGap = parseFloat(window.getComputedStyle(section.querySelector('.platform-category-list')).marginTop);
+        const availableHeight = featuredCard.getBoundingClientRect().height - heading.getBoundingClientRect().height - panelVerticalPadding - listTopGap;
+
+        section.style.setProperty('--platform-category-list-max', Math.max(180, availableHeight) + 'px');
+      }
+
+      syncCategoryHeight();
+      window.addEventListener('resize', syncCategoryHeight);
+
+      if ('ResizeObserver' in window && featuredCard) {
+        new ResizeObserver(syncCategoryHeight).observe(featuredCard);
+      }
+    })();
+  </script>
   <script src="{% static 'js/welcome.js' %}?v=2"></script>
   <script src="{% static 'js/newsletter.js' %}?v=1"></script>
 {% endblock %}

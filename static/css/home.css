@@ -366,6 +366,8 @@
 }
 
 .platform-category-panel {
+    display: flex;
+    flex-direction: column;
     flex: 0 0 320px;
     overflow: hidden;
     padding: 22px;
@@ -433,7 +435,7 @@
     display: grid;
     gap: 12px;
     margin-top: 18px;
-    max-height: 430px;
+    max-height: var(--platform-category-list-max, 430px);
     overflow-y: auto;
     padding-right: 6px;
     scrollbar-color: var(--app-gold) var(--app-soft);
@@ -501,9 +503,9 @@
     color: var(--app-black);
     font-size: 14px;
     font-weight: 900;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    line-height: 1.25;
+    white-space: normal;
+    word-break: break-word;
 }
 
 .platform-category-text small {
