@@ -68,40 +68,18 @@ def shop_homepage_view(request):
     # Start with all active products
     products = active_products_queryset().order_by("name")
 
-    # Apply filters if the form is valid
+    # Apply search if the form is valid.
     if form.is_valid():
-        category_filter = form.cleaned_data.get("category")
-        min_price = form.cleaned_data.get("min_price")
-        max_price = form.cleaned_data.get("max_price")
         search_query = form.cleaned_data.get("search")
-
-        # Filter by category if selected
-        if category_filter:
-            products = products.filter(category=category_filter)
-            selected_category = category_filter
-
-        # Filter by price range if provided
-        if min_price is not None and max_price is not None:
-            products = products.filter(
-                Q(productvolume__price__gte=min_price)
-                | Q(productvolume__price__isnull=True, productvolume__volume__price__gte=min_price),
-                Q(productvolume__price__lte=max_price)
-                | Q(productvolume__price__isnull=True, productvolume__volume__price__lte=max_price),
-            ).distinct()
-        elif min_price is not None:
-            products = products.filter(
-                Q(productvolume__price__gte=min_price)
-                | Q(productvolume__price__isnull=True, productvolume__volume__price__gte=min_price)
-            ).distinct()
-        elif max_price is not None:
-            products = products.filter(
-                Q(productvolume__price__lte=max_price)
-                | Q(productvolume__price__isnull=True, productvolume__volume__price__lte=max_price)
-            ).distinct()
-
-        # Filter by search query if provided
         if search_query:
             products = products.filter(name__icontains=search_query)
+
+    # Category filtering is driven exclusively by the category icon cards.
+    category_id = request.GET.get("category")
+    if category_id and category_id.isdigit():
+        selected_category = categories.filter(pk=category_id).first()
+        if selected_category:
+            products = products.filter(category=selected_category)
 
     # Pagination setup
     paginator = Paginator(products, 32)

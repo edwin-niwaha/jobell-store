@@ -88,6 +88,71 @@
       color: #fff;
     }
 
+    .shop-filter-card {
+      background: #fff;
+      border-radius: 16px;
+      position: sticky;
+      top: 10px;
+      z-index: 100;
+    }
+
+    .search-toolbar {
+      align-items: center;
+      display: flex;
+      flex-wrap: nowrap;
+      gap: .5rem;
+      min-width: 0;
+      width: 100%;
+    }
+
+    .search-box {
+      align-items: center;
+      display: flex;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .search-icon {
+      align-items: center;
+      background: #fff;
+      border: 1px solid #dee2e6;
+      border-right: 0;
+      border-radius: 999px 0 0 999px;
+      color: #6c6258;
+      display: flex;
+      flex: 0 0 46px;
+      height: 46px;
+      justify-content: center;
+      width: 46px;
+    }
+
+    .search-box input {
+      border: 1px solid #dee2e6;
+      border-left: 0 !important;
+      border-radius: 0 999px 999px 0 !important;
+      font-size: .92rem;
+      height: 46px;
+      min-width: 0;
+      width: 100%;
+    }
+
+    .search-box input:focus {
+      border-color: #dee2e6;
+      box-shadow: none;
+    }
+
+    .search-submit {
+      align-items: center;
+      border-radius: 0 999px 999px 0;
+      display: flex;
+      flex: 0 0 48px;
+      height: 46px;
+      justify-content: center;
+      min-width: 48px;
+      padding: 0;
+      width: 48px;
+    }
+
     .shop-img {
       aspect-ratio: 1 / 1;
       max-height: 170px;
@@ -316,6 +381,45 @@
       color: #b12704;
     }
 
+    .pagination .page-link {
+      border-radius: 999px;
+      margin: 0 .15rem;
+    }
+
+    .pagination .page-item.active .page-link {
+      background: var(--deep-gold);
+      border-color: var(--deep-gold);
+      color: #fff;
+    }
+
+    @media (max-width: 991.98px) {
+      .shop-filter-card {
+        position: static;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .search-toolbar {
+        gap: .4rem;
+      }
+
+      .search-submit {
+        flex-basis: 44px;
+        height: 44px;
+        min-width: 44px;
+        width: 44px;
+      }
+
+      .search-icon {
+        flex-basis: 44px;
+        height: 44px;
+        width: 44px;
+      }
+
+      .search-box input {
+        height: 44px;
+      }
+    }
 
     @media (max-width: 575.98px) {
       .shop-hero {
@@ -358,7 +462,6 @@
         display: none;
       }
 
-      .shop-filter-card .card-body,
       .shop-category-panel .card-body {
         padding: .75rem !important;
       }
@@ -451,34 +554,24 @@
         </div>
       </section>
 
-      <form method="get" action="{% url 'products:shop_homepage' %}" class="card border-0 shadow-sm rounded-4 mb-3 shop-filter-card">
-        <div class="card-body p-2 p-lg-3">
-          <div class="row g-3 align-items-end">
-            <div class="col-md-3">
-              <label for="id_category" class="form-label small fw-bold text-muted text-uppercase">Category</label>
-              {{ form.category }}
-            </div>
-
-            <div class="col-md-4">
-              <label for="id_search" class="form-label small fw-bold text-muted text-uppercase">Search</label>
+      <form method="get"
+            action="{% url 'products:shop_homepage' %}"
+            class="card border-0 shadow-sm rounded-4 mb-3 shop-filter-card">
+        <div class="card-body p-2">
+          <div class="search-toolbar">
+            <div class="search-box">
+              <span class="search-icon">
+                <i class="fas fa-search" aria-hidden="true"></i>
+              </span>
               {{ form.search }}
             </div>
 
-            <div class="col-md-2">
-              <label for="id_min_price" class="form-label small fw-bold text-muted text-uppercase">Min price</label>
-              {{ form.min_price }}
-            </div>
-
-            <div class="col-md-2">
-              <label for="id_max_price" class="form-label small fw-bold text-muted text-uppercase">Max price</label>
-              {{ form.max_price }}
-            </div>
-
-            <div class="col-md-1 d-grid">
-              <button type="submit" class="btn btn-gold rounded-pill" title="Search products" aria-label="Search products">
-                <i class="fas fa-search"></i>
-              </button>
-            </div>
+            <button type="submit"
+                    class="btn btn-gold search-submit"
+                    title="Search products"
+                    aria-label="Search products">
+              <i class="fas fa-search" aria-hidden="true"></i>
+            </button>
           </div>
         </div>
       </form>
@@ -505,7 +598,7 @@
 
           {% if categories %}
             <div class="shop-category-scroll d-flex flex-nowrap" data-shop-category-scroll aria-label="Product categories">
-              <a href="{% url 'products:shop_homepage' %}{% if request.GET.search or request.GET.min_price or request.GET.max_price %}?{% if request.GET.search %}search={{ request.GET.search }}{% endif %}{% if request.GET.min_price %}{% if request.GET.search %}&{% endif %}min_price={{ request.GET.min_price }}{% endif %}{% if request.GET.max_price %}{% if request.GET.search or request.GET.min_price %}&{% endif %}max_price={{ request.GET.max_price }}{% endif %}{% endif %}" class="shop-category-card {% if not selected_category %}active{% endif %}">
+              <a href="{% url 'products:shop_homepage' %}{% if request.GET.search %}?search={{ request.GET.search }}{% endif %}" class="shop-category-card {% if not selected_category %}active{% endif %}">
                 <span class="shop-category-media">
                   <i class="fas fa-border-all" aria-hidden="true"></i>
                 </span>
@@ -516,7 +609,7 @@
               </a>
 
               {% for category in categories %}
-                <a href="?category={{ category.id }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.min_price %}&min_price={{ request.GET.min_price }}{% endif %}{% if request.GET.max_price %}&max_price={{ request.GET.max_price }}{% endif %}" class="shop-category-card {% if selected_category and selected_category.id == category.id %}active{% endif %}">
+                <a href="?category={{ category.id }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="shop-category-card {% if selected_category and selected_category.id == category.id %}active{% endif %}">
                   <span class="shop-category-media">
                     {% if category.image_url %}
                       <img src="{{ category.image_url }}" alt="{{ category.name }}">
@@ -630,37 +723,37 @@
                             </a>
                           </div>
                         {% else %}
-                        <form method="post" action="{% url 'orders:add_to_cart' product.uuid %}" class="js-add-to-cart-form">
-                          {% csrf_token %}
-                          <input type="hidden" name="quantity" value="1">
-                          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                          <form method="post" action="{% url 'orders:add_to_cart' product.uuid %}" class="js-add-to-cart-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="quantity" value="1">
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
 
-                          {% if product_info.sellable_variants|length > 1 %}
-                            <label class="form-label small fw-bold text-muted text-uppercase mb-1">Variant</label>
-                            <select class="form-select form-select-sm variant-select" name="volume_id" aria-label="Choose variant for {{ product.name }}" required>
-                              {% for variant in product_info.sellable_variants %}
-                                <option value="{{ variant.id }}">
-                                  {{ variant.variant_label }} - UGX {{ variant.current_price|floatformat:'0'|intcomma }}
-                                </option>
+                            {% if product_info.sellable_variants|length > 1 %}
+                              <label class="form-label small fw-bold text-muted text-uppercase mb-1">Variant</label>
+                              <select class="form-select form-select-sm variant-select" name="volume_id" aria-label="Choose variant for {{ product.name }}" required>
+                                {% for variant in product_info.sellable_variants %}
+                                  <option value="{{ variant.id }}">
+                                    {{ variant.variant_label }} - UGX {{ variant.current_price|floatformat:'0'|intcomma }}
+                                  </option>
+                                {% endfor %}
+                              </select>
+                            {% else %}
+                              {% for variant in product_info.sellable_variants|slice:':1' %}
+                                <input type="hidden" name="volume_id" value="{{ variant.id }}">
+                                <span class="variant-pill">{{ variant.variant_label }}</span>
                               {% endfor %}
-                            </select>
-                          {% else %}
-                            {% for variant in product_info.sellable_variants|slice:':1' %}
-                              <input type="hidden" name="volume_id" value="{{ variant.id }}">
-                              <span class="variant-pill">{{ variant.variant_label }}</span>
-                            {% endfor %}
-                          {% endif %}
+                            {% endif %}
 
-                          <div class="d-flex gap-2">
-                            <a href="{% url 'orders:product_details_view' product.uuid %}" class="btn btn-outline-gold rounded-pill px-3 d-inline-flex align-items-center justify-content-center" title="Quick details" aria-label="Quick details for {{ product.name }}">
-                              <i class="fas fa-info-circle"></i>
-                            </a>
+                            <div class="d-flex gap-2">
+                              <a href="{% url 'orders:product_details_view' product.uuid %}" class="btn btn-outline-gold rounded-pill px-3 d-inline-flex align-items-center justify-content-center" title="Quick details" aria-label="Quick details for {{ product.name }}">
+                                <i class="fas fa-info-circle"></i>
+                              </a>
 
-                            <button type="submit" class="btn btn-gold rounded-pill flex-grow-1" data-cart-submit>
-                              <i class="fas fa-shopping-cart me-2"></i>Add
-                            </button>
-                          </div>
-                        </form>
+                              <button type="submit" class="btn btn-gold rounded-pill flex-grow-1" data-cart-submit>
+                                <i class="fas fa-shopping-cart me-2"></i>Add
+                              </button>
+                            </div>
+                          </form>
                         {% endif %}
                       {% else %}
                         <a href="{% url 'orders:product_detail' product.uuid %}" class="btn btn-outline-secondary w-100 rounded-pill">
@@ -694,7 +787,7 @@
           <ul class="pagination flex-wrap justify-content-center">
             {% if page_obj.has_previous %}
               <li class="page-item">
-                <a class="page-link text-dark" href="?page={{ page_obj.previous_page_number }}&search={{ request.GET.search|default:'' }}&category={{ request.GET.category|default:'' }}&min_price={{ request.GET.min_price|default:'' }}&max_price={{ request.GET.max_price|default:'' }}" aria-label="Previous">
+                <a class="page-link text-dark" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" aria-label="Previous">
                   <i class="fas fa-angle-left"></i>
                 </a>
               </li>
@@ -703,11 +796,11 @@
             {% for i in page_obj.paginator.page_range %}
               {% if page_obj.number == i %}
                 <li class="page-item active">
-                  <span class="page-link border-0" style="background-color: #b88a44;">{{ i }}</span>
+                  <span class="page-link border-0">{{ i }}</span>
                 </li>
               {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
                 <li class="page-item">
-                  <a class="page-link text-dark" href="?page={{ i }}&search={{ request.GET.search|default:'' }}&category={{ request.GET.category|default:'' }}&min_price={{ request.GET.min_price|default:'' }}&max_price={{ request.GET.max_price|default:'' }}">
+                  <a class="page-link text-dark" href="?page={{ i }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}">
                     {{ i }}
                   </a>
                 </li>
@@ -716,7 +809,7 @@
 
             {% if page_obj.has_next %}
               <li class="page-item">
-                <a class="page-link text-dark" href="?page={{ page_obj.next_page_number }}&search={{ request.GET.search|default:'' }}&category={{ request.GET.category|default:'' }}&min_price={{ request.GET.min_price|default:'' }}&max_price={{ request.GET.max_price|default:'' }}" aria-label="Next">
+                <a class="page-link text-dark" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" aria-label="Next">
                   <i class="fas fa-angle-right"></i>
                 </a>
               </li>
@@ -726,6 +819,7 @@
       {% endif %}
     </div>
   </main>
+
   <script>
     (function () {
       document.querySelectorAll('[data-shop-scroll-target]').forEach(function (button) {
