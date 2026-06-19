@@ -1,3 +1,4 @@
+{# Updated responsive checkout template. Keep this file as orders/checkout.html #}
 {% extends 'accounts/base.html' %}
 {% load humanize %}
 {% load crispy_forms_tags %}
@@ -5,22 +6,23 @@
 {% block content %}
   <main class="store-page checkout-page">
     <div class="container">
-      <div class="checkout-hero">
-        <div class="checkout-hero-main">
-          <span class="checkout-icon"><i class="fas fa-shield-alt" aria-hidden="true"></i></span>
-          <div>
+      <div class="checkout-hero checkout-hero-compact">
+        <div class="checkout-top-row">
+          <a href="{% url 'orders:cart' %}" class="checkout-back-btn" aria-label="Back to cart">
+            <i class="fas fa-arrow-left" aria-hidden="true"></i>
+          </a>
+
+          <div class="checkout-title-block">
             <span class="store-eyebrow">Checkout</span>
             <h1 class="store-title h2">Complete your order</h1>
-            <p class="store-muted mb-0">Confirm your customer details, delivery method, payment, and order total.</p>
           </div>
-        </div>
 
-        <div class="checkout-hero-actions">
-          <span class="checkout-pill"><i class="fas fa-shopping-bag" aria-hidden="true"></i>{{ cart.items.count }} item{{ cart.items.count|pluralize }}</span>
-          <a href="{% url 'orders:cart' %}" class="store-btn-outline">
-            <i class="fas fa-arrow-left" aria-hidden="true"></i>Back to cart
-          </a>
+          <span class="checkout-pill checkout-pill-compact">
+            <i class="fas fa-shopping-bag" aria-hidden="true"></i>
+            {{ cart.items.count }} item{{ cart.items.count|pluralize }}
+          </span>
         </div>
+        <p class="store-muted checkout-hero-note mb-0">Confirm your customer details, delivery method, payment, and order total.</p>
       </div>
 
       {% if form.non_field_errors %}
@@ -36,52 +38,108 @@
         <input type="hidden" name="update_saved_address" id="updateSavedAddress" value="">
 
         <div class="checkout-main">
-          <section class="checkout-card">
-            <div class="checkout-compact-head">
-              <div class="checkout-card-head mb-0">
+          <section class="checkout-card checkout-accordion-card checkout-smart-card" id="contactSection">
+            <button class="checkout-accordion-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#contactDetails" aria-expanded="false" aria-controls="contactDetails">
+              <span class="checkout-card-head mb-0">
                 <span class="store-checkout-step">1</span>
-                <div>
+                <span>
                   <span class="store-eyebrow">Customer</span>
-                  <h2>Contact details</h2>
-                  <p id="contactSummaryText">
+                  <span class="checkout-section-title">Contact details</span>
+                  <span class="checkout-section-summary" id="contactSummaryText">
                     {% if form.first_name.value or form.mobile.value %}
                       {{ form.first_name.value|default:'Customer' }}{% if form.mobile.value %} - {{ form.mobile.value }}{% endif %}
                     {% else %}
                       Add your name and phone number.
                     {% endif %}
-                  </p>
+                  </span>
+                </span>
+              </span>
+              <span class="checkout-accordion-icon" aria-hidden="true"><i class="mdi mdi-plus"></i></span>
+            </button>
+            <div class="collapse checkout-accordion-body" id="contactDetails">
+              <div class="checkout-field-grid">
+                <div class="checkout-field">
+                  <label for="{{ form.first_name.id_for_label }}">First name</label>
+                  {{ form.first_name }}
+                  {% for error in form.first_name.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
+                </div>
+                <div class="checkout-field">
+                  <label for="{{ form.last_name.id_for_label }}">Last name</label>
+                  {{ form.last_name }}
+                  {% for error in form.last_name.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
+                </div>
+                <div class="checkout-field">
+                  <label for="{{ form.mobile.id_for_label }}">Mobile number</label>
+                  {{ form.mobile }}
+                  {% for error in form.mobile.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
+                </div>
+                <div class="checkout-field">
+                  <label for="{{ form.email.id_for_label }}">Email address</label>
+                  {{ form.email }}
+                  {% for error in form.email.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
                 </div>
               </div>
-              <button type="button" class="checkout-plus-action" data-bs-toggle="modal" data-bs-target="#contactModal" aria-label="Add or update contact details">
-                <i class="mdi mdi-plus" aria-hidden="true"></i>
-                <span>Update</span>
-              </button>
             </div>
           </section>
 
-          <section class="checkout-card">
-            <div class="checkout-compact-head">
-              <div class="checkout-card-head mb-0">
+          <section class="checkout-card checkout-accordion-card checkout-smart-card" id="addressSection">
+            <button class="checkout-accordion-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#addressDetails" aria-expanded="false" aria-controls="addressDetails">
+              <span class="checkout-card-head mb-0">
                 <span class="store-checkout-step">2</span>
-                <div>
+                <span>
                   <span class="store-eyebrow">Address</span>
-                  <h2>Delivery address</h2>
-                  <p id="addressSummaryText">
+                  <span class="checkout-section-title">Delivery address</span>
+                  <span class="checkout-section-summary" id="addressSummaryText">
                     {% if form.delivery_city.value or form.delivery_area.value %}
                       {{ form.delivery_area.value|default:'Delivery area' }}{% if form.delivery_city.value %}, {{ form.delivery_city.value }}{% endif %}
                     {% else %}
                       Add your delivery location.
                     {% endif %}
-                  </p>
+                  </span>
+                </span>
+              </span>
+              <span class="checkout-accordion-icon" aria-hidden="true"><i class="mdi mdi-plus"></i></span>
+            </button>
+            <div class="collapse checkout-accordion-body" id="addressDetails">
+              <div id="deliveryAddressFields" class="checkout-transition-panel">
+                {% if form.saved_address %}
+                  <div class="checkout-field checkout-field-wide checkout-saved-field">
+                    <label for="{{ form.saved_address.id_for_label }}">Saved address</label>
+                    {{ form.saved_address }}
+                    {% for error in form.saved_address.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
+                  </div>
+                {% endif %}
+                <div class="checkout-field-grid checkout-field-grid-address">
+                  <div class="checkout-field checkout-field-wide">
+                    <label for="{{ form.address.id_for_label }}">Street address</label>
+                    {{ form.address }}
+                    {% for error in form.address.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div class="checkout-field">
+                    <label for="{{ form.delivery_region.id_for_label }}">Region</label>
+                    {{ form.delivery_region }}
+                    {% for error in form.delivery_region.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div class="checkout-field">
+                    <label for="{{ form.delivery_city.id_for_label }}">City</label>
+                    {{ form.delivery_city }}
+                    {% for error in form.delivery_city.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div class="checkout-field">
+                    <label for="{{ form.delivery_area.id_for_label }}">Area</label>
+                    {{ form.delivery_area }}
+                    {% for error in form.delivery_area.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
+                  </div>
+                  {% if form.save_address %}
+                    <div class="checkout-check-row checkout-field-wide">
+                      {{ form.save_address }}
+                      <label for="{{ form.save_address.id_for_label }}">{{ form.save_address.label }}</label>
+                    </div>
+                  {% endif %}
                 </div>
               </div>
-              <button type="button" class="checkout-plus-action" data-bs-toggle="modal" data-bs-target="#addressModal" aria-label="Add or update delivery address">
-                <i class="mdi mdi-plus" aria-hidden="true"></i>
-                <span>Update</span>
-              </button>
             </div>
           </section>
-
           <section class="checkout-card">
             <div class="checkout-card-head">
               <span class="store-checkout-step">3</span>
@@ -185,7 +243,7 @@
     {% endif %}
 </div>
                   <span class="checkout-copy-status" id="copyMobileMoneyStatus" aria-live="polite"></span>
-                  <small>Online Mobile Money checkout is not active yet. Your payment will be confirmed after staff review.</small>
+                  <small>Send payment to the number below and upload payment proof.</small>
                 </div>
               </div>
               <div class="checkout-field">
@@ -204,122 +262,6 @@
           </section>
         </div>
 
-        <div class="modal fade checkout-edit-modal" id="contactModal" tabindex="-1" aria-labelledby="contactModalLabel" aria-hidden="true">
-          <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-            <div class="modal-content">
-              <div class="modal-header">
-                <div>
-                  <span class="store-eyebrow">Customer</span>
-                  <h2 class="modal-title" id="contactModalLabel">Contact details</h2>
-                </div>
-                <button type="button"
-                        class="border-0 bg-transparent p-0"
-                        data-bs-dismiss="modal"
-                        aria-label="Close">
-                    <i class="mdi mdi-close fs-3"></i>
-                </button>              </div>
-              <div class="modal-body">
-                <div class="checkout-field-grid">
-                  <div class="checkout-field">
-                    <label for="{{ form.first_name.id_for_label }}">First name</label>
-                    {{ form.first_name }}
-                    {% for error in form.first_name.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
-                  </div>
-                  <div class="checkout-field">
-                    <label for="{{ form.last_name.id_for_label }}">Last name</label>
-                    {{ form.last_name }}
-                    {% for error in form.last_name.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
-                  </div>
-                  <div class="checkout-field">
-                    <label for="{{ form.email.id_for_label }}">Email</label>
-                    {{ form.email }}
-                    {% for error in form.email.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
-                  </div>
-                  <div class="checkout-field">
-                    <label for="{{ form.mobile.id_for_label }}">Phone number</label>
-                    {{ form.mobile }}
-                    {% for error in form.mobile.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
-                  </div>
-                </div>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="store-btn-outline" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="store-btn" data-bs-dismiss="modal">
-                  <i class="fas fa-check" aria-hidden="true"></i>
-                  Use details
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal fade checkout-edit-modal" id="addressModal" tabindex="-1" aria-labelledby="addressModalLabel" aria-hidden="true">
-          <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-            <div class="modal-content">
-              <div class="modal-header">
-                <div>
-                  <span class="store-eyebrow">Address</span>
-                  <h2 class="modal-title" id="addressModalLabel">Delivery address</h2>
-                </div>
-                <button type="button"
-                        class="btn btn-link text-dark p-0 border-0"
-                        data-bs-dismiss="modal"
-                        aria-label="Close">
-                    <i class="mdi mdi-close fs-3"></i>
-                </button>              </div>
-              <div class="modal-body">
-                {% if form.saved_address %}
-                  <div class="checkout-saved-row mb-3">
-                    <div class="checkout-field">
-                      <label for="{{ form.saved_address.id_for_label }}">Saved address</label>
-                      {{ form.saved_address }}
-                      {% for error in form.saved_address.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
-                    </div>
-                    <button type="button" class="checkout-mini-action" id="updateAddressBtn">
-                      <i class="mdi mdi-pencil-outline" aria-hidden="true"></i>Use selected
-                    </button>
-                  </div>
-                {% endif %}
-
-                <div class="checkout-field-grid checkout-field-grid-address">
-                  <div class="checkout-field checkout-field-wide">
-                    <label for="{{ form.address.id_for_label }}">Street address</label>
-                    {{ form.address }}
-                    {% for error in form.address.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
-                  </div>
-                  <div class="checkout-field">
-                    <label for="{{ form.delivery_region.id_for_label }}">Region</label>
-                    {{ form.delivery_region }}
-                    {% for error in form.delivery_region.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
-                  </div>
-                  <div class="checkout-field">
-                    <label for="{{ form.delivery_city.id_for_label }}">City</label>
-                    {{ form.delivery_city }}
-                    {% for error in form.delivery_city.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
-                  </div>
-                  <div class="checkout-field">
-                    <label for="{{ form.delivery_area.id_for_label }}">Area</label>
-                    {{ form.delivery_area }}
-                    {% for error in form.delivery_area.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
-                  </div>
-                  {% if form.save_address %}
-                    <div class="checkout-check-row checkout-field-wide">
-                      {{ form.save_address }}
-                      <label for="{{ form.save_address.id_for_label }}">{{ form.save_address.label }}</label>
-                    </div>
-                  {% endif %}
-                </div>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="store-btn-outline" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="store-btn" data-bs-dismiss="modal">
-                  <i class="fas fa-check" aria-hidden="true"></i>
-                  Use address
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
 
         <aside class="checkout-summary-wrap">
           <section class="checkout-summary">
@@ -332,9 +274,12 @@
             </div>
 
             <div class="checkout-summary-head">
-              <div>
-                <span class="store-eyebrow">Review</span>
-                <h2>Order summary</h2>
+              <div class="checkout-summary-title">
+                <span class="store-checkout-step">5</span>
+                <span>
+                  <span class="store-eyebrow">Review</span>
+                  <h2>Order summary</h2>
+                </span>
               </div>
               <span class="checkout-count">{{ cart.items.count }} item{{ cart.items.count|pluralize }}</span>
             </div>
@@ -416,7 +361,7 @@
       const shipDelivery = document.getElementById('shipDelivery')
       const shipPickup = document.getElementById('shipPickup')
       const pickupFields = document.getElementById('pickupFields')
-      const updateAddressBtn = document.getElementById('updateAddressBtn')
+      const deliveryAddressFields = document.getElementById('deliveryAddressFields')
       const updateSavedAddress = document.getElementById('updateSavedAddress')
       const savedAddressSelect = document.getElementById('id_saved_address')
       const checkoutAddressData = document.getElementById('checkoutAddressData')
@@ -428,8 +373,6 @@
       const summaryGrandTotal = document.getElementById('summaryGrandTotal')
       const contactSummaryText = document.getElementById('contactSummaryText')
       const addressSummaryText = document.getElementById('addressSummaryText')
-      const contactModal = document.getElementById('contactModal')
-      const addressModal = document.getElementById('addressModal')
       const copyMobileMoneyBtn = document.querySelector('[data-copy-mobile-number]')
       const copyMobileMoneyStatus = document.getElementById('copyMobileMoneyStatus')
       const savedAddresses = checkoutAddressData ? JSON.parse(checkoutAddressData.textContent) : []
@@ -564,9 +507,19 @@
           })
       })
 
+      function setPanelVisible(panel, visible) {
+        if (!panel) return
+        panel.classList.toggle('is-hidden', !visible)
+        panel.setAttribute('aria-hidden', String(!visible))
+        panel.querySelectorAll('input, select, textarea').forEach(function (field) {
+          field.disabled = !visible
+        })
+      }
+
       function toggleShippingFields() {
-        if (!pickupFields || !shipPickup) return
-        pickupFields.classList.toggle('d-none', !shipPickup.checked)
+        if (!shipPickup) return
+        setPanelVisible(pickupFields, shipPickup.checked)
+        setPanelVisible(deliveryAddressFields, !shipPickup.checked)
         refreshDeliverySummary()
       }
 
@@ -604,14 +557,6 @@
         populateSelectedAddress()
       })
 
-      updateAddressBtn?.addEventListener('click', function () {
-        if (updateSavedAddress) updateSavedAddress.value = '1'
-        populateSelectedAddress()
-        if (window.bootstrap && addressModal) {
-          window.bootstrap.Modal.getOrCreateInstance(addressModal).hide()
-        }
-      })
-
       populateSelectedAddress()
       ;['id_first_name', 'id_last_name', 'id_email', 'id_mobile'].forEach(function (id) {
         const field = document.getElementById(id)
@@ -621,8 +566,9 @@
       ;['id_delivery_region', 'id_delivery_city', 'id_delivery_area'].forEach(function (id) {
         const field = document.getElementById(id)
         function handleDeliveryFieldChange() {
-          if (savedAddressSelect) savedAddressSelect.value = ''
-          if (updateSavedAddress) updateSavedAddress.value = ''
+          if (updateSavedAddress) {
+            updateSavedAddress.value = savedAddressSelect && savedAddressSelect.value ? '1' : ''
+          }
           updateAddressSummary()
           refreshDeliverySummary()
         }
@@ -631,8 +577,9 @@
       })
       const addressField = document.getElementById('id_address')
       function handleStreetAddressChange() {
-        if (savedAddressSelect) savedAddressSelect.value = ''
-        if (updateSavedAddress) updateSavedAddress.value = ''
+        if (updateSavedAddress) {
+          updateSavedAddress.value = savedAddressSelect && savedAddressSelect.value ? '1' : ''
+        }
         updateAddressSummary()
       }
       addressField?.addEventListener('input', handleStreetAddressChange)
@@ -641,14 +588,37 @@
       updateAddressSummary()
       refreshDeliverySummary()
 
-      const hasContactErrors = {% if form.first_name.errors or form.last_name.errors or form.email.errors or form.mobile.errors %}true{% else %}false{% endif %}
-      const hasAddressErrors = {% if form.saved_address.errors or form.address.errors or form.delivery_region.errors or form.delivery_city.errors or form.delivery_area.errors or form.save_address.errors %}true{% else %}false{% endif %}
-      if (window.bootstrap) {
-        if (hasContactErrors && contactModal) {
-          new window.bootstrap.Modal(contactModal).show()
-        } else if (hasAddressErrors && addressModal) {
-          new window.bootstrap.Modal(addressModal).show()
+      document.querySelectorAll('.checkout-accordion-body').forEach(function (panel) {
+        const toggle = document.querySelector('[data-bs-target="#' + panel.id + '"]')
+        const icon = toggle?.querySelector('.checkout-accordion-icon i')
+        function syncAccordionIcon(expanded) {
+          if (!icon) return
+          icon.classList.toggle('mdi-minus', expanded)
+          icon.classList.toggle('mdi-plus', !expanded)
         }
+        panel.addEventListener('show.bs.collapse', function () { syncAccordionIcon(true) })
+        panel.addEventListener('hide.bs.collapse', function () { syncAccordionIcon(false) })
+        syncAccordionIcon(panel.classList.contains('show'))
+      })
+
+      const errorFields = Array.from(document.querySelectorAll('.checkout-error')).map(function (error) {
+        const field = error.closest('.checkout-field')?.querySelector('input, select, textarea')
+        if (field) {
+          field.classList.add('is-invalid')
+          field.setAttribute('aria-invalid', 'true')
+        }
+        return field
+      }).filter(Boolean)
+      const firstErrorField = errorFields[0]
+      if (firstErrorField) {
+        const errorPanel = firstErrorField.closest('.collapse')
+        if (errorPanel && window.bootstrap) {
+          window.bootstrap.Collapse.getOrCreateInstance(errorPanel, { toggle: false }).show()
+        }
+        window.setTimeout(function () {
+          firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          firstErrorField.focus({ preventScroll: true })
+        }, 180)
       }
 
       form?.addEventListener('submit', function () {
@@ -656,6 +626,49 @@
         if (placeOrderBtn.disabled) return
         placeOrderBtn.disabled = true
         placeOrderBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span><span>Placing order...</span>'
+      })
+    })
+  </script>
+
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const mobileFields = ['id_mobile', 'id_mobile_money_number']
+
+      mobileFields.forEach(function (id) {
+        const field = document.getElementById(id)
+        if (!field) return
+        field.setAttribute('inputmode', 'tel')
+        field.setAttribute('autocomplete', 'tel')
+        field.setAttribute('placeholder', '+256XXXXXXXXX')
+        field.setAttribute('pattern', '^\\+256[0-9]{9}$')
+
+        field.addEventListener('blur', function () {
+          let value = field.value.trim().replace(/\s+/g, '')
+          if (value.startsWith('256') && value.length === 12) value = '+' + value
+          if (value.startsWith('0') && value.length === 10) value = '+256' + value.slice(1)
+          field.value = value
+        })
+      })
+
+      function syncCheckedCards() {
+        document.querySelectorAll('.checkout-option').forEach(function (card) {
+          const input = card.querySelector('input[type="radio"]')
+          card.classList.toggle('is-selected', Boolean(input && input.checked))
+        })
+      }
+
+      document.querySelectorAll('.checkout-option input[type="radio"]').forEach(function (input) {
+        input.addEventListener('change', syncCheckedCards)
+      })
+      syncCheckedCards()
+
+      const requiredVisibleFields = document.querySelectorAll('.checkout-field input, .checkout-field select, .checkout-field textarea')
+      requiredVisibleFields.forEach(function (field) {
+        field.addEventListener('input', function () {
+          field.classList.remove('is-invalid')
+          field.removeAttribute('aria-invalid')
+        })
       })
     })
   </script>

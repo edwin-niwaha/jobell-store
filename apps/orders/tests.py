@@ -260,6 +260,58 @@ class EcommerceFlowTests(TestCase):
 
         self.assertTrue(form.is_valid(), form.errors)
 
+    def test_checkout_form_normalizes_supported_ugandan_phone_formats(self):
+        station = PickupStation.objects.create(
+            name="Phone Test Pickup",
+            city="Kampala",
+            area="Central",
+            address="Shop 2",
+        )
+        cases = {
+            "+256701234567": "+256701234567",
+            "+256751234567": "+256751234567",
+            "0701234567": "+256701234567",
+            "0751234567": "+256751234567",
+            "0312345678": "+256312345678",
+            "+256312345678": "+256312345678",
+        }
+
+        for supplied, expected in cases.items():
+            with self.subTest(supplied=supplied):
+                form = CheckoutForm(
+                    {
+                        "first_name": "Buyer",
+                        "mobile": supplied,
+                        "shipping_method": "pickup",
+                        "pickup_station": station.id,
+                        "payment_method": "cod",
+                    },
+                    user=self.user,
+                )
+                self.assertTrue(form.is_valid(), form.errors)
+                self.assertEqual(form.cleaned_data["mobile"], expected)
+
+    def test_checkout_form_shows_ugandan_phone_error_and_tel_keyboard_hint(self):
+        form = CheckoutForm(
+            {
+                "first_name": "Buyer",
+                "mobile": "+254701234567",
+                "shipping_method": "pickup",
+                "payment_method": "cod",
+            },
+            user=self.user,
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertEqual(
+            form.errors["mobile"][0],
+            "Enter a valid Ugandan phone number. Example: +256701234567 or 0701234567",
+        )
+        self.assertEqual(form.fields["mobile"].widget.attrs["inputmode"], "tel")
+        self.assertEqual(
+            form.fields["mobile"].widget.attrs["placeholder"], "+256701234567"
+        )
+
     def test_checkout_form_accepts_local_mobile_money_number(self):
         station = PickupStation.objects.create(
             name="Main Pickup",

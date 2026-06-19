@@ -12,10 +12,53 @@
 
     .shop-hero {
       background: linear-gradient(135deg, #050505, #1c1c1c);
-      border-radius: 24px;
+      border-radius: 18px;
       overflow: hidden;
       border: 1px solid rgba(212, 175, 55, 0.15);
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.14);
+    }
+
+    .shop-hero-inner {
+      padding: 1rem 1.15rem;
+    }
+
+    .shop-hero-row {
+      align-items: center;
+      display: flex;
+      gap: 1rem;
+      justify-content: space-between;
+    }
+
+    .shop-hero-title {
+      color: #fff;
+      font-size: clamp(1.35rem, 2.6vw, 2.05rem);
+      font-weight: 900;
+      line-height: 1.08;
+      margin: 0;
+    }
+
+    .shop-hero-copy {
+      color: rgba(255, 255, 255, .65);
+      font-size: .88rem;
+      margin: .25rem 0 0;
+    }
+
+    .shop-hero-badge {
+      color: var(--deep-gold-dark);
+      display: block;
+      font-size: .72rem;
+      font-weight: 900;
+      letter-spacing: .13em;
+      line-height: 1;
+      margin-bottom: .35rem;
+      text-transform: uppercase;
+    }
+
+    .shop-hero-cart {
+      flex: 0 0 auto;
+      min-height: 38px;
+      padding: .5rem .95rem;
+      white-space: nowrap;
     }
 
     .btn-gold {
@@ -47,7 +90,7 @@
 
     .shop-img {
       aspect-ratio: 1 / 1;
-      max-height: 210px;
+      max-height: 170px;
       object-fit: cover;
       transition: transform .25s ease;
     }
@@ -59,7 +102,7 @@
     }
 
     .product-card .card-body {
-      padding: .9rem !important;
+      padding: .75rem !important;
     }
 
     .product-card h2 {
@@ -90,7 +133,7 @@
     }
 
     #product-list {
-      row-gap: 1rem;
+      row-gap: .75rem;
     }
 
     .shop-section-heading p {
@@ -123,10 +166,10 @@
       border-radius: 1rem;
       color: #111;
       display: flex;
-      flex: 0 0 196px;
-      gap: .75rem;
-      min-height: 96px;
-      padding: .75rem;
+      flex: 0 0 164px;
+      gap: .6rem;
+      min-height: 72px;
+      padding: .6rem;
       scroll-snap-align: start;
       text-decoration: none;
       transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
@@ -153,12 +196,12 @@
       border-radius: 50%;
       color: var(--deep-gold);
       display: inline-flex;
-      flex: 0 0 52px;
-      font-size: 1.35rem;
-      height: 52px;
+      flex: 0 0 42px;
+      font-size: 1.05rem;
+      height: 42px;
       justify-content: center;
       overflow: hidden;
-      width: 52px;
+      width: 42px;
     }
 
     .shop-category-media img {
@@ -177,7 +220,7 @@
     }
 
     .shop-category-copy strong {
-      font-size: .9rem;
+      font-size: .82rem;
       font-weight: 800;
       line-height: 1.2;
       white-space: normal;
@@ -221,8 +264,8 @@
       border-radius: 999px;
       font-size: .8rem;
       font-weight: 600;
-      min-height: 36px;
-      margin-bottom: .75rem;
+      min-height: 34px;
+      margin-bottom: .5rem;
     }
 
     .variant-pill {
@@ -233,7 +276,7 @@
       display: block;
       font-size: .75rem;
       font-weight: 700;
-      margin-bottom: .75rem;
+      margin-bottom: .5rem;
       overflow: hidden;
       padding: .45rem .65rem;
       text-overflow: ellipsis;
@@ -242,9 +285,9 @@
 
     .wishlist-btn {
       aspect-ratio: 1 / 1;
-      height: 40px;
-      min-width: 40px;
-      width: 40px;
+      height: 36px;
+      min-width: 36px;
+      width: 36px;
     }
 
     .shop-card-heart {
@@ -271,6 +314,76 @@
     .shop-card-heart .btn:hover {
       background: #fff7f7;
       color: #b12704;
+    }
+
+
+    @media (max-width: 575.98px) {
+      .shop-hero {
+        border-radius: 14px;
+        margin-bottom: .75rem !important;
+      }
+
+      .shop-hero-inner {
+        padding: .8rem .85rem;
+      }
+
+      .shop-hero-row {
+        align-items: center;
+        flex-direction: row;
+        gap: .75rem;
+      }
+
+      .shop-hero-title {
+        font-size: 1.12rem;
+        line-height: 1.12;
+      }
+
+      .shop-hero-badge {
+        font-size: .62rem;
+        margin-bottom: .25rem;
+      }
+
+      .shop-hero-copy {
+        display: none;
+      }
+
+      .shop-hero-cart {
+        border-radius: 999px;
+        font-size: .78rem;
+        min-height: 34px;
+        padding: .42rem .72rem;
+      }
+
+      .shop-hero-cart .cart-label {
+        display: none;
+      }
+
+      .shop-filter-card .card-body,
+      .shop-category-panel .card-body {
+        padding: .75rem !important;
+      }
+
+      .shop-section-heading {
+        margin-bottom: .65rem !important;
+      }
+
+      .shop-img {
+        max-height: 138px;
+      }
+
+      .product-card .card-body {
+        padding: .62rem !important;
+      }
+
+      .product-card h2 {
+        font-size: .82rem;
+        min-height: 2.05rem;
+      }
+
+      #product-list {
+        --bs-gutter-x: .55rem;
+        --bs-gutter-y: .7rem;
+      }
     }
 
     @media (max-width: 900px) {
@@ -318,28 +431,28 @@
     }
   </style>
 
-  <main class="bg-light py-4 py-lg-5">
+  <main class="bg-light py-3 py-lg-4">
     <div class="container-fluid px-3 px-lg-4">
-      <section class="shop-hero shadow-sm mb-4">
-        <div class="p-4 p-lg-5">
-          <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-4">
-            <div class="text-white">
-              <p class="text-uppercase fw-bold text-warning small mb-2">{{ site_name|upper }} store</p>
-              <h1 class="display-5 fw-bold mb-2">Discover your signature scent</h1>
-              <p class="text-white-50 mb-0">
+      <section class="shop-hero shadow-sm mb-3">
+        <div class="shop-hero-inner">
+          <div class="shop-hero-row">
+            <div class="shop-hero-content">
+              <span class="shop-hero-badge">{{ site_name|upper }} store</span>
+              <h1 class="shop-hero-title">Discover your signature scent</h1>
+              <p class="shop-hero-copy">
                 {{ result_count|default:0 }} product{{ result_count|default:0|pluralize }} available for delivery or pickup follow-up.
               </p>
             </div>
 
-            <a href="{% url 'orders:cart' %}" class="btn btn-gold rounded-pill px-4">
-              <i class="fas fa-shopping-cart me-2"></i>View cart
+            <a href="{% url 'orders:cart' %}" class="btn btn-gold rounded-pill shop-hero-cart">
+              <i class="fas fa-shopping-cart me-1"></i><span class="cart-label">View </span>Cart
             </a>
           </div>
         </div>
       </section>
 
-      <form method="get" action="{% url 'products:shop_homepage' %}" class="card border-0 shadow-sm rounded-4 mb-3">
-        <div class="card-body p-3 p-lg-4">
+      <form method="get" action="{% url 'products:shop_homepage' %}" class="card border-0 shadow-sm rounded-4 mb-3 shop-filter-card">
+        <div class="card-body p-2 p-lg-3">
           <div class="row g-3 align-items-end">
             <div class="col-md-3">
               <label for="id_category" class="form-label small fw-bold text-muted text-uppercase">Category</label>
@@ -370,8 +483,8 @@
         </div>
       </form>
 
-      <section class="card border-0 shadow-sm rounded-4 mb-4">
-        <div class="card-body p-3 p-lg-4">
+      <section class="card border-0 shadow-sm rounded-4 mb-3 shop-category-panel">
+        <div class="card-body p-2 p-lg-3">
           <div class="d-flex align-items-center justify-content-between gap-3 mb-3 shop-section-heading">
             <div>
               <h2 class="h5 fw-bold text-dark mb-0">Shop by category</h2>
@@ -428,7 +541,7 @@
         </div>
       </section>
 
-      <div id="product-list" class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xxl-5 g-3">
+      <div id="product-list" class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xxl-5 g-2 g-lg-3">
         {% if products_with_images %}
           {% for product_info in products_with_images %}
             {% with product=product_info.product %}

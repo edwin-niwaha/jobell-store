@@ -1,7 +1,13 @@
 from django import forms
 from .models import Order
 from django.core.exceptions import ValidationError
-from phonenumbers import parse, is_valid_number, phonenumberutil
+from phonenumbers import (
+    PhoneNumberFormat,
+    format_number,
+    is_valid_number,
+    parse,
+    phonenumberutil,
+)
 
 from apps.addresses.models import CustomerAddress
 from apps.shipping.models import PickupStation
@@ -138,8 +144,9 @@ class CheckoutForm(forms.Form):
         widget=forms.TextInput(
             attrs={
                 "class": "form-control",
-                "placeholder": "e.g., +256123456789",
+                "placeholder": "+256701234567",
                 "autocomplete": "tel",
+                "inputmode": "tel",
             }
         ),
     )
@@ -240,34 +247,21 @@ class CheckoutForm(forms.Form):
             self.fields.pop("save_address")
 
     def clean_mobile(self):
-        mobile = self.cleaned_data.get("mobile")
+        mobile = (self.cleaned_data.get("mobile") or "").strip()
+        error_message = (
+            "Enter a valid Ugandan phone number. "
+            "Example: +256701234567 or 0701234567"
+        )
 
-        if mobile:
-            # Remove any spaces or hyphens before processing
-            mobile = mobile.replace(" ", "").replace("-", "")
+        try:
+            parsed_mobile = parse(mobile, "UG")
+        except phonenumberutil.NumberParseException as exc:
+            raise ValidationError(error_message) from exc
 
-            try:
-                # Parse the phone number using the phonenumbers library
-                parsed_mobile = parse(mobile)
+        if parsed_mobile.country_code != 256 or not is_valid_number(parsed_mobile):
+            raise ValidationError(error_message)
 
-                # Check if the phone number is valid
-                if not is_valid_number(parsed_mobile):
-                    raise ValidationError(
-                        "Invalid mobile number. Please enter a valid number in the format: +256123456789."
-                    )
-
-                # Check if the phone number has a country code
-                if not parsed_mobile.country_code:
-                    raise ValidationError(
-                        "Mobile number must include a country code. Please enter a valid number in the format: +256123456789."
-                    )
-
-            except phonenumberutil.NumberParseException:
-                raise ValidationError(
-                    "Invalid mobile number format. Please enter a valid number in the format: +256123456789."
-                )
-
-        return mobile
+        return format_number(parsed_mobile, PhoneNumberFormat.E164)
 
     def clean_mobile_money_number(self):
         mobile_money_number = self.cleaned_data.get("mobile_money_number")
