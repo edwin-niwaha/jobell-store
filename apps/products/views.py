@@ -505,9 +505,7 @@ def products_list_all(request):
     )
 
     # Calculate totals using inventory quantities
-    total_stock = sum(
-        product.inventory.quantity for product in products if product.inventory
-    )
+    total_stock = products.aggregate(total_stock=Sum("inventory__quantity"))["total_stock"] or 0
 
     total_ml = (
         products.aggregate(total_ml=Sum("productvolume__volume__ml"))["total_ml"] or 0

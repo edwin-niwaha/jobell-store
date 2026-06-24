@@ -1,5 +1,6 @@
 """Read-optimized product querysets and storefront presentation helpers."""
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Prefetch
 from django.db.models import Avg, Q
 
@@ -9,7 +10,7 @@ from .models import Product, ProductImage, ProductVolume
 def active_variants_queryset():
     return (
         ProductVolume.objects.filter(is_active=True)
-        .select_related("volume", "product", "product__category")
+        .select_related("volume", "product", "product__category", "product__inventory")
         .order_by("sort_order", "volume__ml", "product_type", "color", "size", "scent")
     )
 
@@ -30,11 +31,42 @@ def active_products_queryset():
             Prefetch("images", queryset=active_images, to_attr="prefetched_active_images"),
         )
         .filter(status="ACTIVE")
+        .annotate(storefront_avg_rating=Avg("reviews__rating", filter=Q(reviews__is_verified=True)))
     )
 
 
 def _variant_current_price(variant):
-    return variant.current_price
+    try:
+        return variant.current_price
+    except (ObjectDoesNotExist, TypeError, ValueError):
+        return None
+
+
+def _variant_original_price(variant):
+    try:
+        return variant.original_price
+    except ObjectDoesNotExist:
+        return None
+
+
+def _variant_has_discount(variant):
+    try:
+        return variant.has_price_discount
+    except (ObjectDoesNotExist, TypeError, ValueError):
+        return False
+
+
+def _variant_image_url(variant):
+    if getattr(variant, "variant_image", None):
+        return getattr(variant.variant_image, "url", str(variant.variant_image))
+    return ""
+
+
+def _product_inventory_quantity(product):
+    try:
+        return product.inventory.quantity or 0
+    except ObjectDoesNotExist:
+        return 0
 
 
 def build_storefront_product_card(product):
@@ -61,25 +93,28 @@ def build_storefront_product_card(product):
 
     prices = [_variant_current_price(variant) for variant in priced_variants]
     original_prices = [
-        variant.original_price
+        original_price
         for variant in priced_variants
-        if variant.original_price is not None
+        for original_price in [_variant_original_price(variant)]
+        if original_price is not None
     ]
 
     min_price = min(prices) if prices else product.selling_price
     max_price = max(prices) if prices else product.selling_price
     min_original_price = min(original_prices) if original_prices else product.selling_price
-    has_discount = any(variant.has_price_discount for variant in priced_variants)
+    has_discount = any(_variant_has_discount(variant) for variant in priced_variants)
     has_sellable_price = min_price is not None and max_price is not None
 
     if not image_url:
-        image_url = next((variant.image_url for variant in variants if variant.image_url), "")
+        image_url = next((url for variant in variants for url in [_variant_image_url(variant)] if url), "")
 
-    avg_rating = product.reviews.filter(is_verified=True).aggregate(Avg("rating"))[
-        "rating__avg"
-    ]
+    avg_rating = getattr(product, "storefront_avg_rating", None)
+    if avg_rating is None:
+        avg_rating = product.reviews.filter(is_verified=True).aggregate(Avg("rating"))[
+            "rating__avg"
+        ]
 
-    fallback_stock = getattr(getattr(product, "inventory", None), "quantity", 0)
+    fallback_stock = _product_inventory_quantity(product)
     is_in_stock = bool(sellable_variants) or (not variants and fallback_stock > 0)
     volume_values = sorted(
         {

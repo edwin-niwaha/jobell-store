@@ -1,9 +1,17 @@
 """Inventory domain helpers."""
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import F, Q
 
 from apps.products.models import Product, ProductVolume, Volume
 from .models import Inventory
+
+
+def _product_inventory_quantity(product, default=0):
+    try:
+        return product.inventory.quantity or default
+    except ObjectDoesNotExist:
+        return default
 
 
 def product_variation_stock(product):
@@ -11,9 +19,7 @@ def product_variation_stock(product):
     tracked = variants.filter(stock_quantity__isnull=False)
     if tracked.exists():
         return sum(variant.stock_quantity or 0 for variant in tracked)
-    if hasattr(product, "inventory"):
-        return product.inventory.quantity
-    return 0
+    return _product_inventory_quantity(product)
 
 
 def sync_product_inventory_from_variations(product):
@@ -31,7 +37,7 @@ def ensure_default_product_variation(product, volume=None):
     volume = volume or Volume.objects.order_by("ml").first()
     if volume is None:
         return None
-    inventory_quantity = getattr(getattr(product, "inventory", None), "quantity", None)
+    inventory_quantity = _product_inventory_quantity(product, default=None)
     return ProductVolume.objects.create(
         product=product,
         volume=volume,

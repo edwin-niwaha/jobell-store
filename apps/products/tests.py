@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.db import IntegrityError
 from django.test import TestCase
 
+from apps.inventory.models import Inventory
 from apps.products.forms import ProductVolumeForm, VolumeForm
 from apps.products.models import Category, Product, ProductVolume, Volume
 from apps.products.selectors import build_storefront_product_card
@@ -112,6 +113,88 @@ class ProductModelTests(TestCase):
         self.assertEqual(card["min_price"], Decimal("45.00"))
         self.assertEqual(card["max_price"], Decimal("45.00"))
         self.assertEqual(card["min_original_price"], Decimal("60.00"))
+
+    def _product(self, name="Test Fragrance", **overrides):
+        defaults = {
+            "name": name,
+            "description": "A production-safe scent.",
+            "status": "ACTIVE",
+            "category": self.category,
+            "supplier": self.supplier,
+        }
+        defaults.update(overrides)
+        return Product.objects.create(**defaults)
+
+    def _variant(self, product, **overrides):
+        defaults = {
+            "product": product,
+            "volume": self.volume,
+            "product_type": "Spray",
+            "price": Decimal("60.00"),
+            "unit_cost": Decimal("25.00"),
+        }
+        defaults.update(overrides)
+        return ProductVolume.objects.create(**defaults)
+
+    def test_variant_available_quantity_uses_inventory_when_stock_untracked(self):
+        product = self._product("Inventory Backed")
+        Inventory.objects.create(product=product, quantity=6)
+        variant = self._variant(product, stock_quantity=None)
+
+        self.assertEqual(variant.available_quantity, 6)
+        self.assertTrue(variant.is_stock_tracked)
+        self.assertTrue(variant.is_in_stock)
+
+    def test_variant_without_inventory_returns_zero_stock(self):
+        product = self._product("Missing Inventory")
+        variant = self._variant(product, stock_quantity=None)
+
+        self.assertEqual(variant.available_quantity, 0)
+        self.assertFalse(variant.is_stock_tracked)
+        self.assertFalse(variant.is_in_stock)
+        card = build_storefront_product_card(product)
+        self.assertFalse(card["is_in_stock"])
+        self.assertEqual(card["image_url"], "")
+
+    def test_inactive_variant_is_not_in_stock(self):
+        product = self._product("Inactive Variant")
+        variant = self._variant(product, stock_quantity=5, is_active=False)
+
+        self.assertEqual(variant.available_quantity, 5)
+        self.assertFalse(variant.is_in_stock)
+        card = build_storefront_product_card(product)
+        self.assertFalse(card["is_in_stock"])
+        self.assertEqual(card["variants"], [])
+
+    def test_variant_with_zero_stock_is_not_sellable(self):
+        product = self._product("Zero Stock")
+        variant = self._variant(product, stock_quantity=0)
+
+        self.assertEqual(variant.available_quantity, 0)
+        self.assertFalse(variant.is_in_stock)
+        card = build_storefront_product_card(product)
+        self.assertFalse(card["is_in_stock"])
+        self.assertEqual(card["sellable_variants"], [])
+
+    def test_storefront_card_handles_variant_without_override_price(self):
+        product = self._product("Volume Price Fallback")
+        self._variant(product, price=None, stock_quantity=3)
+
+        card = build_storefront_product_card(product)
+
+        self.assertTrue(card["has_sellable_price"])
+        self.assertEqual(card["min_price"], Decimal("35.00"))
+        self.assertEqual(card["max_price"], Decimal("35.00"))
+
+    def test_storefront_card_handles_product_with_inventory_and_no_active_variant(self):
+        product = self._product("No Active Variant")
+        Inventory.objects.create(product=product, quantity=4)
+
+        card = build_storefront_product_card(product)
+
+        self.assertTrue(card["is_in_stock"])
+        self.assertEqual(card["variants"], [])
+        self.assertFalse(card["has_sellable_price"])
 
     def test_volume_form_rejects_duplicate_ml(self):
         form = VolumeForm(

@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.forms import model_to_dict
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import FileExtensionValidator
 from django.db.models import Avg, Q
 from apps.supplier.models import Supplier
@@ -201,14 +201,16 @@ class Product(models.Model):
 
     def to_json(self):
         item = model_to_dict(self)
+        try:
+            inventory_quantity = self.inventory.quantity
+        except ObjectDoesNotExist:
+            inventory_quantity = 0
         item.update(
             {
                 "id": self.id,
                 "text": self.name,
                 "category": self.category.name if self.category else None,
-                "quantity": (
-                    self.inventory.quantity if hasattr(self, "inventory") else 0
-                ),
+                "quantity": inventory_quantity,
                 "total_product": 0,
             }
         )
@@ -509,15 +511,27 @@ class ProductVolume(models.Model):
 
     @property
     def is_stock_tracked(self):
-        return self.stock_quantity is not None or hasattr(self.product, "inventory")
+        if self.stock_quantity is not None:
+            return True
+        if not self.product_id:
+            return False
+        try:
+            self.product.inventory
+        except ObjectDoesNotExist:
+            return False
+        return True
 
     @property
     def available_quantity(self):
         if self.stock_quantity is not None:
             return self.stock_quantity
-        if self.product_id and hasattr(self.product, "inventory"):
-            return self.product.inventory.quantity
-        return 10**9
+        if not self.product_id:
+            return 0
+        try:
+            inventory = self.product.inventory
+        except ObjectDoesNotExist:
+            return 0
+        return inventory.quantity or 0
 
     @property
     def is_in_stock(self):

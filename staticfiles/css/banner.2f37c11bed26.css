@@ -1,0 +1,71 @@
+/* Banner Styling */
+.banner-popup {
+    top: -100px;
+    left: -100%;
+    background: linear-gradient(to right, #FFD700, #FFA500);
+    /* Gold gradient */
+    z-index: 1050;
+    transition: top 0.8s ease-out, left 0.8s ease-out;
+    margin-top: 45px;
+    height: 85px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    border-radius: 0 0 10px 10px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Active state */
+.banner-popup.active {
+    top: 0;
+    left: 0;
+}
+
+/* Banner content styling */
+.banner-content {
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: #fffdf5;
+    flex: 1;
+    text-align: center;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* Hover effect for link */
+.banner-link {
+    color: #fff8dc;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.banner-link:hover {
+    text-decoration: underline;
+    color: #ffecb3;
+    /* Soft pale gold */
+}
+
+/* Close Button Styling */
+#closeBanner {
+    background-color: transparent;
+    border: none;
+    font-size: 2rem;
+    color: #fff8dc;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+#closeBanner:hover {
+    transform: scale(1.1);
+    color: #ffeb3b;
+    /* Bright yellow on hover */
+}
+
+/* Navbar Margin Adjust (preserved from original) */
+.navbar {
+    transition: margin-top 0.3s ease;
+}

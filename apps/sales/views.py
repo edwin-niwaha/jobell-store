@@ -2,6 +2,7 @@ import json
 import logging
 from django.utils import timezone
 from decimal import Decimal
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q
 from django.db.models import Sum, Count
@@ -35,6 +36,13 @@ from apps.authentication.decorators import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _product_inventory_or_none(product):
+    try:
+        return product.inventory
+    except ObjectDoesNotExist:
+        return None
 
 
 # =================================== Sale list view ===================================
@@ -363,8 +371,9 @@ def sales_add_view(request):
         "customers": [c.to_select2() for c in Customer.objects.all()],
         "products": products,
         "total_stock": sum(
-            product.inventory.quantity if hasattr(product, "inventory") else 0
+            (inventory.quantity if inventory else 0)
             for product in products
+            for inventory in [_product_inventory_or_none(product)]
         ),
         "payment_methods": PAYMENT_METHOD_CHOICES,
     }
@@ -422,13 +431,14 @@ def sales_add_view(request):
                             )  # Fallback to 0 if cost not provided
 
                         # Check if the product has inventory and stock is available
-                        if not hasattr(product_obj, "inventory"):
+                        inventory_obj = _product_inventory_or_none(product_obj)
+                        if inventory_obj is None:
                             raise ValueError(
                                 f"No inventory record for {product_obj.name}"
                             )
-                        if product_obj.inventory.quantity < quantity_requested:
+                        if inventory_obj.quantity < quantity_requested:
                             raise ValueError(
-                                f"Oops! Insufficient stock for {product_obj.name} (Available: {product_obj.inventory.quantity})"
+                                f"Oops! Insufficient stock for {product_obj.name} (Available: {inventory_obj.quantity})"
                             )
 
                         # Calculate COGS for this product
@@ -436,7 +446,6 @@ def sales_add_view(request):
                         cogs_total += product_cost
 
                         # Update inventory stock
-                        inventory_obj = product_obj.inventory
                         inventory_obj.quantity -= quantity_requested
                         inventory_obj.save()  # Triggers check_stock_alerts()
                         logger.info(
