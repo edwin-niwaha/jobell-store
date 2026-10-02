@@ -11,6 +11,7 @@ COPY apps ./apps
 COPY api ./api
 COPY services ./services
 COPY repositories ./repositories
+COPY scripts/check_production_branch.py ./scripts/check_production_branch.py
 COPY templates ./templates
 COPY static ./static
 RUN python manage.py collectstatic --noinput --settings=core.settings.build

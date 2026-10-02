@@ -2,18 +2,19 @@ import logging
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect, get_object_or_404
 from django.core.paginator import Paginator
-from django.db.models import Q
 from django.db import transaction
-from .models import Customer
-from .forms import CustomerForm
+from django.db.models import Q
+from django.shortcuts import get_object_or_404, redirect, render
 
 # Import custom decorators
 from apps.authentication.decorators import (
     admin_or_manager_or_staff_required,
     admin_required,
 )
+
+from .forms import CustomerForm
+from .models import Customer
 
 logger = logging.getLogger(__name__)
 

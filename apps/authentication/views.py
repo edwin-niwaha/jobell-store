@@ -1,3 +1,5 @@
+import logging
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login
@@ -21,6 +23,7 @@ from apps.authentication.decorators import (
     admin_or_manager_required,
     admin_required,
 )
+from apps.orders.services import merge_session_cart_into_user_cart
 
 from .forms import (
     ContactForm,
@@ -31,13 +34,10 @@ from .forms import (
     UpdateUserForm,
 )
 from .models import (
-    Profile,
     Contact,
+    Profile,
 )
 from .notifications import queue_contact_emails
-from apps.orders.services import merge_session_cart_into_user_cart
-
-import logging
 
 # Configure logger
 logger = logging.getLogger(__name__)

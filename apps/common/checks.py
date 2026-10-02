@@ -1,5 +1,6 @@
 """Fail deployment checks for incomplete production service configuration."""
 from urllib.parse import urlsplit
+
 from django.conf import settings
 from django.core.checks import Error, Tags, register
 

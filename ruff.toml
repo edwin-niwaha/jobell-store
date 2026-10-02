@@ -1,0 +1,16 @@
+target-version = "py312"
+extend-exclude = [".venv-prod-check", ".prod-check", "staticfiles", "vendor"]
+
+[lint]
+select = ["E4", "E7", "E9", "F", "I", "RUF100"]
+
+[lint.isort]
+combine-as-imports = true
+
+[lint.per-file-ignores]
+# Layered Django settings intentionally inherit the base module's settings.
+"core/settings/__init__.py" = ["F403", "F405"]
+"core/settings/build.py" = ["F403", "F405"]
+"core/settings/development.py" = ["F403", "F405"]
+"core/settings/production.py" = ["F403", "F405"]
+"core/settings/test.py" = ["F403", "F405"]

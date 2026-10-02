@@ -5,14 +5,17 @@ Requires Playwright in NODE_PATH and its Chromium browser; no project dependency
 import os
 import shutil
 import subprocess
-from unittest.mock import patch
 from pathlib import Path
+from unittest.mock import patch
+
 from django.conf import settings
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.test import override_settings
+
+from apps.shipping.models import PickupStation
+
 from . import tests as ecommerce_tests
 from .models import Cart, CartItem, Order
-from apps.shipping.models import PickupStation
 
 
 @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend', ORDER_EMAIL_USE_CELERY=False, ADMIN_ORDER_EMAILS=[], RESEND_API_KEY='')

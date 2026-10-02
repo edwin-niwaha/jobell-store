@@ -1,13 +1,15 @@
-from django.db import models
+import uuid
+
+import cloudinary.uploader
+from cloudinary.models import CloudinaryField
 from django.contrib.auth.models import User
-from django.forms import model_to_dict
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import FileExtensionValidator
+from django.db import models
 from django.db.models import Avg, Q
+from django.forms import model_to_dict
+
 from apps.supplier.models import Supplier
-from cloudinary.models import CloudinaryField
-import cloudinary.uploader
-import uuid
 
 from .services import generate_unique_slug, generate_variant_sku, percentage_discount
 

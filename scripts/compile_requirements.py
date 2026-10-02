@@ -1,9 +1,9 @@
 """Compile the runtime lock, retaining a portable path for the compatibility wheel."""
 import os
-from pathlib import Path
 import re
 import subprocess
 import sys
+from pathlib import Path
 
 root = Path(__file__).resolve().parents[1]
 env = dict(os.environ, CUSTOM_COMPILE_COMMAND="python scripts/compile_requirements.py")

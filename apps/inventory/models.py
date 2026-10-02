@@ -1,5 +1,7 @@
 import logging
+
 from django.db import models
+
 from apps.products.models import Product
 
 logger = logging.getLogger(__name__)

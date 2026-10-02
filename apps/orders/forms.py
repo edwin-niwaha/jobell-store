@@ -1,5 +1,4 @@
 from django import forms
-from .models import Order
 from django.core.exceptions import ValidationError
 from phonenumbers import (
     PhoneNumberFormat,
@@ -12,6 +11,7 @@ from phonenumbers import (
 from apps.addresses.models import CustomerAddress
 from apps.shipping.models import PickupStation
 
+from .models import Order
 
 # class CheckoutForm(forms.Form):
 

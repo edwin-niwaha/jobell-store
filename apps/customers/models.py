@@ -2,7 +2,6 @@ from django.conf import settings
 from django.db import models
 from phonenumber_field.modelfields import PhoneNumberField
 
-
 # =================================== customers model ===================================
 
 

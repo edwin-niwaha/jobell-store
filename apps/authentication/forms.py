@@ -1,14 +1,15 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
-from django.contrib.auth.password_validation import password_validators_help_text_html
 from django.contrib.auth.models import User
-from phonenumber_field.formfields import PhoneNumberField
-from phonenumbers import phonenumberutil, parse, is_valid_number
+from django.contrib.auth.password_validation import password_validators_help_text_html
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from phonenumber_field.formfields import PhoneNumberField
+from phonenumbers import is_valid_number, parse, phonenumberutil
+
+from apps.customers.models import Customer
 
 from .models import Contact, Profile
-from apps.customers.models import Customer
 
 
 # =================================== Register  ===================================

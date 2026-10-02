@@ -1,5 +1,9 @@
 name: Production checks
-on: [push, pull_request]
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
 permissions:
   contents: read
 jobs:
@@ -23,6 +27,8 @@ jobs:
       CHECKOUT_BROWSER_CHANNEL: chromium
     steps:
       - uses: actions/checkout@v4
+      - name: Verify production branch guard
+        run: python3 -m unittest discover -s scripts -p 'test_production_branch.py'
       - name: Validate Railway configuration
         shell: pwsh
         run: |

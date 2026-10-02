@@ -1,6 +1,7 @@
-from django.db import models
 from django.contrib.auth.models import User
+from django.db import models
 from django.utils.text import slugify
+
 from .validators import build_youtube_embed_url, validate_youtube_url
 
 

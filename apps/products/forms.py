@@ -1,15 +1,17 @@
 from django import forms
 from django.core.exceptions import ValidationError
+
+from apps.inventory.models import Inventory
+
 from .models import (
+    PRODUCT_TYPE_CHOICES,
     Category,
-    Volume,
-    ProductVolume,
     Product,
     ProductImage,
+    ProductVolume,
     Review,
-    PRODUCT_TYPE_CHOICES,
+    Volume,
 )
-from apps.inventory.models import Inventory
 
 
 class ProductFilterForm(forms.Form):

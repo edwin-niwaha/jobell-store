@@ -1,9 +1,9 @@
-from django.db import models
 import django.utils.timezone
-from apps.customers.models import Customer
-from apps.products.models import Product, ProductVolume
-from apps.orders.models import Order
+from django.db import models
 
+from apps.customers.models import Customer
+from apps.orders.models import Order
+from apps.products.models import Product, ProductVolume
 
 PAYMENT_METHOD_CHOICES = [
     ("cash", "Cash"),

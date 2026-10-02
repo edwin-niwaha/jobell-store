@@ -1,33 +1,13 @@
 import logging
 
 from django.contrib import messages
-from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-from django.db import IntegrityError
-from django.db.models import Sum, F, Q, Count, Prefetch
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from django.db import IntegrityError, transaction
+from django.db.models import Count, F, Prefetch, Q, Sum
 from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.shortcuts import render, redirect, get_object_or_404
-from django.db import transaction
-from apps.inventory.models import Inventory
-from apps.products.selectors import (
-    active_products_queryset,
-    build_storefront_cards,
-    storefront_priced_queryset,
-)
-
-# Import models and forms
-from .models import Category, Volume, ProductVolume, Product, ProductImage
-from .forms import (
-    CategoryForm,
-    VolumeForm,
-    ProductVolumeForm,
-    ProductForm,
-    ProductImageForm,
-    VolumeSelectionForm,
-    ProductFilterForm,
-)
-
 
 # Import custom decorators
 from apps.authentication.decorators import (
@@ -35,6 +15,26 @@ from apps.authentication.decorators import (
     admin_or_manager_required,
     admin_required,
 )
+from apps.inventory.models import Inventory
+from apps.orders.models import Wishlist
+from apps.products.selectors import (
+    active_products_queryset,
+    build_storefront_cards,
+    storefront_priced_queryset,
+)
+
+from .forms import (
+    CategoryForm,
+    ProductFilterForm,
+    ProductForm,
+    ProductImageForm,
+    ProductVolumeForm,
+    VolumeForm,
+    VolumeSelectionForm,
+)
+
+# Import models and forms
+from .models import Category, Product, ProductImage, ProductVolume, Volume
 
 logger = logging.getLogger(__name__)
 
@@ -120,6 +120,7 @@ def shop_homepage_view(request):
         {
             "form": form,
             "products_with_images": products_with_images,
+            "wishlist_product_ids": set(Wishlist.objects.filter(user=request.user).values_list("product_id", flat=True)) if request.user.is_authenticated else set(),
             "page_obj": page_obj,
             "categories": categories,
             "selected_category": selected_category,

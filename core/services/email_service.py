@@ -5,7 +5,6 @@ import requests
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 
-
 logger = logging.getLogger(__name__)
 
 

@@ -534,54 +534,35 @@
     }
   </style>
 
-  <main class="bg-light py-3 py-lg-4">
+  <main class="shop-page py-3 py-lg-4">
     <div class="container-fluid px-3 px-lg-4">
-      <section class="shop-hero shadow-sm mb-3">
-        <div class="shop-hero-inner">
-          <div class="shop-hero-row">
-            <div class="shop-hero-content">
-              <span class="shop-hero-badge">{{ site_name|upper }} store</span>
-              <h1 class="shop-hero-title">Discover your signature scent</h1>
-              <p class="shop-hero-copy">
-                {{ result_count|default:0 }} product{{ result_count|default:0|pluralize }} available for delivery or pickup follow-up.
-              </p>
-            </div>
 
-            <a href="{% url 'orders:cart' %}" class="btn btn-gold rounded-pill shop-hero-cart">
-              <i class="fas fa-shopping-cart me-1"></i><span class="cart-label">View </span>Cart
-            </a>
-          </div>
-        </div>
-      </section>
 
       <form method="get"
             action="{% url 'products:shop_homepage' %}"
             class="card border-0 shadow-sm rounded-4 mb-3 shop-filter-card">
-        <div class="card-body p-2">
-          <div class="search-toolbar">
+        <div class="card-body shop-filter-body">
+          <div class="shop-filter-toolbar">
             <div class="search-box">
-              <span class="search-icon">
-                <i class="fas fa-search" aria-hidden="true"></i>
-              </span>
+              <span class="search-icon"><i class="fas fa-search" aria-hidden="true"></i></span>
               <label class="visually-hidden" for="{{ form.search.id_for_label }}">Search fragrances</label>
               {{ form.search }}
             </div>
-
-            <button type="submit"
-                    class="btn btn-gold search-submit"
-                    title="Search products"
-                    aria-label="Search products">
-              <i class="fas fa-search" aria-hidden="true"></i>
-            </button>
+            <div class="shop-sort-control">
+              <label class="visually-hidden" for="{{ form.sort.id_for_label }}">Sort products</label>
+              {{ form.sort }}
+            </div>
+            <button class="btn btn-gold shop-apply-filter" type="submit">Apply Filter</button>
           </div>
           {% if selected_category %}<input type="hidden" name="category" value="{{ selected_category.id }}">{% endif %}
-          <div class="shopping-filters">
-            <div><label for="{{ form.min_price.id_for_label }}">Min price (UGX)</label>{{ form.min_price }}{{ form.min_price.errors }}</div>
-            <div><label for="{{ form.max_price.id_for_label }}">Max price (UGX)</label>{{ form.max_price }}{{ form.max_price.errors }}</div>
-            <div><label for="{{ form.sort.id_for_label }}">Sort products</label>{{ form.sort }}{{ form.sort.errors }}</div>
-            <div class="d-flex align-items-end"><button class="btn btn-gold w-100" type="submit">Apply filters</button></div>
-          </div>
-          {{ form.search.errors }}{{ form.non_field_errors }}
+          <details class="shop-price-filter" {% if request.GET.min_price or request.GET.max_price or form.min_price.errors or form.max_price.errors %}open{% endif %}>
+            <summary>Price range</summary>
+            <div class="shop-price-fields">
+              <div><label for="{{ form.min_price.id_for_label }}">Min price (UGX)</label>{{ form.min_price }}{{ form.min_price.errors }}</div>
+              <div><label for="{{ form.max_price.id_for_label }}">Max price (UGX)</label>{{ form.max_price }}{{ form.max_price.errors }}</div>
+            </div>
+          </details>
+          {{ form.search.errors }}{{ form.sort.errors }}{{ form.non_field_errors }}
         </div>
       </form>
 
@@ -590,7 +571,6 @@
           <div class="d-flex align-items-center justify-content-between gap-3 mb-3 shop-section-heading">
             <div>
               <h2 class="h5 fw-bold text-dark mb-0">Shop by category</h2>
-              <p>{{ categories|length|default:0 }} categories available</p>
             </div>
 
             {% if categories %}
@@ -606,7 +586,7 @@
           </div>
 
           {% if categories %}
-            <div class="shop-category-scroll d-flex flex-nowrap" data-shop-category-scroll aria-label="Product categories">
+            <div class="shop-category-scroll d-flex flex-nowrap" data-shop-category-scroll role="region" tabindex="0" aria-label="Product categories">
               <a href="{% url 'products:shop_homepage' %}?{{ category_query }}" class="shop-category-card {% if not selected_category %}active{% endif %}">
                 <span class="shop-category-media">
                   <i class="fas fa-border-all" aria-hidden="true"></i>
@@ -649,7 +629,7 @@
         {% if selected_category %}<span>{{ selected_category.name }}</span>{% endif %}
         {% if request.GET.min_price %}<span>From UGX {{ request.GET.min_price }}</span>{% endif %}
         {% if request.GET.max_price %}<span>Up to UGX {{ request.GET.max_price }}</span>{% endif %}
-        <a href="{% url 'products:shop_homepage' %}">Reset filters</a>
+        <a href="{% url 'products:shop_homepage' %}">Clear filters</a>
       </div>
       <div id="product-list" class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-2 g-lg-3">
         {% if products_with_images %}
@@ -668,8 +648,8 @@
                   <form method="post" action="{% url 'orders:wishlist_add' product.uuid %}" class="shop-card-heart">
                     {% csrf_token %}
                     <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                    <button type="submit" class="btn" title="Add {{ product.name }} to wishlist" aria-label="Add {{ product.name }} to wishlist">
-                      <i class="fas fa-heart"></i>
+                    <button type="submit" class="btn {% if product.pk in wishlist_product_ids %}is-saved{% endif %}" title="{% if product.pk in wishlist_product_ids %}Already in wishlist{% else %}Add {{ product.name }} to wishlist{% endif %}" aria-label="{% if product.pk in wishlist_product_ids %}{{ product.name }} is already in your wishlist{% else %}Add {{ product.name }} to wishlist{% endif %}" aria-pressed="{% if product.pk in wishlist_product_ids %}true{% else %}false{% endif %}">
+                      <i class="{% if product.pk in wishlist_product_ids %}fas{% else %}far{% endif %} fa-heart" aria-hidden="true"></i>
                     </button>
                   </form>
 
@@ -731,23 +711,14 @@
                     <p class="small {% if product_info.is_in_stock %}text-success{% else %}text-muted{% endif %}">{% if product_info.is_in_stock %}In stock{% else %}Out of stock{% endif %}</p>
                     <div class="mt-auto">
                       {% if product_info.sellable_variants and product_info.has_sellable_price and product_info.is_in_stock %}
-                        {% if product_info.sellable_variants|length > 6 %}
-                          <div class="d-grid gap-2">
-                            <span class="variant-pill">
-                              {% if product_info.volume_range_label %}{{ product_info.volume_range_label }} · {% endif %}{{ product_info.sellable_variants|length }} options
-                            </span>
-                            <a href="{% url 'orders:product_detail' product.uuid %}" class="btn btn-gold rounded-pill">
-                              <i class="fas fa-list me-2"></i>Choose options
-                            </a>
-                          </div>
-                        {% else %}
+
                           <form method="post" action="{% url 'orders:add_to_cart' product.uuid %}" class="js-add-to-cart-form">
                             {% csrf_token %}
                             <input type="hidden" name="quantity" value="1">
                             <input type="hidden" name="next" value="{{ request.get_full_path }}">
 
                             {% if product_info.sellable_variants|length > 1 %}
-                              <label class="form-label small fw-bold text-muted text-uppercase mb-1">Variant</label>
+                              <label class="form-label small fw-bold text-muted text-uppercase mb-1">Volume</label>
                               <select class="form-select form-select-sm variant-select" name="volume_id" aria-label="Choose variant for {{ product.name }}" required>
                                 {% for variant in product_info.sellable_variants %}
                                   <option value="{{ variant.id }}">
@@ -772,7 +743,17 @@
                               </button>
                             </div>
                           </form>
-                        {% endif %}
+      <form class="shopping-whatsapp-form" method="get" action="{% url 'orders:whatsapp_product' product.uuid %}">
+        {% with variant=product_info.sellable_variants.0 %}
+          <input type="hidden" name="volume_id" value="{{ variant.id }}">
+        {% endwith %}
+        <input type="hidden" name="quantity" value="1">
+        <button class="shopping-whatsapp-button" type="submit" aria-label="Order {{ product.name }} on WhatsApp">
+          <i class="mdi mdi-whatsapp" aria-hidden="true"></i>Order on WhatsApp
+        </button>
+      </form>
+
+
                       {% else %}
                         <a href="{% url 'orders:product_detail' product.uuid %}" class="btn btn-outline-secondary w-100 rounded-pill">
                           <i class="fas fa-eye me-2"></i>View details
@@ -792,7 +773,7 @@
                 <h2 class="h4 fw-bold text-dark">No products found</h2>
                 <p class="text-muted">Try a different search or category.</p>
                 <a href="{% url 'products:shop_homepage' %}" class="btn btn-outline-gold rounded-pill px-4">
-                  <i class="fas fa-redo me-2"></i>Reset filters
+                  <i class="fas fa-redo me-2"></i>Clear filters
                 </a>
               </div>
             </section>

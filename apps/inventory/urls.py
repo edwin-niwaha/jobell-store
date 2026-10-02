@@ -1,11 +1,12 @@
 # urls.py
 from django.urls import path
+
 from .views import (
-    inventory_list_view,
     inventory_add_view,
-    inventory_update_view,
     inventory_delete_view,
+    inventory_list_view,
     inventory_report_view,
+    inventory_update_view,
 )
 
 app_name = "inventory"

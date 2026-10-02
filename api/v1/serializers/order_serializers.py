@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from apps.addresses.models import CustomerAddress
 from apps.orders.models import Cart, CartItem, Order, OrderDetail, Wishlist
+
 from .product_serializers import ProductSerializer, ProductVariantSerializer
 
 

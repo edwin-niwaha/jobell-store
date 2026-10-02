@@ -1,36 +1,34 @@
 import json
 import logging
-from django.conf import settings
-from django.http import JsonResponse
+from datetime import date, datetime, timedelta
 from decimal import Decimal
-from datetime import date, timedelta, datetime
-from django.utils import timezone
-from django.db import IntegrityError, transaction
-from django.db.models.functions import TruncMonth
-from django.db.models.functions import ExtractYear
-from django.contrib.auth.decorators import login_required
-from django.db.models import Sum, FloatField, F, Q, Count
-from django.db.models.functions import Coalesce
-from django.shortcuts import render, redirect, get_object_or_404
+
 from django.contrib import messages
-from django.core.paginator import Paginator, EmptyPage
-
-from apps.products.models import Product, Category, Review
-from apps.products.selectors import active_products_queryset, build_storefront_cards
-from apps.sales.models import Sale
-from apps.orders.models import Cart, CartItem, Order, Wishlist
-from apps.finance.models import ChartOfAccounts, Transaction, FinancialPeriod
-
-
-from .models import Testimonial, Subscriber
-from .forms import TestimonialForm, NewsletterForm, EmailForm
-from .notifications import queue_bulk_newsletter_email, queue_newsletter_subscription_emails
-from apps.products.forms import ProductFilterForm
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import EmptyPage, Paginator
+from django.db import IntegrityError, transaction
+from django.db.models import Count, F, FloatField, Q, Sum
+from django.db.models.functions import Coalesce, ExtractYear, TruncMonth
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 
 from apps.authentication.decorators import (
     admin_or_manager_or_staff_required,
 )
+from apps.finance.models import ChartOfAccounts, FinancialPeriod, Transaction
+from apps.orders.models import Cart, CartItem, Order, Wishlist
+from apps.products.forms import ProductFilterForm
+from apps.products.models import Category, Product, Review
+from apps.products.selectors import active_products_queryset, build_storefront_cards
+from apps.sales.models import Sale
 
+from .forms import EmailForm, NewsletterForm, TestimonialForm
+from .models import Subscriber, Testimonial
+from .notifications import (
+    queue_bulk_newsletter_email,
+    queue_newsletter_subscription_emails,
+)
 from .utils import (
     get_top_selling_products,
 )
@@ -67,6 +65,7 @@ def index(request):
     # Initialize counts for cart, wishlist, and orders
     cart_count = 0
     wishlist_count = 0
+    wishlist_product_ids = set()
     order_count = 0
 
     # Fetch the user's cart and calculate the cart count only if the user is authenticated
@@ -83,7 +82,8 @@ def index(request):
         )
 
         # Fetch the user's wishlist count
-        wishlist_count = Wishlist.objects.filter(user=request.user).count()
+        wishlist_product_ids = set(Wishlist.objects.filter(user=request.user).values_list("product_id", flat=True))
+        wishlist_count = len(wishlist_product_ids)
 
         # Fetch the user's order count, ensuring a valid customer instance
         order_count = Order.objects.filter(customer=customer).count() if customer else 0
@@ -230,6 +230,7 @@ def index(request):
             "page_obj": page_obj,
             "cart_count": cart_count,
             "wishlist_count": wishlist_count,
+            "wishlist_product_ids": wishlist_product_ids,
             "order_count": order_count,
             "testimonial_form": testimonial_form,
             "testimonials": testimonials,
@@ -405,7 +406,6 @@ def dashboard(request):
     # Calculate total profit from all sales
     for sale in sales:
         for item in sale.items.all():
-            product = item.product
             product_volume = item.product_volume
 
             # Determine volume and price details

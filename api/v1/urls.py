@@ -3,7 +3,6 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from api.v1.docs import mobile_api_docs
-
 from api.v1.views.auth_views import AuthViewSet
 from api.v1.views.order_viewsets import (
     AddressViewSet,

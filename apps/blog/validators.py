@@ -1,6 +1,6 @@
 from urllib.parse import parse_qs, urlparse
-from django.core.exceptions import ValidationError
 
+from django.core.exceptions import ValidationError
 
 YOUTUBE_HOSTS = {
     "www.youtube.com",

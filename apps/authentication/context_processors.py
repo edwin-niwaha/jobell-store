@@ -1,8 +1,8 @@
-from apps.authentication.models import Profile, Contact
-from apps.products.models import Product
-from apps.orders.models import Order, Cart, CartItem
 from django.db.models import F, Sum
-from django.shortcuts import get_object_or_404
+
+from apps.authentication.models import Contact, Profile
+from apps.orders.models import Cart, CartItem, Order
+from apps.products.models import Product
 
 
 def guest_profiles_context(request):

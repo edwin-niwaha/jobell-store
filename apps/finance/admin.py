@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
-from .models import Branch, ChartOfAccounts, JournalEntry, Transaction, FinancialPeriod
+
+from .models import Branch, ChartOfAccounts, FinancialPeriod, JournalEntry, Transaction
 
 
 # Register Branch model

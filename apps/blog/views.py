@@ -1,18 +1,18 @@
 import logging
 
-from django.shortcuts import render, get_object_or_404, redirect
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib import messages
-from django.db import transaction
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from django.db import transaction
+from django.shortcuts import get_object_or_404, redirect, render
 
-
-from .models import BlogPost, Category
-from .forms import BlogPostForm, CategoryForm, TagForm, CommentForm
 from apps.authentication.decorators import (
-    admin_required,
     admin_or_manager_or_staff_required,
+    admin_required,
 )
+
+from .forms import BlogPostForm, CategoryForm, CommentForm, TagForm
+from .models import BlogPost, Category
 
 logger = logging.getLogger(__name__)
 

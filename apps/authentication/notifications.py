@@ -1,4 +1,5 @@
 import logging
+
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils import timezone
@@ -10,7 +11,6 @@ from apps.orders.notifications import (
     valid_recipients,
 )
 from core.services.email_service import send_transactional_email
-
 
 logger = logging.getLogger(__name__)
 

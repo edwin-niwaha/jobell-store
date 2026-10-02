@@ -1,39 +1,38 @@
 import json
 import logging
-from django.utils import timezone
 from decimal import Decimal
-from django.core.exceptions import ObjectDoesNotExist
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.db.models import Q
-from django.db.models import Sum, Count
-from django.db import transaction
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ObjectDoesNotExist
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from django.db import transaction
+from django.db.models import Count, Q, Sum
 from django.http import HttpResponse
-from django.shortcuts import render, redirect, get_object_or_404
-from core.wsgi import *
-from xhtml2pdf import pisa
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import get_template
-from apps.customers.models import Customer
-from apps.inventory.models import Inventory
-from apps.products.models import Product, ProductVolume
-from .models import Sale, SaleDetail
-from .forms import ReportPeriodForm, SaleForm
-
-from apps.finance.models import (
-    JournalEntry,
-    Transaction,
-    ChartOfAccounts,
-    FinancialPeriod,
-    Branch,
-    PAYMENT_METHOD_CHOICES,
-)
+from django.utils import timezone
+from xhtml2pdf import pisa
 
 # Import custom decorators
 from apps.authentication.decorators import (
     admin_or_manager_or_staff_required,
     admin_required,
 )
+from apps.customers.models import Customer
+from apps.finance.models import (
+    PAYMENT_METHOD_CHOICES,
+    Branch,
+    ChartOfAccounts,
+    FinancialPeriod,
+    JournalEntry,
+    Transaction,
+)
+from apps.inventory.models import Inventory
+from apps.products.models import Product, ProductVolume
+
+from .forms import ReportPeriodForm, SaleForm
+from .models import Sale, SaleDetail
 
 logger = logging.getLogger(__name__)
 

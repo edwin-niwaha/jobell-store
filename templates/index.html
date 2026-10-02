@@ -12,38 +12,6 @@
   <div class="platform-home">
     <main class="platform-shell">
       <section class="platform-hero">
-        <div class="platform-hero-copy">
-          <span class="platform-eyebrow">{{ site_name|upper }} Storefront</span>
-          <h1>Discover Luxury Fragrances</h1>
-          <p>Premium scents crafted for confidence, elegance, and unforgettable impressions.</p>
-
-          <div class="platform-actions">
-            <a href="{% url 'products:shop_homepage' %}" class="platform-btn platform-btn-accent">
-              Shop fragrances
-            </a>
-            <a href="#platform-categories" class="platform-btn platform-btn-secondary">
-              Browse categories
-            </a>
-          </div>
-
-        <div class="platform-stats d-flex align-items-center gap-2 gap-md-4 text-center" aria-label="Store summary">
-            <div>
-                <strong class="d-block fs-6">{{ active_products_count|default:0 }}</strong>
-                <span class="small text-muted">Products</span>
-            </div>
-
-            <div>
-                <strong class="d-block fs-6">{{ categories_count|default:0 }}</strong>
-                <span class="small text-muted">Categories</span>
-            </div>
-
-            <div>
-                <strong class="d-block fs-6">{{ featured_count|default:0 }}</strong>
-                <span class="small text-muted">Featured</span>
-            </div>
-        </div>
-        </div>
-
         <div class="platform-hero-carousel" data-app-hero-carousel aria-label="Featured products slideshow">
           {% if products_with_images %}
             <div class="platform-hero-slides">
@@ -62,12 +30,8 @@
                       {% endif %}
                     </a>
                     <div class="platform-hero-product">
-                      <span class="platform-eyebrow">Featured fragrance</span>
+                      <p class="platform-hero-tagline">Find your signature scent.</p>
                       <h2>{{ product.name }}</h2>
-                      <p>
-                        {% if product.category %}{{ product.category }}{% else %}Premium selection{% endif %}
-                        {% if product.gender %} for {{ product.gender }}{% endif %}
-                      </p>
                       <strong>
                         {% if product_info.has_sellable_price %}
                           UGX {{ min_price|floatformat:'0'|intcomma }}{% if min_price != max_price %} - {{ max_price|floatformat:'0'|intcomma }}{% endif %}
@@ -75,7 +39,7 @@
                           Price not available
                         {% endif %}
                       </strong>
-                      <a class="platform-btn platform-btn-accent" href="{% url 'orders:product_detail' product.uuid %}">View product</a>
+                      <span class="platform-hero-cta">Discover your fragrance →</span>
                     </div>
                   </article>
                 {% endwith %}
@@ -102,14 +66,13 @@
         <div class="platform-section-heading">
           <div>
             <h2>Shop by category</h2>
-            <p>Find a fragrance for every mood and occasion.</p>
           </div>
 
           <a href="{% url 'products:shop_homepage' %}">Shop all fragrances →</a>
         </div>
 
         {% if categories %}
-          <div class="platform-category-scroll" data-category-scroll aria-label="Product categories">
+          <div class="platform-category-scroll" data-category-scroll role="region" tabindex="0" aria-label="Product categories">
             {% for category in categories %}
               <a class="platform-category-card" href="{% url 'products:shop_homepage' %}?category={{ category.id }}">
                 <span class="platform-category-media">
@@ -165,9 +128,9 @@
         </div>
 
         {% if new_arrivals %}
-          <div class="platform-product-grid">
+          <div class="platform-product-scroll platform-new-arrivals-scroll" role="region" tabindex="0" aria-label="New Arrivals products">
             {% for product_info in new_arrivals %}
-              {% include 'partials/home_product_tile.html' with product_info=product_info grid=True %}
+              {% include 'partials/home_product_tile.html' with product_info=product_info %}
             {% endfor %}
           </div>
         {% else %}

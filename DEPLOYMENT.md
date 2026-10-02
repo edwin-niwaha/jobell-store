@@ -74,6 +74,31 @@ the full suite, migration drift check, dependency audit, and Docker build on Lin
 
 ## Railway services
 
+### Production branch policy
+
+Changes flow from `dev` (or another working branch) through a pull request into
+`main`. Only `main` may deploy to production. Protect `main` in GitHub with a
+ruleset requiring pull requests and the `test` status check from Production checks;
+disable bypasses and force pushes to enforce merging rather than direct pushes.
+
+For **both web and Celery services** in Railway's production environment, set
+Settings → Source → connected branch to `main` and enable **Wait for CI**.
+These are Railway dashboard settings, not fields in `railway.json`.
+Keep any `dev` staging service in a separate environment with separate data and
+its own deployment configuration.
+
+Both production configurations run `scripts/check_production_branch.py` before
+deployment. It rejects `dev`, other branches, and missing `RAILWAY_GIT_BRANCH`
+metadata, before web migrations or worker startup. Use GitHub-triggered deployments;
+local CLI uploads without GitHub branch metadata are intentionally blocked.
+Do not manually override `RAILWAY_GIT_BRANCH` to bypass the guard.
+
+The CI workflow runs on pushes and pull requests targeting `main` and `dev`.
+It validates code but does not deploy it. Railway deploys the merged `main`
+commit after its checks pass when Wait for CI is enabled.
+See [Railway autodeploy settings](https://docs.railway.com/deployments/github-autodeploys)
+and [Git branch metadata](https://docs.railway.com/variables/reference).
+
 1. Back up the existing PostgreSQL database and verify how to restore it before
    running new migrations. Preserve existing Cloudinary assets and any local
    uploads separately; local `media/` is intentionally excluded from the image.

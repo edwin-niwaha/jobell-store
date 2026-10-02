@@ -12,7 +12,12 @@ from api.v1.serializers.order_serializers import (
     WishlistItemSerializer,
 )
 from apps.addresses.models import CustomerAddress
-from services.order_service import cart_service, checkout_service, order_service, wishlist_service
+from services.order_service import (
+    cart_service,
+    checkout_service,
+    order_service,
+    wishlist_service,
+)
 
 
 class CartViewSet(viewsets.ViewSet):

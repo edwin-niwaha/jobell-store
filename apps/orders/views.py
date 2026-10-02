@@ -1,51 +1,49 @@
-from django.core.paginator import Paginator
-from django.db.models import Q, Avg, Sum
+import base64
+import json
+import logging
+import uuid
+from decimal import Decimal, InvalidOperation
+
+import requests
 from django.conf import settings
 from django.contrib import messages
-from decimal import Decimal, InvalidOperation
-import json
-import requests
-import uuid
-from django.http import JsonResponse
-from django.http import HttpResponseForbidden
-import logging
-import base64
-from django.shortcuts import render, get_object_or_404, redirect
-from django.urls import reverse
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.paginator import Paginator
+from django.db import transaction
+from django.db.models import Avg, Q, Sum
+from django.http import HttpResponseForbidden, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.utils.crypto import constant_time_compare
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from django.utils.http import url_has_allowed_host_and_scheme
-from django.utils import timezone
-from django.utils.crypto import constant_time_compare
-from django.db import transaction
+
+from apps.addresses.models import CustomerAddress
+from apps.authentication.decorators import (
+    admin_or_manager_or_staff_required,
+    admin_required,
+)
+from apps.customers.models import Customer
+from apps.products.models import Product, ProductImage, ProductVolume, Review
+from apps.products.selectors import build_storefront_product_card
+from apps.shipping.services import delivery_quote_for
+
+# from django.core.exceptions import MultipleObjectsReturned
+from .forms import CheckoutForm, OrderStatusForm
 from .models import Cart, CartItem, Order, OrderDetail, Wishlist
+from .notifications import (
+    queue_order_created_emails,
+    queue_order_status_changed_emails,
+    queue_payment_status_changed_emails,
+)
 from .services import (
     cart_total,
     create_order_from_cart,
     get_or_create_cart,
     mark_order_paid_and_capture_sale,
     validate_purchase_item,
-)
-from .notifications import (
-    queue_order_created_emails,
-    queue_order_status_changed_emails,
-    queue_payment_status_changed_emails,
-)
-from apps.products.models import Product, ProductVolume, ProductImage
-from apps.products.selectors import build_storefront_product_card
-
-# from django.core.exceptions import MultipleObjectsReturned
-from .forms import CheckoutForm, OrderStatusForm
-from apps.customers.models import Customer
-from apps.products.models import Review
-from apps.addresses.models import CustomerAddress
-from apps.shipping.services import delivery_quote_for
-
-from apps.authentication.decorators import (
-    admin_required,
-    admin_or_manager_or_staff_required,
 )
 
 
