@@ -1,7 +1,8 @@
 # products/migrations/0011_add_product_uuid.py
 
-from django.db import migrations, models
 import uuid
+
+from django.db import migrations, models
 
 
 # A more streamlined function to generate UUIDs

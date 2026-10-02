@@ -8,30 +8,59 @@ from django.template.loader import render_to_string
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from apps.authentication.models import Profile
 from apps.addresses.models import CustomerAddress
+from apps.authentication.models import Profile
 from apps.customers.models import Customer
-from apps.orders.models import Cart, CartItem, Order, OrderDetail, OrderPayment, Wishlist
 from apps.orders.forms import CheckoutForm
-from apps.orders.services import (
-    cart_total,
-    create_order_from_cart,
-    mark_order_paid_and_capture_sale,
+from apps.orders.models import (
+    Cart,
+    CartItem,
+    Order,
+    OrderDetail,
+    OrderPayment,
+    Wishlist,
 )
 from apps.orders.notifications import (
     _order_context,
     queue_order_status_changed_emails,
     queue_payment_status_changed_emails,
 )
-from core.services.email_service import EmailServiceError
+from apps.orders.services import (
+    cart_total,
+    create_order_from_cart,
+    mark_order_paid_and_capture_sale,
+)
 from apps.products.models import Category, Product, ProductVolume, Volume
 from apps.sales.models import Sale, SaleDetail
 from apps.shipping.models import DeliveryRate, PickupStation
 from apps.shipping.services import delivery_quote_for
 from apps.supplier.models import Supplier
+from core.services.email_service import EmailServiceError
 
 
 class EcommerceFlowTests(TestCase):
+    def test_storefront_wishlist_hearts_are_personal_and_duplicate_add_shows_message(self):
+        Wishlist.objects.create(user=self.user, product=self.product)
+        urls = [reverse("users-home"), reverse("products:shop_homepage")]
+        for url in urls:
+            response = self.client.get(url)
+            self.assertEqual(response.context["wishlist_product_ids"], set())
+            self.assertNotContains(response, 'aria-pressed="true"')
+        self.client.force_login(self.user)
+        for url in urls:
+            response = self.client.get(url)
+            self.assertEqual(response.context["wishlist_product_ids"], {self.product.pk})
+            self.assertContains(response, 'aria-pressed="true"')
+        response = self.client.post(reverse("orders:wishlist_add", args=[self.product.uuid]),
+                                    {"next": urls[1]}, follow=True)
+        self.assertContains(response, "already in your wishlist")
+        self.assertEqual(Wishlist.objects.filter(user=self.user, product=self.product).count(), 1)
+        self.client.force_login(self.staff_user)
+        for url in urls:
+            response = self.client.get(url)
+            self.assertEqual(response.context["wishlist_product_ids"], set())
+            self.assertNotContains(response, 'aria-pressed="true"')
+
     def test_product_detail_explains_unavailable_inventory_without_purchase_form(self):
         self.variant.stock_quantity = None
         self.variant.save()

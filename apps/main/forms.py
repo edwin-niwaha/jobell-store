@@ -1,7 +1,7 @@
 from django import forms
 from django.conf import settings
 
-from .models import Testimonial, Subscriber
+from .models import Subscriber, Testimonial
 
 
 class TestimonialForm(forms.ModelForm):

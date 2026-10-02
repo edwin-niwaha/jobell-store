@@ -4,9 +4,10 @@ from urllib.parse import parse_qs, urlsplit
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
+from apps.products.models import ProductVolume
+
 from . import tests as ecommerce_tests
 from .models import Cart, CartItem, Order, OrderPayment
-from apps.products.models import ProductVolume
 
 
 class WhatsAppOrderTests(TestCase):

@@ -1,6 +1,5 @@
 import os
 
-
 SITE_NAME = os.getenv("SITE_NAME", "Jobell Store")
 COMPANY_NAME = os.getenv("COMPANY_NAME", "Jobell Inc")
 PRIMARY_COLOR = os.getenv("PRIMARY_COLOR", "#D4AF37")

@@ -4,7 +4,6 @@ from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
 
-
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 load_dotenv(BASE_DIR / ".env")
 
@@ -24,17 +23,16 @@ def env_list(name, default=None):
 
 
 from .branding import (  # noqa: E402
-    BORDER_RADIUS,
-    COMPANY_NAME,
-    LOGO_URL,
-    PRIMARY_COLOR,
-    SECONDARY_COLOR,
-    SITE_NAME,
+    BORDER_RADIUS as BORDER_RADIUS,
+    COMPANY_NAME as COMPANY_NAME,
+    LOGO_URL as LOGO_URL,
+    PRIMARY_COLOR as PRIMARY_COLOR,
+    SECONDARY_COLOR as SECONDARY_COLOR,
+    SITE_NAME as SITE_NAME,
     SUPPORT_EMAIL,
-    SUPPORT_PHONE,
-    TEXT_COLOR,
+    SUPPORT_PHONE as SUPPORT_PHONE,
+    TEXT_COLOR as TEXT_COLOR,
 )
-
 
 SUPPORT_EMAIL = os.getenv("SUPPORT_EMAIL", SUPPORT_EMAIL)
 BASE_DOMAIN = os.getenv("BASE_DOMAIN", "example.com")

@@ -1,13 +1,15 @@
 from decimal import Decimal
 from types import SimpleNamespace
 from unittest.mock import patch
+
 from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
-from .views import _complete_flutterwave_payment
+
 from . import tests as ecommerce_tests
 from .models import Cart, CartItem
 from .services import create_order_from_cart
+from .views import _complete_flutterwave_payment
 
 
 class PaymentVerificationTests(SimpleTestCase):

@@ -6,7 +6,6 @@ from core.services.email_service import EmailServiceError
 
 from .notifications import send_contact_emails
 
-
 logger = logging.getLogger(__name__)
 
 

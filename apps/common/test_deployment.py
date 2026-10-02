@@ -1,6 +1,8 @@
 from unittest.mock import patch
+
 from django.db import OperationalError
 from django.test import TestCase, override_settings
+
 from .checks import production_services
 
 

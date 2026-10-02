@@ -5,9 +5,9 @@ reused by HTMX views, APIs, management commands and tests.
 """
 from decimal import Decimal
 
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import F
-from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from apps.customers.models import Customer
@@ -15,6 +15,7 @@ from apps.inventory.models import Inventory
 from apps.inventory.services import sync_product_inventory_from_variations
 from apps.products.models import ProductVolume
 from apps.sales.models import Sale, SaleDetail
+
 from .models import Cart, CartItem, Order, OrderDetail, OrderPayment
 
 

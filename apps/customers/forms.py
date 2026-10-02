@@ -1,7 +1,8 @@
 from django import forms
-from .models import Customer
 from django.core.exceptions import ValidationError
-from phonenumbers import parse, is_valid_number, phonenumberutil
+from phonenumbers import is_valid_number, parse, phonenumberutil
+
+from .models import Customer
 
 
 # =================================== customer form ===================================

@@ -69,10 +69,41 @@ live customer database.
 Browser checkout tests require Node, Playwright in `NODE_PATH`, and an installed
 browser. Set `CHECKOUT_BROWSER_CHANNEL=chromium` for Playwright Chromium (the local
 Windows default is Edge). The GitHub workflow validates both Railway config
-files against Railway's published schema, installs the browser tools, and runs
+files against the checked-in Railway schema at `.github/railway.schema.json`
+(avoiding upstream rate limits), installs the browser tools, and runs
 the full suite, migration drift check, dependency audit, and Docker build on Linux.
 
 ## Railway services
+
+The schema snapshot was retrieved from `https://railway.com/railway.schema.json`
+on 2 October 2026. When adding Railway configuration features, download and review
+the latest upstream schema, update `.github/railway.schema.json`, and validate
+both configurations before merging. CI deliberately uses the local snapshot.
+
+### Production branch policy
+
+Changes flow from `dev` (or another working branch) through a pull request into
+`main`. Only `main` may deploy to production. Protect `main` in GitHub with a
+ruleset requiring pull requests and the `test` status check from Production checks;
+disable bypasses and force pushes to enforce merging rather than direct pushes.
+
+For **both web and Celery services** in Railway's production environment, set
+Settings → Source → connected branch to `main` and enable **Wait for CI**.
+These are Railway dashboard settings, not fields in `railway.json`.
+Keep any `dev` staging service in a separate environment with separate data and
+its own deployment configuration.
+
+Both production configurations run `scripts/check_production_branch.py` before
+deployment. It rejects `dev`, other branches, and missing `RAILWAY_GIT_BRANCH`
+metadata, before web migrations or worker startup. Use GitHub-triggered deployments;
+local CLI uploads without GitHub branch metadata are intentionally blocked.
+Do not manually override `RAILWAY_GIT_BRANCH` to bypass the guard.
+
+The CI workflow runs on pushes and pull requests targeting `main` and `dev`.
+It validates code but does not deploy it. Railway deploys the merged `main`
+commit after its checks pass when Wait for CI is enabled.
+See [Railway autodeploy settings](https://docs.railway.com/deployments/github-autodeploys)
+and [Git branch metadata](https://docs.railway.com/variables/reference).
 
 1. Back up the existing PostgreSQL database and verify how to restore it before
    running new migrations. Preserve existing Cloudinary assets and any local

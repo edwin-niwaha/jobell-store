@@ -18,11 +18,12 @@
     <form class="platform-image-wishlist" method="post" action="{% url 'orders:wishlist_add' product.uuid %}">
       {% csrf_token %}
       <input type="hidden" name="next" value="{{ request.get_full_path }}" />
-      <button class="store-icon-btn"
+      <button class="store-icon-btn {% if product.pk in wishlist_product_ids %}is-saved{% endif %}"
               type="submit"
-              title="Add {{ product.name }} to wishlist"
-              aria-label="Add {{ product.name }} to wishlist">
-        <i class="mdi mdi-heart-outline" aria-hidden="true"></i>
+              title="{% if product.pk in wishlist_product_ids %}Already in wishlist{% else %}Add {{ product.name }} to wishlist{% endif %}"
+              aria-label="{% if product.pk in wishlist_product_ids %}{{ product.name }} is already in your wishlist{% else %}Add {{ product.name }} to wishlist{% endif %}"
+              aria-pressed="{% if product.pk in wishlist_product_ids %}true{% else %}false{% endif %}">
+        <i class="mdi {% if product.pk in wishlist_product_ids %}mdi-heart{% else %}mdi-heart-outline{% endif %}" aria-hidden="true"></i>
       </button>
     </form>
     </span>
@@ -43,24 +44,14 @@
     </span>
 
     {% if product_info.sellable_variants %}
-      {% if product_info.sellable_variants|length > 6 %}
-        <div class="platform-product-purchase">
-          <span class="platform-variant-pill">
-            {% if product_info.volume_range_label %}{{ product_info.volume_range_label }} · {% endif %}{{ product_info.sellable_variants|length }} options
-          </span>
-          <a class="platform-card-cart" href="{% url 'orders:product_detail' product.uuid %}">
-            <i class="mdi mdi-format-list-bulleted" aria-hidden="true"></i>
-            Choose options
-          </a>
-        </div>
-      {% else %}
+
       <form class="platform-product-purchase js-add-to-cart-form" method="post" action="{% url 'orders:add_to_cart' product.uuid %}">
         {% csrf_token %}
         <input type="hidden" name="quantity" value="1" />
         <input type="hidden" name="next" value="{{ request.get_full_path }}" />
 
         {% if product_info.sellable_variants|length > 1 %}
-          <label class="platform-variant-label">Variant</label>
+          <label class="platform-variant-label">Volume</label>
           <select class="platform-variant-select" name="volume_id" aria-label="Choose variant for {{ product.name }}" required>
             {% for variant in product_info.sellable_variants %}
               <option value="{{ variant.id }}">
@@ -80,7 +71,17 @@
           Add to cart
         </button>
       </form>
-      {% endif %}
+      <form class="shopping-whatsapp-form" method="get" action="{% url 'orders:whatsapp_product' product.uuid %}">
+        {% with variant=product_info.sellable_variants.0 %}
+          <input type="hidden" name="volume_id" value="{{ variant.id }}">
+        {% endwith %}
+        <input type="hidden" name="quantity" value="1">
+        <button class="shopping-whatsapp-button" type="submit" aria-label="Order {{ product.name }} on WhatsApp">
+          <i class="mdi mdi-whatsapp" aria-hidden="true"></i>Order on WhatsApp
+        </button>
+      </form>
+
+
 
     {% else %}
       <a class="platform-card-view" href="{% url 'orders:product_detail' product.uuid %}">

@@ -1,40 +1,39 @@
 import csv
 import logging
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
+
 from django.conf import settings
-from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ValidationError
-from django.http import HttpResponse
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import Sum, F, Q
+from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator
+from django.db import transaction as db_transaction
+from django.db.models import F, Q, Sum
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from django.db import transaction
-from datetime import date
 from openpyxl import load_workbook
-from .forms import (
-    ChartOfAccountsForm,
-    FinancialPeriodForm,
-    IncomeTransactionForm,
-    ExpenseTransactionForm,
-    JournalEntryForm,
-    TransactionFormSet,
-    ImportCOAForm,
-)
-
-from .models import ChartOfAccounts, Transaction, Branch, FinancialPeriod
-from apps.sales.forms import ReportPeriodForm
 
 from apps.authentication.decorators import (
     admin_or_manager_or_staff_required,
     admin_or_manager_required,
     admin_required,
 )
+from apps.sales.forms import ReportPeriodForm
 
+from .forms import (
+    ChartOfAccountsForm,
+    ExpenseTransactionForm,
+    FinancialPeriodForm,
+    ImportCOAForm,
+    IncomeTransactionForm,
+    JournalEntryForm,
+    TransactionFormSet,
+)
+from .models import Branch, ChartOfAccounts, FinancialPeriod, Transaction
 
 logger = logging.getLogger(__name__)
 
@@ -151,7 +150,7 @@ def chart_of_accounts_list_view(request):
 # =================================== Process and Import Excel data ===================================
 @login_required
 @admin_required
-@transaction.atomic
+@db_transaction.atomic
 def import_coa_data(request):
     if request.method == "POST":
         form = ImportCOAForm(request.POST, request.FILES)
@@ -189,7 +188,7 @@ def import_coa_data(request):
 
 
 # Function to import Excel data
-@transaction.atomic
+@db_transaction.atomic
 def process_and_import_accounts_data(excel_file):
     errors = []
     try:
@@ -350,7 +349,7 @@ def add_chart_of_account_view(request):
 # =================================== Account update view ===================================
 @login_required
 @admin_or_manager_or_staff_required
-@transaction.atomic
+@db_transaction.atomic
 def chart_of_account_update_view(request, account_id):
     account = get_object_or_404(ChartOfAccounts, id=account_id)
 
@@ -381,7 +380,7 @@ def chart_of_account_update_view(request, account_id):
 # =================================== Account delete view ===================================
 @login_required
 @admin_required
-@transaction.atomic
+@db_transaction.atomic
 def chart_of_account_delete_view(request, account_id):
     account = get_object_or_404(ChartOfAccounts, id=account_id)
 
@@ -406,7 +405,7 @@ def chart_of_account_delete_view(request, account_id):
 # =================================== Income transaction creation view ===================================
 @login_required
 @admin_or_manager_required
-@transaction.atomic
+@db_transaction.atomic
 def income_transaction_create_view(request):
     if request.method == "POST":
         form = IncomeTransactionForm(request.POST)
@@ -432,7 +431,7 @@ def income_transaction_create_view(request):
 # =================================== expense add view ===================================
 @login_required
 @admin_or_manager_required
-@transaction.atomic
+@db_transaction.atomic
 def expense_transaction_create_view(request):
     if request.method == "POST":
         form = ExpenseTransactionForm(request.POST)
@@ -458,7 +457,7 @@ def expense_transaction_create_view(request):
 # =================================== multi-journal entry view ===================================
 @login_required
 @admin_or_manager_required
-@transaction.atomic
+@db_transaction.atomic
 def multi_journal_view(request):
     if request.method == "POST":
         journal_form = JournalEntryForm(request.POST, request=request)
@@ -798,7 +797,7 @@ def ledger_report_detailed(request, period_id):
 # =================================== Delete detailed transaction ===================================
 @login_required
 @admin_or_manager_required
-@transaction.atomic
+@db_transaction.atomic
 def delete_transaction_detailed(request, transaction_id):
     try:
         transaction = get_object_or_404(Transaction, id=transaction_id)
@@ -827,7 +826,7 @@ def delete_transaction_detailed(request, transaction_id):
 # =================================== Delete transaction ===================================
 @login_required
 @admin_or_manager_required
-@transaction.atomic
+@db_transaction.atomic
 def delete_transaction(request, transaction_id):
     try:
         transaction = get_object_or_404(Transaction, id=transaction_id)

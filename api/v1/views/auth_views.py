@@ -8,8 +8,8 @@ from api.v1.responses import api_response
 from api.v1.serializers.auth_serializers import (
     DeviceTokenSerializer,
     FirebaseGoogleLoginSerializer,
-    LogoutSerializer,
     LoginSerializer,
+    LogoutSerializer,
     RegisterSerializer,
     UserSerializer,
 )

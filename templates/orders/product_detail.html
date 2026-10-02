@@ -3,277 +3,9 @@
 {% load humanize %}
 
 {% block title %}{{ product.name }} | {{ site_name }}{% endblock %}
-{% block page_styles %}<link rel="stylesheet" href="{% static 'css/product_detail.css' %}?v=1" /><link rel="stylesheet" href="{% static 'css/whatsapp_orders.css' %}"><script src="{% static 'js/whatsapp_orders.js' %}" defer></script>{% endblock %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/product_detail.css' %}?v=2" /><link rel="stylesheet" href="{% static 'css/whatsapp_orders.css' %}"><script src="{% static 'js/whatsapp_orders.js' %}" defer></script>{% endblock %}
 
 {% block content %}
-<style>
-  :root {
-    --detail-black: #050505;
-    --detail-gold: #b8860b;
-    --detail-cream: #f8f5ef;
-    --detail-muted: #70675d;
-    --detail-border: rgba(5, 5, 5, 0.1);
-    --detail-shadow: 0 18px 46px rgba(5, 5, 5, 0.08);
-  }
-
-  .product-detail-page {
-    background: linear-gradient(180deg, #ffffff 0%, var(--detail-cream) 100%);
-    padding: 1.25rem 0 3rem;
-  }
-
-  .product-detail-shell {
-    margin-inline: auto;
-    max-width: 1180px;
-    padding-inline: 1rem;
-  }
-
-  .product-detail-hero {
-    align-items: start;
-    display: grid;
-    gap: 1.25rem;
-    grid-template-columns: minmax(0, 1.02fr) minmax(360px, 0.98fr);
-  }
-
-  .detail-gallery,
-  .detail-buy-box,
-  .detail-section {
-    background: #ffffff;
-    border: 1px solid var(--detail-border);
-    border-radius: 1rem;
-    box-shadow: var(--detail-shadow);
-    overflow: hidden;
-  }
-
-  .detail-gallery-main {
-    aspect-ratio: 1 / 1;
-    background: #f4f0e8;
-  }
-
-  .detail-gallery-main img {
-    height: 100%;
-    object-fit: cover;
-    width: 100%;
-  }
-
-  .detail-gallery-strip {
-    display: grid;
-    gap: 0.5rem;
-    grid-template-columns: repeat(auto-fill, minmax(74px, 1fr));
-    padding: 0.75rem;
-  }
-
-  .detail-gallery-strip img {
-    aspect-ratio: 1 / 1;
-    border: 1px solid rgba(184, 134, 11, 0.22);
-    border-radius: 0.65rem;
-    object-fit: cover;
-    width: 100%;
-  }
-
-  .detail-buy-box {
-    padding: clamp(1rem, 2.2vw, 1.5rem);
-  }
-
-  .detail-eyebrow {
-    color: var(--detail-gold);
-    display: block;
-    font-size: 0.76rem;
-    font-weight: 900;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-  }
-
-  .detail-title {
-    color: var(--detail-black);
-    font-size: clamp(1.7rem, 4vw, 2.6rem);
-    font-weight: 950;
-    letter-spacing: 0;
-    line-height: 1.05;
-    margin: 0.25rem 0 0.55rem;
-  }
-
-  .detail-meta {
-    color: var(--detail-muted);
-    font-weight: 700;
-  }
-
-  .detail-rating-row,
-  .detail-price-card,
-  .detail-actions {
-    margin-top: 1rem;
-  }
-
-  .detail-stars {
-    color: var(--detail-gold);
-    font-size: 1rem;
-    letter-spacing: 0;
-  }
-
-  .detail-price-card {
-    align-items: center;
-    background: var(--detail-black);
-    border-radius: 0.85rem;
-    color: #ffffff;
-    display: flex;
-    gap: 1rem;
-    justify-content: space-between;
-    padding: 0.95rem 1rem;
-  }
-
-  .detail-price-card small {
-    color: rgba(255, 255, 255, 0.68);
-    display: block;
-    font-size: 0.72rem;
-    font-weight: 900;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  #selected-price {
-    color: var(--detail-gold);
-    display: block;
-    font-size: 1.55rem;
-    font-weight: 950;
-  }
-
-  #selected-original-price {
-    color: rgba(255, 255, 255, 0.76);
-    display: block;
-    font-size: 0.9rem;
-  }
-
-  .detail-label {
-    color: var(--detail-black);
-    display: block;
-    font-weight: 900;
-    margin: 1.15rem 0 0.45rem;
-  }
-
-  .detail-buy-box .form-select,
-  .detail-buy-box .form-control,
-  .review-form .form-select,
-  .review-form .form-control {
-    border: 1px solid rgba(5, 5, 5, 0.16);
-    border-radius: 0.7rem;
-    min-height: 44px;
-  }
-
-  .detail-actions {
-    display: grid;
-    gap: 0.7rem;
-  }
-
-  .detail-cart-row {
-    display: grid;
-    gap: 0.7rem;
-    grid-template-columns: 96px minmax(0, 1fr);
-  }
-
-  .btn-detail-primary,
-  .btn-detail-dark,
-  .btn-detail-outline {
-    border-radius: 999px;
-    font-weight: 900;
-    min-height: 44px;
-    padding: 0.65rem 1rem;
-  }
-
-  .btn-detail-primary {
-    background: var(--detail-gold);
-    border-color: var(--detail-gold);
-    color: #ffffff;
-  }
-
-  .btn-detail-dark {
-    background: var(--detail-black);
-    border-color: var(--detail-black);
-    color: #ffffff;
-  }
-
-  .btn-detail-outline {
-    background: #ffffff;
-    border: 1px solid var(--detail-gold);
-    color: var(--detail-black);
-  }
-
-  .detail-note {
-    background: #fbf8f1;
-    border: 1px solid rgba(184, 134, 11, 0.22);
-    border-radius: 0.85rem;
-    color: #302820;
-    margin-top: 1rem;
-    padding: 0.85rem;
-  }
-
-  .detail-section {
-    margin-top: 1.25rem;
-    padding: clamp(1rem, 2.2vw, 1.5rem);
-  }
-
-  .detail-section h2 {
-    color: var(--detail-black);
-    font-size: 1.25rem;
-    font-weight: 950;
-    margin: 0 0 0.8rem;
-  }
-
-  .review-grid {
-    display: grid;
-    gap: 0.85rem;
-  }
-
-  .review-card {
-    border: 1px solid rgba(5, 5, 5, 0.08);
-    border-radius: 0.8rem;
-    padding: 1rem;
-  }
-
-  .review-card-head {
-    align-items: start;
-    display: flex;
-    gap: 0.75rem;
-    justify-content: space-between;
-  }
-
-  .verified-pill {
-    background: rgba(6, 125, 98, 0.1);
-    border-radius: 999px;
-    color: #067d62;
-    display: inline-flex;
-    font-size: 0.75rem;
-    font-weight: 900;
-    padding: 0.3rem 0.65rem;
-  }
-
-  .review-locked {
-    background: #fbf8f1;
-    border: 1px solid rgba(184, 134, 11, 0.2);
-    border-radius: 0.85rem;
-    padding: 1rem;
-  }
-
-  @media (max-width: 991.98px) {
-    .product-detail-hero {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  @media (max-width: 575.98px) {
-    .product-detail-shell {
-      padding-inline: 0.75rem;
-    }
-
-    .detail-cart-row,
-    .detail-price-card {
-      grid-template-columns: 1fr;
-    }
-
-    .detail-cart-row {
-      display: flex;
-      flex-direction: column;
-    }
-  }
-</style>
 
 <section class="product-detail-page">
   <div class="product-detail-shell">
@@ -284,6 +16,12 @@
     </nav>
     <div class="product-detail-hero">
       <div class="detail-gallery">
+        <form class="detail-image-heart" method="post" action="{% url 'orders:wishlist_add' product.uuid %}">
+          {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button type="submit" aria-label="Save {{ product.name }} to wishlist" title="Save to wishlist">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/></svg>
+          </button>
+        </form>
         <div id="product-carousel" class="carousel slide" data-bs-interval="false" aria-label="Product images">
           <div class="carousel-inner detail-gallery-main">
             {% if product_images %}
@@ -327,23 +65,14 @@
         <h1 class="detail-title">{{ product.name }}</h1>
         <div class="detail-meta">{{ product.gender|default:'Unisex' }} <span class="detail-availability {% if not product_card.is_in_stock %}is-unavailable{% endif %}">{% if product_card.is_in_stock %}In stock{% else %}Out of stock{% endif %}</span></div>
 
-        <div class="detail-rating-row">
-          {% if average_rating %}<span class="detail-stars" aria-hidden="true">&#9733;</span>{% endif %}
-          <span class="detail-meta">
-            {% if average_rating %}{{ average_rating }} / 5{% else %}No ratings yet{% endif %}
-            · {{ verified_reviews_count }} verified review{{ verified_reviews_count|pluralize }}
-          </span>
-          <a href="#productReviews">Read reviews</a>
-        </div>
 
-        <p class="detail-intro">{{ product.description|default:'Discover your next signature fragrance.'|truncatewords:30 }}</p>
         <div class="detail-price-card" role="status" aria-live="polite">
           <div>
-            <small>{% if product_volumes %}Price{% else %}Product price{% endif %}</small>
+
             <span id="selected-price">{% if product_card.has_sellable_price %}UGX {{ product_card.min_price|floatformat:'0'|intcomma }}{% if product_card.min_price != product_card.max_price %} – {{ product_card.max_price|floatformat:'0'|intcomma }}{% endif %}{% else %}Price unavailable{% endif %}</span>
             <span id="selected-original-price"></span>
           </div>
-          <span id="selected-stock" class="detail-stock-label">{% if not product_volumes %}Currently unavailable{% else %}Choose your option{% endif %}</span>
+          <span id="selected-stock" class="detail-stock-label">{% if not product_volumes %}Currently unavailable{% endif %}</span>
         </div>
 
         {% if product_volumes %}
@@ -383,30 +112,21 @@
           <div class="detail-unavailable" role="status">
             <strong>This fragrance is currently unavailable.</strong>
             <button type="button" class="wa-secondary w-100" disabled>Order on WhatsApp · Unavailable</button>
-            <p>Explore other fragrances or save this one to your wishlist.</p>
+            <p>Explore other available fragrances.</p>
             <a class="btn btn-detail-primary w-100" href="{% url 'products:shop_homepage' %}{% if product.category %}?category={{ product.category.id }}{% endif %}">Explore available fragrances</a>
           </div>
         {% endif %}
-        <form class="detail-wishlist" method="post" action="{% url 'orders:wishlist_add' product.uuid %}">
-          {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
-          <button type="submit" class="btn btn-detail-outline w-100"><i class="far fa-heart me-2" aria-hidden="true"></i>Save to wishlist</button>
-        </form>
 
-        <div class="detail-note">
-          <i class="mdi mdi-truck-delivery-outline" aria-hidden="true"></i> Delivery options and charges are shown at checkout.
-          {% if user.is_authenticated %}
-            <a href="{% url 'orders:cart' %}" class="btn btn-detail-dark btn-sm mt-2 w-100">View cart ({{ cart_count|default:0 }})</a>
-          {% endif %}
-        </div>
       </aside>
     </div>
 
-    <section class="detail-section" id="productDescription">
-      <h2>Description</h2>
+    <details class="detail-section" id="productDescription">
+      <summary>About this fragrance</summary>
       <p class="mb-0">{{ product.description|default:'No description available.' }}</p>
-    </section>
+    </details>
 
-    <section class="detail-section" id="productReviews">
+    <details class="detail-section" id="productReviews" {% if can_review or request.GET.page %}open{% endif %}>
+      <summary>Reviews{% if average_rating %} · {{ average_rating }} / 5{% endif %} ({{ verified_reviews_count }})</summary>
       <div class="d-flex flex-column flex-md-row justify-content-between gap-2 mb-3">
         <div>
           <h2 class="mb-1">Customer Reviews</h2>
@@ -493,12 +213,20 @@
           </div>
         {% endif %}
       </div>
-    </section>
+    </details>
   </div>
 </section>
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
+    const navbar = document.querySelector('.platform-store-nav')
+    if (navbar) {
+      const reserveHeaderSpace = () => {
+        document.body.style.paddingTop = `${Math.ceil(navbar.getBoundingClientRect().height) + 8}px`
+      }
+      reserveHeaderSpace()
+      if (window.ResizeObserver) new ResizeObserver(reserveHeaderSpace).observe(navbar)
+    }
     const volumeSelect = document.getElementById('volume-select')
     const addToCartForm = document.getElementById('add-to-cart-form')
     const quantityInput = document.getElementById('quantity-input')

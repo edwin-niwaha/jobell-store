@@ -1,24 +1,19 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/toasts.css' %}?v=2" />
 {% if messages %}
-  <div class="toast-container position-fixed top-50 start-50 translate-middle p-3" style="z-index: 1000;">
+  <div class="toast-container jobell-toast-host">
     {% for message in messages %}
-      <div class="toast fade show {% if message.tags %}{{ message.tags }}{% endif %}" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="10000">
+      <div class="toast jobell-toast" data-kind="{% if message.level == 40 %}error{% elif message.level == 30 %}warning{% elif message.level == 25 %}success{% else %}info{% endif %}" role="{% if message.level == 40 %}alert{% else %}status{% endif %}" aria-atomic="true" data-bs-autohide="true" data-bs-delay="5000">
         <div class="toast-header">
-          <strong class="me-auto">Notification</strong>
+          <span class="jobell-toast-icon" aria-hidden="true"></span>
+          <strong class="me-auto">{% if message.level == 40 %}Something went wrong{% elif message.level == 30 %}Please check{% elif message.level == 25 %}Success{% else %}Update{% endif %}</strong>
           <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
         <div class="toast-body">{{ message }}</div>
+        <span class="jobell-toast-progress" aria-hidden="true"></span>
       </div>
     {% endfor %}
   </div>
 {% endif %}
 
-<!-- Initialize Toasts with Bootstrap -->
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const toastElements = document.querySelectorAll('.toast')
-    toastElements.forEach((toastEl) => {
-      const toastInstance = new bootstrap.Toast(toastEl)
-      toastInstance.show()
-    })
-  })
-</script>
+<script src="{% static 'js/toasts.js' %}?v=2" defer></script>

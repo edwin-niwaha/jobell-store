@@ -1,11 +1,20 @@
 """Read-optimized product querysets and storefront presentation helpers."""
 
-from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Prefetch
-from django.db.models import Avg, Q
-from django.db.models import DecimalField, ExpressionWrapper, F, OuterRef, Subquery, Value
-from django.db.models.functions import Coalesce, Greatest
 from decimal import Decimal
+
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import (
+    Avg,
+    DecimalField,
+    ExpressionWrapper,
+    F,
+    OuterRef,
+    Prefetch,
+    Q,
+    Subquery,
+    Value,
+)
+from django.db.models.functions import Coalesce, Greatest
 
 from .models import Product, ProductImage, ProductVolume
 

@@ -10,7 +10,7 @@ import io
 import json
 from pathlib import Path
 from urllib.request import urlopen
-from zipfile import ZipFile, ZIP_DEFLATED, ZipInfo
+from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 
 def main():

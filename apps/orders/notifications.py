@@ -4,13 +4,12 @@ from decimal import Decimal
 from celery import current_app
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.templatetags.static import static
 from django.template.loader import render_to_string
+from django.templatetags.static import static
 from django.urls import reverse
 from django.utils import timezone
 
 from core.services.email_service import EmailServiceError, send_transactional_email
-
 
 logger = logging.getLogger(__name__)
 

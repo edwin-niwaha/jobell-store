@@ -7,7 +7,11 @@ from apps.addresses.models import CustomerAddress
 from apps.orders.models import CartItem
 from apps.orders.services import cart_total, create_order_from_cart
 from apps.shipping.services import delivery_quote_for
-from repositories.order_repository import CartRepository, OrderRepository, WishlistRepository
+from repositories.order_repository import (
+    CartRepository,
+    OrderRepository,
+    WishlistRepository,
+)
 from repositories.product_repository import ProductVariantRepository
 
 

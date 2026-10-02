@@ -4,8 +4,10 @@ from celery import shared_task
 
 from core.services.email_service import EmailServiceError
 
-from .notifications import send_bulk_newsletter_email, send_newsletter_subscription_emails
-
+from .notifications import (
+    send_bulk_newsletter_email,
+    send_newsletter_subscription_emails,
+)
 
 logger = logging.getLogger(__name__)
 

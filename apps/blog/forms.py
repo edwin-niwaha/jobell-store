@@ -1,7 +1,8 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.text import slugify
-from .models import BlogPost, Category, Tag, Comment
+
+from .models import BlogPost, Category, Comment, Tag
 from .validators import validate_youtube_url
 
 

@@ -1,11 +1,12 @@
 from decimal import Decimal
-from django.test import TestCase
+
+from django.test import Client, TestCase
 from django.urls import reverse
-from . import tests as ecommerce_tests
-from .models import Cart, CartItem
-from .models import Order
+
 from apps.shipping.models import PickupStation
-from django.test import Client
+
+from . import tests as ecommerce_tests
+from .models import Cart, CartItem, Order
 
 
 class CartPageTests(TestCase):
@@ -17,7 +18,7 @@ class CartPageTests(TestCase):
 
     def test_empty_and_populated_layout(self):
         self.assertContains(self.client.get(reverse('orders:cart')), 'Your cart is empty')
-        item = self.item()
+        self.item()
         response = self.client.get(reverse('orders:cart'))
         self.assertContains(response, 'cart.css')
         self.assertContains(response, 'data-step="1"')

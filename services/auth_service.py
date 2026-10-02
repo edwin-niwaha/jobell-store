@@ -7,8 +7,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 try:
     import firebase_admin
-    from firebase_admin import auth as firebase_auth
-    from firebase_admin import credentials
+    from firebase_admin import auth as firebase_auth, credentials
 except ImportError:  # pragma: no cover - handled as configuration error at runtime
     firebase_admin = None
     firebase_auth = None

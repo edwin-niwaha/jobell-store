@@ -9,6 +9,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_GET
 
 from apps.products.models import Product, ProductVolume
+
 from .models import Cart
 from .services import _validate_cart_items, validate_purchase_item
 
@@ -62,6 +63,7 @@ def review(request, product_uuid=None):
             price = variant.get_discounted_price()
             lines.append({"product": product, "variant": variant, "quantity": quantity,
                           "price": price, "total": price * quantity,
+                          "quantity_limit": min(variant.available_quantity, variant.max_quantity_per_order or variant.available_quantity),
                           "url": product_link(request, product)})
     except ValidationError as exc:
         errors = exc.messages

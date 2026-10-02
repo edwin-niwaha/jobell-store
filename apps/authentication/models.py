@@ -1,15 +1,16 @@
-from django.contrib.auth.models import User
-from django.core.validators import EmailValidator
-from phonenumber_field.modelfields import PhoneNumberField
-import requests
 from io import BytesIO
-from cloudinary.uploader import upload
-from cloudinary.models import CloudinaryField
-from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.core.exceptions import ValidationError
 
+import requests
+from cloudinary.models import CloudinaryField
+from cloudinary.uploader import upload
+from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.validators import EmailValidator
 from django.db import models
+from phonenumber_field.modelfields import PhoneNumberField
 from PIL import Image
+
 from apps.finance.models import Branch
 
 

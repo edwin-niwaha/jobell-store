@@ -12,7 +12,6 @@ from .notifications import (
     send_payment_status_changed_emails,
 )
 
-
 logger = logging.getLogger(__name__)
 
 
