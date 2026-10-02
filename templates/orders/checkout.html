@@ -1,0 +1,721 @@
+{# Updated responsive checkout template. Keep this file as orders/checkout.html #}
+{% extends 'accounts/base.html' %}
+{% load humanize %}
+{% load crispy_forms_tags %}
+{% load static %}
+{% block title %}Checkout | {{ branding.site_name }}{% endblock %}
+{% block body_class %}commerce-app commerce-checkout{% endblock %}
+{% block topbar %}{% include 'accounts/_partials/navbar.html' %}<header class="commerce-mobile-header"><a href="{% url 'orders:cart' %}" data-mobile-back aria-label="Back to cart">←</a><div><strong>Checkout</strong><span>{{ branding.site_name }}</span></div><a href="#orderSummary" data-mobile-review aria-label="Review your order"><i class="mdi mdi-shopping-outline" aria-hidden="true"></i></a></header>{% endblock %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/commerce_mobile.css' %}?v=6"><link rel="stylesheet" href="{% static 'css/checkout.css' %}?v=3"><script src="{% static 'js/commerce_mobile.js' %}?v=6" defer></script>{% endblock %}
+
+{% block content %}
+  <noscript><style>.checkout-accordion-body.collapse:not(.show) { display:block; }</style></noscript>
+  <main class="store-page checkout-page">
+    <div class="container">
+      <div class="checkout-hero checkout-hero-compact">
+        <div class="checkout-top-row">
+          <a href="{% url 'orders:cart' %}" class="checkout-back-btn" aria-label="Back to cart">
+            <i class="fas fa-arrow-left" aria-hidden="true"></i>
+          </a>
+
+          <div class="checkout-title-block">
+            <span class="store-eyebrow">Checkout</span>
+            <h1 class="store-title h2">Complete your order</h1>
+          </div>
+
+          <span class="checkout-pill checkout-pill-compact">
+            <i class="fas fa-shopping-bag" aria-hidden="true"></i>
+            {{ cart.items.count }} item{{ cart.items.count|pluralize }}
+          </span>
+        </div>
+        <p class="store-muted checkout-hero-note mb-0">Your next fragrance is just a few steps away. Review everything before placing your order.</p>
+      </div>
+
+      <ol class="shopping-progress" aria-label="Checkout steps"><li>1 · Contact</li><li>2 · Delivery</li><li>3 · Payment</li><li>4 · Review</li></ol>
+      <a class="shopping-summary-link" href="#orderSummary">Review items and order total</a>
+      <nav class="commerce-steps" aria-label="Checkout steps" hidden><button type="button" data-checkout-step="0"><span class="checkout-step-number">1</span><span>Contact</span></button><button type="button" data-checkout-step="1"><span class="checkout-step-number">2</span><span>Delivery</span></button><button type="button" data-checkout-step="2"><span class="checkout-step-number">3</span><span>Payment</span></button><button type="button" data-checkout-step="3"><span class="checkout-step-number">4</span><span>Review</span></button></nav>
+      <p class="commerce-guidance">No account needed. You’ll review the full total before placing your order.</p>
+      {% if form.non_field_errors %}
+        <div class="checkout-alert checkout-alert-danger" role="alert">
+          {% for error in form.non_field_errors %}
+            <div>{{ error }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <form method="post" id="checkoutForm" class="checkout-layout" data-delivery-summary-url="{% url 'orders:checkout_delivery_summary' %}" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="update_saved_address" id="updateSavedAddress" value="">
+
+        <div class="checkout-main">
+          <section class="checkout-card checkout-accordion-card checkout-smart-card" id="contactSection" aria-labelledby="contactHeading">
+            <header class="checkout-contact-header">
+              <span class="checkout-contact-icon" aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20v-1a7 7 0 0 1 14 0v1"/></svg>
+              </span>
+              <div class="checkout-contact-copy">
+                  <span class="store-eyebrow">Your details</span>
+                  <h2 id="contactHeading">Contact details</h2>
+                  <p id="contactSummaryText">
+                    {% if form.first_name.value or form.mobile.value %}
+                      {{ form.first_name.value|default:'Customer' }}{% if form.mobile.value %} - {{ form.mobile.value }}{% endif %}
+                    {% else %}
+                      Add your name and phone number so we can confirm your order.
+                    {% endif %}
+                  </p>
+              </div>
+            </header>
+            <div class="collapse checkout-accordion-body" id="contactDetails">
+              <div class="checkout-field-grid">
+                <div class="checkout-field">
+                  <label for="{{ form.first_name.id_for_label }}">First name</label>
+                  {{ form.first_name }}
+                  {% for error in form.first_name.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
+                </div>
+                <div class="checkout-field">
+                  <label for="{{ form.mobile.id_for_label }}">Mobile number</label>
+                  {{ form.mobile }}
+                  {% for error in form.mobile.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
+                </div>
+              </div>
+              <details class="commerce-optional-contact" {% if form.last_name.errors or form.email.errors %}open{% endif %}>
+                <summary>Add optional details — last name and email</summary>
+                <div class="checkout-field-grid">
+                <div class="checkout-field">
+                  <label for="{{ form.last_name.id_for_label }}">Last name <small>Optional</small></label>
+                  {{ form.last_name }}
+                  {% for error in form.last_name.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
+                </div>
+                <div class="checkout-field">
+                  <label for="{{ form.email.id_for_label }}">Email address <small>Optional</small></label>
+                  {{ form.email }}
+                  {% for error in form.email.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
+                </div>
+              </div>
+              </details>
+            </div>
+          </section>
+
+          <section class="checkout-card checkout-accordion-card checkout-smart-card" id="addressSection">
+            <button class="checkout-accordion-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#addressDetails" aria-expanded="false" aria-controls="addressDetails">
+              <span class="checkout-card-head mb-0">
+                <span class="store-checkout-step">2</span>
+                <span>
+                  <span class="store-eyebrow">Address</span>
+                  <span class="checkout-section-title">Delivery address</span>
+                  <span class="checkout-section-summary" id="addressSummaryText">
+                    {% if form.delivery_city.value or form.delivery_area.value %}
+                      {{ form.delivery_area.value|default:'Delivery area' }}{% if form.delivery_city.value %}, {{ form.delivery_city.value }}{% endif %}
+                    {% else %}
+                      Add your delivery location.
+                    {% endif %}
+                  </span>
+                </span>
+              </span>
+              <span class="checkout-accordion-icon" aria-hidden="true"><i class="mdi mdi-plus"></i></span>
+            </button>
+            <div class="collapse checkout-accordion-body" id="addressDetails">
+              <div id="deliveryAddressFields" class="checkout-transition-panel">
+                {% if form.saved_address %}
+                  <div class="checkout-field checkout-field-wide checkout-saved-field">
+                    <label for="{{ form.saved_address.id_for_label }}">Saved address</label>
+                    {{ form.saved_address }}
+                    {% for error in form.saved_address.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
+                  </div>
+                {% endif %}
+                <div class="checkout-field-grid checkout-field-grid-address">
+                  <div class="checkout-field checkout-field-wide">
+                    <label for="{{ form.address.id_for_label }}">Street address</label>
+                    {{ form.address }}
+                    {% for error in form.address.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div class="checkout-field">
+                    <label for="{{ form.delivery_region.id_for_label }}">Region</label>
+                    {{ form.delivery_region }}
+                    {% for error in form.delivery_region.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div class="checkout-field">
+                    <label for="{{ form.delivery_city.id_for_label }}">City</label>
+                    {{ form.delivery_city }}
+                    {% for error in form.delivery_city.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div class="checkout-field">
+                    <label for="{{ form.delivery_area.id_for_label }}">Area</label>
+                    {{ form.delivery_area }}
+                    {% for error in form.delivery_area.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
+                  </div>
+                  {% if form.save_address %}
+                    <div class="checkout-check-row checkout-field-wide">
+                      {{ form.save_address }}
+                      <label for="{{ form.save_address.id_for_label }}">{{ form.save_address.label }}</label>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </section>
+          <section class="checkout-card" id="shippingSection">
+            <div class="checkout-card-head">
+              <span class="store-checkout-step">3</span>
+              <div>
+                <span class="store-eyebrow">Delivery</span>
+                <h2>Shipping method</h2>
+                <p>Choose free pickup or delivery to your door. Add your address below for a delivery quote.</p>
+              </div>
+            </div>
+
+            <div class="checkout-option-grid">
+              <label class="checkout-option" for="shipDelivery">
+                <input class="form-check-input" type="radio" name="shipping_method" id="shipDelivery" value="delivery" {% if form.shipping_method.value == 'delivery' or not form.shipping_method.value %}checked{% endif %}>
+                <span class="checkout-option-icon"><i class="mdi mdi-truck-delivery-outline" aria-hidden="true"></i></span>
+                <span class="checkout-option-body">
+                  <strong>Door Delivery</strong>
+                  <small>Delivered to your address. Fee is shown in the summary.</small>
+                </span>
+                <span class="checkout-radio-dot" aria-hidden="true"></span>
+              </label>
+
+              <label class="checkout-option" for="shipPickup">
+                <input class="form-check-input" type="radio" name="shipping_method" id="shipPickup" value="pickup" {% if form.shipping_method.value == 'pickup' %}checked{% endif %}>
+                <span class="checkout-option-icon"><i class="mdi mdi-store-marker-outline" aria-hidden="true"></i></span>
+                <span class="checkout-option-body">
+                  <strong>Pickup Station</strong>
+                  <small>Collect from an active {{ site_name|upper }} pickup point.</small>
+                </span>
+                <span class="checkout-radio-dot" aria-hidden="true"></span>
+              </label>
+            </div>
+
+            <div id="pickupFields" class="checkout-inline-panel">
+              <div class="checkout-field">
+                <label for="{{ form.pickup_station.id_for_label }}">Pickup station</label>
+                {{ form.pickup_station }}
+                {% for error in form.pickup_station.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
+              </div>
+            </div>
+
+            <div class="checkout-delivery-status {% if delivery_quote_message and not delivery_available %}is-error{% endif %}" id="deliveryStatus">
+              <i class="mdi mdi-truck-fast-outline" aria-hidden="true"></i>
+              <span id="deliveryStatusText">
+                {% if delivery_quote_message %}
+                  {{ delivery_quote_message }}
+                {% else %}
+                  Enter your delivery location to calculate transport.
+                {% endif %}
+              </span>
+            </div>
+            <a class="commerce-delivery-help" href="{% url 'orders:whatsapp_cart' %}" target="_blank" rel="noopener"><i class="mdi mdi-whatsapp" aria-hidden="true"></i> Need delivery help? Discuss this cart on WhatsApp ↗</a>
+          </section>
+
+          <section class="checkout-card" id="paymentSection">
+            <div class="checkout-card-head">
+              <span class="store-checkout-step">4</span>
+              <div>
+                <span class="store-eyebrow">Payment</span>
+                <h2>Payment method</h2>
+                <p>Choose how you want to complete payment for this order.</p>
+              </div>
+            </div>
+
+            <div class="checkout-option-grid">
+              <label class="checkout-option" for="cashOnDelivery">
+                <input class="form-check-input" type="radio" name="payment_method" id="cashOnDelivery" value="cod" {% if form.payment_method.value == 'cod' or not form.payment_method.value %}checked{% endif %}>
+                <span class="checkout-option-icon"><i class="fas fa-wallet" aria-hidden="true"></i></span>
+                <span class="checkout-option-body">
+                  <strong>Cash on Delivery</strong>
+                  <small>Pay when you receive or collect your order.</small>
+                </span>
+                <span class="checkout-radio-dot" aria-hidden="true"></span>
+              </label>
+
+              <label class="checkout-option" for="mobileMoney">
+                <input class="form-check-input" type="radio" name="payment_method" id="mobileMoney" value="mobile" {% if form.payment_method.value == 'mobile' %}checked{% endif %}>
+                <span class="checkout-option-icon"><i class="fas fa-mobile-alt" aria-hidden="true"></i></span>
+                <span class="checkout-option-body">
+                  <strong>Mobile Money</strong>
+                  <small>Send money manually, then add your transaction evidence.</small>
+                </span>
+                <span class="checkout-radio-dot" aria-hidden="true"></span>
+              </label>
+            </div>
+
+            <div id="mobileMoneyFields" class="checkout-inline-panel">
+              <div class="checkout-payment-instructions">
+                <span class="checkout-payment-icon"><i class="fas fa-mobile-alt" aria-hidden="true"></i></span>
+                <div class="checkout-payment-copy-body">
+                  <span>Send Mobile Money to</span>
+<div class="d-flex align-items-center gap-2">
+    <strong id="manualMobileMoneyNumber" class="fs-5 fw-bold">
+        {{ manual_mobile_money_number }}
+    </strong>
+
+    {% if manual_mobile_money_number %}
+    <button type="button"
+            class="btn p-0 border-0 bg-transparent text-warning shadow-none checkout-copy-number"
+            data-copy-mobile-number="{{ manual_mobile_money_number }}">
+        <i class="mdi mdi-content-copy fs-5"></i>
+    </button>
+    {% endif %}
+</div>
+                  <span class="checkout-copy-status" id="copyMobileMoneyStatus" aria-live="polite"></span>
+                  <small>Send payment to the number above, then enter your transaction reference below.</small>
+                </div>
+              </div>
+              <div class="checkout-field">
+                <label for="{{ form.mobile_money_number.id_for_label }}">Mobile Money number</label>
+                {{ form.mobile_money_number }}
+                {% if form.mobile_money_number.help_text %}<small class="checkout-help">{{ form.mobile_money_number.help_text }}</small>{% endif %}
+                {% for error in form.mobile_money_number.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
+              </div>
+              <div class="checkout-field">
+                <label for="{{ form.payment_evidence.id_for_label }}">Payment evidence</label>
+                {{ form.payment_evidence }}
+                {% if form.payment_evidence.help_text %}<small class="checkout-help">{{ form.payment_evidence.help_text }}</small>{% endif %}
+                {% for error in form.payment_evidence.errors %}<p class="checkout-error">{{ error }}</p>{% endfor %}
+              </div>
+            </div>
+          </section>
+        </div>
+
+
+        <aside class="checkout-summary-wrap" id="orderSummary">
+          <section class="checkout-summary">
+            <div class="checkout-summary-status">
+              <span><i class="fas fa-lock" aria-hidden="true"></i></span>
+              <div>
+                <small>Checkout status</small>
+                <strong>Ready for secure review</strong>
+              </div>
+            </div>
+
+            <div class="checkout-summary-head">
+              <div class="checkout-summary-title">
+                <span class="store-checkout-step">5</span>
+                <span>
+                  <span class="store-eyebrow">Review</span>
+                  <h2>Order summary</h2>
+                </span>
+              </div>
+              <span class="checkout-count">{{ cart.items.count }} item{{ cart.items.count|pluralize }}</span>
+            </div>
+
+            <div class="checkout-items">
+              {% for item in cart.items.all %}
+                <div class="checkout-item">
+                  {% if item.volume.image_url %}
+                    <img src="{{ item.volume.image_url }}" alt="{{ item.product.name }}" loading="lazy">
+                  {% else %}
+                    <span class="checkout-item-placeholder"><i class="fas fa-image" aria-hidden="true"></i></span>
+                  {% endif %}
+
+                  <div class="checkout-item-body">
+                    <div class="checkout-item-top">
+                      <strong>{{ item.product.name }}</strong>
+                      <span>UGX {{ item.get_total_price|floatformat:'0'|intcomma }}</span>
+                    </div>
+                    <small>{{ item.volume.variant_label }}</small>
+                    <small>Qty {{ item.quantity }} at UGX {{ item.volume.get_discounted_price|floatformat:'0'|intcomma }}</small>
+                  </div>
+                </div>
+              {% empty %}
+                <div class="checkout-note">
+                  <i class="fas fa-shopping-cart" aria-hidden="true"></i>
+                  <span>Your cart is empty.</span>
+                </div>
+              {% endfor %}
+            </div>
+
+            <div class="checkout-totals">
+              <section class="commerce-review-choices" aria-label="Your order choices"><div><strong>Contact</strong><p id="checkoutReviewContact"></p><button type="button" data-checkout-step="0">Edit contact</button></div><div><strong>Delivery</strong><p id="mobileReviewDelivery"></p><button type="button" data-checkout-step="1">Edit delivery</button></div><div><strong>Payment</strong><p id="mobileReviewPayment"></p><button type="button" data-checkout-step="2">Edit payment</button></div></section>
+              <div>
+                <span>Subtotal</span>
+                <strong id="summarySubtotal">UGX {{ total_price|floatformat:'0'|intcomma }}</strong>
+              </div>
+              <div>
+                <span>Delivery fee</span>
+                <strong id="summaryShippingFee">UGX {{ shipping_fee|floatformat:'0'|intcomma }}</strong>
+              </div>
+              <div class="checkout-total-row">
+                <span>Total</span>
+                <strong id="summaryGrandTotal">UGX {{ grand_total|floatformat:'0'|intcomma }}</strong>
+              </div>
+            </div>
+
+            <button type="submit" class="checkout-place-order" id="placeOrderBtn">
+              <i class="fas fa-check-circle" aria-hidden="true"></i>
+              <span>Place order</span>
+            </button>
+
+            <div class="checkout-trust-grid">
+              <span><i class="fas fa-shield-alt" aria-hidden="true"></i>Secure checkout</span>
+              <span><i class="mdi mdi-truck-fast-outline" aria-hidden="true"></i>Delivery support</span>
+              <span><i class="fas fa-credit-card" aria-hidden="true"></i>Safe payment</span>
+            </div>
+
+            <a href="{% url 'products:shop_homepage' %}" class="checkout-continue-link">Continue shopping</a>
+          </section>
+        </aside>
+      </form>
+      <div class="commerce-dock" id="mobileCheckoutDock" hidden><div class="commerce-dock-total"><span id="mobileTotalLabel">Items total · delivery next</span><strong id="mobileCheckoutTotal">UGX {{ total_price|floatformat:'0'|intcomma }}</strong></div><button type="button" id="checkoutPrevious" class="checkout-previous" hidden>← Back</button><button type="button" id="mobileCheckoutAction" class="commerce-dock-button">Continue →</button></div>
+      <p id="mobileCheckoutStatus" class="commerce-flow-status" role="status" aria-live="polite"></p>
+
+      {{ checkout_addresses|json_script:"checkoutAddressData" }}
+    </div>
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const cashOnDelivery = document.getElementById('cashOnDelivery')
+      const mobileMoney = document.getElementById('mobileMoney')
+      const mobileMoneyFields = document.getElementById('mobileMoneyFields')
+      const shipDelivery = document.getElementById('shipDelivery')
+      const shipPickup = document.getElementById('shipPickup')
+      const pickupFields = document.getElementById('pickupFields')
+      const deliveryAddressFields = document.getElementById('deliveryAddressFields')
+      const updateSavedAddress = document.getElementById('updateSavedAddress')
+      const savedAddressSelect = document.getElementById('id_saved_address')
+      const checkoutAddressData = document.getElementById('checkoutAddressData')
+      const form = document.getElementById('checkoutForm')
+      const placeOrderBtn = document.getElementById('placeOrderBtn')
+      const deliveryStatus = document.getElementById('deliveryStatus')
+      const deliveryStatusText = document.getElementById('deliveryStatusText')
+      const summaryShippingFee = document.getElementById('summaryShippingFee')
+      const summaryGrandTotal = document.getElementById('summaryGrandTotal')
+      const contactSummaryText = document.getElementById('contactSummaryText')
+      const addressSummaryText = document.getElementById('addressSummaryText')
+      const copyMobileMoneyBtn = document.querySelector('[data-copy-mobile-number]')
+      const copyMobileMoneyStatus = document.getElementById('copyMobileMoneyStatus')
+      const savedAddresses = checkoutAddressData ? JSON.parse(checkoutAddressData.textContent) : []
+      let deliverySummaryTimer = null
+      let deliveryQuoteVersion = 0
+
+      function fieldValue(id) {
+        const field = document.getElementById(id)
+        return field ? field.value.trim() : ''
+      }
+
+      function formatMoney(value) {
+        const amount = Number(value || 0)
+        return 'UGX ' + new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(amount)
+      }
+
+      function updateContactSummary() {
+        if (!contactSummaryText) return
+        const name = [fieldValue('id_first_name'), fieldValue('id_last_name')].filter(Boolean).join(' ')
+        const phone = fieldValue('id_mobile')
+        const email = fieldValue('id_email')
+        contactSummaryText.textContent = name || phone || email
+          ? [name || 'Customer', phone || email].filter(Boolean).join(' - ')
+          : 'Add your name and phone number so we can confirm your order.'
+      }
+
+      function updateAddressSummary() {
+        if (!addressSummaryText) return
+        const address = fieldValue('id_address')
+        const city = fieldValue('id_delivery_city')
+        const area = fieldValue('id_delivery_area')
+        addressSummaryText.textContent = address || city || area
+          ? [area || address || 'Delivery address', city].filter(Boolean).join(', ')
+          : 'Add your delivery location.'
+      }
+
+      function setDeliveryStatus(message, available) {
+        if (deliveryStatusText) deliveryStatusText.textContent = message
+        if (deliveryStatus) deliveryStatus.classList.toggle('is-error', !available)
+        if (placeOrderBtn && shipDelivery) {
+          placeOrderBtn.disabled = shipDelivery.checked && !available
+        }
+      }
+
+      function collectDeliveryParams() {
+        const params = new URLSearchParams()
+        params.set('shipping_method', shipPickup && shipPickup.checked ? 'pickup' : 'delivery')
+        const savedAddress = document.getElementById('id_saved_address')
+        if (savedAddress && savedAddress.value && (!updateSavedAddress || updateSavedAddress.value !== '1')) {
+          params.set('saved_address', savedAddress.value)
+        }
+        ;[
+          ['delivery_region', 'id_delivery_region'],
+          ['delivery_city', 'id_delivery_city'],
+          ['delivery_area', 'id_delivery_area']
+        ].forEach(function (pair) {
+          const field = document.getElementById(pair[1])
+          if (field && field.value) params.set(pair[0], field.value)
+        })
+        return params
+      }
+
+      function refreshDeliverySummary() {
+        if (!form || !form.dataset.deliverySummaryUrl) return
+        const quoteVersion = ++deliveryQuoteVersion
+        form.dataset.quoteState = 'pending'
+        if (placeOrderBtn) placeOrderBtn.disabled = true
+        window.clearTimeout(deliverySummaryTimer)
+        deliverySummaryTimer = window.setTimeout(function () {
+          const url = form.dataset.deliverySummaryUrl + '?' + collectDeliveryParams().toString()
+          fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function (response) {
+              return response.json()
+            })
+            .then(function (data) {
+              if (quoteVersion !== deliveryQuoteVersion) return
+              form.dataset.quoteState = data.available ? 'ready' : 'unavailable'
+              if (summaryShippingFee) summaryShippingFee.textContent = formatMoney(data.shipping_fee)
+              if (summaryGrandTotal) summaryGrandTotal.textContent = formatMoney(data.grand_total)
+              setDeliveryStatus(data.message || 'Delivery fee updated.', Boolean(data.available))
+            })
+            .catch(function () {
+              if (quoteVersion !== deliveryQuoteVersion) return
+              form.dataset.quoteState = 'unavailable'
+              setDeliveryStatus('Could not calculate delivery right now. Please try again.', false)
+            })
+        }, 250)
+      }
+
+      function togglePaymentFields() {
+        if (!mobileMoneyFields || !mobileMoney) return
+        mobileMoneyFields.classList.toggle('d-none', !mobileMoney.checked)
+        mobileMoneyFields.querySelectorAll('input, select, textarea').forEach(function (field) {
+          field.disabled = !mobileMoney.checked
+        })
+      }
+
+      cashOnDelivery?.addEventListener('change', togglePaymentFields)
+      mobileMoney?.addEventListener('change', togglePaymentFields)
+      togglePaymentFields()
+
+      function copyTextToClipboard(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+          return navigator.clipboard.writeText(text)
+        }
+
+        const copyField = document.createElement('textarea')
+        copyField.value = text
+        copyField.setAttribute('readonly', '')
+        copyField.style.position = 'fixed'
+        copyField.style.top = '-9999px'
+        document.body.appendChild(copyField)
+        copyField.select()
+
+        try {
+          document.execCommand('copy')
+          return Promise.resolve()
+        } catch (error) {
+          return Promise.reject(error)
+        } finally {
+          document.body.removeChild(copyField)
+        }
+      }
+
+      copyMobileMoneyBtn?.addEventListener('click', function () {
+        const number = copyMobileMoneyBtn.dataset.copyMobileNumber
+        if (!number) return
+
+        copyTextToClipboard(number)
+          .then(function () {
+            copyMobileMoneyBtn.classList.add('is-copied')
+            copyMobileMoneyBtn.innerHTML = '<i class="mdi mdi-check" aria-hidden="true"></i>'
+            if (copyMobileMoneyStatus) copyMobileMoneyStatus.textContent = 'Mobile Money number copied.'
+
+            window.setTimeout(function () {
+              copyMobileMoneyBtn.classList.remove('is-copied')
+              copyMobileMoneyBtn.innerHTML = '<i class="mdi mdi-content-copy" aria-hidden="true"></i>'
+              if (copyMobileMoneyStatus) copyMobileMoneyStatus.textContent = ''
+            }, 2200)
+          })
+          .catch(function () {
+            if (copyMobileMoneyStatus) copyMobileMoneyStatus.textContent = 'Could not copy. Please select the number manually.'
+          })
+      })
+
+      function setPanelVisible(panel, visible) {
+        if (!panel) return
+        panel.classList.toggle('is-hidden', !visible)
+        panel.setAttribute('aria-hidden', String(!visible))
+        panel.querySelectorAll('input, select, textarea').forEach(function (field) {
+          field.disabled = !visible
+        })
+      }
+
+      function toggleShippingFields() {
+        if (!shipPickup) return
+        setPanelVisible(pickupFields, shipPickup.checked)
+        setPanelVisible(deliveryAddressFields, !shipPickup.checked)
+        refreshDeliverySummary()
+      }
+
+      shipDelivery?.addEventListener('change', toggleShippingFields)
+      shipPickup?.addEventListener('change', toggleShippingFields)
+      toggleShippingFields()
+
+      function setFieldValue(id, value) {
+        const field = document.getElementById(id)
+        if (field) field.value = value || ''
+      }
+
+      function populateSelectedAddress() {
+        if (!savedAddressSelect) return
+        const selectedAddress = savedAddresses.find(function (address) {
+          return String(address.id) === String(savedAddressSelect.value)
+        })
+        if (!selectedAddress) {
+          refreshDeliverySummary()
+          return
+        }
+
+        setFieldValue('id_mobile', selectedAddress.phone_number)
+        setFieldValue('id_address', selectedAddress.street_name)
+        setFieldValue('id_delivery_region', selectedAddress.region)
+        setFieldValue('id_delivery_city', selectedAddress.city)
+        setFieldValue('id_delivery_area', selectedAddress.area)
+        updateContactSummary()
+        updateAddressSummary()
+        refreshDeliverySummary()
+      }
+
+      savedAddressSelect?.addEventListener('change', function () {
+        if (updateSavedAddress) updateSavedAddress.value = ''
+        populateSelectedAddress()
+      })
+
+      if (!document.querySelector('.checkout-error, .checkout-alert-danger')) populateSelectedAddress()
+      ;['id_first_name', 'id_last_name', 'id_email', 'id_mobile'].forEach(function (id) {
+        const field = document.getElementById(id)
+        field?.addEventListener('input', updateContactSummary)
+        field?.addEventListener('change', updateContactSummary)
+      })
+      ;['id_delivery_region', 'id_delivery_city', 'id_delivery_area'].forEach(function (id) {
+        const field = document.getElementById(id)
+        function handleDeliveryFieldChange() {
+          if (updateSavedAddress) {
+            updateSavedAddress.value = savedAddressSelect && savedAddressSelect.value ? '1' : ''
+          }
+          updateAddressSummary()
+          refreshDeliverySummary()
+        }
+        field?.addEventListener('change', handleDeliveryFieldChange)
+        field?.addEventListener('input', handleDeliveryFieldChange)
+      })
+      const addressField = document.getElementById('id_address')
+      function handleStreetAddressChange() {
+        if (updateSavedAddress) {
+          updateSavedAddress.value = savedAddressSelect && savedAddressSelect.value ? '1' : ''
+        }
+        updateAddressSummary()
+      }
+      addressField?.addEventListener('input', handleStreetAddressChange)
+      addressField?.addEventListener('change', handleStreetAddressChange)
+      updateContactSummary()
+      updateAddressSummary()
+      refreshDeliverySummary()
+
+      document.querySelectorAll('.checkout-accordion-body').forEach(function (panel) {
+        const toggle = document.querySelector('[data-bs-target="#' + panel.id + '"]')
+        // The shared vendor bundle exposes an older Bootstrap API. Keep checkout
+        // panels independent of that API so contact fields always remain usable.
+        toggle?.removeAttribute('data-bs-toggle')
+        toggle?.addEventListener('click', function () {
+          if (document.body.classList.contains('has-mobile-flow')) return
+          const expanded = panel.classList.toggle('show')
+          toggle.setAttribute('aria-expanded', String(expanded))
+          syncAccordionIcon(expanded)
+        })
+        const icon = toggle?.querySelector('.checkout-accordion-icon i')
+        function syncAccordionIcon(expanded) {
+          if (!icon) return
+          icon.classList.toggle('mdi-minus', expanded)
+          icon.classList.toggle('mdi-plus', !expanded)
+        }
+        panel.addEventListener('show.bs.collapse', function () { syncAccordionIcon(true) })
+        panel.addEventListener('hide.bs.collapse', function () { syncAccordionIcon(false) })
+        syncAccordionIcon(panel.classList.contains('show'))
+      })
+
+      const errorFields = Array.from(document.querySelectorAll('.checkout-error')).map(function (error) {
+        const field = error.closest('.checkout-field')?.querySelector('input, select, textarea')
+        if (field) {
+          field.classList.add('is-invalid')
+          field.setAttribute('aria-invalid', 'true')
+        }
+        return field
+      }).filter(Boolean)
+      document.querySelectorAll('.checkout-error').forEach(function (error) {
+        const panel = error.closest('.collapse')
+        if (panel) panel.classList.add('show')
+      })
+      const incompletePanel = Array.from(document.querySelectorAll('.checkout-accordion-body')).find(function (panel) {
+        return Array.from(panel.querySelectorAll('input[required], select[required], textarea[required]')).some(function (field) { return !field.disabled && !field.value.trim() })
+      }) || document.getElementById('contactDetails')
+      if (incompletePanel) incompletePanel.classList.add('show')
+      const firstErrorField = errorFields[0]
+      if (firstErrorField) {
+        const errorPanel = firstErrorField.closest('.collapse')
+        if (errorPanel) errorPanel.classList.add('show')
+        window.setTimeout(function () {
+          firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          firstErrorField.focus({ preventScroll: true })
+        }, 180)
+      }
+
+      form?.addEventListener('submit', function (event) {
+        // Step navigation or validation can cancel submission in the capture phase.
+        // Only lock the button when an order is actually being submitted.
+        if (event.defaultPrevented) return
+        if (!placeOrderBtn) return
+        if (placeOrderBtn.disabled) { event.preventDefault(); return }
+        placeOrderBtn.disabled = true
+        placeOrderBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span><span>Placing order...</span>'
+      })
+    })
+  </script>
+
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const mobileFields = ['id_mobile', 'id_mobile_money_number']
+
+      mobileFields.forEach(function (id) {
+        const field = document.getElementById(id)
+        if (!field) return
+        field.setAttribute('inputmode', 'tel')
+        field.setAttribute('autocomplete', 'tel')
+        const isPaymentNumber = id === 'id_mobile_money_number'
+        field.setAttribute('placeholder', isPaymentNumber ? '0771234567' : '+256XXXXXXXXX')
+        field.setAttribute('pattern', isPaymentNumber ? '^0[0-9]{9}$' : '^\\+256[0-9]{9}$')
+
+        field.addEventListener('blur', function () {
+          let value = field.value.trim().replace(/\s+/g, '')
+          if (isPaymentNumber) {
+            if (value.startsWith('+256') && value.length === 13) value = '0' + value.slice(4)
+            else if (value.startsWith('256') && value.length === 12) value = '0' + value.slice(3)
+            field.value = value
+            return
+          }
+          if (value.startsWith('256') && value.length === 12) value = '+' + value
+          if (value.startsWith('0') && value.length === 10) value = '+256' + value.slice(1)
+          field.value = value
+        })
+      })
+
+      function syncCheckedCards() {
+        document.querySelectorAll('.checkout-option').forEach(function (card) {
+          const input = card.querySelector('input[type="radio"]')
+          card.classList.toggle('is-selected', Boolean(input && input.checked))
+        })
+      }
+
+      document.querySelectorAll('.checkout-option input[type="radio"]').forEach(function (input) {
+        input.addEventListener('change', syncCheckedCards)
+      })
+      syncCheckedCards()
+
+      const requiredVisibleFields = document.querySelectorAll('.checkout-field input, .checkout-field select, .checkout-field textarea')
+      requiredVisibleFields.forEach(function (field) {
+        field.addEventListener('input', function () {
+          field.classList.remove('is-invalid')
+          field.removeAttribute('aria-invalid')
+        })
+      })
+    })
+  </script>
+{% endblock %}

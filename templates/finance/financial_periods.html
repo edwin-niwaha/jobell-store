@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+  <div class="container-fluid">
+    <div class="admin-page-head">
+      <div>
+        <span class="admin-eyebrow">Settings</span>
+        <h1 class="admin-page-title">Financial periods</h1>
+        <p class="admin-muted mb-0">Create, open, close, or lock accounting periods used by journals and reports.</p>
+      </div>
+      <div class="admin-actions print-hide">
+        <a href="{% url 'finance:audit_logs' %}" class="btn btn-outline-dark">
+          <i class="mdi mdi-file-document-outline mr-2"></i>Audit logs
+        </a>
+      </div>
+    </div>
+
+    <div class="admin-stat-grid financial-period-stat-grid">
+      <div class="admin-stat">
+        <span>Total</span>
+        <strong>{{ periods.count|intcomma }}</strong>
+      </div>
+      <div class="admin-stat">
+        <span>Open</span>
+        <strong>{{ open_count|intcomma }}</strong>
+      </div>
+      <div class="admin-stat">
+        <span>Closed</span>
+        <strong>{{ closed_count|intcomma }}</strong>
+      </div>
+      <div class="admin-stat">
+        <span>Locked</span>
+        <strong>{{ locked_count|intcomma }}</strong>
+      </div>
+    </div>
+
+    <div class="admin-form-layout financial-period-layout">
+      <section class="admin-panel">
+        <div class="admin-panel-header">
+          <h2>{{ form_title }}</h2>
+          {% if editing_period %}
+            <a href="{% url 'finance:financial_periods' %}" class="btn btn-light btn-sm">Cancel edit</a>
+          {% endif %}
+        </div>
+        <div class="card-body">
+          <form method="post" action="{% if editing_period %}{% url 'finance:financial_period_update' editing_period.id %}{% else %}{% url 'finance:financial_period_add' %}{% endif %}" class="admin-compact-form">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div class="form-group">
+              <label for="{{ form.name.id_for_label }}">Period name</label>
+              {{ form.name }}
+              {{ form.name.errors }}
+            </div>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="{{ form.start_date.id_for_label }}">Start date</label>
+                  {{ form.start_date }}
+                  {{ form.start_date.errors }}
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="{{ form.end_date.id_for_label }}">End date</label>
+                  {{ form.end_date }}
+                  {{ form.end_date.errors }}
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="{{ form.status.id_for_label }}">Status</label>
+              {{ form.status }}
+              {{ form.status.errors }}
+            </div>
+            <div class="form-group">
+              <label for="{{ form.branch.id_for_label }}">Branch</label>
+              {{ form.branch }}
+              <small class="form-text text-muted">Leave blank for a company-wide period.</small>
+              {{ form.branch.errors }}
+            </div>
+            <button type="submit" class="btn btn-primary font-weight-bold">
+              <i class="mdi mdi-content-save-outline mr-2"></i>{% if editing_period %}Update period{% else %}Add period{% endif %}
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <section class="admin-panel">
+        <div class="admin-panel-header">
+          <h2>Existing periods</h2>
+          <span class="badge badge-warning text-dark">{{ periods.count }} total</span>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="admin-table financial-period-table">
+              <thead>
+                <tr>
+                  <th>Period</th>
+                  <th>Dates</th>
+                  <th>Branch</th>
+                  <th>Status</th>
+                  <th class="text-right print-hide">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for period in periods %}
+                  <tr>
+                    <td>
+                      <span class="admin-item-title">{{ period.name }}</span>
+                      <span class="admin-item-subtitle">Created {{ period.created_at|naturaltime }}</span>
+                    </td>
+                    <td>
+                      <span class="admin-item-title">{{ period.start_date|date:'d M Y' }}</span>
+                      <span class="admin-item-subtitle">to {{ period.end_date|date:'d M Y' }}</span>
+                    </td>
+                    <td>{{ period.branch|default:'Company-wide' }}</td>
+                    <td>
+                      {% if period.status == 'open' %}
+                        <span class="admin-badge is-delivered">Open</span>
+                      {% elif period.status == 'closed' %}
+                        <span class="admin-badge is-muted">Closed</span>
+                      {% else %}
+                        <span class="admin-badge is-danger">Locked</span>
+                      {% endif %}
+                    </td>
+                    <td class="text-right print-hide">
+                      <a href="{% url 'finance:financial_period_update' period.id %}" class="btn btn-light btn-sm admin-view-action">
+                        <i class="mdi mdi-pencil-outline"></i>
+                        <span>Edit</span>
+                      </a>
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="5">
+                      <div class="admin-empty">
+                        <div class="admin-empty-icon"><i class="mdi mdi-calendar-range"></i></div>
+                        <h2 class="h4 font-weight-bold">No financial periods yet</h2>
+                        <p class="admin-muted">Add a period before posting finance transactions.</p>
+                      </div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+{% endblock %}

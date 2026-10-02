@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+  <div class="container-fluid">
+    <div class="admin-page-head">
+      <div>
+        <span class="admin-eyebrow">Fulfillment</span>
+        <h1 class="admin-page-title">Process order #{{ order.id }}</h1>
+        <p class="admin-muted mb-0">Review the customer, items, and update the delivery status.</p>
+      </div>
+
+      <div class="admin-actions print-hide">
+        <a href="{% url 'orders:orders_to_be_processed' %}" class="btn btn-outline-dark">
+          <i class="mdi mdi-arrow-left mr-2"></i>Back to queue
+        </a>
+        <a href="{% url 'orders:order_report' order.id %}" class="btn btn-info">
+          <i class="mdi mdi-eye-outline mr-2"></i>View report
+        </a>
+      </div>
+    </div>
+
+    <div class="admin-stat-grid">
+      <div class="admin-stat">
+        <span>Status</span>
+        <strong>{{ order.status }}</strong>
+      </div>
+      <div class="admin-stat">
+        <span>Total</span>
+        <strong>UGX {{ order.total_amount|floatformat:'0'|intcomma }}</strong>
+      </div>
+      <div class="admin-stat">
+        <span>Payment</span>
+        <strong>{{ order.get_payment_method_display }} / {{ order.get_payment_status_display }}</strong>
+      </div>
+      <div class="admin-stat">
+        <span>Date</span>
+        <strong>{{ order.created_at|date:'d M' }}</strong>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-lg-8">
+        <section class="admin-panel mb-4">
+          <div class="admin-panel-header">
+            <h2>Order items</h2>
+            <span class="badge badge-warning text-dark">{{ order.details.count }} item{{ order.details.count|pluralize }}</span>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Variant</th>
+                    <th>Qty</th>
+                    <th class="text-right">Unit</th>
+                    <th class="text-right">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for detail in order.details.all %}
+                    <tr>
+                      <td>
+                        <span class="admin-item-title">{{ detail.product.name }}</span>
+                        <span class="admin-item-subtitle">{{ detail.product.category }}{% if detail.product.gender %} / {{ detail.product.gender }}{% endif %}</span>
+                      </td>
+                      <td>
+                        {% if detail.product_volume %}
+                          {{ detail.product_volume.variant_label }}
+                        {% else %}
+                          <span class="admin-muted">No variant</span>
+                        {% endif %}
+                      </td>
+                      <td>{{ detail.quantity }}</td>
+                      <td class="text-right">UGX {{ detail.price|floatformat:'0'|intcomma }}</td>
+                      <td class="text-right"><strong>UGX {{ detail.total|floatformat:'0'|intcomma }}</strong></td>
+                    </tr>
+                  {% empty %}
+                    <tr>
+                      <td colspan="5">
+                        <div class="admin-empty">
+                          <div class="admin-empty-icon"><i class="mdi mdi-package-variant-closed"></i></div>
+                          <h2 class="h5 font-weight-bold">No items found</h2>
+                        </div>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="col-lg-4">
+        <section class="admin-panel mb-4">
+          <div class="admin-panel-header">
+            <h2>Customer</h2>
+          </div>
+          <div class="card-body">
+            <span class="admin-item-title">{{ order.customer.get_full_name|default:'Customer' }}</span>
+            <p class="admin-muted mb-2">{{ order.customer.address|default:'Address pending' }}</p>
+            {% if order.customer.email %}
+              <p class="mb-1"><i class="mdi mdi-email-outline mr-2"></i><a href="mailto:{{ order.customer.email }}">{{ order.customer.email }}</a></p>
+            {% endif %}
+            {% if order.customer.mobile %}
+              <p class="mb-0"><i class="mdi mdi-phone-outline mr-2"></i><a href="tel:{{ order.customer.mobile }}">{{ order.customer.mobile }}</a></p>
+            {% endif %}
+          </div>
+        </section>
+
+        <section class="admin-panel">
+          <div class="admin-panel-header">
+            <h2>Update status</h2>
+          </div>
+          <div class="card-body">
+            <form method="post">
+              {% csrf_token %}
+              <div class="form-group">
+                {{ form.status.label_tag }}
+                {{ form.status }}
+                {% for error in form.status.errors %}
+                  <div class="text-danger small mt-1">{{ error }}</div>
+                {% endfor %}
+              </div>
+              <button type="submit" class="btn btn-success btn-lg w-100" onclick="return confirm('Update this order status?')">
+                <i class="mdi mdi-check-circle-outline mr-2"></i>Update status
+              </button>
+            </form>
+          </div>
+        </section>
+
+        {% if order.payment_status != 'completed' %}
+          <section class="admin-panel mt-4">
+            <div class="admin-panel-header">
+              <h2>Payment</h2>
+            </div>
+            <div class="card-body">
+              <p class="admin-muted">Confirm only after payment has been received.</p>
+              <form method="post" action="{% url 'orders:confirm_payment' order.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary btn-lg w-100" onclick="return confirm('Confirm payment received for this order?')">
+                  <i class="mdi mdi-cash-check mr-2"></i>Confirm payment received
+                </button>
+              </form>
+            </div>
+          </section>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+  <div class="container-fluid">
+    <div class="row mb-3">
+      <div class="col-md-12 d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div>
+          {% if perms.shipping.add_deliveryrate %}
+            <a href="{% url 'shipping:delivery_rate_add' %}" class="btn btn-dark">
+              <i class="mdi mdi-plus mr-2"></i>
+              Add Shipping Fee
+            </a>
+          {% endif %}
+        </div>
+        <button title="Print" type="button" class="btn btn-success" onclick="printDiv('printMe')">
+          <i class="mdi mdi-printer btn-icon-prepend"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-md-12">
+        <form method="get" action="{% url 'shipping:delivery_rate_list' %}">
+          <div class="input-group">
+            <input type="text" class="form-control" name="search" value="{{ search_query }}" placeholder="Search by region, city, or area" />
+            <button class="btn btn-primary" type="submit">
+              <i class="mdi mdi-magnify"></i>
+              Search
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="printMe" class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h3>SHIPPING FEES</h3>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="my-table" id="dataTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Region</th>
+                <th>City</th>
+                <th>Area</th>
+                <th>Fee</th>
+                <th>Days</th>
+                <th>Status</th>
+                {% if perms.shipping.change_deliveryrate %}
+                  <th class="print-hide">Actions</th>
+                {% endif %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for rate in page_obj %}
+                <tr>
+                  <td>{{ forloop.counter }}</td>
+                  <td>{{ rate.get_region_display }}</td>
+                  <td>{{ rate.city|default:'All cities' }}</td>
+                  <td>{{ rate.area|default:'All areas' }}</td>
+                  <td>UGX {{ rate.fee|floatformat:'0'|intcomma }}</td>
+                  <td>{{ rate.estimated_days }}</td>
+                  <td>
+                    {% if rate.is_active %}
+                      <span class="badge bg-success">Active</span>
+                    {% else %}
+                      <span class="badge bg-secondary">Inactive</span>
+                    {% endif %}
+                  </td>
+                  {% if perms.shipping.change_deliveryrate %}
+                    <td class="text-center print-hide">
+                      <a href="{% url 'shipping:delivery_rate_update' rate.id %}" class="btn btn-warning btn-sm" data-bs-toggle="tooltip" title="Update shipping fee">
+                        <i class="bi bi-pencil"></i>
+                      </a>
+                    </td>
+                  {% endif %}
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="8" class="text-center text-muted py-4">No shipping fees found.</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="pagination">
+          <span class="step-links">
+            {% if page_obj.has_previous %}
+              <a href="?page=1&search={{ search_query }}">&laquo; first</a>
+              <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}">previous</a>
+            {% endif %}
+
+            <span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.</span>
+
+            {% if page_obj.has_next %}
+              <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}">next</a>
+              <a href="?page={{ page_obj.paginator.num_pages }}&search={{ search_query }}">last &raquo;</a>
+            {% endif %}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

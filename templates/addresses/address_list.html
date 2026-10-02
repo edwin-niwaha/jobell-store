@@ -1,0 +1,58 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}My Addresses{% endblock %}
+
+{% block content %}
+  <main class="store-page">
+    <div class="store-shell">
+      <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
+        <div>
+          <span class="store-eyebrow">Delivery details</span>
+          <h1 class="store-title h2">My Addresses</h1>
+          <p class="store-muted mb-0">Manage saved delivery addresses for faster checkout.</p>
+        </div>
+        <a class="store-btn" href="{% url 'addresses:create' %}">
+          <i class="mdi mdi-plus"></i> Add address
+        </a>
+      </div>
+
+      {% if addresses %}
+        <div class="row g-3">
+          {% for address in addresses %}
+            <div class="col-md-6 col-xl-4">
+              <article class="store-panel h-100">
+                <div class="card-body p-4">
+                  <div class="d-flex justify-content-between gap-3 mb-2">
+                    <strong class="text-dark">{{ address.city }}</strong>
+                    {% if address.is_default %}
+                      <span class="badge rounded-pill" style="background:#B8860B;">Default</span>
+                    {% endif %}
+                  </div>
+                  <p class="store-muted mb-2">{{ address.single_line }}</p>
+                  {% if address.phone_number %}
+                    <p class="mb-0"><i class="mdi mdi-phone-outline"></i> {{ address.phone_number }}</p>
+                  {% endif %}
+                  <div class="d-flex flex-wrap gap-2 mt-3">
+                    <a class="store-btn-outline" href="{% url 'addresses:update' address.pk %}">Edit</a>
+                    {% if not address.is_default %}
+                      <a class="store-btn-outline" href="{% url 'addresses:make_default' address.pk %}">Make default</a>
+                    {% endif %}
+                    <a class="store-btn-dark" href="{% url 'addresses:delete' address.pk %}">Delete</a>
+                  </div>
+                </div>
+              </article>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <section class="store-panel store-empty">
+          <div class="store-empty-icon"><i class="mdi mdi-map-marker-outline"></i></div>
+          <h2 class="h4">No saved addresses yet</h2>
+          <p class="store-muted">Add your first address and use it during checkout.</p>
+          <a class="store-btn mt-2" href="{% url 'addresses:create' %}">Add address</a>
+        </section>
+      {% endif %}
+    </div>
+  </main>
+{% endblock %}
+

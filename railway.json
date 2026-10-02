@@ -1,0 +1,15 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "build": {
+    "builder": "DOCKERFILE",
+    "dockerfilePath": "Dockerfile"
+  },
+  "deploy": {
+    "preDeployCommand": ["python manage.py check --deploy --fail-level WARNING --settings=core.settings.production", "python manage.py migrate --noinput --settings=core.settings.production"],
+    "startCommand": "gunicorn core.wsgi:application --config gunicorn.conf.py",
+    "healthcheckPath": "/health/",
+    "healthcheckTimeout": 120,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 5
+  }
+}

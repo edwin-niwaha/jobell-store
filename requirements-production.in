@@ -1,0 +1,29 @@
+# Direct runtime dependencies. Compile to requirements-production.txt for deployment.
+# The legacy requirements.txt also includes unused CMS/editor and development packages.
+Django>=5.2.17,<5.3
+celery[redis]>=5.5,<6
+cloudinary>=1.44,<2
+dj-database-url>=2.3,<4
+django-cloudinary-storage==0.3.0
+django-cors-headers>=4.7,<5
+django-crispy-forms>=2.4,<3
+crispy-bootstrap5>=2025.4
+django-filter>=25.1,<26
+django-formtools>=2.5,<3
+django-phonenumber-field>=8,<9
+djangorestframework>=3.16,<4
+djangorestframework-simplejwt>=5.5,<6
+# Upstream 2.3.4 code with a metadata-only compatibility patch; see vendor/README.md.
+./vendor/djoser-2.3.4-py3-none-any.whl
+social-auth-app-django>=6.1,<7
+social-auth-core>=5.2,<6
+firebase-admin>=6.5,<8
+gunicorn>=23,<26
+openpyxl>=3.1.5,<4
+phonenumbers>=9,<10
+Pillow>=11,<13
+psycopg[binary]>=3.2,<4
+python-dotenv>=1,<2
+requests>=2.32.5,<3
+whitenoise[brotli]>=6.9,<7
+xhtml2pdf>=0.2.17,<0.3

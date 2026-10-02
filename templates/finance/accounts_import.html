@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block head %}
+
+{% endblock %}
+
+{% block content %}
+  <div class="container">
+    <div class="page-header flex-wrap">
+      <h3 class="mb-0">{{ form_name|upper }}<span class="pl-0 h6 pl-sm-2 text-muted d-inline-block" /></h3>
+      <div class="d-flex">
+        <a title="Register Account" class="btn btn-sm ml-3 btn-success" href="{% url 'finance:add_chart_of_account' %}"><i class="mdi mdi-account-plus btn-icon-prepend"></i></a>
+        <a title="View List..." class="btn btn-sm ml-3 btn-success" href="{% url 'finance:chart_of_accounts_list' %}"><i class="mdi mdi-chart-line btn-icon-prepend"></i></a>
+      </div>
+    </div>
+    <hr />
+
+    <div class="form-content my-3 p-3">
+      <div class="row justify-content-center">
+        <div class="col-lg-12">
+          <div class="card shadow-lg border-0 rounded-lg mt-0 mb-5">
+            <div class="card-body">
+              <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <!--  -->
+                <input type="file" name="excel_file" accept=".xls,.xlsx" />
+                <div class="form-group mt-4 mb-0">
+                  <button type="submit" class="col-md-12 btn btn-dark" onclick="return confirm('Are you sure you want import?') && validateForm()">IMPORT DATA</button>
+                </div>
+              </form>
+            </div>
+            <!-- table -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

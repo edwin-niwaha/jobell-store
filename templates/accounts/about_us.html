@@ -1,0 +1,66 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}
+  About {{ site_name|upper }}
+{% endblock %}
+
+{% block content %}
+  <section class="platform-info-page">
+    <div class="platform-info-hero">
+      <div>
+        <span class="platform-page-kicker">About {{ site_name|upper }}</span>
+        <h1>Fragrance, body care, and everyday essentials.</h1>
+        <p>{{ site_name|upper }} is built around a simple shopping experience: clear products, reliable service, and carefully selected scents for personal care and home spaces.</p>
+      </div>
+      <img class="platform-info-logo" src="{% static 'images/file.png' %}" alt="{{ site_name|upper }}" />
+    </div>
+
+    <div class="platform-value-grid">
+      <article class="platform-info-panel">
+        <h2>Our mission</h2>
+        <p>Provide high-quality products at fair prices, backed by helpful service from discovery to delivery.</p>
+      </article>
+      <article class="platform-info-panel">
+        <h2>Our vision</h2>
+        <p>Become a trusted storefront known for quality, simplicity, and customer confidence.</p>
+      </article>
+      <article class="platform-info-panel">
+        <h2>Our values</h2>
+        <ul class="platform-check-list">
+          <li><i class="mdi mdi-check-circle-outline"></i> Customer-first service</li>
+          <li><i class="mdi mdi-check-circle-outline"></i> Quality products</li>
+          <li><i class="mdi mdi-check-circle-outline"></i> Honest communication</li>
+        </ul>
+      </article>
+    </div>
+
+    <div class="platform-section-heading-wide">
+      <h2>Meet our team</h2>
+      <p>The people keeping {{ site_name|upper }} moving.</p>
+    </div>
+
+    <div class="platform-team-grid">
+      <article class="platform-team-card">
+        <img src="{% static 'team/ceo.jpeg' %}" alt="Christbell Mujuni" />
+        <h3>Christbell Mujuni</h3>
+        <p>Chief Executive Officer</p>
+      </article>
+      <article class="platform-team-card">
+        <img src="{% static 'team/md.jpeg' %}" alt="Jordan Mujuni" />
+        <h3>Jordan Mujuni</h3>
+        <p>Managing Director</p>
+      </article>
+      <article class="platform-team-card">
+        <img src="{% static 'team/specialist.jpeg' %}" alt="Cronnie Owomugisha" />
+        <h3>Cronnie Owomugisha</h3>
+        <p>IT Specialist</p>
+      </article>
+      <article class="platform-team-card">
+        <img src="{% static 'team/consultant.jpg' %}" alt="Edwin Niwaha" />
+        <h3>Edwin Niwaha</h3>
+        <p>Consultant</p>
+      </article>
+    </div>
+  </section>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends 'accounts/base.html' %}{% load static humanize %}
+{% block title %}Review WhatsApp order | {{ branding.site_name }}{% endblock %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/whatsapp_orders.css' %}"><script src="{% static 'js/whatsapp_orders.js' %}" defer></script>{% endblock %}
+{% block content %}
+<main class="wa-page"><div class="wa-shell"><a href="{{ back_url }}" class="wa-back">← {% if product_order %}Back to product{% else %}Edit cart{% endif %}</a>
+<header><span class="wa-kicker">Jobell Store · Personal assistance</span><h1>Review your WhatsApp order</h1><p>Continue to WhatsApp to confirm availability, delivery, and payment with our team.</p></header>
+{% if errors %}<section class="wa-card" role="alert"><h2>Check your selection</h2>{% for error in errors %}<p>{{ error }}</p>{% endfor %}<a class="wa-button" href="{{ back_url }}">{% if product_order %}Choose an option{% else %}Update cart{% endif %}</a></section>
+{% else %}<div class="wa-grid"><section class="wa-card" aria-label="Order items">
+{% for line in lines %}<article class="wa-item"><div><a href="{{ line.url }}"><h2>{{ line.product.name }}</h2></a><p>{{ line.variant.variant_label }}</p><p>Quantity: {{ line.quantity }} · UGX {{ line.price|floatformat:'0'|intcomma }} each</p><strong>UGX {{ line.total|floatformat:'0'|intcomma }}</strong></div>
+{% if product_order %}<form method="get"><input type="hidden" name="volume_id" value="{{ line.variant.pk }}"><label for="wa-quantity">Quantity</label><input id="wa-quantity" name="quantity" type="number" min="1" max="{{ line.variant.available_quantity }}" value="{{ line.quantity }}" required><button type="submit" class="wa-secondary">Update summary</button></form>{% endif %}
+</article>{% endfor %}</section>
+<aside class="wa-card"><h2>Your summary</h2><div class="wa-total"><span>Subtotal</span><strong>UGX {{ subtotal|floatformat:'0'|intcomma }}</strong></div><p>Delivery charges: to be confirmed</p><p class="wa-note">This is an enquiry. Your order is confirmed only after our team agrees the details with you. No payment has been taken.</p>
+<a class="wa-button" href="{{ whatsapp_url }}" target="_blank" rel="noopener noreferrer"><i class="mdi mdi-whatsapp" aria-hidden="true"></i> Continue to WhatsApp ↗</a>
+<p class="wa-small">Your cart and selections stay saved.</p>
+<details class="wa-fallback"><summary>WhatsApp didn’t open?</summary><p>Copy your message and send it to <a href="tel:+256777337491">+256 777 337491</a>.</p><label for="wa-message">Order message</label><textarea id="wa-message" readonly rows="10">{{ order_message }}</textarea><button type="button" class="wa-secondary" data-copy-order>Copy order message</button><p data-copy-status role="status" aria-live="polite"></p><a href="{{ whatsapp_url }}" target="_blank" rel="noopener noreferrer">Try WhatsApp again ↗</a></details>
+</aside></div>{% endif %}</div></main>
+{% endblock %}

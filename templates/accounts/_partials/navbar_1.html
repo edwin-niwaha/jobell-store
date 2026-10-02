@@ -1,0 +1,318 @@
+{% load static %}
+
+<style>
+  .platform-sales-nav {
+    background: #020617;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 26px rgba(2, 6, 23, 0.2);
+    min-height: 76px;
+    padding: 0;
+  }
+
+  .platform-sales-nav .platform-sales-nav-inner {
+    align-items: center;
+    gap: 18px;
+    max-width: 1500px;
+    padding: 10px 18px;
+  }
+
+  .platform-sales-brand {
+    align-items: center;
+    display: inline-flex;
+    gap: 12px;
+    min-width: max-content;
+    text-decoration: none;
+  }
+
+  .platform-sales-brand:hover {
+    text-decoration: none;
+  }
+
+  .platform-sales-brand-mark {
+    align-items: center;
+    background: #ffffff;
+    border-radius: 12px;
+    display: inline-flex;
+    height: 46px;
+    justify-content: center;
+    overflow: hidden;
+    width: 46px;
+  }
+
+  .platform-sales-brand-mark img {
+    height: 100%;
+    object-fit: contain;
+    width: 100%;
+  }
+
+  .platform-sales-brand-copy {
+    display: grid;
+    line-height: 1.1;
+  }
+
+  .platform-sales-brand-copy strong {
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: 900;
+  }
+
+  .platform-sales-brand-copy small {
+    color: rgba(255, 255, 255, 0.62);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .platform-sales-nav-toggle {
+    align-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 10px;
+    color: #ffffff;
+    display: inline-flex;
+    height: 42px;
+    justify-content: center;
+    padding: 0;
+    width: 42px;
+  }
+
+  .platform-sales-nav-toggle i {
+    font-size: 24px;
+  }
+
+  .platform-sales-nav-links,
+  .platform-sales-nav-actions {
+    align-items: center;
+    gap: 6px;
+  }
+
+  .platform-sales-nav-links {
+    margin-left: 18px;
+    margin-right: auto;
+  }
+
+  .platform-sales-nav-actions {
+    margin-left: auto;
+  }
+
+  .platform-sales-nav .nav-link,
+  .platform-sales-auth-link,
+  .platform-sales-user-link {
+    align-items: center;
+    border-radius: 10px;
+    color: rgba(255, 255, 255, 0.78) !important;
+    display: inline-flex;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    gap: 7px;
+    padding: 9px 11px !important;
+    text-decoration: none;
+    transition: background-color 0.18s ease, color 0.18s ease;
+  }
+
+  .platform-sales-nav .nav-link:hover,
+  .platform-sales-nav .nav-link:focus,
+  .platform-sales-auth-link:hover,
+  .platform-sales-auth-link:focus,
+  .platform-sales-user-link:hover,
+  .platform-sales-user-link:focus {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff !important;
+    text-decoration: none;
+  }
+
+  .platform-sales-nav .nav-link i,
+  .platform-sales-auth-link i,
+  .platform-sales-user-link i {
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .platform-sales-cart {
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    color: #ffffff;
+    display: inline-flex;
+    height: 40px;
+    justify-content: center;
+    position: relative;
+    text-decoration: none;
+    width: 40px;
+  }
+
+  .platform-sales-cart:hover,
+  .platform-sales-cart:focus {
+    background: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    text-decoration: none;
+  }
+
+  .platform-sales-cart i {
+    font-size: 20px;
+  }
+
+  .platform-sales-count {
+    background: #f79420;
+    border-radius: 999px;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 900;
+    line-height: 1;
+    min-width: 18px;
+    padding: 4px 5px;
+    position: absolute;
+    right: -6px;
+    text-align: center;
+    top: -6px;
+  }
+
+  .platform-sales-auth-primary {
+    background: #ffd814;
+    color: #111827 !important;
+  }
+
+  .platform-sales-auth-primary:hover,
+  .platform-sales-auth-primary:focus {
+    background: #f7ca00;
+    color: #111827 !important;
+  }
+
+  @media (max-width: 1199.98px) {
+    .platform-sales-nav .navbar-collapse {
+      background: rgba(2, 6, 23, 0.98);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      box-shadow: 0 18px 42px rgba(2, 6, 23, 0.28);
+      margin-top: 12px;
+      padding: 12px;
+      width: 100%;
+    }
+
+    .platform-sales-nav-links,
+    .platform-sales-nav-actions {
+      align-items: stretch;
+      margin: 12px 0 0;
+    }
+
+    .platform-sales-nav-actions {
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 12px;
+    }
+
+    .platform-sales-nav .nav-link,
+    .platform-sales-auth-link,
+    .platform-sales-user-link {
+      justify-content: flex-start;
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 575.98px) {
+    .platform-sales-brand-copy {
+      display: none;
+    }
+
+    .platform-sales-nav .platform-sales-nav-inner {
+      padding-left: 12px;
+      padding-right: 12px;
+    }
+  }
+</style>
+
+<nav class="navbar navbar-expand-xl fixed-top platform-sales-nav" data-responsive-navbar>
+  <div class="container-fluid platform-sales-nav-inner">
+    <a class="platform-sales-brand" href="/" aria-label="{{ site_name|upper }} home">
+      <span class="platform-sales-brand-mark">
+        <img src="{% static 'images/file.png' %}" alt="{{ site_name|upper }}" />
+      </span>
+      <span class="platform-sales-brand-copy">
+        <strong>{{ site_name|upper }}</strong>
+        <small>Sales workspace</small>
+      </span>
+    </a>
+
+    <button class="navbar-toggler platform-sales-nav-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#legacyNavbar" aria-controls="legacyNavbar" aria-expanded="false" aria-label="Toggle navigation">
+      <i class="mdi mdi-menu"></i>
+    </button>
+
+    <div class="collapse navbar-collapse" id="legacyNavbar" data-navbar-menu>
+      <ul class="navbar-nav platform-sales-nav-links">
+        <li class="nav-item">
+          <a class="nav-link" href="/"><i class="mdi mdi-home-outline"></i> Home</a>
+        </li>
+        {% if user.is_authenticated and user.profile.role != 'guest' %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'dashboard' %}"><i class="mdi mdi-view-dashboard-outline"></i> Dashboard</a>
+          </li>
+        {% endif %}
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'orders:wishlist' %}"><i class="mdi mdi-heart-outline"></i> Wishlist</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'orders:customer_order_history' %}"><i class="mdi mdi-receipt-text-outline"></i> Orders</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'about_us' %}"><i class="mdi mdi-information-outline"></i> About</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'contact_us' %}"><i class="mdi mdi-headphones"></i> Support</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'blog:blog_list' %}"><i class="mdi mdi-newspaper-variant-outline"></i> Blog</a>
+        </li>
+      </ul>
+
+      <ul class="navbar-nav platform-sales-nav-actions">
+        <li class="nav-item">
+          <a class="platform-sales-cart" href="{% url 'orders:cart' %}" aria-label="View cart">
+            <i class="mdi mdi-cart-outline"></i>
+            <span class="platform-sales-count">{{ cart_count_user|default:0 }}</span>
+          </a>
+        </li>
+        {% if user.is_authenticated %}
+          <li class="nav-item">
+            <a href="{% url 'users-profile' %}" class="platform-sales-user-link"><i class="mdi mdi-account-outline"></i> My Profile</a>
+          </li>
+          <li class="nav-item">
+            <a href="{% url 'logout' %}" class="platform-sales-user-link" onclick="return confirm('Are you sure you want to logout?');"><i class="mdi mdi-logout"></i> Logout</a>
+          </li>
+        {% else %}
+          <li class="nav-item">
+            <a href="{% url 'login' %}" class="platform-sales-auth-link"><i class="mdi mdi-login"></i> Log in</a>
+          </li>
+          <li class="nav-item">
+            <a class="platform-sales-auth-link platform-sales-auth-primary" href="{% url 'users-register' %}">Register</a>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<script src="{% static 'js/navbar.js' %}"></script>
+<script>
+  (function () {
+    function initSalesNavbarFallback() {
+      const navbar = document.querySelector('.platform-sales-nav');
+      if (!navbar) return;
+
+      const toggle = navbar.querySelector('[data-bs-toggle="collapse"][data-bs-target]');
+      const menu = navbar.querySelector('#legacyNavbar');
+      if (!toggle || !menu) return;
+
+      toggle.addEventListener('click', function (event) {
+        if (window.bootstrap && window.bootstrap.Collapse) return;
+        event.preventDefault();
+        const isOpen = menu.classList.toggle('show');
+        toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initSalesNavbarFallback);
+    } else {
+      initSalesNavbarFallback();
+    }
+  })();
+</script>

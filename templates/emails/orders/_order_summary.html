@@ -1,0 +1,58 @@
+{% load humanize %}
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse:separate;border-spacing:0;margin:0 0 22px;background:#fbfaf7;border:1px solid #eadfca;border-radius:14px;">
+  <tr>
+    <td style="padding:18px;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+        <tr>
+          <td style="padding:0 0 12px;font-size:13px;line-height:18px;color:#7a6a45;text-transform:uppercase;letter-spacing:1px;">Order summary</td>
+        </tr>
+      </table>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+        <tr>
+          <td width="50%" valign="top" style="padding:0 12px 12px 0;font-size:14px;line-height:21px;color:#1f2933;">
+            <strong style="color:#050505;">Order #{{ order_number }}</strong><br>
+            {{ order_date|date:"M j, Y, g:i A" }}<br>
+            Status: <strong>{{ new_status|default:order.status }}</strong><br>
+            Payment: <strong>{{ payment_status }}</strong>
+          </td>
+          <td width="50%" valign="top" style="padding:0 0 12px 12px;font-size:14px;line-height:21px;color:#1f2933;">
+            <strong style="color:#050505;">{{ customer_name }}</strong><br>
+            {% if customer_phone %}{{ customer_phone }}<br>{% endif %}
+            {% if customer_email %}{{ customer_email }}<br>{% endif %}
+            {{ payment_method }}
+          </td>
+        </tr>
+        <tr>
+          <td colspan="2" style="padding:10px 0 0;border-top:1px solid #eadfca;font-size:14px;line-height:21px;color:#1f2933;">
+            <strong style="color:#050505;">Delivery address</strong><br>
+            {{ delivery_address|default:"To be confirmed" }}
+          </td>
+        </tr>
+      </table>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:16px;border-top:1px solid #eadfca;">
+        <tr>
+          <td style="padding:12px 0 4px;font-size:14px;color:#4b5563;">Subtotal</td>
+          <td align="right" style="padding:12px 0 4px;font-size:14px;color:#111827;">UGX {{ subtotal|floatformat:0|intcomma }}</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 0;font-size:14px;color:#4b5563;">Delivery fee</td>
+          <td align="right" style="padding:4px 0;font-size:14px;color:#111827;">UGX {{ shipping_fee|floatformat:0|intcomma }}</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 0;font-size:14px;color:#4b5563;">Discount</td>
+          <td align="right" style="padding:4px 0;font-size:14px;color:#111827;">UGX {{ discount_total|default:discount|floatformat:0|intcomma }}</td>
+        </tr>
+        {% if tax_amount %}
+          <tr>
+            <td style="padding:4px 0;font-size:14px;color:#4b5563;">Tax</td>
+            <td align="right" style="padding:4px 0;font-size:14px;color:#111827;">UGX {{ tax_amount|floatformat:0|intcomma }}</td>
+          </tr>
+        {% endif %}
+        <tr>
+          <td style="padding:12px 0 0;border-top:1px solid #eadfca;font-size:16px;color:#050505;font-weight:700;">Grand total</td>
+          <td align="right" style="padding:12px 0 0;border-top:1px solid #eadfca;font-size:18px;color:#050505;font-weight:700;">UGX {{ grand_total|default:total|floatformat:0|intcomma }}</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>

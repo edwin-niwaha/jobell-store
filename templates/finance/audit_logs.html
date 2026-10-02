@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Audit Logs | {{ site_name|upper }}
+{% endblock %}
+
+{% block content %}
+  <div class="container-fluid">
+    <div class="admin-page-head">
+      <div>
+        <span class="admin-eyebrow">Financials</span>
+        <h1 class="admin-page-title">Audit Log Report</h1>
+        <p class="admin-muted mb-0">Trace financial record changes by date, user, model, and action.</p>
+      </div>
+      <div class="admin-actions">
+        <a href="{% url 'dashboard' %}" class="admin-theme-btn admin-theme-btn-dark">
+          <i class="mdi mdi-arrow-left" aria-hidden="true"></i>
+          Dashboard
+        </a>
+        <button title="Export to Excel" type="button" class="admin-theme-btn admin-theme-btn-soft" onclick="ExportToExcel('xlsx')">
+          <i class="mdi mdi-file-excel" aria-hidden="true"></i>
+          Excel
+        </button>
+        <button title="Export to Word" type="button" class="admin-theme-btn admin-theme-btn-soft" onclick="Export2Doc('printMe')">
+          <i class="mdi mdi-file-word" aria-hidden="true"></i>
+          Word
+        </button>
+        <button title="Print" type="button" class="admin-theme-btn admin-theme-btn-accent" onclick="printDiv('printMe')">
+          <i class="mdi mdi-printer" aria-hidden="true"></i>
+          Print
+        </button>
+      </div>
+    </div>
+
+    <form method="get" class="admin-filter-bar">
+      <div>
+        <label for="start_date" class="admin-muted d-block mb-1">Start date</label>
+        <input type="date" id="start_date" name="start_date" value="{{ start_date|date:'Y-m-d' }}" class="form-control" />
+      </div>
+      <div>
+        <label for="end_date" class="admin-muted d-block mb-1">End date</label>
+        <input type="date" id="end_date" name="end_date" value="{{ end_date|date:'Y-m-d' }}" class="form-control" />
+      </div>
+      <div>
+        <label for="user_id" class="admin-muted d-block mb-1">User</label>
+        <select id="user_id" name="user_id" class="form-control">
+          <option value="">All users</option>
+          {% for user_option in users %}
+            <option value="{{ user_option.id }}" {% if selected_user.id == user_option.id %}selected{% endif %}>{{ user_option.username }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="align-self-end d-flex flex-wrap" style="gap: 0.6rem;">
+        <button type="submit" class="admin-theme-btn admin-theme-btn-accent">
+          <i class="mdi mdi-filter-outline" aria-hidden="true"></i>
+          Filter
+        </button>
+        <button type="submit" name="download" value="1" class="admin-theme-btn admin-theme-btn-soft">
+          <i class="mdi mdi-download" aria-hidden="true"></i>
+          CSV
+        </button>
+      </div>
+    </form>
+
+    <div id="printMe" class="admin-panel mb-4">
+      <div class="admin-panel-header">
+        <h2>{{ audit_total }} audit entr{{ audit_total|pluralize:'y,ies' }}</h2>
+      </div>
+      <div class="p-3">
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>User</th>
+                <th>Model</th>
+                <th>Action</th>
+                <th>Object ID</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for entry in report_data %}
+                <tr>
+                  <td>{{ entry.timestamp|date:'Y-m-d H:i:s' }}</td>
+                  <td>{{ entry.user }}</td>
+                  <td>{{ entry.model }}</td>
+                  <td>
+                    {% if entry.action == 'CREATE' %}
+                      <span class="admin-badge is-success">Create</span>
+                    {% elif entry.action == 'UPDATE' %}
+                      <span class="admin-badge is-info">Update</span>
+                    {% elif entry.action == 'DELETE' %}
+                      <span class="admin-badge is-danger">Delete</span>
+                    {% else %}
+                      <span class="admin-badge is-muted">{{ entry.action }}</span>
+                    {% endif %}
+                  </td>
+                  <td>{{ entry.object_id }}</td>
+                  <td class="admin-row-text">{{ entry.details }}</td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="6" class="admin-empty-row">No audit logs match your filters.</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center flex-wrap mt-3">
+          <div class="admin-muted mb-2 mb-md-0">Showing {{ report_data.start_index }} to {{ report_data.end_index }} of {{ report_data.paginator.count }} entries</div>
+          <nav aria-label="Audit log pagination">
+            <ul class="pagination admin-pagination">
+              {% if report_data.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ report_data.previous_page_number }}{% if start_date %}&start_date={{ start_date|date:'Y-m-d' }}{% endif %}{% if end_date %}&end_date={{ end_date|date:'Y-m-d' }}{% endif %}{% if user_id %}&user_id={{ user_id }}{% endif %}">Previous</a></li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">Previous</span></li>
+              {% endif %}
+              <li class="page-item active"><span class="page-link">{{ report_data.number }} / {{ report_data.paginator.num_pages }}</span></li>
+              {% if report_data.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ report_data.next_page_number }}{% if start_date %}&start_date={{ start_date|date:'Y-m-d' }}{% endif %}{% if end_date %}&end_date={{ end_date|date:'Y-m-d' }}{% endif %}{% if user_id %}&user_id={{ user_id }}{% endif %}">Next</a></li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">Next</span></li>
+              {% endif %}
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

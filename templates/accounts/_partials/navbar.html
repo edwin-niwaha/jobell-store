@@ -1,0 +1,88 @@
+{% load static %}
+
+<nav class="navbar navbar-expand-xl fixed-top platform-store-nav" data-responsive-navbar>
+  <div class="container-fluid platform-nav-inner">
+    <a class="platform-brand" href="{% url 'users-home' %}" aria-label="{{ site_name|upper }} home">
+      <span class="platform-brand-mark">
+        <img src="{% static 'images/file.png' %}" alt="{{ site_name|upper }}" />
+      </span>
+      <span class="platform-brand-copy">
+        <strong>{{ site_name|upper }}</strong>
+        <small>Storefront</small>
+      </span>
+    </a>
+
+    <a class="platform-icon-action d-xl-none shopping-mobile-cart" href="{% url 'orders:cart' %}" aria-label="View cart">
+      <i class="mdi mdi-cart-outline" aria-hidden="true"></i><span class="platform-count-badge" data-cart-count>{{ cart_count_user|default:0 }}</span>
+    </a>
+    <button class="navbar-toggler platform-nav-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#siteNavbar" aria-controls="siteNavbar" aria-expanded="false" aria-label="Toggle navigation">
+      <i class="mdi mdi-menu"></i>
+    </button>
+
+      <form class="platform-nav-search" role="search" action="{% url 'products:shop_homepage' %}" method="get">
+        <label class="visually-hidden" for="navProductSearch">Search fragrances</label>
+        <input id="navProductSearch" type="search" name="search" value="{{ request.GET.search|default:'' }}" placeholder="Find your fragrance…" />
+        <button type="submit" aria-label="Search products"><i class="mdi mdi-magnify" aria-hidden="true"></i></button>
+      </form>
+    <div class="collapse navbar-collapse" id="siteNavbar" data-navbar-menu>
+      <ul class="navbar-nav platform-nav-links">
+        <li class="nav-item"><a class="nav-link" href="{% url 'users-home' %}#platform-categories">Categories</a></li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'products:shop_homepage' %}"><i class="mdi mdi-storefront-outline"></i> Shop</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'orders:wishlist' %}"><i class="mdi mdi-heart-outline"></i> Wishlist</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'contact_us' %}"><i class="mdi mdi-headphones"></i> Support</a>
+        </li>
+        {% if user.is_authenticated and user.profile.role != 'guest' %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'dashboard' %}"><i class="mdi mdi-view-dashboard-outline"></i> Dashboard</a>
+          </li>
+        {% endif %}
+      </ul>
+
+      <ul class="navbar-nav platform-nav-actions">
+        <li class="nav-item">
+          <a class="platform-icon-action" href="{% url 'orders:cart' %}" aria-label="View cart">
+            <i class="mdi mdi-cart-outline"></i>
+            <span class="platform-count-badge" data-cart-count>{{ cart_count_user|default:0 }}</span>
+          </a>
+        </li>
+        {% if user.is_authenticated %}
+          <li class="nav-item dropdown">
+            <a class="platform-user-menu dropdown-toggle" href="#" id="userMenu" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <span class="platform-avatar">
+                {% if user.profile.avatar %}
+                  <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" />
+                {% else %}
+                  {{ user.username|first|upper }}
+                {% endif %}
+              </span>
+              <span class="platform-user-copy">
+                <small>Hello</small>
+                <strong>{{ user.username|title }}</strong>
+              </span>
+            </a>
+            <div class="dropdown-menu dropdown-menu-right platform-dropdown" aria-labelledby="userMenu">
+              <a class="dropdown-item" href="{% url 'orders:customer_order_history' %}">My orders</a>
+              <a class="dropdown-item" href="{% url 'addresses:list' %}">Delivery addresses</a>
+              <a class="dropdown-item" href="{% url 'users-profile' %}"><i class="mdi mdi-account-outline"></i> My profile</a>
+              <a class="dropdown-item" href="{% url 'password_change' %}"><i class="mdi mdi-shield-key-outline"></i> Security</a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item text-danger" href="{% url 'logout' %}" onclick="return confirm('Are you sure you want to logout?');"><i class="mdi mdi-logout"></i> Logout</a>
+            </div>
+          </li>
+        {% else %}
+          <li class="nav-item">
+            <a class="platform-auth-link" href="{% url 'login' %}"><i class="mdi mdi-login"></i> Log in</a>
+          </li>
+          <li class="nav-item">
+            <a class="platform-auth-link platform-auth-primary" href="{% url 'users-register' %}">Register</a>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>

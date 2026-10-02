@@ -1,0 +1,304 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}
+  {{ site_name|upper }}
+{% endblock %}
+
+{% block content %}
+  <link rel="stylesheet" href="{% static 'css/home.css' %}?v=11" />
+
+  <div class="platform-home">
+    <main class="platform-shell">
+      <section class="platform-hero">
+        <div class="platform-hero-copy">
+          <span class="platform-eyebrow">{{ site_name|upper }} Storefront</span>
+          <h1>Discover Luxury Fragrances</h1>
+          <p>Premium scents crafted for confidence, elegance, and unforgettable impressions.</p>
+
+          <div class="platform-actions">
+            <a href="{% url 'products:shop_homepage' %}" class="platform-btn platform-btn-accent">
+              Shop fragrances
+            </a>
+            <a href="#platform-categories" class="platform-btn platform-btn-secondary">
+              Browse categories
+            </a>
+          </div>
+
+        <div class="platform-stats d-flex align-items-center gap-2 gap-md-4 text-center" aria-label="Store summary">
+            <div>
+                <strong class="d-block fs-6">{{ active_products_count|default:0 }}</strong>
+                <span class="small text-muted">Products</span>
+            </div>
+
+            <div>
+                <strong class="d-block fs-6">{{ categories_count|default:0 }}</strong>
+                <span class="small text-muted">Categories</span>
+            </div>
+
+            <div>
+                <strong class="d-block fs-6">{{ featured_count|default:0 }}</strong>
+                <span class="small text-muted">Featured</span>
+            </div>
+        </div>
+        </div>
+
+        <div class="platform-hero-carousel" data-app-hero-carousel aria-label="Featured products slideshow">
+          {% if products_with_images %}
+            <div class="platform-hero-slides">
+              {% for product_info in products_with_images|slice:':8' %}
+                {% with product=product_info.product images=product_info.images min_price=product_info.min_price max_price=product_info.max_price %}
+                  <article class="platform-hero-slide {% if forloop.first %}is-active{% endif %}" data-app-slide>
+                    <a class="platform-hero-media" href="{% url 'orders:product_detail' product.uuid %}" aria-label="View {{ product.name }}">
+                      {% if product_info.image_url %}
+                        <img src="{{ product_info.image_url }}" alt="{{ product.name }}" />
+                      {% elif images %}
+                        {% for image in images|slice:':1' %}
+                          <img src="{{ image.image.url }}" alt="{{ product.name }}" />
+                        {% endfor %}
+                      {% else %}
+                        <img src="{% static 'images/no-image.png' %}" alt="No image available" />
+                      {% endif %}
+                    </a>
+                    <div class="platform-hero-product">
+                      <span class="platform-eyebrow">Featured fragrance</span>
+                      <h2>{{ product.name }}</h2>
+                      <p>
+                        {% if product.category %}{{ product.category }}{% else %}Premium selection{% endif %}
+                        {% if product.gender %} for {{ product.gender }}{% endif %}
+                      </p>
+                      <strong>
+                        {% if product_info.has_sellable_price %}
+                          UGX {{ min_price|floatformat:'0'|intcomma }}{% if min_price != max_price %} - {{ max_price|floatformat:'0'|intcomma }}{% endif %}
+                        {% else %}
+                          Price not available
+                        {% endif %}
+                      </strong>
+                      <a class="platform-btn platform-btn-accent" href="{% url 'orders:product_detail' product.uuid %}">View product</a>
+                    </div>
+                  </article>
+                {% endwith %}
+              {% endfor %}
+            </div>
+            <button class="platform-hero-arrow platform-hero-arrow-prev" type="button" data-app-prev aria-label="Show previous featured product">
+              <i class="mdi mdi-chevron-left" aria-hidden="true"></i>
+            </button>
+            <button class="platform-hero-arrow platform-hero-arrow-next" type="button" data-app-next aria-label="Show next featured product">
+              <i class="mdi mdi-chevron-right" aria-hidden="true"></i>
+            </button>
+            <div class="platform-hero-dots" aria-label="Featured product slides">
+              {% for product_info in products_with_images|slice:':8' %}
+                <button class="platform-hero-dot {% if forloop.first %}is-active{% endif %}" type="button" data-app-dot="{{ forloop.counter0 }}" aria-label="Show slide {{ forloop.counter }}" {% if forloop.first %}aria-current="true"{% endif %}></button>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="platform-empty-panel">Featured products will appear here once available.</div>
+          {% endif %}
+        </div>
+      </section>
+
+      <section class="platform-panel platform-category-panel" id="platform-categories">
+        <div class="platform-section-heading">
+          <div>
+            <h2>Shop by category</h2>
+            <p>Find a fragrance for every mood and occasion.</p>
+          </div>
+
+          <a href="{% url 'products:shop_homepage' %}">Shop all fragrances →</a>
+        </div>
+
+        {% if categories %}
+          <div class="platform-category-scroll" data-category-scroll aria-label="Product categories">
+            {% for category in categories %}
+              <a class="platform-category-card" href="{% url 'products:shop_homepage' %}?category={{ category.id }}">
+                <span class="platform-category-media">
+                  {% if category.image_url %}
+                    <img src="{{ category.image_url }}" alt="{{ category.name }}" />
+                  {% else %}
+                    <i class="mdi mdi-spray-bottle" aria-hidden="true"></i>
+                  {% endif %}
+                </span>
+                <span class="platform-category-copy">
+                  <strong>{{ category.name }}</strong>
+                  {% if category.active_product_count %}
+                    <small>{{ category.active_product_count }} product{{ category.active_product_count|pluralize }}</small>
+                  {% else %}
+                    <small>Browse collection</small>
+                  {% endif %}
+                </span>
+              </a>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="platform-muted">Categories will appear here once available.</p>
+        {% endif %}
+      </section>
+
+      <section class="platform-panel platform-featured-panel" data-featured-card>
+        <div class="platform-section-heading">
+            <div>
+              <span class="platform-eyebrow">Handpicked</span>
+              <h2>Featured Fragrances</h2>
+            </div>
+          <a href="{% url 'products:shop_homepage' %}">See more</a>
+        </div>
+
+        {% if products_with_images %}
+          <div class="platform-product-scroll">
+            {% for product_info in products_with_images|slice:':12' %}
+              {% include 'partials/home_product_tile.html' with product_info=product_info %}
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="platform-muted">No featured products available yet.</p>
+        {% endif %}
+      </section>
+
+      <section class="platform-panel">
+        <div class="platform-section-heading">
+          <div>
+            <span class="platform-eyebrow">Fresh picks</span>
+            <h2>New Arrivals</h2>
+          </div>
+          <a href="{% url 'products:shop_homepage' %}">View all</a>
+        </div>
+
+        {% if new_arrivals %}
+          <div class="platform-product-grid">
+            {% for product_info in new_arrivals %}
+              {% include 'partials/home_product_tile.html' with product_info=product_info grid=True %}
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="platform-muted">Products will appear here once available.</p>
+        {% endif %}
+      </section>
+
+      <section class="platform-service-grid">
+        <div class="platform-service-card">
+          <h3><i class="mdi mdi-truck-fast-outline" aria-hidden="true"></i> Fast delivery</h3>
+          <p>Reliable delivery from order to doorstep.</p>
+        </div>
+
+        <div class="platform-service-card">
+          <h3><i class="mdi mdi-shield-check-outline" aria-hidden="true"></i> Secure checkout</h3>
+          <p>A simple and safe purchase flow for every order.</p>
+        </div>
+
+        <div class="platform-service-card platform-service-cta">
+          <div>
+            <h3>Need more?</h3>
+            <p>Browse the full catalog and discover more fragrances for your routine.</p>
+          </div>
+          <a href="{% url 'products:shop_homepage' %}" class="platform-btn platform-btn-accent">Explore products</a>
+        </div>
+      </section>
+
+      <section class="platform-community-grid">
+        <div class="platform-panel">
+          <div class="platform-section-heading">
+            <div>
+              <span class="platform-eyebrow">Testimonials</span>
+              <h2>Customer voices</h2>
+            </div>
+            <button class="platform-link-button" type="button" data-toggle="modal" data-target="#addTestimonialModal" data-bs-toggle="modal" data-bs-target="#addTestimonialModal">
+              Share yours
+            </button>
+          </div>
+
+          {% if testimonials %}
+            <div id="testimonial-carousel" class="carousel slide" data-ride="carousel" data-bs-ride="carousel">
+              <div class="carousel-inner">
+                {% for testimonial in testimonials %}
+                  <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                    <blockquote class="platform-testimonial">
+                      <p>&ldquo;{{ testimonial.text }}&rdquo;</p>
+                      <footer>{{ testimonial.author }}</footer>
+                    </blockquote>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% else %}
+            <p class="platform-muted">Testimonials will appear here once approved.</p>
+          {% endif %}
+        </div>
+
+        <div class="platform-panel platform-newsletter-panel">
+          <div class="platform-section-heading">
+            <div>
+              <span class="platform-eyebrow">Updates</span>
+              <h2>Newsletter</h2>
+            </div>
+          </div>
+
+          <p class="platform-muted">Subscribe for exclusive offers and fragrance updates.</p>
+
+          <form class="platform-newsletter" method="POST" action="{% url 'users-home' %}" data-newsletter-form>
+            {% csrf_token %}
+            <input type="hidden" name="submit_newsletter" value="1">
+            {{ newsletter_form.email }}
+            <button class="platform-btn platform-btn-accent" type="submit">
+              Subscribe
+            </button>
+            <label class="platform-consent">
+              {{ newsletter_form.consent }}
+              <span>I agree to receive emails.</span>
+            </label>
+            {% for error in newsletter_form.email.errors %}
+              <div class="invalid-feedback d-block">{{ error }}</div>
+            {% endfor %}
+            {% for error in newsletter_form.consent.errors %}
+              <div class="invalid-feedback d-block">{{ error }}</div>
+            {% endfor %}
+          </form>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal fade" id="addTestimonialModal" tabindex="-1" aria-labelledby="addTestimonialModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content platform-modal">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addTestimonialModalLabel">Share your testimonial</h5>
+          <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <form method="POST" action="{% url 'users-home' %}">
+            {% csrf_token %}
+            <div class="form-group mb-3">
+              <label for="{{ testimonial_form.text.id_for_label }}">Your testimonial</label>
+              {{ testimonial_form.text }}
+            </div>
+            <div class="form-group mb-3">
+              <label for="{{ testimonial_form.author.id_for_label }}">Your name</label>
+              {{ testimonial_form.author }}
+            </div>
+            <button type="submit" class="platform-btn platform-btn-accent w-100">Submit</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <audio id="welcome-audio" src="{% static 'audio/welcome.mp3' %}" preload="auto"></audio>
+  <script>
+    (function () {
+      document.querySelectorAll('[data-scroll-target]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          var target = document.querySelector(button.getAttribute('data-scroll-target'));
+          if (!target) return;
+          var direction = parseInt(button.getAttribute('data-scroll-direction'), 10) || 1;
+          target.scrollBy({ left: direction * Math.round(target.clientWidth * 0.8), behavior: 'smooth' });
+        });
+      });
+    })();
+  </script>
+  <script src="{% static 'js/welcome.js' %}?v=2"></script>
+  <script src="{% static 'js/newsletter.js' %}?v=1"></script>
+{% endblock %}

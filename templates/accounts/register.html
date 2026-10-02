@@ -1,0 +1,17 @@
+{% extends 'accounts/base.html' %}{% load static %}
+{% block title %}Create account | {{ branding.site_name }}{% endblock %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/account_forms.css' %}?v=1"><script src="{% static 'js/account_forms.js' %}?v=1" defer></script>{% endblock %}
+{% block content %}
+<main class="account-page"><div class="account-layout">
+<section class="account-story"><span class="account-kicker">Join {{ branding.site_name }}</span><h1>A little more personal.<br>A lot easier to shop.</h1><p>Create your account to save your favourite fragrances and make your next checkout easier.</p><ul class="account-benefits"><li><i class="mdi mdi-heart-outline" aria-hidden="true"></i>Save fragrances you love</li><li><i class="mdi mdi-package-variant-closed" aria-hidden="true"></i>View your order history</li><li><i class="mdi mdi-map-marker-outline" aria-hidden="true"></i>Keep delivery addresses handy</li></ul><a class="account-back" href="{% url 'products:shop_homepage' %}">← Continue shopping</a></section>
+<section class="account-card" aria-labelledby="registerTitle"><header><h2 id="registerTitle">Create your account</h2><p>Tell us a little about yourself. Phone numbers are optional.</p></header>
+{% if form.non_field_errors %}<div class="account-alert" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+<form method="post" class="account-form">{% csrf_token %}{% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+<div class="account-grid">
+{% include 'accounts/_partials/form_field.html' with field=form.first_name %}{% include 'accounts/_partials/form_field.html' with field=form.last_name %}
+{% include 'accounts/_partials/form_field.html' with field=form.username %}{% include 'accounts/_partials/form_field.html' with field=form.email %}
+{% include 'accounts/_partials/form_field.html' with field=form.password1 %}{% include 'accounts/_partials/form_field.html' with field=form.password2 %}
+{% include 'accounts/_partials/form_field.html' with field=form.mobile %}{% include 'accounts/_partials/form_field.html' with field=form.tel %}
+</div><button type="submit" class="account-primary">Create account</button></form>
+<div class="account-footer">Already have an account? <a href="{% url 'login' %}{% if next %}?next={{ next|urlencode }}{% endif %}">Sign in</a></div></section>
+</div></main>{% endblock %}

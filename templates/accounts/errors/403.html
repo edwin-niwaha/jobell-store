@@ -1,0 +1,16 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}
+  403 Forbidden
+{% endblock %}
+
+{% block content %}
+  <section class="platform-info-page platform-centered-page">
+    <div class="platform-info-panel platform-status-panel">
+      <span class="platform-status-icon platform-status-warning"><i class="mdi mdi-shield-alert-outline"></i></span>
+      <h1>403</h1>
+      <p>You do not have permission to access this page.</p>
+      <a href="{% url 'users-home' %}" class="platform-page-button">Go to home</a>
+    </div>
+  </section>
+{% endblock %}

@@ -1,0 +1,958 @@
+import json
+import logging
+from django.conf import settings
+from django.http import JsonResponse
+from decimal import Decimal
+from datetime import date, timedelta, datetime
+from django.utils import timezone
+from django.db import IntegrityError, transaction
+from django.db.models.functions import TruncMonth
+from django.db.models.functions import ExtractYear
+from django.contrib.auth.decorators import login_required
+from django.db.models import Sum, FloatField, F, Q, Count
+from django.db.models.functions import Coalesce
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.core.paginator import Paginator, EmptyPage
+
+from apps.products.models import Product, Category, Review
+from apps.products.selectors import active_products_queryset, build_storefront_cards
+from apps.sales.models import Sale
+from apps.orders.models import Cart, CartItem, Order, Wishlist
+from apps.finance.models import ChartOfAccounts, Transaction, FinancialPeriod
+
+
+from .models import Testimonial, Subscriber
+from .forms import TestimonialForm, NewsletterForm, EmailForm
+from .notifications import queue_bulk_newsletter_email, queue_newsletter_subscription_emails
+from apps.products.forms import ProductFilterForm
+
+from apps.authentication.decorators import (
+    admin_or_manager_or_staff_required,
+)
+
+from .utils import (
+    get_top_selling_products,
+)
+
+logger = logging.getLogger(__name__)
+
+# =================================== Home User view  ===================================
+def index(request):
+    # Initialize the filter form
+    form = ProductFilterForm(request.GET)
+
+    active_products = active_products_queryset().order_by(
+        "-is_featured", "-created_at", "name"
+    )
+    categories = list(
+        Category.objects.filter(is_active=True)
+        .annotate(
+            active_product_count=Count(
+                "products",
+                filter=Q(products__status="ACTIVE"),
+                distinct=True,
+            )
+        )
+        .order_by("name")
+    )
+    featured_count = active_products.filter(is_featured=True).count()
+
+    # Prefer featured products on the landing page, but fall back to active products
+    # so a new store still has a useful homepage before merchandising is configured.
+    products = active_products.filter(is_featured=True)
+    if not products.exists():
+        products = active_products
+
+    # Initialize counts for cart, wishlist, and orders
+    cart_count = 0
+    wishlist_count = 0
+    order_count = 0
+
+    # Fetch the user's cart and calculate the cart count only if the user is authenticated
+    if request.user.is_authenticated:
+        customer = getattr(request.user, "customer", None)
+
+        # Get or create the user's cart
+        cart, _ = Cart.objects.get_or_create(user=request.user)
+        cart_count = (
+            CartItem.objects.filter(cart=cart).aggregate(
+                total_quantity=Sum("quantity")
+            )["total_quantity"]
+            or 0
+        )
+
+        # Fetch the user's wishlist count
+        wishlist_count = Wishlist.objects.filter(user=request.user).count()
+
+        # Fetch the user's order count, ensuring a valid customer instance
+        order_count = Order.objects.filter(customer=customer).count() if customer else 0
+
+    # Apply filters if the form is valid
+    if form.is_valid():
+        category_filter = form.cleaned_data.get("category")
+        min_price = form.cleaned_data.get("min_price")
+        max_price = form.cleaned_data.get("max_price")
+        search_query = form.cleaned_data.get("search")
+
+        # Filter by category if selected
+        if category_filter:
+            products = products.filter(category=category_filter)
+
+        # Filter by price range if provided
+        if min_price is not None and max_price is not None:
+            products = products.filter(
+                Q(productvolume__price__gte=min_price)
+                | Q(
+                    productvolume__price__isnull=True,
+                    productvolume__volume__price__gte=min_price,
+                ),
+                Q(productvolume__price__lte=max_price)
+                | Q(
+                    productvolume__price__isnull=True,
+                    productvolume__volume__price__lte=max_price,
+                ),
+            ).distinct()
+        elif min_price is not None:
+            products = products.filter(
+                Q(productvolume__price__gte=min_price)
+                | Q(
+                    productvolume__price__isnull=True,
+                    productvolume__volume__price__gte=min_price,
+                )
+            ).distinct()
+        elif max_price is not None:
+            products = products.filter(
+                Q(productvolume__price__lte=max_price)
+                | Q(
+                    productvolume__price__isnull=True,
+                    productvolume__volume__price__lte=max_price,
+                )
+            ).distinct()
+
+        # Filter by search query if provided
+        if search_query:
+            products = products.filter(name__icontains=search_query)
+
+    # Pagination setup
+    paginator = Paginator(products, 16)
+    page_number = request.GET.get("page", 1)
+
+    try:
+        page_number = int(page_number)
+        if page_number < 1:
+            page_number = 1
+    except ValueError:
+        page_number = 1
+
+    try:
+        page_obj = paginator.page(page_number)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
+
+    products_with_images = build_storefront_cards(page_obj)
+    new_arrivals = build_storefront_cards(active_products.order_by("-created_at", "-pk")[:8])
+
+    # Handle testimonial and nesletter forms submission
+    testimonial_form = TestimonialForm(request.POST or None)
+    newsletter_form = NewsletterForm(request.POST or None)
+
+    is_newsletter_submission = (
+        request.method == "POST"
+        and (
+            "submit_newsletter" in request.POST
+            or ("email" in request.POST and "consent" in request.POST)
+        )
+    )
+
+    if request.method == "POST" and not is_newsletter_submission and testimonial_form.is_valid():
+        testimonial_form.save()
+        messages.success(
+            request,
+            "Your testimonial has been submitted successfully!",
+            extra_tags="bg-success",
+        )
+        return redirect("users-home")
+
+    # Handle Newsletter Form Submission
+    if is_newsletter_submission and newsletter_form.is_valid():
+        try:
+            subscriber = newsletter_form.save()
+        except IntegrityError:
+            logger.info(
+                "Duplicate newsletter subscription rejected for %s.",
+                newsletter_form.cleaned_data.get("email"),
+            )
+            newsletter_form.add_error("email", "This email is already subscribed.")
+        else:
+            transaction.on_commit(
+                lambda subscriber_id=subscriber.id: queue_newsletter_subscription_emails(
+                    subscriber_id
+                )
+            )
+            logger.info(
+                "Newsletter subscriber saved and email task scheduled: %s",
+                subscriber.email,
+            )
+            messages.success(
+                request,
+                "Thank you for subscribing to our newsletter!",
+                extra_tags="bg-success",
+            )
+            return redirect("users-home")
+
+    elif is_newsletter_submission:
+        logger.info("Newsletter subscription rejected: %s", newsletter_form.errors.as_json())
+
+    if (
+        request.method == "POST"
+        and not is_newsletter_submission
+        and not testimonial_form.is_valid()
+    ):
+        logger.info("Testimonial submission rejected: %s", testimonial_form.errors.as_json())
+
+    # Fetch all testimonials to display in the template
+    testimonials = Testimonial.objects.filter(approved=True)
+
+    # Pass the form, filtered products, and pagination to the template
+    return render(
+        request,
+        "index.html",
+        {
+            "form": form,
+            "products_with_images": products_with_images,
+            "new_arrivals": new_arrivals,
+            "categories": categories,
+            "active_products_count": active_products.count(),
+            "categories_count": len(categories),
+            "featured_count": featured_count,
+            "user": request.user,
+            "page_obj": page_obj,
+            "cart_count": cart_count,
+            "wishlist_count": wishlist_count,
+            "order_count": order_count,
+            "testimonial_form": testimonial_form,
+            "testimonials": testimonials,
+            "newsletter_form": newsletter_form,
+        },
+    )
+
+
+@login_required
+@admin_or_manager_or_staff_required
+def finance_dashboard(request):
+    def calculate_revenue():
+        """Calculate total revenue from transactions."""
+        try:
+            transaction_filter = {
+                "account__account_type": "revenue",
+                "transaction_type": "credit",
+                "account__is_deleted": False,
+            }
+
+            revenue_transactions = Transaction.objects.filter(**transaction_filter)
+            total_revenue = revenue_transactions.aggregate(total=Sum("amount"))[
+                "total"
+            ] or Decimal("0.00")
+            logger.info(f"Total Revenue (from Transactions): {total_revenue}")
+
+            # Log revenue by account for debugging
+            revenue_categories = (
+                revenue_transactions.values(
+                    "account__account_name", "account__account_number"
+                )
+                .annotate(balance=Sum("amount"))
+                .order_by("account__account_number")
+            )
+            for category in revenue_categories:
+                logger.debug(
+                    f"Revenue Account {category['account__account_name']} ({category['account__account_number']}): {category['balance']}"
+                )
+
+            return total_revenue
+        except Exception as e:
+            logger.error(f"Error calculating revenue: {e}")
+            return Decimal("0.00")
+
+    def calculate_account_totals():
+        """Calculate totals for each account type."""
+        account_types = ["Asset", "Liability", "Revenue", "Expense", "NetIncome"]
+        summary = {}
+        try:
+            # Calculate revenue separately
+            total_revenue = calculate_revenue()
+
+            for account_type in account_types:
+                if account_type == "NetIncome":
+                    continue
+                total = Decimal("0.00")
+                accounts = ChartOfAccounts.objects.filter(
+                    account_type=account_type.lower()
+                )
+                for acc in accounts:
+                    transactions = Transaction.objects.filter(account=acc).aggregate(
+                        debit_sum=Sum("amount", filter=Q(transaction_type="debit")),
+                        credit_sum=Sum("amount", filter=Q(transaction_type="credit")),
+                    )
+                    debit = transactions["debit_sum"] or Decimal("0.00")
+                    credit = transactions["credit_sum"] or Decimal("0.00")
+                    total += (
+                        (debit - credit)
+                        if account_type.lower() in ["asset", "expense"]
+                        else (credit - debit)
+                    )
+                    logger.debug(
+                        f"Account {acc.account_name} ({acc.account_number}): Debit = {debit}, Credit = {credit}, Total = {total}"
+                    )
+                # Use calculated revenue for Revenue account type
+                if account_type == "Revenue":
+                    total = total_revenue
+                summary[account_type] = total
+                logger.info(f"{account_type} Total: {total}")
+
+            # Calculate Net Income
+            summary["NetIncome"] = summary.get(
+                "Revenue", Decimal("0.00")
+            ) - summary.get("Expense", Decimal("0.00"))
+            logger.info(f"Net Income: {summary['NetIncome']}")
+        except Exception as e:
+            logger.error(f"Error in account totals: {e}")
+            summary = {key: Decimal("0.00") for key in account_types}
+        return summary
+
+    # Prepare context
+    context = {
+        "summary": calculate_account_totals(),
+        "recent_transactions": Transaction.objects.select_related(
+            "journal_entry", "account"
+        ).order_by("-journal_entry__transaction_date")[:8],
+    }
+    logger.debug(f"Summary before rendering: {context['summary']}")
+
+    return render(request, "main/fin_dashboard.html", context)
+
+
+@login_required
+@admin_or_manager_or_staff_required
+def get_total_sales_for_period(start_date, end_date):
+    return (
+        Sale.objects.filter(trans_date__range=[start_date, end_date]).aggregate(
+            total_sales=Sum("grand_total")
+        )["total_sales"]
+        or 0
+    )
+
+
+# =================================== The dashboard view ===================================from django.db.models import Sum
+
+
+@login_required
+@admin_or_manager_or_staff_required
+def dashboard(request):
+    today = date.today()
+    year = today.year
+
+    # Helper function to get total sales for a period
+    def get_total_sales_for_period(start_date, end_date):
+        return (
+            Sale.objects.filter(trans_date__range=[start_date, end_date]).aggregate(
+                total_sales=Coalesce(Sum("grand_total"), 0.0)
+            )["total_sales"]
+            or 0
+        )
+
+    # Calculate monthly and annual earnings
+    monthly_earnings = [
+        Sale.objects.filter(trans_date__year=year, trans_date__month=month).aggregate(
+            total=Coalesce(Sum("grand_total"), 0.0)
+        )["total"]
+        for month in range(1, 13)
+    ]
+    monthly_earnings = [float(value or 0) for value in monthly_earnings]
+    annual_earnings = sum(monthly_earnings)
+    avg_month = annual_earnings / 12
+
+    # Get total sales for today, week, and month
+    total_sales_today = get_total_sales_for_period(today, today)
+    total_sales_week = get_total_sales_for_period(
+        today - timedelta(days=today.weekday()), today
+    )
+    total_sales_month = get_total_sales_for_period(today.replace(day=1), today)
+
+    # Get top-selling products using the new method
+    top_products = get_top_selling_products()
+
+    sales_per_year = (
+        Sale.objects.annotate(year=ExtractYear("trans_date"))
+        .values("year")
+        .annotate(total_sales=Sum("grand_total"))
+        .order_by("year")
+    )
+    payment_mix = (
+        Sale.objects.values("payment_method")
+        .annotate(total=Sum("grand_total"))
+        .order_by("-total")
+    )
+
+    # Fetch all sales and prefetch related data
+    sales = Sale.objects.prefetch_related(
+        "items__product_volume__volume", "items__product"
+    )
+
+    # Initialize total profit after sales
+    total_profit_after_sales = Decimal(0)
+
+    # Calculate total profit from all sales
+    for sale in sales:
+        for item in sale.items.all():
+            product = item.product
+            product_volume = item.product_volume
+
+            # Determine volume and price details
+            cost = product_volume.effective_cost if product_volume else 0
+            discounted_price = item.price  # Price directly from SaleDetail
+
+            # Calculate and accumulate profit
+            item_profit = (Decimal(discounted_price) - Decimal(cost)) * Decimal(
+                item.quantity
+            )
+            total_profit_after_sales += item_profit
+
+    # total_profit_after_sales now holds the total profit from all sales
+
+    # Total stock from Inventory
+    total_stock = Product.objects.filter(status="ACTIVE").aggregate(
+        total=Coalesce(Sum("inventory__quantity"), 0)
+    )["total"]
+
+    context = {
+        "products": Product.objects.filter(status="ACTIVE").count(),
+        "total_stock": total_stock,
+        "categories": Category.objects.count(),
+        "annual_earnings": annual_earnings,
+        "monthly_earnings": json.dumps(monthly_earnings),
+        "avg_month": avg_month,
+        "total_sales_today": total_sales_today,
+        "total_sales_week": total_sales_week,
+        "total_sales_month": total_sales_month,
+        "top_products": top_products,
+        "total_profit_after_sales": total_profit_after_sales,
+        "sales_count": Sale.objects.count(),
+        "avg_sale_value": annual_earnings / max(Sale.objects.filter(trans_date__year=year).count(), 1),
+        "current_year": year,
+        "dashboard_chart_data": {
+            "monthly": {
+                "labels": [
+                    "Jan",
+                    "Feb",
+                    "Mar",
+                    "Apr",
+                    "May",
+                    "Jun",
+                    "Jul",
+                    "Aug",
+                    "Sep",
+                    "Oct",
+                    "Nov",
+                    "Dec",
+                ],
+                "sales": monthly_earnings,
+            },
+            "annual": {
+                "labels": [item["year"] for item in sales_per_year],
+                "sales": [float(item["total_sales"] or 0) for item in sales_per_year],
+            },
+            "payments": {
+                "labels": [
+                    item["payment_method"].replace("_", " ").title()
+                    for item in payment_mix
+                ],
+                "sales": [float(item["total"] or 0) for item in payment_mix],
+            },
+            "topProducts": {
+                "labels": [product.name for product in top_products[:6]],
+                "quantity": [
+                    int(product.total_quantity_sold or 0)
+                    for product in top_products[:6]
+                ],
+                "sales": [
+                    float(product.total_sales_value or 0)
+                    for product in top_products[:6]
+                ],
+            },
+        },
+    }
+
+    return render(request, "main/dashboard.html", context)
+
+
+# =================================== Monthly Sales graph ===================================
+
+
+@login_required
+@admin_or_manager_or_staff_required
+def monthly_earnings_view(request):
+    today = date.today()
+    year = today.year
+    monthly_earnings = []
+
+    for month in range(1, 13):
+        earning = (
+            Sale.objects.filter(trans_date__year=year, trans_date__month=month)
+            .aggregate(
+                total_variable=Coalesce(
+                    Sum(F("grand_total")), 0.0, output_field=FloatField()
+                )
+            )
+            .get("total_variable")
+        )
+        monthly_earnings.append(earning)
+
+    return JsonResponse(
+        {
+            "labels": [
+                "Jan",
+                "Feb",
+                "Mar",
+                "Apr",
+                "May",
+                "Jun",
+                "Jul",
+                "Aug",
+                "Sep",
+                "Oct",
+                "Nov",
+                "Dec",
+            ],
+            "data": monthly_earnings,
+        }
+    )
+
+
+# =================================== Annual Sales graph ===================================
+@login_required
+@admin_or_manager_or_staff_required
+def sales_data_api(request):
+    # Query to get total sales grouped by year
+    sales_per_year = (
+        Sale.objects.annotate(year=ExtractYear("trans_date"))
+        .values("year")
+        .annotate(total_sales=Sum("grand_total"))
+        .order_by("year")
+    )
+
+    # Prepare the data as a dictionary
+    data = {
+        "years": [item["year"] for item in sales_per_year],
+        "total_sales": [item["total_sales"] for item in sales_per_year],
+    }
+
+    # Return the data as JSON
+    return JsonResponse(data)
+
+
+# =================================== Finance graphs ===================================
+# 1. Bar Chart: Transaction Totals by Account Type
+@login_required
+@admin_or_manager_or_staff_required
+def transactions_by_account_type(request):
+    data = (
+        Transaction.objects.select_related("account")
+        .values("account__account_type")
+        .annotate(total_amount=Sum("amount"))
+        .order_by("account__account_type")
+    )
+    labels = [item["account__account_type"].capitalize() for item in data]
+    amounts = [float(item["total_amount"]) for item in data]
+    return JsonResponse({"labels": labels, "amounts": amounts})
+
+
+# 2. Pie Chart: Financial Period Status Distribution
+@login_required
+@admin_or_manager_or_staff_required
+def financial_period_status(request):
+    data = (
+        FinancialPeriod.objects.values("status")
+        .annotate(count=Count("id"))
+        .order_by("status")
+    )
+    labels = [item["status"].capitalize() for item in data]
+    counts = [item["count"] for item in data]
+    return JsonResponse({"labels": labels, "counts": counts})
+
+
+# 3. Line Chart: Transaction Trends Over Time
+@login_required
+@admin_or_manager_or_staff_required
+def transaction_trends(request):
+    current_year = timezone.now().year  # 2025
+    start_date = datetime(current_year, 1, 1).date()
+    end_date = datetime(current_year, 12, 31).date()
+
+    # Aggregate transactions by month
+    data = (
+        Transaction.objects.select_related("journal_entry")
+        .filter(journal_entry__transaction_date__range=[start_date, end_date])
+        .annotate(month=TruncMonth("journal_entry__transaction_date"))
+        .values("month")
+        .annotate(total_amount=Sum("amount"))
+        .order_by("month")
+    )
+
+    # Define all months (Jan to Dec)
+    months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+    ]
+    amounts = [0] * 12
+
+    # Map data to months
+    for item in data:
+        month_index = item["month"].month - 1  # 1-based to 0-based
+        amounts[month_index] = float(item["total_amount"])
+
+    return JsonResponse({"labels": months, "amounts": amounts})
+
+
+# 4. Donut Chart: Top Accounts by Transaction Volume
+@login_required
+@admin_or_manager_or_staff_required
+def top_accounts(request):
+    data = (
+        Transaction.objects.select_related("account")
+        .values("account__account_name")
+        .annotate(total_amount=Sum("amount"))
+        .order_by("-total_amount")[:5]
+    )
+    labels = [item["account__account_name"] for item in data]
+    amounts = [float(item["total_amount"]) for item in data]
+    return JsonResponse({"labels": labels, "amounts": amounts})
+
+
+# 5. Income Vs Expenses
+
+
+@login_required
+@admin_or_manager_or_staff_required
+def income_vs_expenses(request):
+    current_year = timezone.now().year  # 2025
+    start_date = datetime(current_year, 1, 1).date()
+    end_date = datetime(current_year, 12, 31).date()
+
+    # Aggregate income by month
+    income_data = (
+        Transaction.objects.select_related("journal_entry")
+        .filter(
+            journal_entry__transaction_date__range=[start_date, end_date],
+            account__account_type="revenue",
+        )
+        .annotate(month=TruncMonth("journal_entry__transaction_date"))
+        .values("month")
+        .annotate(total_amount=Sum("amount"))
+        .order_by("month")
+    )
+
+    # Aggregate expenses by month
+    expense_data = (
+        Transaction.objects.select_related("journal_entry")
+        .filter(
+            journal_entry__transaction_date__range=[start_date, end_date],
+            account__account_type="expense",
+        )
+        .annotate(month=TruncMonth("journal_entry__transaction_date"))
+        .values("month")
+        .annotate(total_amount=Sum("amount"))
+        .order_by("month")
+    )
+
+    # Define all months (Jan to Dec)
+    months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+    ]
+    income_amounts = [0] * 12
+    expense_amounts = [0] * 12
+
+    # Map income data to months
+    for item in income_data:
+        month_index = item["month"].month - 1  # 1-based to 0-based
+        income_amounts[month_index] = float(item["total_amount"])
+
+    # Map expense data to months
+    for item in expense_data:
+        month_index = item["month"].month - 1  # 1-based to 0-based
+        expense_amounts[month_index] = float(item["total_amount"])
+
+    return JsonResponse(
+        {"labels": months, "income": income_amounts, "expenses": expense_amounts}
+    )
+
+
+# =================================== testimonials_view ===================================
+@login_required
+@admin_or_manager_or_staff_required
+def testimonials_view(request):
+    if request.method == "POST":
+        # Handle approval or rejection of a testimonial
+        testimonial_id = request.POST.get("testimonial_id")
+        action = request.POST.get("action")
+
+        testimonial = get_object_or_404(Testimonial, id=testimonial_id)
+        if action in {"approve", "reject"}:
+            if action == "approve":
+                testimonial.approved = True
+                message = "Testimonial approved."
+            else:
+                testimonial.approved = False
+                message = "Testimonial moved back to pending."
+            testimonial.save()
+            messages.success(request, message, extra_tags="bg-success")
+        else:
+            messages.warning(request, "No testimonial action was taken.")
+
+        return redirect("testimonials")  # Redirect to the same page after action
+
+    status = request.GET.get("status", "").strip()
+    search_query = request.GET.get("search", "").strip()
+    testimonials_list = Testimonial.objects.all()
+
+    if status == "approved":
+        testimonials_list = testimonials_list.filter(approved=True)
+    elif status == "pending":
+        testimonials_list = testimonials_list.filter(approved=False)
+
+    if search_query:
+        testimonials_list = testimonials_list.filter(
+            Q(author__icontains=search_query) | Q(text__icontains=search_query)
+        )
+
+    paginator = Paginator(testimonials_list, 20)  # Show 20 testimonials per page
+    page_number = request.GET.get("page")
+    testimonials = paginator.get_page(page_number)
+
+    table_title = "Testimonials Management"
+    return render(
+        request,
+        "main/testimonials.html",
+        {
+            "testimonials": testimonials,
+            "table_title": table_title,
+            "search_query": search_query,
+            "status": status,
+            "approved_count": Testimonial.objects.filter(approved=True).count(),
+            "pending_count": Testimonial.objects.filter(approved=False).count(),
+        },
+    )
+
+
+# =================================== update_testimonial ===================================
+@login_required
+@admin_or_manager_or_staff_required
+def testimonial_update(request, pk):
+    testimonial = get_object_or_404(Testimonial, pk=pk)
+
+    if request.method == "POST":
+        form = TestimonialForm(request.POST, instance=testimonial)
+        if form.is_valid():
+            form.save()
+            return redirect("testimonials")  # Redirect to the testimonials list page
+    else:
+        form = TestimonialForm(instance=testimonial)
+
+        # Add 'form_title' to the context
+    context = {
+        "form": form,
+        "testimonial": testimonial,
+        "form_title": "Update Testimonial",  # Title for the form
+    }
+
+    return render(request, "main/testimonial_update.html", context)
+
+
+# =================================== delete_testimonial ===================================
+@login_required
+@admin_or_manager_or_staff_required
+def testimonial_delete(request, pk):
+    if request.method != "POST":
+        messages.warning(request, "Use the delete button to remove a testimonial.")
+        return redirect("testimonials")
+
+    testimonial = get_object_or_404(Testimonial, pk=pk)
+
+    try:
+        testimonial.delete()
+        messages.success(
+            request, "Testimonial deleted successfully.", extra_tags="bg-danger"
+        )
+    except Exception:
+        logger.exception("Error deleting testimonial %s", pk)
+        messages.error(
+            request, "There was an error during the deletion!", extra_tags="bg-danger"
+        )
+
+    return redirect("testimonials")
+
+
+# =================================== Subscribers List ===================================
+@login_required
+@admin_or_manager_or_staff_required
+def subscriber_list_view(request):
+    search_query = request.GET.get("search", "").strip()
+    consent = request.GET.get("consent", "").strip()
+    subscriber_list = Subscriber.objects.all()
+
+    if consent == "yes":
+        subscriber_list = subscriber_list.filter(consent=True)
+    elif consent == "no":
+        subscriber_list = subscriber_list.filter(consent=False)
+
+    if search_query:
+        subscriber_list = subscriber_list.filter(email__icontains=search_query)
+
+    # Pagination logic
+    paginator = Paginator(subscriber_list, 50)
+    page_number = request.GET.get("page")
+    subscribers = paginator.get_page(page_number)
+
+    context = {
+        "subscribers": subscribers,
+        "table_title": "Subscribers List",
+        "search_query": search_query,
+        "consent": consent,
+        "subscriber_total": Subscriber.objects.count(),
+        "consented_count": Subscriber.objects.filter(consent=True).count(),
+    }
+    return render(request, "main/subscriber.html", context)
+
+
+# =================================== delete subscribers ===================================
+
+
+@login_required
+@admin_or_manager_or_staff_required
+def delete_subscriber_view(request, subscriber_id):
+    if request.method != "POST":
+        messages.warning(request, "Use the delete button to remove a subscriber.")
+        return redirect("subscriber_list")
+
+    subscriber = get_object_or_404(Subscriber, id=subscriber_id)
+    subscriber.delete()
+    messages.success(
+        request, "Subscriber deleted successfully.", extra_tags="bg-danger"
+    )
+    return redirect("subscriber_list")
+
+
+# =================================== Send Email ===================================
+@login_required
+@admin_or_manager_or_staff_required
+def send_bulk_email_view(request):
+    table_title = "Subscriber Email List"
+
+    if request.method == "POST":
+        form = EmailForm(request.POST)
+        if form.is_valid():
+            subject = form.cleaned_data["subject"]
+            message = form.cleaned_data["message"]
+
+            # Fetch all subscriber emails
+            recipients = list(
+                Subscriber.objects.filter(consent=True).values_list("email", flat=True)
+            )
+
+            if recipients:
+                transaction.on_commit(
+                    lambda: queue_bulk_newsletter_email(subject, message, recipients)
+                )
+                messages.success(
+                    request,
+                    "Email queued successfully for all consenting subscribers.",
+                    extra_tags="bg-success",
+                )
+            else:
+                messages.warning(request, "No consenting subscribers to send email to.")
+            return redirect("send_bulk_email")  # Prevent resubmission
+
+    else:
+        form = EmailForm()
+
+    subscribers = Subscriber.objects.all().order_by("id")
+    paginator = Paginator(subscribers, 10)
+    page_number = request.GET.get("page")
+    subscribers = paginator.get_page(page_number)
+
+    context = {
+        "form": form,
+        "table_title": table_title,
+        "subscribers": subscribers,
+    }
+
+    return render(request, "main/send_bulk_email.html", context)
+
+
+# =================================== Reviews ===================================
+@login_required
+@admin_or_manager_or_staff_required
+def reviews_list_view(request):
+    reviews = Review.objects.select_related("product", "user").all()
+    if request.method == "POST":
+        review_id = request.POST.get("review_id")
+        action = request.POST.get("action")
+        review = get_object_or_404(Review, id=review_id)
+
+        if action == "verify" and not review.is_verified:
+            review.is_verified = True
+            review.save()
+            messages.success(
+                request,
+                f"Review for {review.product.name} has been verified.",
+                extra_tags="bg-success",
+            )
+
+        return redirect("reviews_list")  # Redirect to the reviews list page
+
+    return render(request, "main/reviews_list.html", {"reviews": reviews})
+
+
+@login_required
+@admin_or_manager_or_staff_required
+def toggle_is_verified(request, review_id):
+    # Fetch the review object based on the given ID
+    review = get_object_or_404(Review, id=review_id)
+
+    # Toggle the 'is_verified' status if it's not already verified
+    if not review.is_verified:
+        review.is_verified = True
+        review.save()
+
+    # Return a JSON response with the updated status
+    return JsonResponse({"is_verified": review.is_verified})
+
+
+@login_required
+@admin_or_manager_or_staff_required
+def delete_review(request, review_id):
+    review = get_object_or_404(Review, id=review_id)
+    review.delete()
+    messages.success(request, "Review deleted successfully.", extra_tags="bg-danger")
+    return redirect("reviews_list")

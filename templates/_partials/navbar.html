@@ -1,0 +1,433 @@
+{% load static %}
+
+<style>
+  :root {
+    --premium-gold: #b8860b;
+    --premium-gold-dark: #8f6508;
+    --navbar-black: #050505;
+  }
+
+  .platform-navbar {
+    background: var(--navbar-black);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, .18);
+    z-index: 1030;
+  }
+
+  .platform-navbar .navbar-menu-wrapper {
+    width: 100%;
+    min-height: 64px;
+    padding: 0 1rem;
+  }
+
+  .platform-navbar .nav-link {
+    color: #fff;
+    position: relative;
+  }
+
+  .platform-navbar .nav-link:hover,
+  .platform-navbar .nav-link:focus {
+    color: var(--premium-gold);
+  }
+
+  .platform-navbar .mdi {
+    font-size: 22px;
+  }
+
+  .platform-navbar .count {
+    position: absolute;
+    top: 8px;
+    right: 4px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: var(--premium-gold);
+    color: #fff;
+    font-size: 11px;
+    line-height: 18px;
+    text-align: center;
+    font-weight: 700;
+  }
+
+  .platform-navbar .dropdown-menu {
+    border: 0;
+    border-radius: 14px;
+    margin-top: 12px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, .18);
+    overflow: hidden;
+  }
+
+  .platform-dropdown-menu {
+    width: 340px;
+    max-height: 420px;
+    overflow-y: auto;
+  }
+
+  .platform-dropdown-title {
+    background: #111;
+    color: var(--premium-gold);
+    font-weight: 800;
+    padding: 14px 18px;
+    margin: 0;
+  }
+
+  .platform-navbar .dropdown-item {
+    white-space: normal;
+    padding: 12px 18px;
+  }
+
+  .platform-navbar .dropdown-item:hover {
+    background: #fff8e6;
+  }
+
+  .platform-navbar .badge-gold {
+    background: var(--premium-gold);
+    color: #fff;
+  }
+
+  .platform-navbar .nav-profile-img {
+    width: 36px;
+    height: 36px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid var(--premium-gold);
+  }
+
+  .platform-navbar .profile-name {
+    color: #fff;
+    font-weight: 700;
+  }
+
+  .platform-navbar .profile-name small {
+    color: #d6d6d6 !important;
+  }
+
+  .platform-navbar .dropdown-toggle::after {
+    display: none;
+  }
+
+  @media (max-width: 575.98px) {
+    .platform-dropdown-menu {
+      width: 300px;
+    }
+
+    .platform-navbar .profile-name {
+      display: none;
+    }
+  }
+  <style>
+  .profile-dropdown-menu {
+    right: 0 !important;
+    left: auto !important;
+    transform: none !important;
+    min-width: 260px;
+    max-width: calc(100vw - 20px);
+  }
+
+  .navbar-nav-right {
+    margin-left: auto !important;
+    padding-right: 15px;
+  }
+
+  .platform-navbar .navbar-menu-wrapper {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    width: 100%;
+    overflow: visible;
+  }
+
+  .platform-navbar {
+    overflow: visible;
+  }
+
+  .platform-navbar .dropdown-menu {
+    z-index: 3000;
+  }
+
+  @media (min-width: 992px) {
+    .platform-navbar {
+      left: 260px;
+      width: calc(100% - 260px);
+    }
+
+    .sidebar-icon-only .platform-navbar {
+      left: 70px;
+      width: calc(100% - 70px);
+    }
+  }
+
+  @media (max-width: 991.98px) {
+    .platform-navbar {
+      left: 0;
+      width: 100%;
+    }
+
+    .profile-dropdown-menu {
+      position: fixed !important;
+      top: 65px !important;
+      right: 10px !important;
+      left: auto !important;
+    }
+  }
+</style>
+</style>
+
+<nav class="navbar platform-navbar col-lg-12 col-12 p-lg-0 fixed-top d-flex flex-row" data-dashboard-navbar>
+  <div class="navbar-menu-wrapper d-flex align-items-center justify-content-between">
+
+    <a class="navbar-brand brand-logo-mini align-self-center d-lg-none" href="{% url 'dashboard' %}">
+      <img src="{% static 'assets/images/logo-mini.svg' %}" alt="logo">
+    </a>
+
+    <button class="navbar-toggler align-self-center mr-2 text-white" type="button" data-toggle="minimize">
+      <i class="mdi mdi-menu"></i>
+    </button>
+
+    <ul class="navbar-nav flex-row align-items-center">
+
+      <!-- Customer Orders -->
+      <li class="nav-item dropdown mx-1">
+        <a class="nav-link count-indicator dropdown-toggle dashboard-dropdown-toggle"
+           id="orderDropdown"
+           href="#"
+           role="button"
+           aria-haspopup="true"
+           aria-expanded="false">
+          <i class="mdi mdi-cart-outline"></i>
+          {% if pending_orders_count %}
+            <span class="count">{{ pending_orders_count }}</span>
+          {% endif %}
+        </a>
+
+        <div class="dropdown-menu navbar-dropdown preview-list platform-dropdown-menu" aria-labelledby="orderDropdown">
+          <h6 class="platform-dropdown-title">Customer Orders</h6>
+
+          {% if pending_and_out_for_delivery %}
+            {% for order in pending_and_out_for_delivery %}
+              <a class="dropdown-item preview-item" href="{% url 'orders:orders_to_be_processed' %}">
+                <div class="preview-item-content flex-grow">
+                  <span class="badge badge-pill badge-gold">Order</span>
+                    <p class="text-small text-muted mb-0 mt-1">
+                      Order from 
+                      <strong>
+                        {% if order.customer.get_full_name %}
+                          {{ order.customer.get_full_name }}
+                        {% else %}
+                          {{ order.customer }}
+                        {% endif %}
+                      </strong>
+                    </p>
+                  <small class="text-muted">{{ order.created_at|date:'g:i A' }}</small>
+                </div>
+              </a>
+            {% endfor %}
+          {% else %}
+            <p class="dropdown-item text-muted mb-0">No orders available.</p>
+          {% endif %}
+        </div>
+      </li>
+
+      <!-- Low Stock Alerts -->
+      <li class="nav-item dropdown mx-1">
+        <a class="nav-link count-indicator dropdown-toggle dashboard-dropdown-toggle"
+           id="lowStockDropdown"
+           href="#"
+           role="button"
+           aria-haspopup="true"
+           aria-expanded="false">
+          <i class="mdi mdi-cube-outline"></i>
+          {% if low_stock_count %}
+            <span class="count">{{ low_stock_count }}</span>
+          {% endif %}
+        </a>
+
+        <div class="dropdown-menu navbar-dropdown preview-list platform-dropdown-menu" aria-labelledby="lowStockDropdown">
+          <h6 class="platform-dropdown-title">Low Stock Alerts</h6>
+
+          {% if low_stock_products %}
+            {% for product in low_stock_products %}
+              <a class="dropdown-item preview-item" href="{% url 'products:products_list' %}">
+                <div class="preview-item-content flex-grow">
+                  <span class="badge badge-pill badge-warning">Low Stock</span>
+                  <p class="text-small text-muted mb-0 mt-1">
+                    <strong>{{ product.name }}</strong><br>
+                    Current Stock: {{ product.inventory.quantity }}
+                  </p>
+                </div>
+              </a>
+            {% endfor %}
+          {% else %}
+            <p class="dropdown-item text-muted mb-0">No products are currently low on stock.</p>
+          {% endif %}
+        </div>
+      </li>
+
+      <!-- User Feedback -->
+      <li class="nav-item dropdown mx-1">
+        <a class="nav-link count-indicator dropdown-toggle dashboard-dropdown-toggle"
+           id="feedbackDropdown"
+           href="#"
+           role="button"
+           aria-haspopup="true"
+           aria-expanded="false">
+          <i class="mdi mdi-email-outline"></i>
+          {% if feedback_count %}
+            <span class="count">{{ feedback_count }}</span>
+          {% endif %}
+        </a>
+
+        <div class="dropdown-menu navbar-dropdown preview-list platform-dropdown-menu" aria-labelledby="feedbackDropdown">
+          <h6 class="platform-dropdown-title">User Feedback</h6>
+
+          {% if user_feedback %}
+            {% for feedback in user_feedback %}
+              <a class="dropdown-item preview-item" href="{% url 'user_feedback' %}">
+                <div class="preview-item-content flex-grow">
+                  <span class="badge badge-pill badge-gold">Feedback</span>
+                  <p class="text-small text-muted mb-0 mt-1">
+                    Support needed for <strong>{{ feedback.name }}</strong>
+                  </p>
+                  <small class="text-muted">{{ feedback.created_at|date:'g:i A' }}</small>
+                </div>
+              </a>
+            {% endfor %}
+          {% else %}
+            <p class="dropdown-item text-muted mb-0">No feedback available.</p>
+          {% endif %}
+        </div>
+      </li>
+    </ul>
+
+    <ul class="navbar-nav navbar-nav-right flex-row align-items-center ml-lg-auto">
+
+      <li class="nav-item d-none d-xl-flex border-0">
+        <a href="#" onclick="toggleFullScreen(); return false;" class="nav-link">
+          <i class="mdi mdi-crop-free"></i>
+        </a>
+      </li>
+
+      <!-- Profile -->
+      <li class="nav-item nav-profile dropdown border-0">
+        <a class="nav-link dropdown-toggle dashboard-dropdown-toggle d-flex align-items-center"
+           id="profileDropdown"
+           href="#"
+           role="button"
+           aria-haspopup="true"
+           aria-expanded="false">
+          {% if user.profile.avatar %}
+            <img class="nav-profile-img mr-2" src="{{ user.profile.avatar.url }}" alt="Profile">
+          {% else %}
+            <img class="nav-profile-img mr-2" src="{% static 'assets/images/faces/face1.jpg' %}" alt="Profile">
+          {% endif %}
+
+          <span class="profile-name">
+            {{ user.username|title|default:'Guest' }}
+            {% if user.profile.role %}
+              <small>({{ user.profile.get_role_display }})</small>
+            {% endif %}
+          </span>
+        </a>
+
+        <div class="dropdown-menu dropdown-menu-right navbar-dropdown platform-dropdown-menu profile-dropdown-menu" aria-labelledby="profileDropdown">          <h6 class="platform-dropdown-title">My Account</h6>
+
+          <a class="dropdown-item" href="{% url 'profile_list' %}">
+            <i class="mdi mdi-settings mr-2 text-warning"></i> Profiles
+          </a>
+
+          <a class="dropdown-item" href="{% url 'user_feedback' %}">
+            <i class="mdi mdi-message mr-2 text-warning"></i> Feedback
+          </a>
+
+          <a class="dropdown-item" href="{% url 'send_bulk_email' %}">
+            <i class="mdi mdi-email mr-2 text-warning"></i> Email List
+          </a>
+
+          <a class="dropdown-item" href="{% url 'reviews_list' %}">
+            <i class="mdi mdi-comment-text mr-2 text-warning"></i> Reviews List
+          </a>
+
+          <div class="dropdown-divider"></div>
+
+          <a class="dropdown-item text-danger" href="{% url 'logout' %}">
+            <i class="mdi mdi-logout mr-2"></i> Signout
+          </a>
+        </div>
+      </li>
+    </ul>
+
+    <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center text-white"
+            type="button"
+            data-toggle="offcanvas"
+            data-dashboard-menu-toggle
+            aria-controls="sidebar"
+            aria-expanded="false"
+            aria-label="Toggle dashboard menu">
+      <span class="mdi mdi-menu"></span>
+    </button>
+  </div>
+</nav>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const navbar = document.querySelector('[data-dashboard-navbar]');
+
+    if (!navbar) return;
+
+    function closeAllDropdowns() {
+      navbar.querySelectorAll('.dropdown.show').forEach(function (dropdown) {
+        dropdown.classList.remove('show');
+
+        const menu = dropdown.querySelector('.dropdown-menu');
+        const toggle = dropdown.querySelector('.dashboard-dropdown-toggle');
+
+        if (menu) menu.classList.remove('show');
+        if (toggle) toggle.setAttribute('aria-expanded', 'false');
+      });
+    }
+
+    navbar.querySelectorAll('.dashboard-dropdown-toggle').forEach(function (toggle) {
+      toggle.addEventListener('click', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const dropdown = this.closest('.dropdown');
+        const menu = dropdown.querySelector('.dropdown-menu');
+        const isOpen = dropdown.classList.contains('show');
+
+        closeAllDropdowns();
+
+        if (!isOpen) {
+          dropdown.classList.add('show');
+          menu.classList.add('show');
+          this.setAttribute('aria-expanded', 'true');
+        }
+      });
+    });
+
+    navbar.querySelectorAll('.dropdown-menu').forEach(function (menu) {
+      menu.addEventListener('click', function (event) {
+        event.stopPropagation();
+      });
+    });
+
+    document.addEventListener('click', function () {
+      closeAllDropdowns();
+    });
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') {
+        closeAllDropdowns();
+      }
+    });
+  });
+
+  function toggleFullScreen() {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      document.documentElement.requestFullscreen().catch(function (err) {
+        console.error(err);
+      });
+    }
+  }
+</script>

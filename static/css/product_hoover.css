@@ -1,0 +1,58 @@
+/* styles.css */
+.product-item {
+    position: relative;
+}
+
+.hover-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 0.25rem;
+    z-index: 10;
+    opacity: 0;
+    /* Hidden by default */
+    transition: opacity 0.3s ease;
+    /* Smooth transition for hover effect */
+}
+
+.product-item:hover .hover-overlay {
+    opacity: 1;
+    /* Show on hover */
+}
+
+.card img {
+    transition: transform 0.3s ease;
+    /* Add smooth zoom effect */
+}
+
+.product-item:hover img {
+    transform: scale(1.1);
+    /* Slightly zoom in on hover */
+}
+
+.hover-overlay .btn {
+    background: linear-gradient(90deg, #ff7e5f, #feb47b);
+    /* Attractive gradient */
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: bold;
+    border-radius: 30px;
+    text-transform: uppercase;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-overlay .btn:hover {
+    transform: scale(1.1);
+    /* Slightly enlarge on hover */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    /* Add shadow effect */
+}

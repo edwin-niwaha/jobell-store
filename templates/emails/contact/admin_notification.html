@@ -1,0 +1,25 @@
+{% extends "emails/base.html" %}
+{% block content %}
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+  <tr>
+    <td style="padding:28px 24px 10px;">
+      <div style="display:inline-block;background:#050505;border:1px solid #d4af37;border-radius:999px;padding:7px 11px;color:#f7e7ad;font-size:12px;line-height:14px;text-transform:uppercase;letter-spacing:1px;">Admin alert</div>
+      <h1 style="margin:14px 0 8px;font-size:28px;line-height:34px;color:#050505;font-weight:700;">New contact message</h1>
+      <p style="margin:0 0 18px;font-size:15px;line-height:24px;color:#374151;">A customer sent a message through the {{ site_name }} contact form.</p>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 18px;border:1px solid #eadfca;border-radius:14px;overflow:hidden;">
+        <tr>
+          <td style="background:#050505;color:#f7e7ad;padding:12px 16px;font-size:13px;line-height:18px;font-weight:700;">Message details</td>
+        </tr>
+        <tr>
+          <td style="padding:14px 16px;background:#fffaf0;">
+            <p style="margin:0 0 6px;font-size:14px;line-height:22px;color:#111111;"><strong>Name:</strong> {{ contact_name }}</p>
+            <p style="margin:0 0 6px;font-size:14px;line-height:22px;color:#111111;"><strong>Email:</strong> {{ contact_email }}</p>
+            <p style="margin:0 0 6px;font-size:14px;line-height:22px;color:#111111;"><strong>Submitted:</strong> {{ submitted_at|date:"M j, Y H:i" }}</p>
+            <p style="margin:0;font-size:14px;line-height:22px;color:#111111;">{{ contact_message }}</p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+{% endblock %}

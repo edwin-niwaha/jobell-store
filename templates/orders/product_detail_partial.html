@@ -1,0 +1,431 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block content %}
+  <style>
+    :root {
+      --quick-black: #050505;
+      --quick-gold: #b8860b;
+      --quick-cream: #f8f5ef;
+      --quick-muted: #70675d;
+      --quick-border: rgba(5, 5, 5, 0.1);
+      --quick-shadow: 0 18px 46px rgba(5, 5, 5, 0.08);
+    }
+
+    .quick-product-page {
+      background: linear-gradient(180deg, #ffffff 0%, var(--quick-cream) 100%);
+      min-height: 72vh;
+      padding: clamp(1rem, 3vw, 2.5rem) 0 3rem;
+    }
+
+    .quick-product-shell {
+      margin-inline: auto;
+      max-width: 1180px;
+      padding-inline: 1rem;
+    }
+
+    .quick-hero {
+      align-items: start;
+      display: grid;
+      gap: 1.25rem;
+      grid-template-columns: minmax(0, 1fr) minmax(350px, 0.9fr);
+    }
+
+    .quick-card {
+      background: #ffffff;
+      border: 1px solid var(--quick-border);
+      border-radius: 1rem;
+      box-shadow: var(--quick-shadow);
+      overflow: hidden;
+    }
+
+    .quick-gallery-main {
+      aspect-ratio: 1 / 1;
+      background: #f1ece4;
+    }
+
+    .quick-gallery-main img {
+      height: 100%;
+      object-fit: cover;
+      width: 100%;
+    }
+
+    .quick-gallery-strip {
+      display: grid;
+      gap: 0.5rem;
+      grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+      padding: 0.75rem;
+    }
+
+    .quick-gallery-strip img {
+      aspect-ratio: 1 / 1;
+      border: 1px solid rgba(184, 134, 11, 0.22);
+      border-radius: 0.65rem;
+      object-fit: cover;
+      width: 100%;
+    }
+
+    .quick-info {
+      padding: clamp(1rem, 2.3vw, 1.5rem);
+    }
+
+    .quick-eyebrow {
+      color: var(--quick-gold);
+      display: block;
+      font-size: 0.76rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .quick-title {
+      color: var(--quick-black);
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      font-weight: 950;
+      line-height: 1.06;
+      margin: 0.25rem 0 0.5rem;
+    }
+
+    .quick-muted {
+      color: var(--quick-muted);
+      font-weight: 650;
+    }
+
+    .quick-stars {
+      color: var(--quick-gold);
+      letter-spacing: 0;
+    }
+
+    .quick-label {
+      color: var(--quick-black);
+      display: block;
+      font-weight: 900;
+      margin: 1.1rem 0 0.45rem;
+    }
+
+    .quick-info .form-select,
+    .quick-info .form-control {
+      border: 1px solid rgba(5, 5, 5, 0.16);
+      border-radius: 0.7rem;
+      min-height: 44px;
+    }
+
+    .quick-price-card {
+      align-items: center;
+      background: var(--quick-black);
+      border-radius: 0.85rem;
+      color: #ffffff;
+      display: flex;
+      gap: 1rem;
+      justify-content: space-between;
+      margin-top: 1rem;
+      padding: 0.95rem 1rem;
+    }
+
+    .quick-price-card small {
+      color: rgba(255, 255, 255, 0.68);
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    #quick-price {
+      color: var(--quick-gold);
+      display: block;
+      font-size: 1.5rem;
+      font-weight: 950;
+    }
+
+    #quick-original-price {
+      color: rgba(255, 255, 255, 0.76);
+      display: block;
+      font-size: 0.9rem;
+    }
+
+    .quick-actions {
+      display: grid;
+      gap: 0.7rem;
+      margin-top: 1rem;
+    }
+
+    .quick-cart-row {
+      display: grid;
+      gap: 0.7rem;
+      grid-template-columns: 96px minmax(0, 1fr);
+    }
+
+    .btn-quick-primary,
+    .btn-quick-dark,
+    .btn-quick-outline {
+      border-radius: 999px;
+      font-weight: 900;
+      min-height: 44px;
+      padding: 0.65rem 1rem;
+    }
+
+    .btn-quick-primary {
+      background: var(--quick-gold);
+      border-color: var(--quick-gold);
+      color: #ffffff;
+    }
+
+    .btn-quick-dark {
+      background: var(--quick-black);
+      border-color: var(--quick-black);
+      color: #ffffff;
+    }
+
+    .btn-quick-outline {
+      background: #ffffff;
+      border: 1px solid var(--quick-gold);
+      color: var(--quick-black);
+    }
+
+    .quick-section {
+      margin-top: 1.25rem;
+      padding: clamp(1rem, 2.3vw, 1.5rem);
+    }
+
+    .quick-section h2 {
+      color: var(--quick-black);
+      font-size: 1.25rem;
+      font-weight: 950;
+      margin-bottom: 0.75rem;
+    }
+
+    .quick-review {
+      border: 1px solid rgba(5, 5, 5, 0.08);
+      border-radius: 0.8rem;
+      padding: 1rem;
+    }
+
+    .verified-pill {
+      background: rgba(6, 125, 98, 0.1);
+      border-radius: 999px;
+      color: #067d62;
+      display: inline-flex;
+      font-size: 0.75rem;
+      font-weight: 900;
+      padding: 0.3rem 0.65rem;
+    }
+
+    @media (max-width: 991.98px) {
+      .quick-hero {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 575.98px) {
+      .quick-product-shell {
+        padding-inline: 0.75rem;
+      }
+
+      .quick-cart-row,
+      .quick-price-card {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+  </style>
+
+  <main class="quick-product-page">
+    <div class="quick-product-shell">
+      {% if error %}
+        <section class="quick-card quick-section text-center">
+          <h1 class="quick-title">Product not found</h1>
+          <p class="quick-muted">{{ error }}</p>
+          <a href="{% url 'products:shop_homepage' %}" class="btn btn-quick-primary">Go to shop</a>
+        </section>
+      {% elif volumes %}
+        <div class="quick-hero">
+          <section class="quick-card">
+            <div id="quick-product-carousel" class="carousel slide" data-bs-ride="carousel" aria-label="Product images">
+              <div class="carousel-inner quick-gallery-main">
+                {% if product_images %}
+                  {% for image_url in product_images %}
+                    <div class="carousel-item h-100 {% if forloop.first %}active{% endif %}">
+                      <img src="{{ image_url }}" alt="{{ name }} image {{ forloop.counter }}" loading="{% if forloop.first %}eager{% else %}lazy{% endif %}">
+                    </div>
+                  {% endfor %}
+                {% else %}
+                  <div class="carousel-item h-100 active">
+                    <img src="{{ volumes.0.image }}" alt="{{ name }}" loading="eager">
+                  </div>
+                {% endif %}
+              </div>
+
+              {% if product_images|length > 1 %}
+                <button class="carousel-control-prev" type="button" data-bs-target="#quick-product-carousel" data-bs-slide="prev">
+                  <span class="carousel-control-prev-icon bg-dark rounded-circle" aria-hidden="true"></span>
+                  <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#quick-product-carousel" data-bs-slide="next">
+                  <span class="carousel-control-next-icon bg-dark rounded-circle" aria-hidden="true"></span>
+                  <span class="visually-hidden">Next</span>
+                </button>
+              {% endif %}
+            </div>
+
+            {% if product_images|length > 1 %}
+              <div class="quick-gallery-strip">
+                {% for image_url in product_images|slice:':8' %}
+                  <img src="{{ image_url }}" alt="{{ name }} thumbnail {{ forloop.counter }}" loading="lazy">
+                {% endfor %}
+              </div>
+            {% endif %}
+          </section>
+
+          <aside class="quick-card quick-info">
+            <span class="quick-eyebrow">{{ category }}</span>
+            <h1 class="quick-title">{{ name }}</h1>
+            <div class="quick-muted">{{ gender|default:'Unisex' }}{% if supplier %} / {{ supplier }}{% endif %}</div>
+
+            <div class="mt-3">
+              <span class="quick-stars">
+                {% if average_rating %}&#9733;&#9733;&#9733;&#9733;&#9733;{% else %}&#9734;&#9734;&#9734;&#9734;&#9734;{% endif %}
+              </span>
+              <span class="quick-muted">
+                {% if average_rating %}{{ average_rating }} / 5{% else %}No ratings yet{% endif %}
+                · {{ verified_reviews_count }} verified review{{ verified_reviews_count|pluralize }}
+              </span>
+            </div>
+
+            <label for="quick-volume-select" class="quick-label">Choose product type and volume</label>
+            <select id="quick-volume-select" name="volume_id" form="quick-add-to-cart" class="form-select" required>
+              {% for volume in volumes %}
+                <option
+                  value="{{ volume.id }}"
+                  data-price="{{ volume.current_price|floatformat:'0' }}"
+                  data-original-price="{{ volume.original_price|floatformat:'0' }}"
+                  data-discount="{{ volume.discount_value|default:'0' }}"
+                  data-stock="{{ volume.stock }}"
+                  data-max-quantity="{{ volume.max_quantity_per_order }}"
+                  data-image="{{ volume.image }}"
+                >
+                  {{ volume.variant_label }} - UGX {{ volume.current_price|floatformat:'0'|intcomma }}
+                </option>
+              {% endfor %}
+            </select>
+
+            <div class="quick-price-card">
+              <div>
+                <small>Selected price</small>
+                <span id="quick-price">Choose an option</span>
+                <span id="quick-original-price"></span>
+              </div>
+              <span id="quick-stock" class="badge rounded-pill text-bg-light"></span>
+            </div>
+
+            <div class="quick-actions">
+              <form id="quick-add-to-cart" action="{% url 'orders:add_to_cart' product_uuid %}" method="post" class="quick-cart-row js-add-to-cart-form">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <input type="number" name="quantity" id="quick-quantity" class="form-control text-center" value="1" min="1" aria-label="Quantity">
+                <button type="submit" class="btn btn-quick-primary" data-cart-submit>
+                  <i class="fas fa-shopping-cart me-2"></i>Add to Cart
+                </button>
+              </form>
+
+              <a href="{% url 'orders:product_detail' product_uuid %}" class="btn btn-quick-outline">
+                Full Details & Reviews
+              </a>
+            </div>
+          </aside>
+        </div>
+
+        <section class="quick-card quick-section">
+          <h2>Description</h2>
+          <p class="mb-0">{{ description|default:'No description available.' }}</p>
+        </section>
+
+        <section class="quick-card quick-section">
+          <div class="d-flex flex-column flex-md-row justify-content-between gap-2 mb-3">
+            <div>
+              <h2 class="mb-1">Verified Reviews</h2>
+              <p class="quick-muted mb-0">{{ verified_reviews_count }} verified review{{ verified_reviews_count|pluralize }}</p>
+            </div>
+            {% if average_rating %}
+              <strong>{{ average_rating }} / 5</strong>
+            {% endif %}
+          </div>
+
+          {% if reviews %}
+            <div class="d-grid gap-3">
+              {% for review in reviews %}
+                <article class="quick-review">
+                  <div class="d-flex flex-column flex-sm-row justify-content-between gap-2">
+                    <div>
+                      <strong>{{ review.user.username|default:'Customer' }}</strong>
+                      <span class="verified-pill ml-2">Verified buyer</span>
+                    </div>
+                    <span class="quick-stars">{% for _ in review.filled_stars %}&#9733;{% endfor %}{% for _ in review.empty_stars %}&#9734;{% endfor %}</span>
+                  </div>
+                  <p class="mt-3 mb-2">{{ review.review_text }}</p>
+                  <small class="text-muted">Reviewed on {{ review.created_at|date:'M d, Y' }}</small>
+                </article>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="quick-muted mb-0">No verified reviews yet.</p>
+          {% endif %}
+        </section>
+      {% else %}
+        <section class="quick-card quick-section text-center">
+          <h1 class="quick-title">{{ name }}</h1>
+          <p class="quick-muted">No volumes are available for this product right now.</p>
+          <a href="{% url 'products:shop_homepage' %}" class="btn btn-quick-primary">Continue shopping</a>
+        </section>
+      {% endif %}
+    </div>
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const select = document.getElementById('quick-volume-select')
+      const price = document.getElementById('quick-price')
+      const original = document.getElementById('quick-original-price')
+      const stock = document.getElementById('quick-stock')
+      const quantity = document.getElementById('quick-quantity')
+      const form = document.getElementById('quick-add-to-cart')
+
+      const formatUgx = (value) => Number(value || 0).toLocaleString('en-US', {
+        maximumFractionDigits: 0
+      })
+
+      function updateVariant() {
+        if (!select || !select.value) return
+        const option = select.options[select.selectedIndex]
+        const selectedPrice = option.getAttribute('data-price')
+        const originalPrice = option.getAttribute('data-original-price')
+        const discount = Number(option.getAttribute('data-discount') || 0)
+        const available = Number(option.getAttribute('data-stock') || 0)
+        const maxQuantity = Number(option.getAttribute('data-max-quantity') || 1)
+
+        price.textContent = `UGX ${formatUgx(selectedPrice)}`
+        original.innerHTML = discount > 0 && Number(originalPrice) > Number(selectedPrice)
+          ? `<del>UGX ${formatUgx(originalPrice)}</del> ${discount}% off`
+          : ''
+        stock.textContent = available > 999999 ? `Limit ${maxQuantity} per order` : `${formatUgx(available)} available`
+        quantity.max = Math.max(1, Math.min(available || maxQuantity, maxQuantity))
+      }
+
+      if (select) {
+        select.addEventListener('change', updateVariant)
+        updateVariant()
+      }
+
+      if (form) {
+        form.addEventListener('submit', function (event) {
+          if (!select.value) {
+            event.preventDefault()
+            alert('Please choose a product volume.')
+          }
+        })
+      }
+    })
+  </script>
+{% endblock %}

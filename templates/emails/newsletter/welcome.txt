@@ -1,0 +1,10 @@
+Welcome to {{ site_name }}
+
+Your subscription is confirmed.
+
+Email: {{ subscriber_email }}
+Subscribed: {{ subscribed_at|date:"M j, Y H:i" }}
+
+You will now receive Jobell offers, fragrance updates, and premium product news.
+
+Visit {{ site_url }}

@@ -1,0 +1,26 @@
+.table-container {
+    overflow-x: auto;
+    max-width: 100%;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th,
+td {
+    padding: 8px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+button {
+    margin: 5px;
+    padding: 8px;
+}
+
+.scroll-container {
+    display: flex;
+    justify-content: center;
+}

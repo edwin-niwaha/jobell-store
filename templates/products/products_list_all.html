@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col">
+            <a href="{% url 'products:products_add' %}" class="btn btn-success font-weight-bold">
+                <i class="mdi mdi-plus mr-2"></i> Add Product
+            </a>
+            <a href="{% url 'products:update_product_image' %}" class="btn btn-success font-weight-bold ml-2">
+                <i class="mdi mdi-plus mr-2"></i> Add Image
+            </a>
+            <button title="Print" type="button" class="btn btn-sm ml-2 btn-success" onclick="printDiv('printMe')">
+                <i class="mdi mdi-printer btn-icon-prepend"></i>
+            </button>
+        </div>
+    </div>
+
+    <div id="printMe" class="tab-pane show active">
+        <div class="alert alert-danger w-100">
+            <h3 class="m-0 font-weight-bold text-primary">Detailed products report</h3>
+        </div>
+        <div class="table-responsive">
+            <table class="my-table" id="dataTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>Category</th>
+                        <th>Gender</th>
+                        <th>Type</th>
+                        <th>Stock</th>
+                        <th>Volume ML</th>
+                        <th class="text-right">Cost</th>
+                        <th class="text-right">Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    {% with product_volumes=product.productvolume_set.all %}
+                    {% if product_volumes %}
+                    {% for product_volume in product_volumes %}
+                    <tr>
+                        {% if forloop.first %}
+                        <td rowspan="{{ product_volumes.count }}">{{ product.prefixed_id }}</td>
+                        <td rowspan="{{ product_volumes.count }}">{{ product.name }}</td>
+                        <td rowspan="{{ product_volumes.count }}">{{ product.status }}</td>
+                        <td rowspan="{{ product_volumes.count }}">
+                            {% if product.category %}
+                            {{ product.category.name }}
+                            {% else %}
+                            N/A
+                            {% endif %}
+                        </td>
+                        <td rowspan="{{ product_volumes.count }}">{{ product.gender }}</td>
+                        {% comment %} <td rowspan="{{ product_volumes.count }}">{{ product.product_type }}</td>
+                        {% endcomment %}
+                        <td class="text-center" rowspan="{{ product_volumes.count }}">{{ product.stock }}</td>
+                        {% endif %}
+                        <td class="text-center">{{ product_volume.volume.ml }} ML</td>
+                        <td class="text-right">{{ product_volume.cost|floatformat:"2"|intcomma }}</td>
+                        <td class="text-right">{{ product_volume.price|floatformat:"2"|intcomma }}</td>
+                        {% if forloop.last %}
+                        {% comment %} <td rowspan="{{ product_volumes.count }}">
+                            {% if product.images.all %}
+                            {% for image in product.images.all %}
+                            <img src="{{ image.image.url }}" alt="{{ product.product.name }}"
+                                style="width: 100px; height: auto;"><br>
+                            {% endfor %}
+                            {% else %}
+                            No images available.
+                            {% endif %}
+                        </td> {% endcomment %}
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td>{{ product.prefixed_id }}</td>
+                        <td>{{ product.name }}</td>
+                        <td>{{ product.status }}</td>
+                        <td>
+                            {% if product.category %}
+                            {{ product.category.name }}
+                            {% else %}
+                            N/A
+                            {% endif %}
+                        </td>
+                        <td>{{ product.gender }}</td>
+                        {% comment %} <td>{{ product.product_type }}</td> {% endcomment %}
+                        <td class="text-center">{{ product.stock }}</td>
+                        <td colspan="3">No products available.</td>
+                    </tr>
+                    {% endif %}
+                    {% endwith %}
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="6" class="text-right"><strong>Total:</strong></td>
+                        <td class="text-center">
+                            <strong>{{ total_stock }}</strong>
+                        </td>
+                        <td class="text-center"><strong>{{ total_ml }}</strong> ML</td>
+                        <td class="text-right"><strong>{{ total_cost|floatformat:"2"|intcomma }}</strong></td>
+                        <td class="text-right"><strong>{{ total_price|floatformat:"2"|intcomma }}</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock content %}

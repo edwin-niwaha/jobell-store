@@ -1,0 +1,65 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}
+  Privacy Policy
+{% endblock %}
+
+{% block content %}
+  <section class="platform-info-page">
+    <div class="platform-info-hero">
+      <div>
+        <span class="platform-page-kicker">Privacy</span>
+        <h1>Privacy Policy</h1>
+        <p>How {{ site_name|upper }} collects, uses, and protects customer information while you browse, shop, and contact our team.</p>
+      </div>
+      <a class="platform-page-action" href="{% url 'contact_us' %}">Contact support</a>
+    </div>
+
+    <div class="platform-info-panel platform-policy-panel">
+      <h2>Cookies management</h2>
+      <p>We use cookies to improve your experience on our website. By using our services, you agree to the use of cookies.</p>
+
+      <h2>1. Information we collect</h2>
+      <p>We collect information to provide and improve our services:</p>
+      <ul>
+        <li><strong>Personal information:</strong> name, email address, phone number, and billing or shipping address when you create an account, place an order, or contact us.</li>
+        <li><strong>Payment information:</strong> payment details needed to process transactions, handled securely by payment providers.</li>
+        <li><strong>Usage data:</strong> IP address, browser type, device details, and browsing behavior through cookies and similar tools.</li>
+      </ul>
+
+      <h2>2. How we use your information</h2>
+      <ul>
+        <li>To process orders and deliver products.</li>
+        <li>To communicate order confirmations, updates, and offers when you opt in.</li>
+        <li>To personalize and improve your shopping experience.</li>
+        <li>To comply with legal obligations and protect against fraud or abuse.</li>
+      </ul>
+
+      <h2>3. Cookies</h2>
+      <p>Cookies help us remember preferences and understand how visitors use the website. You can adjust browser settings to refuse cookies, though some features may be limited.</p>
+
+      <h2>4. Sharing your information</h2>
+      <p>We do not sell personal information. We may share details with service providers, payment processors, shipping partners, or legal authorities when required to fulfill orders or comply with the law.</p>
+
+      <h2>5. Data security</h2>
+      <p>We use reasonable security measures to protect personal information. No electronic transmission or storage method is completely secure, so absolute security cannot be guaranteed.</p>
+
+      <h2>6. Your rights</h2>
+      <ul>
+        <li>Access the personal information we hold about you.</li>
+        <li>Correct or update inaccurate information.</li>
+        <li>Request deletion where legally permitted.</li>
+        <li>Opt out of marketing communications.</li>
+      </ul>
+
+      <h2>7. Children's privacy</h2>
+      <p>Our website is not intended for children under 13, and we do not knowingly collect personal information from children.</p>
+
+      <h2>8. Changes to this policy</h2>
+      <p>We may update this policy from time to time. Changes will be posted on this page.</p>
+
+      <h2>9. Contact us</h2>
+      <p>For privacy questions, contact <a href="mailto:{{ support_email }}">{{ support_email }}</a> or call +256 777-337-491.</p>
+    </div>
+  </section>
+{% endblock %}

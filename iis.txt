@@ -1,0 +1,54 @@
+
+https://blog.devgenius.io/deploy-django-app-to-iis-windows-server-beginners-guide-with-images-3d03b6fd5b7e
+
+// Open FastCGI Settings and click Add Application on your write panel.
+
+C:\inetpub\wwwroot\sponsorship_mis\venv\Scripts\python.exe
+C:\inetpub\wwwroot\sponsorship_mis\venv\Lib\site-packages\wfastcgi.py
+
+
+#####################################################################
+C:\inetpub\wwwroot\jobel_retail\.venv\Scripts\python.exe
+C:\inetpub\wwwroot\jobel_retail\.venv\Lib\site-packages\wfastcgi.py
+
+
+// ENVIRONMENT VARIABLES
+
+DJANGO_SETTINGS_MODULE : core.settings
+
+PYTHON_PATH : C:\inetpub\wwwroot\sponsorship_mis
+#####################################################################
+PYTHON_PATH : C:\inetpub\wwwroot\jobel_retail
+ 
+WSGI_HANDLER : django.core.wsgi.get_wsgi_application()
+
+
+// ADD WEBSITE
+Right click sites and select add. Give it a name of your choosing and set the physical path the the wwwroot. 
+Next we need to map the FastCGI handler to the site. Select your new site and choose handler mappings. 
+Click “Add Module Mapping…” from the actions selection on the right.
+
+Set request path to * and Module to FastCgiModule. However, the executable section must be 
+set manually as we need to select the Python executable and pipe to wfastcgi, which the UI’s … browse button prohibits. 
+For example, my value uses the virtualenv paths:
+
+//OPTIONAL
+C:\inetpub\wwwroot\sponsorship_mis\venv\Scripts\python.exe|C:\inetpub\wwwroot\sponsorship_mis\venv\Lib\site-packages\wfastcgi.py
+
+C:\inetpub\wwwroot\fraud_django\venv\Scripts\python.exe|C:\inetpub\wwwroot\fraud_django\venv\Lib\site-packages\wfastcgi.py
+
+#####################################################################
+
+C:\inetpub\wwwroot\jobel_retail\.venv\Scripts\python.exe|C:\inetpub\wwwroot\jobel_retail\.venv\Lib\site-packages\wfastcgi.py
+
+
+// Serving Static Files
+
+https://www.theperfumeshop.com/
+
+Before deploy
+python manage.py collectstatic
+black .
+
+ruff check .
+ruff check . --fix

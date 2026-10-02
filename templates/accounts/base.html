@@ -1,0 +1,169 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <link rel="shortcut icon" href="{% static 'images/file.png' %}" />
+
+    <!-- External Dependencies -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    {% comment %} <link rel="stylesheet" href="{% static 'css/home.css' %}" /> {% endcomment %}
+
+    <!-- Add custom stylesheets -->
+    <link href="{% static 'css/footer.css' %}" rel="stylesheet" type="text/css" />
+    <link href="{% static 'css/users.css' %}" rel="stylesheet" type="text/css" />
+    <link href="{% static 'css/account_pages.css' %}?v=2" rel="stylesheet" type="text/css" />
+    <link href="{% static 'css/storefront.css' %}?v=1" rel="stylesheet" type="text/css" />
+    <link href="{% static 'css/carousel.css' %}" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="{% static 'css/product_hoover.css' %}" />
+    <!-- Dynamic Banner CSS -->
+    <link href="{% static 'css/banner.css' %}" rel="stylesheet" />
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+    <!-- Material Design Icons -->
+    <link rel="stylesheet" href="https://cdn.materialdesignicons.com/6.5.95/css/materialdesignicons.min.css" />
+
+    <!-- Font Awesome icons -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css" integrity="sha384-oS3vJWv+0UjzBfQzYUhtDYW+Pj2yciDJxpsK1OYPAYjqT085Qq/1cq5FLXAZQ7Ay" crossorigin="anonymous" />
+
+    <!-- Video -->
+    <link rel="stylesheet" href="{% static 'css/video.css' %}" />
+    <title>
+      {% block title %}
+        {{ company_name|upper }}
+      {% endblock %}
+    </title>
+    <style>
+      :root {
+        --primary-color: {{ primary_color|default:'#D4AF37' }};
+        --secondary-color: {{ secondary_color|default:'#000000' }};
+        --text-color: {{ text_color|default:'#212529' }};
+        --border-radius: {{ border_radius|default:'12px' }};
+      }
+
+      .fixed-marquee {
+        position: fixed;
+        top: 56px; /* Height of the navbar */
+        width: 100%;
+        z-index: 1029; /* Below the navbar but above the content */
+      }
+      
+      body {
+        padding-top: 76px;
+      }
+      .product-item .carousel-item img {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      
+      .product-item .carousel-item:hover img {
+        transform: scale(1.1);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      }
+      .product-image {
+        border-radius: 15px; /* Apply rounded corners to images */
+      }
+      .footer-item {
+        font-family: 'Times New Roman', serif;
+        color: whitesmoke;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+
+  <body class="platform-account-body {% block body_class %}{% endblock %}">
+    <!-- ========== Topbar Start ========== -->
+    {% block topbar %}
+      {% include 'accounts/_partials/navbar.html' %}
+    {% endblock %}
+    <!-- ========== Topbar End ========== -->
+
+    {% comment %} {% include 'accounts/_partials/banner.html' %} {% endcomment %}
+
+    <!-- =============== Messages Start ================= -->
+    {% block messages %}
+      {% include '_partials/messages.html' %}
+    {% endblock %}
+    <!-- =============== Messages End ================= -->
+    {% comment %} {% include '_partials/cookies.html' %} {% endcomment %}
+
+    <!-- Content -->
+    <div class="platform-page-content">
+      {% block content %}
+
+      {% endblock %}
+    </div>
+
+    <!-- ============== Footer ===================== -->
+    {% block footer %}
+      {% include '_partials/home_footer.html' %}
+      <!-- Chat Button -->
+      <button id="load-chat" class="platform-chat-button" type="button"><i class="mdi mdi-message-text-outline"></i></button>
+    {% endblock %}
+    <!-- ============================================= -->
+
+    <link rel="stylesheet" href="{% static 'css/shopping.css' %}?v=1" />
+    {% block page_styles %}{% endblock %}
+    <script src="{% static 'js/shopping.js' %}?v=1" defer></script>
+    <!-- jQuery and Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- A plugin for password show/hide -->
+    <script src="https://unpkg.com/bootstrap-show-password@1.2.1/dist/bootstrap-show-password.min.js"></script>
+
+    <!-- Additional scripts -->
+    {% block scripts %}
+      <script src="{% static 'assets/vendors/js/vendor.bundle.base.js' %}"></script>
+
+      <!-- disabled btn -->
+      <script type="text/javascript" src="{% static 'js/disabled_btn.js' %}"></script>
+      <script src="{% static 'js/search.js' %}"></script>
+      <script src="{% static 'js/print.js' %}"></script>
+      <script src="{% static 'js/navbar.js' %}"></script>
+      <!-- JavaScript for Quantity Control -->
+      <!-- Custom JS -->
+      {% comment %} <script src="{% static 'js/banner.js' %}"></script> {% endcomment %}
+
+      {% comment %} <script src="{% static 'js/cookies.js' %}"></script> {% endcomment %}
+    {% endblock %}
+    <!-- Start of Tawk.to Script -->
+    {% comment %} <script type="text/javascript">
+      var Tawk_API = Tawk_API || {},
+        Tawk_LoadStart = new Date()
+      ;(function () {
+        var s1 = document.createElement('script'),
+          s0 = document.getElementsByTagName('script')[0]
+        s1.async = true
+        s1.src = 'https://embed.tawk.to/67be2a6557476c190f8fff7a/1ikvdb7ot'
+        s1.charset = 'UTF-8'
+        s1.setAttribute('crossorigin', '*')
+        s0.parentNode.insertBefore(s1, s0)
+      })()
+    </script> {% endcomment %}
+
+    <script>
+      document.getElementById('load-chat')?.addEventListener('click', function () {
+        if (!window.Tawk_API) {
+          window.Tawk_API = {}
+          window.Tawk_LoadStart = new Date()
+      
+          var s1 = document.createElement('script')
+          s1.async = true
+          s1.src = 'https://embed.tawk.to/67be2a6557476c190f8fff7a/1ikvdb7ot'
+          s1.charset = 'UTF-8'
+          s1.setAttribute('crossorigin', '*')
+      
+          var s0 = document.getElementsByTagName('script')[0]
+          s0.parentNode.insertBefore(s1, s0)
+        }
+      })
+    </script>
+
+    <!-- End of Tawk.to Script -->
+  </body>
+</html>

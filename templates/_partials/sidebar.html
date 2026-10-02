@@ -1,0 +1,401 @@
+{% load static %}
+<nav class="sidebar sidebar-offcanvas" id="sidebar">
+  <div class="text-center sidebar-brand-wrapper d-flex align-items-center py-4">
+    <a class="sidebar-brand brand-logo" href="/" style="color: #B8860B;"><img src="{% static 'images/file.png' %}" height="50" width="40" alt="{{ site_name|upper }} Logo" loading="lazy" /></a>
+  </div>
+
+  <ul class="nav flex-column">
+    <!-- Dashboards -->
+    <li class="nav-item">
+      <a class="nav-link" data-bs-toggle="collapse" href="#dashboardsMenu" aria-expanded="false" aria-controls="dashboardsMenu">
+        <i class="mdi mdi-view-dashboard menu-icon"></i>
+        <span class="menu-title">Dashboards</span>
+        <i class="menu-arrow"></i>
+      </a>
+      <div class="collapse" id="dashboardsMenu">
+        <ul class="nav flex-column sub-menu">
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'dashboard' %}">
+              <i class="mdi mdi-view-dashboard menu-icon"></i>
+              Sales Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'fin_dashboard' %}">
+              <i class="mdi mdi-bank menu-icon"></i>
+              Finance Dashboard
+            </a>
+          </li>
+        </ul>
+      </div>
+    </li>
+
+    <!-- Business Operations -->
+    <li class="nav-item">
+      <a class="nav-link" data-bs-toggle="collapse" href="#operationsMenu" aria-expanded="false" aria-controls="operationsMenu">
+        <i class="mdi mdi-briefcase menu-icon"></i>
+        <span class="menu-title">Orders & People</span>
+        <i class="menu-arrow"></i>
+      </a>
+      <div class="collapse" id="operationsMenu">
+        <ul class="nav flex-column sub-menu">
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'orders:orders_to_be_processed' %}">
+              <i class="mdi mdi-truck-fast menu-icon"></i>
+              Open Orders
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'orders:all_orders' %}">
+              <i class="mdi mdi-receipt menu-icon"></i>
+              All Orders
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'sales:sales_list' %}">
+              <i class="mdi mdi-trending-up menu-icon"></i>
+              Sales
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'customers:customers_list' %}">
+              <i class="mdi mdi-account-multiple menu-icon"></i>
+              Customers
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'supplier:supplier_list' %}">
+              <i class="mdi mdi-factory menu-icon"></i>
+              Suppliers
+            </a>
+          </li>
+        </ul>
+      </div>
+    </li>
+
+    <li class="nav-item">
+      {% if perms.shipping.view_deliveryrate or perms.shipping.add_deliveryrate or perms.shipping.change_deliveryrate or perms.shipping.view_pickupstation or perms.shipping.add_pickupstation or perms.shipping.change_pickupstation %}
+        <a class="nav-link" data-bs-toggle="collapse" href="#shippingMenu" aria-expanded="false" aria-controls="shippingMenu">
+          <i class="mdi mdi-truck-delivery menu-icon"></i>
+          <span class="menu-title">Shipping</span>
+          <i class="menu-arrow"></i>
+        </a>
+        <div class="collapse" id="shippingMenu">
+          <ul class="nav flex-column sub-menu">
+            {% if perms.shipping.view_deliveryrate or perms.shipping.add_deliveryrate or perms.shipping.change_deliveryrate %}
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'shipping:delivery_rate_list' %}">
+                  <i class="mdi mdi-cash-multiple menu-icon"></i>
+                  Shipping Fees
+                </a>
+              </li>
+            {% endif %}
+            {% if perms.shipping.add_deliveryrate %}
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'shipping:delivery_rate_add' %}">
+                  <i class="mdi mdi-plus-circle menu-icon"></i>
+                  Add Shipping Fee
+                </a>
+              </li>
+            {% endif %}
+            {% if perms.shipping.view_pickupstation or perms.shipping.add_pickupstation or perms.shipping.change_pickupstation %}
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'shipping:pickup_station_list' %}">
+                  <i class="mdi mdi-storefront menu-icon"></i>
+                  Pickup Stations
+                </a>
+              </li>
+            {% endif %}
+            {% if perms.shipping.add_pickupstation %}
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'shipping:pickup_station_add' %}">
+                  <i class="mdi mdi-map-marker-plus menu-icon"></i>
+                  Add Pickup Station
+                </a>
+              </li>
+            {% endif %}
+          </ul>
+        </div>
+      {% else %}
+        <a class="nav-link" href="#" onclick="showMessageSettings(event)">
+          <i class="mdi mdi-truck-delivery menu-icon"></i>
+          <span class="menu-title">Shipping</span>
+        </a>
+      {% endif %}
+    </li>
+
+    <!-- Products -->
+    <li class="nav-item">
+      <a class="nav-link" data-bs-toggle="collapse" href="#productsMenu" aria-expanded="false" aria-controls="productsMenu">
+        <i class="mdi mdi-package menu-icon"></i>
+        <span class="menu-title">Products</span>
+        <i class="menu-arrow"></i>
+      </a>
+      <div class="collapse" id="productsMenu">
+        <ul class="nav flex-column sub-menu">
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'products:products_list' %}">
+              <i class="mdi mdi-package menu-icon"></i>
+              Products
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'products:categories_list' %}">
+              <i class="mdi mdi-tag-multiple menu-icon"></i>
+              Categories
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'products:volume_add' %}">
+              <i class="mdi mdi-package-variant menu-icon"></i>
+              Volumes
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'products:add-volume-to-all-products' %}">
+              <i class="mdi mdi-package-variant menu-icon"></i>
+              Bulk Variants
+            </a>
+          </li>
+        </ul>
+      </div>
+    </li>
+
+    <!-- Inventory -->
+    <li class="nav-item">
+      <a class="nav-link" data-bs-toggle="collapse" href="#inventoryMenu" aria-expanded="false" aria-controls="inventoryMenu">
+        <i class="mdi mdi-warehouse menu-icon"></i>
+        <span class="menu-title">Inventory</span>
+        <i class="menu-arrow"></i>
+      </a>
+      <div class="collapse" id="inventoryMenu">
+        <ul class="nav flex-column sub-menu">
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'inventory:inventory_list' %}">
+              <i class="mdi mdi-box-cutter menu-icon"></i>
+              Manage Stock
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'products:stock_alerts' %}">
+              <i class="mdi mdi-alert menu-icon"></i>
+              Stock Alerts
+            </a>
+          </li>
+        </ul>
+      </div>
+    </li>
+
+    <!-- Finance (Admin Only) -->
+    <li class="nav-item">
+      {% if user.profile.role == 'administrator' %}
+        <a class="nav-link" data-bs-toggle="collapse" href="#financeMenu" aria-expanded="false" aria-controls="financeMenu">
+          <i class="mdi mdi-bank menu-icon"></i>
+          <span class="menu-title">Finance</span>
+          <i class="menu-arrow"></i>
+        </a>
+        <div class="collapse" id="financeMenu">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'finance:chart_of_accounts_list' %}">
+                <i class="mdi mdi-account-plus menu-icon"></i>
+                Chart of Accounts
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'finance:import_coa_data' %}">
+                <i class="mdi mdi-file-import menu-icon"></i>
+                Import Accounts
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'finance:income_add' %}">
+                <i class="mdi mdi-plus-circle-outline menu-icon"></i>
+                Add Income
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'finance:expense_add' %}">
+                <i class="mdi mdi-minus-circle-outline menu-icon"></i>
+                Add Expense
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'finance:multi_journal' %}">
+                <i class="mdi mdi-book menu-icon"></i>
+                Multi Journal
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'finance:ledger_report' %}">
+                <i class="mdi mdi-book-open menu-icon"></i>
+                General Ledger
+              </a>
+            </li>
+          </ul>
+        </div>
+      {% else %}
+        <a class="nav-link" href="#" onclick="showMessageSettings(event)">
+          <i class="mdi mdi-bank menu-icon"></i>
+          <span class="menu-title">Finance</span>
+        </a>
+      {% endif %}
+    </li>
+
+    <!-- Reports (Admin Only) -->
+    <li class="nav-item">
+      {% if user.profile.role == 'administrator' %}
+        <a class="nav-link" data-bs-toggle="collapse" href="#reportsMenu" aria-expanded="false" aria-controls="reportsMenu">
+          <i class="mdi mdi-chart-bar menu-icon"></i>
+          <span class="menu-title">Reports</span>
+          <i class="menu-arrow"></i>
+        </a>
+        <div class="collapse" id="reportsMenu">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'inventory:inventory-report' %}">
+                <i class="mdi mdi-file-chart menu-icon"></i>
+                Inventory Report
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'sales:sales_report' %}">
+                <i class="mdi mdi-file-chart menu-icon"></i>
+                Sales Report
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'finance:profit-loss-statement' %}" target="_self">
+                <i class="mdi mdi-chart-bar menu-icon"></i>
+                Profit & Loss
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'finance:balance-sheet' %}">
+                <i class="mdi mdi-file-chart menu-icon"></i>
+                Balance Sheet
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'finance:trial_balance_select_period' %}">
+                <i class="mdi mdi-file-chart menu-icon"></i>
+                Trial Balance
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'finance:cash_flow_select_period' %}">
+                <i class="mdi mdi-swap-horizontal menu-icon"></i>
+                Cash Flow
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'finance:ledger_report' %}">
+                <i class="mdi mdi-book-open menu-icon"></i>
+                General Ledger
+              </a>
+            </li>
+          </ul>
+        </div>
+      {% else %}
+        <a class="nav-link" href="#" onclick="showMessageSettings(event)">
+          <i class="mdi mdi-chart-bar menu-icon"></i>
+          <span class="menu-title">Reports</span>
+        </a>
+      {% endif %}
+    </li>
+
+    <!-- Blog -->
+    <li class="nav-item">
+      <a class="nav-link" data-bs-toggle="collapse" href="#blogMenu" aria-expanded="false" aria-controls="blogMenu">
+        <i class="mdi mdi-book-open-page-variant menu-icon"></i>
+        <span class="menu-title">Blog</span>
+        <i class="menu-arrow"></i>
+      </a>
+      <div class="collapse" id="blogMenu">
+        <ul class="nav flex-column sub-menu">
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'blog:blog_list' %}">
+              <i class="mdi mdi-format-list-bulleted menu-icon"></i>
+              Blog List
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'blog:blog_create' %}">
+              <i class="mdi mdi-pencil menu-icon"></i>
+              Add Blog
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'blog:blog_category_add' %}">
+              <i class="mdi mdi-tag-multiple menu-icon"></i>
+              Blog Categories
+            </a>
+          </li>
+        </ul>
+      </div>
+    </li>
+
+    <!-- Settings (Admin Only) -->
+    <li class="nav-item">
+      {% if user.profile.role == 'administrator' %}
+        <a class="nav-link" data-bs-toggle="collapse" href="#settingsMenu" aria-expanded="false" aria-controls="settingsMenu">
+          <i class="mdi mdi-settings menu-icon"></i>
+          <span class="menu-title">Settings</span>
+          <i class="menu-arrow"></i>
+        </a>
+        <div class="collapse" id="settingsMenu">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'profile_list' %}">
+                <i class="mdi mdi-account-circle menu-icon"></i>
+                Profiles
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'user_feedback' %}">
+                <i class="mdi mdi-comment-text menu-icon"></i>
+                Feedback
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'testimonials' %}">
+                <i class="mdi mdi-comment-text menu-icon"></i>
+                Testimonials
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'subscriber_list' %}">
+                <i class="mdi mdi-comment-text menu-icon"></i>
+                Subscribers
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'finance:financial_periods' %}">
+                <i class="mdi mdi-calendar-range menu-icon"></i>
+                Financial Periods
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'finance:audit_logs' %}">
+                <i class="mdi mdi-file-document-outline text-danger menu-icon"></i>
+                Audit Logs
+              </a>
+            </li>
+          </ul>
+        </div>
+      {% else %}
+        <a class="nav-link" href="#" onclick="showMessageSettings(event)">
+          <i class="mdi mdi-settings menu-icon"></i>
+          <span class="menu-title">Settings</span>
+        </a>
+      {% endif %}
+    </li>
+
+    <li class="nav-item mt-2">
+      <a class="nav-link" href="{% url 'users-home' %}">
+        <i class="mdi mdi-open-in-new menu-icon"></i>
+        <span class="menu-title">View Store</span>
+      </a>
+    </li>
+  </ul>
+</nav>

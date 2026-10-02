@@ -1,0 +1,22 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Delete Address{% endblock %}
+
+{% block content %}
+  <main class="store-page">
+    <div class="store-shell" style="max-width: 760px;">
+      <section class="store-panel">
+        <div class="card-body p-4">
+          <span class="store-eyebrow">Confirm delete</span>
+          <h1 class="store-title h3 mb-3">Delete this address?</h1>
+          <p class="store-muted">{{ address.single_line }}</p>
+          <form method="post" class="d-flex flex-wrap gap-2 mt-4">
+            {% csrf_token %}
+            <button class="store-btn-dark" type="submit">Delete address</button>
+            <a class="store-btn-outline" href="{% url 'addresses:list' %}">Cancel</a>
+          </form>
+        </div>
+      </section>
+    </div>
+  </main>
+{% endblock %}

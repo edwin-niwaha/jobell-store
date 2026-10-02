@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block content %}
+  <div class="container-fluid">
+    <div class="row mb-3">
+      <div class="col-md-12 d-flex justify-content-between align-items-center">
+        <a href="{% url 'dashboard' %}">
+          <button type="button" class="btn btn-info font-weight-bold">
+            <i class="mdi mdi-arrow-left-bold mr-2"></i>
+            Go back
+          </button>
+        </a>
+        <div class="d-flex">
+          <button title="Print" type="button" class="btn btn-success ml-2" onclick="printDiv('printMe')"><i class="mdi mdi-printer btn-icon-prepend"></i></button>
+        </div>
+      </div>
+    </div>
+    <!-- Search Form -->
+    <form method="get" action="{% url 'inventory:inventory-report' %}" class="mb-3">
+      <div class="input-group">
+        <input type="text" name="search" value="{{ search_query }}" class="form-control" placeholder="Search inventory" />
+        <button class="btn btn-primary" type="submit"><i class="mdi mdi-search"></i> Search</button>
+      </div>
+    </form>
+
+    <div id="printMe" class="card shadow-sm">
+      <div class="card-header">
+        <h2 class="text-primary">{{ table_title|upper }}</h2>
+      </div>
+
+      <div class="card-body">
+        <div class="table-responsive">
+          {% if inventories %}
+            <table class="table table-bordered table-hover">
+              <thead class="table-dark">
+                <tr>
+                  <th>#</th>
+                  <th>Product</th>
+                  <th>Stock Quantity</th>
+                  <th>Low Stock Threshold</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for inventory in inventories %}
+                  <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ inventory.product.name }}</td>
+                    <td>{{ inventory.quantity }}</td>
+                    <td>{{ inventory.low_stock_threshold }}</td>
+                    <td>
+                      {% if inventory.quantity <= 0 %}
+                        <span class="badge badge-danger">Out of Stock</span>
+                      {% else %}
+                        <span class="badge badge-success">In Stock</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="2" class="text-right">
+                    <strong>Total Stock</strong>
+                  </td>
+                  <td>
+                    <strong>{{ total_stock }}</strong>
+                  </td>
+                  <td colspan="2"></td>
+                </tr>
+              </tfoot>
+            </table>
+            <!-- Pagination controls -->
+            <div class="d-flex justify-content-between">
+              <div>
+                {% if inventories.has_previous %}
+                  <a href="?page=1&search={{ search_query }}" class="btn btn-link">First</a>
+                  <a href="?page={{ inventories.previous_page_number }}&search={{ search_query }}" class="btn btn-link">Previous</a>
+                {% endif %}
+                <span>Page {{ inventories.number }} of {{ inventories.paginator.num_pages }}</span>
+                {% if inventories.has_next %}
+                  <a href="?page={{ inventories.next_page_number }}&search={{ search_query }}" class="btn btn-link">Next</a>
+                  <a href="?page={{ inventories.paginator.num_pages }}&search={{ search_query }}" class="btn btn-link">Last</a>
+                {% endif %}
+              </div>
+            </div>
+          {% else %}
+            <p class="text-muted">No inventory available.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

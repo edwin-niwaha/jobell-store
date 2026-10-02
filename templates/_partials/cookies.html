@@ -1,0 +1,9 @@
+<div id="cookie-banner" class="cookie-banner bg-light p-3 shadow-sm fixed-bottom text-center">
+  <h5 class="mb-3 text-uppercase">Cookies Management</h5>
+  <p class="mb-2">We use cookies to improve your experience.</p>
+  <form id="cookie-form" method="POST">
+    {% csrf_token %}
+    <button type="submit" name="accept" class="btn btn-primary btn-lg me-3">Accept</button>
+    <button type="submit" name="decline" class="btn btn-secondary btn-lg">Decline</button>
+  </form>
+</div>

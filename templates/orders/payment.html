@@ -1,0 +1,73 @@
+{% extends 'accounts/base.html' %}
+{% load crispy_forms_tags %}
+{% load humanize %}
+{% load static %}
+
+{% block content %}
+  <div class="container-fluid py-3">
+    <div class="row justify-content-center">
+      <div class="col-lg-6 col-md-8 col-sm-12">
+        <div class="card shadow-sm border-light">
+          <div class="card-header bg-primary text-white text-center">
+            <h3 class="mb-0">{{ form_title|upper }}</h3>
+          </div>
+          <div class="card-body">
+            <form method="POST" action="{% url 'orders:process_payment' order.id %}">
+              {% csrf_token %}
+
+              <!-- Display Order Details -->
+              <div class="form-group">
+                <p>
+                  <strong>Order ID:</strong> <span class="text-muted">{{ order.id }}</span>
+                </p>
+                <p>
+                  <strong>Total Amount:</strong> <span class="text-success">UgX: {{ order.total_amount|floatformat:'2'|intcomma }}</span>
+                </p>
+                <p>
+                  <strong>Customer:</strong> <span class="text-info">{{ order.customer }}</span>
+                </p>
+              </div>
+
+              <!-- Choose Payment Method -->
+              <div class="form-group">
+                <label for="payment_method">Choose Payment Method:</label>
+                <select name="payment_method" id="payment_method" class="form-control" required>
+                  <option value="" disabled selected>Select a method</option>
+                  {% for value, display in payment_method_choices %}
+                    <option value="{{ value }}">{{ display }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <!-- Phone Number Input -->
+              <div class="form-group">
+                <label for="phone_number">Phone Number:</label>
+                <input type="number" name="phone_number" id="phone_number" class="form-control" placeholder="Enter your phone number" required />
+              </div>
+
+              <!-- Payment Button with Confirmation and Validation -->
+              <div class="form-group mt-4 d-flex justify-content-between">
+                <button type="submit" class="btn btn-dark" onclick="return confirm('Are you sure you want to proceed with the payment?') && validatePaymentForm()">Complete Payment</button>
+                <a href="{% url 'orders:customer_order_history' %}" class="btn btn-secondary">Back to Order History</a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function validatePaymentForm() {
+      const phoneNumber = document.getElementById('phone_number').value
+    
+      // Add phone number validation logic (e.g., ensure 10 digits for phone numbers)
+      if (!phoneNumber.match(/^[0-9]{10}$/)) {
+        alert('Please enter a valid phone number with 10 digits.')
+        return false
+      }
+    
+      return true
+    }
+  </script>
+{% endblock %}

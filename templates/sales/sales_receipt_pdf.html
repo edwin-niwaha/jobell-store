@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+{% load static %}
+{% load humanize %}
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sale Receipt PDF</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+      body {
+        font-family: 'Roboto', 'Lucida Grande', Verdana, Arial, sans-serif;
+        color: black;
+        padding: 0;
+        margin: 0;
+      }
+      
+      .name-company {
+        font-size: 25px;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin: 0;
+      }
+      
+      table thead th,
+      table tbody td {
+        border: 1px solid black;
+        padding: 3px;
+      }
+      
+      .receipt-header,
+      .receipt-footer {
+        border-bottom: 2px solid black;
+        padding: 10px 0;
+      }
+      
+      .receipt-footer {
+        border-top: 2px solid black;
+        border-bottom: none;
+        margin-top: 20px;
+      }
+      
+      .text-right {
+        text-align: right;
+      }
+      
+      .text-center {
+        text-align: center;
+      }
+      
+      .font-weight-bold {
+        font-weight: bold;
+      }
+      
+      .border-dark {
+        border-color: #000 !important;
+      }
+      
+      .pl-2 {
+        padding-left: 0.5rem !important;
+      }
+      
+      .pr-2 {
+        padding-right: 0.5rem !important;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container mt-4">
+      <table class="table border border-dark">
+        <tbody>
+          <tr>
+            <td class="col-6">
+              <p class="name-company">{{ company_name|upper }}</p>
+              <p>
+                <strong>Makerere</strong>
+              </p>
+              <p>
+                <strong>Kampala Uganda</strong>
+              </p>
+              <p>
+                <strong>Phone:</strong>
+                <span class="mr-3"><i class="fas fa-phone"></i></span>
+                +256 777-337-491
+              </p>
+              <p>
+                <strong>Email:</strong>
+                <span class="mr-3"><i class="fas fa-envelope"></i></span>
+                <a href="mailto:{{ support_email }}">{{ support_email }}</a>
+              </p>
+            </td>
+            <td class="col-6 border-left border-dark">
+              <p>
+                <strong>Date:</strong> {{ sale.date_added }}
+              </p>
+              <p>
+                <strong>Sale ID:</strong> {{ sale.id }}
+              </p>
+              <p>
+                <strong>Customer:</strong> {{ sale.customer.get_full_name }}
+              </p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Products Table -->
+      <table class="table table-bordered">
+        <thead class="thead-light">
+          <tr>
+            <th class="text-center">#</th>
+            <th class="text-center">Product</th>
+            <th class="text-center">Quantity</th>
+            <th class="text-right pr-2">Price(UgX)</th>
+            <th class="text-right pr-2">Total(UgX)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in details %}
+            <tr>
+              <td class="text-center">{{ forloop.counter }}</td>
+              <td class="text-left pl-2">{{ d.product.name }}</td>
+              <td class="text-center">{{ d.quantity }}</td>
+              <td class="text-right pr-2">{{ d.price|floatformat:'2'|intcomma }}</td>
+              <td class="text-right pr-2">{{ d.total_detail|floatformat:'2'|intcomma }}</td>
+            </tr>
+          {% endfor %}
+          <tr>
+            <td colspan="4" class="text-right pr-2 font-weight-bold">Subtotal</td>
+            <td class="text-right pr-2">{{ sale.sub_total|floatformat:'2'|intcomma }}</td>
+          </tr>
+          <tr>
+            <td colspan="4" class="text-right pr-2 font-weight-bold">Tax Inclusive ({{ sale.tax_percentage }}%)</td>
+            <td class="text-right pr-2">{{ sale.tax_amount|floatformat:'2'|intcomma }}</td>
+          </tr>
+          <tr>
+            <td colspan="4" class="text-right pr-2 font-weight-bold">Grand Total</td>
+            <td class="text-right pr-2">{{ sale.grand_total|floatformat:'2'|intcomma }}</td>
+          </tr>
+          <tr>
+            <td colspan="4" class="text-right pr-2 font-weight-bold">Amount Paid</td>
+            <td class="text-right pr-2">{{ sale.amount_payed|floatformat:'2'|intcomma }}</td>
+          </tr>
+          <tr>
+            <td colspan="4" class="text-right pr-2 font-weight-bold">Change</td>
+            <td class="text-right pr-2">{{ sale.amount_change|floatformat:'2'|intcomma }}</td>
+          </tr>
+          <tr>
+            <td colspan="5">
+              <p class="text-uppercase font-weight-bold text-center mb-0">Thank you for your preference!</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>

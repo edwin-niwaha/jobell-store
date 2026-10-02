@@ -1,0 +1,27 @@
+{% load humanize %}{{ company_name|default:site_name }} admin notification
+
+{{ event_title|default:"Order notification" }}
+{{ event_message|default:"An order needs staff attention." }}
+
+Order summary
+Order: #{{ order_number }}
+Date: {{ order_date|date:"M j, Y, g:i A" }}
+Customer: {{ customer_name }}
+Phone: {{ customer_phone|default:"Not provided" }}
+Email: {{ customer_email|default:"Not provided" }}
+Address: {{ delivery_address|default:"To be confirmed" }}
+Payment method: {{ payment_method }}
+Payment status: {{ payment_status }}
+Order status: {{ new_status|default:order.status }}
+
+Items
+{% if item_rows %}{% for item in item_rows %}- {{ item.product_name }}{% if item.variant_label %} ({{ item.variant_label }}){% endif %} | Qty {{ item.quantity }} | Unit UGX {{ item.unit_price|floatformat:0|intcomma }} | Total UGX {{ item.line_total|floatformat:0|intcomma }}
+{% endfor %}{% else %}{% for item in items %}- {{ item.product.name }} ({{ item.product_volume.variant_label }}) | Qty {{ item.quantity }} | Total UGX {{ item.total|floatformat:0|intcomma }}
+{% endfor %}{% endif %}
+Subtotal: UGX {{ subtotal|floatformat:0|intcomma }}
+Delivery fee: UGX {{ shipping_fee|floatformat:0|intcomma }}
+Discount: UGX {{ discount_total|default:discount|floatformat:0|intcomma }}
+Tax: UGX {{ tax_amount|floatformat:0|intcomma }}
+Grand total: UGX {{ grand_total|default:total|floatformat:0|intcomma }}
+
+Open order: {{ order_url }}

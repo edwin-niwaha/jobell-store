@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+  Profile List | {{ site_name|upper }}
+{% endblock %}
+
+{% block content %}
+  <div class="container-fluid">
+    <div class="admin-page-head">
+      <div>
+        <span class="admin-eyebrow">Authentication</span>
+        <h1 class="admin-page-title">{{ table_title }}</h1>
+        <p class="admin-muted mb-0">Manage staff accounts, roles, and profile access.</p>
+      </div>
+      <div class="admin-actions">
+        <a href="{% url 'dashboard' %}" class="admin-theme-btn admin-theme-btn-dark">
+          <i class="mdi mdi-arrow-left" aria-hidden="true"></i>
+          Dashboard
+        </a>
+        <button title="Export to Excel" type="button" class="admin-theme-btn admin-theme-btn-soft" onclick="ExportToExcel('xlsx')">
+          <i class="mdi mdi-file-excel" aria-hidden="true"></i>
+          Excel
+        </button>
+        <button title="Export to Word" type="button" class="admin-theme-btn admin-theme-btn-soft" onclick="Export2Doc('printMe')">
+          <i class="mdi mdi-file-word" aria-hidden="true"></i>
+          Word
+        </button>
+        <button title="Print" type="button" class="admin-theme-btn admin-theme-btn-accent" onclick="printDiv('printMe')">
+          <i class="mdi mdi-printer" aria-hidden="true"></i>
+          Print
+        </button>
+      </div>
+    </div>
+
+    <form method="get" action="{% url 'profile_list' %}" class="admin-filter-bar">
+      <div class="flex-grow-1">
+        <label for="profileSearch" class="sr-only">Search profiles</label>
+        <input type="search" name="search" id="profileSearch" class="form-control" value="{{ search_query }}" placeholder="Search by name, email, username, or role" />
+      </div>
+      <button type="submit" class="admin-theme-btn admin-theme-btn-accent">
+        <i class="mdi mdi-magnify" aria-hidden="true"></i>
+        Search
+      </button>
+      {% if search_query %}
+        <a href="{% url 'profile_list' %}" class="admin-theme-btn admin-theme-btn-soft">Clear</a>
+      {% endif %}
+    </form>
+
+    <div id="printMe" class="admin-panel mb-4">
+      <div class="admin-panel-header">
+        <h2>{{ profile_total }} profile{{ profile_total|pluralize }}</h2>
+      </div>
+      <div class="p-3">
+        <div class="admin-table-wrap">
+          <table class="admin-table my-table" id="dataTable">
+            <thead>
+              <tr>
+                <th scope="col">Profile</th>
+                <th scope="col">Contact</th>
+                <th scope="col">Username</th>
+                <th scope="col">Role</th>
+                <th class="print-hide text-center" scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for profile in profiles %}
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      {% if profile.avatar %}
+                        <img class="admin-avatar mr-3" src="{{ profile.avatar.url }}" alt="{{ profile.user.get_full_name|default:profile.user.username }}" />
+                      {% else %}
+                        <span class="admin-avatar mr-3">{{ profile.user.username|first|upper }}</span>
+                      {% endif %}
+                      <div>
+                        <span class="admin-item-title">{{ profile.user.get_full_name|default:profile.user.username }}</span>
+                        <span class="admin-item-subtitle">{{ profile.branch|default:'No branch assigned' }}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="admin-item-title">{{ profile.user.email|default:'No email' }}</span>
+                    <span class="admin-item-subtitle">{{ profile.mobile|default:profile.tel }}</span>
+                  </td>
+                  <td>{{ profile.user.username }}</td>
+                  <td><span class="admin-badge is-info">{{ profile.get_role_display }}</span></td>
+                  <td class="print-hide text-center">
+                    <div class="admin-icon-actions">
+                      {% if user.profile.role == 'administrator' or user.profile.role == 'manager' or user.profile.role == 'staff' %}
+                        <a class="admin-icon-btn-themed is-gold" title="Edit" href="{% url 'update_profile' profile.id %}">
+                          <i class="bi bi-pencil" aria-hidden="true"></i>
+                        </a>
+                      {% else %}
+                        <button type="button" class="admin-icon-btn-themed is-gold" onclick="showNoPermissionMessage('edit')">
+                          <i class="bi bi-pencil" aria-hidden="true"></i>
+                        </button>
+                      {% endif %}
+                      {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
+                        <form method="post" action="{% url 'delete_profile' profile.id %}" class="admin-inline-form" onsubmit="return confirm('Delete this profile permanently?');">
+                          {% csrf_token %}
+                          <button type="submit" class="admin-icon-btn-themed is-danger" title="Delete">
+                            <i class="bi bi-trash" aria-hidden="true"></i>
+                          </button>
+                        </form>
+                      {% else %}
+                        <button type="button" class="admin-icon-btn-themed is-danger" onclick="showNoPermissionMessage('delete')">
+                          <i class="bi bi-trash" aria-hidden="true"></i>
+                        </button>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="5" class="admin-empty-row">No profiles match your filters.</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center flex-wrap mt-3">
+          <div class="admin-muted mb-2 mb-md-0">Showing {{ profiles.start_index }} to {{ profiles.end_index }} of {{ profiles.paginator.count }} entries</div>
+          <nav aria-label="Profile pagination">
+            <ul class="pagination admin-pagination">
+              {% if profiles.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ profiles.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Previous</a></li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">Previous</span></li>
+              {% endif %}
+              <li class="page-item active"><span class="page-link">{{ profiles.number }} / {{ profiles.paginator.num_pages }}</span></li>
+              {% if profiles.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ profiles.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Next</a></li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">Next</span></li>
+              {% endif %}
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

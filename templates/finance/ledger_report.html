@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}
+  Ledger Report | {{ site_name|upper }}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4">
+    <div class="admin-page-head">
+        <div>
+            <span class="admin-eyebrow">Financials</span>
+            <h1 class="admin-page-title">Ledger Report</h1>
+            <p class="admin-muted mb-0">Review account movement, debits, credits, and running balances.</p>
+        </div>
+        <div class="admin-actions">
+            <a href="{% url 'dashboard' %}" class="admin-theme-btn admin-theme-btn-dark">
+                <i class="mdi mdi-arrow-left" aria-hidden="true"></i>
+                Dashboard
+            </a>
+            <button title="Print" type="button" class="admin-theme-btn admin-theme-btn-accent" onclick="printDiv('printMe')">
+                <i class="mdi mdi-printer" aria-hidden="true"></i>
+                Print
+            </button>
+        </div>
+    </div>
+
+    <form method="get" action="{% url 'finance:ledger_report' %}" class="admin-filter-bar">
+        <div class="flex-grow-1">
+            <label for="account_id" class="sr-only">Select Account</label>
+            <select name="account_id" id="account_id" class="form-control" required>
+                <option value="" disabled selected>-- Select Account --</option>
+                {% for account in accounts %}
+                    <option value="{{ account.id }}" {% if account.id == selected_account_id %}selected{% endif %}>{{ account.account_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="start_date" class="sr-only">Start Date</label>
+            <input type="date" name="start_date" id="start_date" class="form-control" value="{{ start_date }}" required>
+        </div>
+        <div>
+            <label for="end_date" class="sr-only">End Date</label>
+            <input type="date" name="end_date" id="end_date" class="form-control" value="{{ end_date }}" required>
+        </div>
+        <button type="submit" class="admin-theme-btn admin-theme-btn-accent">
+            <i class="mdi mdi-chart-line" aria-hidden="true"></i>
+            Generate
+        </button>
+        <a href="{% url 'finance:ledger_select_period' %}" class="admin-theme-btn admin-theme-btn-soft">Detailed Report</a>
+    </form>
+
+    <div class="admin-panel mb-4">
+        <div class="admin-panel-header">
+            <h2>
+                {% if selected_account %}
+                    {{ selected_account.account_number }} - {{ selected_account.account_name }}
+                {% else %}
+                    Select an account
+                {% endif %}
+            </h2>
+        </div>
+
+        <div id="printMe" class="p-3">
+            <div class="admin-list-toolbar">
+                <span class="admin-muted">
+                    {% if selected_account %}
+                        Period: {{ start_date }} to {{ end_date }}
+                    {% else %}
+                        Choose an account and date range to generate a ledger.
+                    {% endif %}
+                </span>
+                <span class="admin-badge is-info">Opening balance: {{ opening_balance|floatformat:"2"|intcomma }}</span>
+            </div>
+
+            <div class="admin-table-wrap">
+                <table class="admin-table my-table" id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Date</th>
+                            <th>Ref No.</th>
+                            <th>Narration</th>
+                            <th>Debits</th>
+                            <th>Credits</th>
+                            <th>Balance</th>
+                            {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
+                                <th class="print-hide text-center">Action</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in ledger_data %}
+                            <tr>
+                                <td>{{ item.journal_entry.id }}</td>
+                                <td>{{ item.journal_entry.transaction_date|date:"d/m/Y" }}</td>
+                                <td>{{ item.journal_entry.reference_number }}</td>
+                                <td class="admin-row-text">{{ item.journal_entry.description }}</td>
+                                <td class="text-right">{{ item.debit|floatformat:"2"|intcomma }}</td>
+                                <td class="text-right">{{ item.credit|floatformat:"2"|intcomma }}</td>
+                                <td class="text-right">{{ item.running_balance|floatformat:"2"|intcomma }}</td>
+                                {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
+                                    <td class="text-center print-hide">
+                                        <form method="post" action="{% url 'finance:delete-transaction' item.id %}" class="admin-inline-form" onsubmit="return confirm('Delete this transaction?');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="admin-icon-btn-themed is-danger" title="Delete transaction">
+                                                <i class="mdi mdi-delete" aria-hidden="true"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                {% endif %}
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="8" class="admin-empty-row">No transactions available for this account.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="4"><strong>Total</strong></td>
+                            <td class="text-right"><strong>{{ total_debits|floatformat:"2"|intcomma }}</strong></td>
+                            <td class="text-right"><strong>{{ total_credits|floatformat:"2"|intcomma }}</strong></td>
+                            <td></td>
+                            {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
+                                <td class="print-hide"></td>
+                            {% endif %}
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

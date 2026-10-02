@@ -1,0 +1,16 @@
+{% extends 'accounts/base.html' %}{% load static %}
+{% block title %}Sign in | {{ branding.site_name }}{% endblock %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/account_forms.css' %}?v=1"><script src="{% static 'js/account_forms.js' %}?v=1" defer></script>{% endblock %}
+{% block content %}
+<main class="account-page"><div class="account-layout">
+<section class="account-story"><span class="account-kicker">{{ branding.site_name }} · Your account</span><h1>Welcome back.<br>Your next scent awaits.</h1><p>Sign in to pick up where you left off, manage your orders, and keep your favourites close.</p><ul class="account-benefits"><li><i class="mdi mdi-bag-personal-outline" aria-hidden="true"></i>Follow your orders in one place</li><li><i class="mdi mdi-heart-outline" aria-hidden="true"></i>Keep a wishlist of favourite fragrances</li><li><i class="mdi mdi-map-marker-outline" aria-hidden="true"></i>Save delivery details for next time</li></ul><a class="account-back" href="{% url 'products:shop_homepage' %}">← Continue shopping</a></section>
+<section class="account-card" aria-labelledby="signinTitle"><header><h2 id="signinTitle">Sign in</h2><p>Enter your username and password to access your account.</p></header>
+{% if form.non_field_errors %}<div class="account-alert" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+{% if google_login_enabled %}<form method="post" action="{% url 'social:begin' 'google-oauth2' %}">{% csrf_token %}{% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}<button type="submit" class="account-social"><i class="fab fa-google" aria-hidden="true"></i>Continue with Google</button></form><div class="account-divider">or use your username</div>{% endif %}
+<form method="post" class="account-form">{% csrf_token %}{% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+{% include 'accounts/_partials/form_field.html' with field=form.username %}
+{% include 'accounts/_partials/form_field.html' with field=form.password %}
+<div class="account-options"><label class="account-remember">{{ form.remember_me }}Remember me</label><a href="{% url 'password_reset' %}">Forgot password?</a></div>
+<button class="account-primary" type="submit">Sign in</button></form>
+<div class="account-footer">New to {{ branding.site_name }}? <a href="{% url 'users-register' %}{% if next %}?next={{ next|urlencode }}{% endif %}">Create an account</a></div></section>
+</div></main>{% endblock %}

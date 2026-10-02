@@ -1,0 +1,31 @@
+{% extends "emails/base.html" %}
+{% block content %}
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+  <tr>
+    <td style="padding:28px 24px 10px;">
+      <div style="display:inline-block;background:#050505;border:1px solid #d4af37;border-radius:999px;padding:7px 11px;color:#f7e7ad;font-size:12px;line-height:14px;text-transform:uppercase;letter-spacing:1px;">Admin alert</div>
+      <h1 style="margin:14px 0 8px;font-size:28px;line-height:34px;color:#050505;font-weight:700;">New newsletter subscriber</h1>
+      <p style="margin:0 0 18px;font-size:15px;line-height:24px;color:#374151;">A customer has joined the {{ site_name }} newsletter list.</p>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 18px;border:1px solid #eadfca;border-radius:14px;overflow:hidden;">
+        <tr>
+          <td style="background:#050505;color:#f7e7ad;padding:12px 16px;font-size:13px;line-height:18px;font-weight:700;">Subscriber details</td>
+        </tr>
+        <tr>
+          <td style="padding:14px 16px;background:#fffaf0;">
+            <p style="margin:0 0 6px;font-size:14px;line-height:22px;color:#111111;"><strong>Email:</strong> {{ subscriber_email }}</p>
+            <p style="margin:0 0 6px;font-size:14px;line-height:22px;color:#111111;"><strong>Consent:</strong> {% if subscriber.consent %}Yes{% else %}No{% endif %}</p>
+            <p style="margin:0;font-size:14px;line-height:22px;color:#111111;"><strong>Subscribed:</strong> {{ subscribed_at|date:"M j, Y H:i" }}</p>
+          </td>
+        </tr>
+      </table>
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:4px 0 12px;">
+        <tr>
+          <td style="background:#050505;border-radius:10px;">
+            <a href="{{ site_url }}" style="display:inline-block;padding:13px 22px;color:#ffffff;text-decoration:none;font-size:14px;line-height:18px;font-weight:700;">Open Jobell</a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+{% endblock %}

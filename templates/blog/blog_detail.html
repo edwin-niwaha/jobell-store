@@ -1,0 +1,57 @@
+{% extends 'accounts/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+  <div class="container-fluid py-3">
+    <div class="card shadow-lg border-0">
+      <div class="card-header bg-primary text-white">
+        <h2 class="mb-0 text-center">{{ post.title }}</h2>
+      </div>
+      <div class="card-body">
+        {% if post.url_content %}
+          <div class="platform-blog-media mb-4">
+            {% if post.youtube_embed_url %}
+              <div class="embed-responsive embed-responsive-16by9">
+                <iframe class="embed-responsive-item" src="{{ post.youtube_embed_url }}" title="{{ post.title }}" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+              </div>
+            {% else %}
+              <div class="d-flex align-items-center justify-content-center h-100 p-4 text-center">
+                <a href="{{ post.url_content }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary font-weight-bold">
+                  <i class="mdi mdi-youtube" aria-hidden="true"></i>
+                  Watch on YouTube
+                </a>
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
+
+        <p class="lead">{{ post.content }}</p>
+
+        <!-- Display Comments -->
+        <div class="comments-section mt-4">
+          <h4 class="text-primary">Comments</h4>
+          {% for comment in comments %}
+            <div class="comment mb-3 p-3 border rounded">
+              <p>
+                <strong>{{ comment.author.username }}</strong> says:
+              </p>
+              <p>{{ comment.content }}</p>
+            </div>
+          {% empty %}
+            <p class="text-muted">No comments yet. Be the first to comment!</p>
+          {% endfor %}
+        </div>
+
+        <!-- Comment Form -->
+        <div class="comment-form mt-5">
+          <h4 class="text-primary">Leave a Comment</h4>
+          <form method="post" action="{% url 'blog:post_comment' post.id %}" class="mt-3">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <button type="submit" class="btn btn-primary btn-lg w-100 mt-3">Post Comment</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

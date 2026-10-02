@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+  {{ form_title }} | {{ site_name|upper }}
+{% endblock %}
+
+{% block content %}
+  <div class="blog-admin-form-page">
+    <div class="admin-page-head">
+      <div>
+        <span class="admin-eyebrow">Blog</span>
+        <h1 class="admin-page-title">{{ form_title }}</h1>
+        <p class="admin-muted mb-0">Write a helpful journal post with a category, tags, and optional YouTube video.</p>
+      </div>
+      <div class="admin-actions">
+        <a href="{% url 'blog:blog_list' %}" class="btn btn-outline-dark">
+          <i class="mdi mdi-arrow-left" aria-hidden="true"></i>
+          Blog
+        </a>
+        <a href="{% url 'blog:blog_category_add' %}" class="btn btn-light">
+          <i class="mdi mdi-folder-plus-outline" aria-hidden="true"></i>
+          Category
+        </a>
+        <a href="{% url 'blog:add_tag' %}" class="btn btn-primary text-white">
+          <i class="mdi mdi-tag-plus-outline" aria-hidden="true"></i>
+          Tag
+        </a>
+      </div>
+    </div>
+
+    <div class="admin-form-layout">
+      <div class="admin-panel">
+        <div class="admin-panel-header">
+          <h2>Post details</h2>
+        </div>
+        <div class="p-4">
+          <form method="post" class="admin-compact-form blog-post-form" novalidate>
+            {% csrf_token %}
+            {{ form|crispy }}
+
+            <div class="admin-form-actions">
+              <a href="{% url 'blog:blog_list' %}" class="btn btn-light">Cancel</a>
+              <button type="submit" class="btn btn-primary text-white">
+                <i class="mdi mdi-content-save-outline" aria-hidden="true"></i>
+                Save post
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <aside class="admin-panel p-4">
+        <span class="admin-eyebrow">Checklist</span>
+        <h2 class="h5 font-weight-bold">Before publishing</h2>
+        <div class="admin-help-list mt-3">
+          <span><i class="mdi mdi-format-header-1" aria-hidden="true"></i> Use a title with at least five characters.</span>
+          <span><i class="mdi mdi-folder-outline" aria-hidden="true"></i> Choose one category for the post.</span>
+          <span><i class="mdi mdi-tag-multiple-outline" aria-hidden="true"></i> Select at least one tag.</span>
+          <span><i class="mdi mdi-youtube" aria-hidden="true"></i> Add a YouTube link only when the video supports the article.</span>
+        </div>
+      </aside>
+    </div>
+  </div>
+{% endblock %}

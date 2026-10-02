@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block head %}
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+    <!--Go back-->
+    <div class="row ml-0 mb-3">
+        <a href="{% url 'products:categories_list' %}">
+            <button type="button" class="btn btn-info font-weight-bold">
+                <i class="mdi mdi-arrow-left-bold mr-2"></i>
+                Go back
+            </button>
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="card col-md-12">
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <!--  -->
+                    {{ form|crispy }}
+                    <div class="form-group mt-4 mb-0">
+                        <button type="submit" class="col-md-12 btn btn-dark"
+                            onclick="return confirm('Are you sure you want to proceed?') && validateForm()">
+                            Create category</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock content %}

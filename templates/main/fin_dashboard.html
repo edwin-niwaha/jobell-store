@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}
+  Finance Dashboard | {{ site_name|upper }}
+{% endblock %}
+
+{% block content %}
+  <div class="finance-dashboard">
+    <div class="admin-page-head">
+      <div>
+        <span class="admin-eyebrow">Finance</span>
+        <h1 class="admin-page-title">Financial dashboard</h1>
+        <p class="admin-muted mb-0">Review balances, retained earnings, recent activity, and financial trends.</p>
+      </div>
+      <div class="admin-actions">
+        <a href="{% url 'finance:chart_of_accounts_list' %}" class="btn btn-outline-dark">
+          <i class="mdi mdi-format-list-bulleted" aria-hidden="true"></i>
+          Accounts
+        </a>
+        <a href="{% url 'finance:multi_journal' %}" class="btn btn-primary">
+          <i class="mdi mdi-plus-circle-outline" aria-hidden="true"></i>
+          Journal entry
+        </a>
+      </div>
+    </div>
+
+    <div class="row">
+      {% for key, value in summary.items %}
+        {% if key != 'NetIncome' %}
+          <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+              <div class="card-body d-flex justify-content-between">
+                <div>
+                  <span class="text-muted small font-weight-bold text-uppercase">{{ key }} total</span>
+                  <h2 class="h4 font-weight-bold mb-0 mt-2">UgX {{ value|floatformat:'2'|intcomma }}</h2>
+                </div>
+                <span class="sales-metric-icon {% if key == 'Asset' %}bg-success{% elif key == 'Liability' %}bg-danger{% elif key == 'Revenue' %}bg-primary{% elif key == 'Expense' %}bg-warning{% else %}bg-info{% endif %} text-white">
+                  <i class="mdi {% if key == 'Asset' %}mdi-bank{% elif key == 'Liability' %}mdi-scale-balance{% elif key == 'Revenue' %}mdi-chart-line{% elif key == 'Expense' %}mdi-credit-card-minus{% else %}mdi-calculator{% endif %}" aria-hidden="true"></i>
+                </span>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    <div class="row">
+      <div class="col-xl-4 mb-4">
+        <div class="card border-0 shadow-sm h-100 bg-info text-white">
+          <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+              <span class="small font-weight-bold text-uppercase text-white-50">Retained earnings</span>
+              <h2 class="h3 font-weight-bold mb-0 mt-2">UgX {{ summary.NetIncome|floatformat:'2'|intcomma }}</h2>
+            </div>
+            <span class="sales-metric-icon bg-white text-info">
+              <i class="mdi mdi-trending-up" aria-hidden="true"></i>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xl-8 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header bg-white d-flex align-items-center justify-content-between">
+            <h2 class="h5 font-weight-bold mb-0">Recent transactions</h2>
+            <span class="badge badge-light border">{{ recent_transactions|length }} latest</span>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Reference</th>
+                    <th>Account</th>
+                    <th>Type</th>
+                    <th class="text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for transaction in recent_transactions %}
+                    <tr>
+                      <td>{{ transaction.journal_entry.transaction_date|date:'M d, Y' }}</td>
+                      <td>{{ transaction.journal_entry.reference_number|default:'N/A' }}</td>
+                      <td class="font-weight-bold">{{ transaction.account.account_name|default:'Unknown' }}</td>
+                      <td>
+                        <span class="badge {% if transaction.transaction_type == 'credit' %}badge-success{% else %}badge-warning{% endif %}">
+                          {{ transaction.transaction_type|title }}
+                        </span>
+                      </td>
+                      <td class="text-right">UgX {{ transaction.amount|floatformat:'2'|intcomma }}</td>
+                    </tr>
+                  {% empty %}
+                    <tr>
+                      <td colspan="5" class="text-center text-muted py-4">No recent transactions available.</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-xl-7 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header bg-white">
+            <h2 class="h5 font-weight-bold mb-0">Transaction totals by account type</h2>
+          </div>
+          <div class="card-body">
+            <div class="sales-chart-area">
+              <canvas id="accountTypeChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xl-5 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header bg-white">
+            <h2 class="h5 font-weight-bold mb-0">Financial period status</h2>
+          </div>
+          <div class="card-body">
+            <div class="sales-chart-area">
+              <canvas id="periodStatusChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xl-7 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header bg-white">
+            <h2 class="h5 font-weight-bold mb-0">Transaction trends over time</h2>
+          </div>
+          <div class="card-body">
+            <div class="sales-chart-area">
+              <canvas id="transactionTrendsChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xl-5 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header bg-white">
+            <h2 class="h5 font-weight-bold mb-0">Top accounts by transaction volume</h2>
+          </div>
+          <div class="card-body">
+            <div class="sales-chart-area">
+              <canvas id="topAccountsChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 mb-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-white">
+            <h2 class="h5 font-weight-bold mb-0">Income vs expenses</h2>
+          </div>
+          <div class="card-body">
+            <div class="sales-chart-area sales-chart-area-sm">
+              <canvas id="incomeVsExpensesChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

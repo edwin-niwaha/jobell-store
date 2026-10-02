@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}
+  Sales Analytics | {{ site_name|upper }}
+{% endblock %}
+
+{% block content %}
+  <div class="sales-dashboard">
+    <div class="admin-page-head">
+      <div>
+        <span class="admin-eyebrow">Sales analytics</span>
+        <h1 class="admin-page-title">Sales dashboard</h1>
+        <p class="admin-muted mb-0">Track revenue, profit, stock, and product performance for {{ current_year }}.</p>
+      </div>
+      <div class="admin-actions">
+        <a href="{% url 'sales:sales_list' %}" class="btn btn-outline-dark">
+          <i class="mdi mdi-receipt" aria-hidden="true"></i>
+          Sales
+        </a>
+        <a href="{% url 'sales:sales_report' %}" class="btn btn-primary">
+          <i class="mdi mdi-file-chart" aria-hidden="true"></i>
+          Reports
+        </a>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body d-flex justify-content-between">
+            <div>
+              <span class="text-muted small font-weight-bold text-uppercase">Avg. monthly earnings</span>
+              <h2 class="h4 font-weight-bold mb-0 mt-2">UgX {{ avg_month|floatformat:'2'|intcomma }}</h2>
+            </div>
+            <span class="sales-metric-icon bg-primary text-white">
+              <i class="mdi mdi-calendar-month" aria-hidden="true"></i>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body d-flex justify-content-between">
+            <div>
+              <span class="text-muted small font-weight-bold text-uppercase">Annual earnings</span>
+              <h2 class="h4 font-weight-bold mb-0 mt-2">UgX {{ annual_earnings|floatformat:'2'|intcomma }}</h2>
+            </div>
+            <span class="sales-metric-icon bg-success text-white">
+              <i class="mdi mdi-cash-multiple" aria-hidden="true"></i>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body d-flex justify-content-between">
+            <div>
+              <span class="text-muted small font-weight-bold text-uppercase">Profit after sales</span>
+              <h2 class="h4 font-weight-bold mb-0 mt-2">UgX {{ total_profit_after_sales|floatformat:2|intcomma }}</h2>
+            </div>
+            <span class="sales-metric-icon bg-warning text-white">
+              <i class="mdi mdi-trending-up" aria-hidden="true"></i>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body d-flex justify-content-between">
+            <div>
+              <span class="text-muted small font-weight-bold text-uppercase">Average sale value</span>
+              <h2 class="h4 font-weight-bold mb-0 mt-2">UgX {{ avg_sale_value|floatformat:'2'|intcomma }}</h2>
+            </div>
+            <span class="sales-metric-icon bg-info text-white">
+              <i class="mdi mdi-chart-line" aria-hidden="true"></i>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <span class="text-muted small font-weight-bold text-uppercase">Sales today</span>
+            <h3 class="h5 font-weight-bold mt-2 mb-0">UgX {{ total_sales_today|floatformat:'2'|intcomma }}</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <span class="text-muted small font-weight-bold text-uppercase">Sales this week</span>
+            <h3 class="h5 font-weight-bold mt-2 mb-0">UgX {{ total_sales_week|floatformat:'2'|intcomma }}</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <span class="text-muted small font-weight-bold text-uppercase">Sales this month</span>
+            <h3 class="h5 font-weight-bold mt-2 mb-0">UgX {{ total_sales_month|floatformat:'2'|intcomma }}</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <span class="text-muted small font-weight-bold text-uppercase">Stock balance</span>
+            <h3 class="h5 font-weight-bold mt-2 mb-0">{{ total_stock|intcomma }}</h3>
+            <small class="text-muted">{{ products|intcomma }} active products</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-xl-5 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header bg-white d-flex align-items-center justify-content-between">
+            <h2 class="h5 font-weight-bold mb-0">Top selling products</h2>
+            <span class="badge badge-light border">{{ sales_count|intcomma }} sales</span>
+          </div>
+          <div class="card-body">
+            {% if top_products %}
+              <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                  <thead>
+                    <tr>
+                      <th>Product</th>
+                      <th class="text-right">Sold</th>
+                      <th class="text-right">Sales value</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for product in top_products|slice:':6' %}
+                      <tr>
+                        <td class="font-weight-bold">{{ product.name }}</td>
+                        <td class="text-right">{{ product.total_quantity_sold|default:'0'|intcomma }}</td>
+                        <td class="text-right">UgX {{ product.total_sales_value|floatformat:'2'|intcomma }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <div class="alert alert-warning mb-0" role="alert">No sales available yet.</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xl-7 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header bg-white">
+            <h2 class="h5 font-weight-bold mb-0">Monthly earnings overview</h2>
+            <small class="text-muted">January to December, <span id="currentYear"></span></small>
+          </div>
+          <div class="card-body">
+            <div class="sales-chart-area">
+              <canvas id="myLineChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-12 mb-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-white">
+            <h2 class="h5 font-weight-bold mb-0">Earnings over the years</h2>
+          </div>
+          <div class="card-body">
+            <div class="sales-chart-area sales-chart-area-sm">
+              <canvas id="salesChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

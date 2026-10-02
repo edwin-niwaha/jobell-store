@@ -1,0 +1,18 @@
+Djoser Default Endpoints:
+
+http://<your-domain>/auth/: This base URL will give you access to the various user-related 
+actions such as registration, password reset, etc. Depending on your settings, 
+you might not see a user-friendly interface, as these endpoints are usually used for 
+API requests via clients like Postman or JavaScript frontends.
+Example URLs (using localhost as an example):
+
+User Registration: http://localhost:8000/api/auth/users/
+Login (JWT): http://localhost:8000/api/auth/jwt/create/
+Token Refresh: http://localhost:8000/api/auth/jwt/refresh/
+Token Verify: http://localhost:8000/api/auth/jwt/verify/
+Custom Logout Route:
+
+For the LogoutView you have manually added:
+http://localhost:8000/auth/logout/: This URL will trigger the LogoutView. 
+It is also usually meant for API requests, so it might not render a user interface but rather return 
+a JSON response (such as a logout success message).

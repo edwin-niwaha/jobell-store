@@ -1,0 +1,373 @@
+{% load static %}
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <link rel="shortcut icon" href="{% static 'images/file.png' %}" />
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font/css/materialdesignicons.min.css" rel="stylesheet" />
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="{% static 'css/admin_store.css' %}?v=5" />
+    <link rel="stylesheet" href="{% static 'assets/css/dashboard.css' %}?v=2" />
+
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
+    <!-- jQuery (Required for Select2) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Bootstrap JS (Bundle includes Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <!-- Chosen CSS and JS -->
+    <link rel="stylesheet" href="{% static 'css/chosen.css' %}" />
+    <script src="{% static 'js/chosen.jquery.js' %}"></script>
+  </head>
+
+  <body class="content-wrapper">
+    <div class="container-fluid" style="margin-top: 80px;">
+      <!-- Topbar -->
+      {% include 'accounts/_partials/navbar_1.html' %}
+
+      <div class="main-panel">
+        <div class="content-wrapper pb-0">
+          <!-- Messages -->
+          {% include '_partials/messages.html' %}
+
+          <div class="admin-page-head">
+            <div>
+              <span class="admin-eyebrow">Sales</span>
+              <h1 class="admin-page-title">Create Sale</h1>
+              <p class="admin-muted mb-0">Build a sale from active products, confirm payment, and post the journal entry.</p>
+            </div>
+            <div class="admin-actions">
+              <a href="{% url 'dashboard' %}" class="admin-theme-btn admin-theme-btn-dark">
+                <i class="mdi mdi-arrow-left" aria-hidden="true"></i>
+                Dashboard
+              </a>
+              <a href="{% url 'sales:sales_list' %}" class="admin-theme-btn admin-theme-btn-soft">
+                <i class="mdi mdi-cart-outline" aria-hidden="true"></i>
+                Sales
+              </a>
+            </div>
+          </div>
+          <!-- Sale Form -->
+          <form action="{% url 'sales:sales_add' %}" class="saleForm" method="post">
+            {% csrf_token %}
+
+            <div class="row g-3">
+              <!-- Left Column: Products Selection -->
+              <div class="col-lg-8 col-xl-9">
+                <div class="admin-panel">
+                  <div class="admin-panel-header">
+                    <h2>Sale products</h2>
+                    <span class="admin-badge is-info">{{ total_stock }} in stock</span>
+                  </div>
+
+                  <div class="p-4">
+                    <!-- Search Product -->
+                    <div class="form-group">
+                      <label for="searchbox_products">Search Product:</label>
+                      <select class="form-control select2" id="searchbox_products" name="searchbox_products">
+                        <option value="" selected disabled hidden>Select a product</option>
+                        {% for product in products %}
+                          {% for product_volume in product.productvolume_set.all %}
+                            {% if product_volume.discount_value %}
+                              {% with discounted_price=product_volume.get_discounted_price %}
+                                <option value="{{ product.id }}-{{ product_volume.id }}" data-product-id="{{ product.id }}" data-volume-id="{{ product_volume.id }}" data-price="{{ discounted_price }}" data-cost="{{ product_volume.effective_cost }}" data-name="{{ product.name }}" data-volume="{{ product_volume.variant_label }}" data-discount="{{ product_volume.discount_value }}">{{ product.name }} - {{ product_volume.variant_label }} - Price: {{ discounted_price|floatformat:'2'|intcomma }} ({{ product_volume.discount_value }}% Off)</option>
+                              {% endwith %}
+                            {% else %}
+                              <option value="{{ product.id }}-{{ product_volume.id }}" data-product-id="{{ product.id }}" data-volume-id="{{ product_volume.id }}" data-price="{{ product_volume.effective_price }}" data-cost="{{ product_volume.effective_cost }}" data-name="{{ product.name }}" data-volume="{{ product_volume.variant_label }}">{{ product.name }} - {{ product_volume.variant_label }} - Price: {{ product_volume.effective_price|floatformat:'2'|intcomma }}</option>
+                            {% endif %}
+                          {% endfor %}
+                        {% endfor %}
+                      </select>
+                    </div>
+
+                    <!-- Products Table -->
+                    <div class="admin-table-wrap mt-4">
+                      <table class="admin-table my-table" id="table_products">
+                        <thead>
+                          <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Volume</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Total</th>
+                            <th class="text-center">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <!-- Dynamic product rows will be added here -->
+                        </tbody>
+                      </table>
+                    </div>
+                    <div class="admin-empty-row" id="sale_empty_hint">Select a product above to add it to this sale.</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Column: Sale Details -->
+              <div class="col-lg-4 col-xl-3">
+                <div class="admin-panel sales-checkout-panel">
+                  <div class="admin-panel-header">
+                    <h2>Sale details</h2>
+                  </div>
+                  <div class="p-4">
+                    <!-- Customer Selection -->
+                    <div class="form-group">
+                      <label for="searchbox_customers">Customer</label>
+                      <select name="customer" class="form-control chzn-select" id="searchbox_customers" required>
+                        <option value="" selected disabled hidden>Select the customer</option>
+                        {% for customer in customers %}
+                          <option value="{{ customer.value }}">{{ customer.label }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+
+                    <!-- Sale Details Fields -->
+                    <div class="form-group mt-4">
+                      <label for="trans_date">Date</label>
+                      <input name="trans_date" class="form-control" id="trans_date" type="date" required />
+                    </div>
+                    <div class="form-group mt-4">
+                      <label for="sub_total">Subtotal</label>
+                      <input name="sub_total" class="form-control" id="sub_total" type="number" readonly />
+                    </div>
+                    <div class="form-group">
+                      <label for="tax_percentage">Tax Inclusive (%)</label>
+                      <input name="tax_percentage" class="form-control" id="tax_percentage" type="number" value="0" required />
+                    </div>
+                    <div class="form-group">
+                      <label for="tax_amount">Tax Amount</label>
+                      <input name="tax_amount" class="form-control" id="tax_amount" type="number" readonly />
+                    </div>
+                    <div class="form-group">
+                      <label for="grand_total">Grand Total</label>
+                      <input name="grand_total" class="form-control" id="grand_total" type="number" readonly />
+                    </div>
+                    <div class="form-group">
+                      <label for="amount_payed">Amount Paid</label>
+                      <input name="amount_payed" class="form-control" id="amount_payed" type="number" required />
+                    </div>
+                    <div class="form-group mt-4">
+                      <label for="payment_method">Payment Method</label>
+                      <select name="payment_method" class="form-control select2" id="payment_method" required>
+                        <option value="" selected disabled hidden>Select payment method</option>
+                        {% for value, label in payment_methods %}
+                          <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                      </select>
+                      {{ form.payment_method.errors }}
+                    </div>
+                    <!-- Amount Change -->
+                    <div class="form-group">
+                      <label for="amount_change">Change</label>
+                      <input name="amount_change" class="form-control" id="amount_change" type="number" readonly />
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="form-group mt-4 mb-0">
+                      <button type="submit" class="admin-theme-btn admin-theme-btn-accent w-100" onclick="return confirm('Create this sale and post the accounting entries?') && validateForm()">
+                        <i class="mdi mdi-check-circle-outline" aria-hidden="true"></i>
+                        Create Sale
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sales Add Script -->
+<script>
+  $(document).ready(function () {
+    // Initialize Select2 for product and customer search boxes
+    $('#searchbox_products, #payment_method').select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Select an option',
+      allowClear: true,
+      width: '100%'
+    });
+
+    $('#searchbox_customers').chosen({
+      allow_single_deselect: true,
+      width: '100%'
+    });
+
+    const productSelect = $('#searchbox_products');
+    const productTableBody = $('#table_products tbody');
+    const subTotalInput = $('#sub_total');
+    const taxPercentageInput = $('#tax_percentage');
+    const taxAmountInput = $('#tax_amount');
+    const grandTotalInput = $('#grand_total');
+    const amountPayedInput = $('#amount_payed');
+    const amountChangeInput = $('#amount_change');
+    const form = $('.saleForm');
+
+    let productIndex = 0;
+    let selectedProducts = [];
+
+    // Handle product selection using Select2's change event
+    productSelect.on('select2:select', function (e) {
+      const data = e.params.data;
+      const productId = data.element.dataset.productId;
+      const volumeId = data.element.dataset.volumeId;
+      const compositeId = data.id; // e.g., "1-2"
+      const productName = data.element.dataset.name;
+      const productVolume = data.element.dataset.volume;
+      const productPrice = parseFloat(data.element.dataset.price);
+      const productCost = parseFloat(data.element.dataset.cost); // Add cost
+
+      console.log('Selected product:', { compositeId, productId, volumeId, productName, productVolume, productPrice, productCost });
+
+      if (compositeId && !selectedProducts.includes(compositeId)) {
+        selectedProducts.push(compositeId);
+        $('#sale_empty_hint').hide();
+
+        // Add new row to the table
+        const newRow = `
+          <tr>
+            <td>${++productIndex}</td>
+            <td>${productName}</td>
+            <td>${productVolume}</td>
+            <td>${productPrice.toFixed(2)}</td>
+            <td><input type="number" class="form-control quantity-input" value="1" min="1" data-price="${productPrice}" data-cost="${productCost}" data-product-id="${productId}" data-volume-id="${volumeId}" data-composite-id="${compositeId}"></td>
+            <td class="product-total">${productPrice.toFixed(2)}</td>
+            <td class="text-center"><button type="button" class="btn btn-danger btn-sm delete-product" data-composite-id="${compositeId}"><i class="mdi mdi-trash-can-outline"></i></button></td>
+          </tr>
+        `;
+        productTableBody.append(newRow);
+        console.log('Row added to table:', newRow);
+
+        updateTotals();
+        productSelect.val(null).trigger('change'); // Clear the select box
+      } else {
+        console.warn('Product already selected or invalid:', compositeId);
+      }
+    });
+
+    // Update totals when quantity changes
+    productTableBody.on('input', '.quantity-input', function () {
+      updateProductTotal($(this));
+      updateTotals();
+    });
+
+    // Remove product when delete button is clicked
+    productTableBody.on('click', '.delete-product', function () {
+      const compositeId = $(this).data('compositeId');
+      selectedProducts = selectedProducts.filter(id => id !== compositeId);
+      $(this).closest('tr').remove();
+      productIndex--;
+      if (selectedProducts.length === 0) {
+        $('#sale_empty_hint').show();
+      }
+      updateRowNumbers();
+      updateTotals();
+      console.log('Product removed:', compositeId);
+    });
+
+    // Update row numbers in the table
+    function updateRowNumbers() {
+      productTableBody.find('tr').each((index, row) => {
+        $(row).find('td:first').text(index + 1);
+      });
+    }
+
+    // Update the total for a specific product
+    function updateProductTotal(input) {
+      const price = parseFloat(input.data('price'));
+      const quantity = parseInt(input.val()) || 1;
+      const productTotal = price * quantity;
+      input.closest('tr').find('.product-total').text(productTotal.toFixed(2));
+      console.log('Updated product total:', productTotal);
+    }
+
+    // Update subtotal, tax amount, grand total, and amount change
+    function updateTotals() {
+      let subtotal = 0;
+      $('.product-total').each(function () {
+        subtotal += parseFloat($(this).text());
+      });
+      subTotalInput.val(subtotal.toFixed(2));
+
+      const taxPercentage = parseFloat(taxPercentageInput.val()) || 0;
+      const taxAmount = subtotal * (taxPercentage / 100);
+      taxAmountInput.val(taxAmount.toFixed(2));
+
+      const grandTotal = subtotal + taxAmount;
+      grandTotalInput.val(grandTotal.toFixed(2));
+
+      const amountPayed = parseFloat(amountPayedInput.val()) || 0;
+      const amountChange = amountPayed - grandTotal;
+      amountChangeInput.val(amountChange.toFixed(2));
+
+      console.log('Totals updated:', { subtotal, taxAmount, grandTotal, amountChange });
+    }
+
+    // Validate form and add hidden inputs before submission
+    window.validateForm = function () {
+      const grandTotal = parseFloat(grandTotalInput.val());
+      const amountPayed = parseFloat(amountPayedInput.val()) || 0;
+
+      if (amountPayed < grandTotal) {
+        alert('The paid amount must be equal to or greater than the total amount.');
+        return false;
+      }
+
+      // Remove existing hidden product inputs
+      $('input[name="products"]').remove();
+
+      // Add hidden inputs with product data
+      selectedProducts.forEach(compositeId => {
+        const row = productTableBody.find('tr').filter(function () {
+          return $(this).find('.delete-product').data('compositeId') === compositeId;
+        });
+        const quantity = parseInt(row.find('.quantity-input').val());
+        const price = parseFloat(row.find('.product-total').text()) / quantity;
+        const cost = parseFloat(row.find('.quantity-input').data('cost')); // Add cost
+        const totalProduct = parseFloat(row.find('.product-total').text());
+        const productId = row.find('.quantity-input').data('productId');
+        const volumeId = row.find('.quantity-input').data('volumeId');
+
+        const input = $('<input>', {
+          type: 'hidden',
+          name: 'products',
+          value: JSON.stringify({
+            product_id: productId,
+            volume_id: volumeId,
+            price: price,
+            cost: cost, // Include cost
+            quantity: quantity,
+            total_product: totalProduct
+          })
+        });
+        form.append(input);
+      });
+
+      console.log('Form validated, hidden inputs added:', selectedProducts);
+      return true;
+    };
+
+    // Event listeners for tax and amount paid
+    taxPercentageInput.on('input', updateTotals);
+    amountPayedInput.on('input', updateTotals);
+  });
+</script>
+    <script src="{% static 'assets/js/dashboard-custom.js' %}?v=1"></script>
+
+  </body>
+</html>

@@ -1,0 +1,11 @@
+We received your message
+
+Hi {{ contact_name }},
+
+Thank you for contacting {{ site_name }}. Our team has your message and will get back to you soon.
+
+Email: {{ contact_email }}
+Submitted: {{ submitted_at|date:"M j, Y H:i" }}
+Message: {{ contact_message }}
+
+Visit {{ site_url }}
