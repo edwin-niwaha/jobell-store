@@ -151,6 +151,7 @@ def index(request):
         page_obj = paginator.page(paginator.num_pages)
 
     products_with_images = build_storefront_cards(page_obj)
+    new_arrivals = build_storefront_cards(active_products.order_by("-created_at", "-pk")[:8])
 
     # Handle testimonial and nesletter forms submission
     testimonial_form = TestimonialForm(request.POST or None)
@@ -220,6 +221,7 @@ def index(request):
         {
             "form": form,
             "products_with_images": products_with_images,
+            "new_arrivals": new_arrivals,
             "categories": categories,
             "active_products_count": active_products.count(),
             "categories_count": len(categories),

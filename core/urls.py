@@ -3,11 +3,14 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path, re_path
+from .health import health
 
 # Define the URL patterns for the project
 urlpatterns = [
+    path("health/", health, name="health"),
     # Admin route
     path("admin/", admin.site.urls),
+    path("api/v1/", include("api.v1.urls")),
     # Main application routes
     path("", include("apps.main.urls")),
     path("auth/", include("apps.authentication.urls")),

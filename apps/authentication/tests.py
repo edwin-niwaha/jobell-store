@@ -10,6 +10,35 @@ from apps.authentication.notifications import _contact_context, queue_contact_em
 from apps.authentication.tasks import send_contact_emails_task
 
 
+class AccountPageLayoutTests(TestCase):
+    def test_account_pages_render_without_authentication(self):
+        for name in ("login", "users-register", "password_reset", "contact_us"):
+            with self.subTest(name=name):
+                response = self.client.get(reverse(name))
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, "account_forms.css")
+
+    def test_registration_failure_preserves_next_destination_and_fields(self):
+        response = self.client.post(reverse("users-register"), {"first_name": "Buyer", "email": "bad-email", "next": "/orders/checkout/"})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="next" value="/orders/checkout/"')
+        self.assertContains(response, 'value="Buyer"')
+        self.assertContains(response, "Enter a valid email address.")
+        self.assertEqual(User.objects.count(), 0)
+
+    def test_reset_failure_preserves_email_and_shows_error(self):
+        response = self.client.post(reverse("password_reset"), {"email": "bad-email"})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'value="bad-email"')
+        self.assertContains(response, "Enter a valid email address.")
+
+    def test_contact_page_explains_login_requirement_before_submission(self):
+        response = self.client.get(reverse("contact_us"))
+        self.assertContains(response, "Sign in to send a message through this form.")
+        self.assertContains(response, "next=/auth/contact-us/")
+        self.assertNotContains(response, 'id="contact-form"')
+
+
 class ContactEmailTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(

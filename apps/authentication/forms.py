@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib.auth.password_validation import password_validators_help_text_html
 from django.contrib.auth.models import User
 from phonenumber_field.formfields import PhoneNumberField
 from phonenumbers import phonenumberutil, parse, is_valid_number
@@ -12,6 +13,20 @@ from apps.customers.models import Customer
 
 # =================================== Register  ===================================
 class RegisterForm(UserCreationForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        autocomplete = {"first_name": "given-name", "last_name": "family-name", "username": "username", "email": "email", "password1": "new-password", "password2": "new-password", "tel": "tel", "mobile": "tel"}
+        for name, field in self.fields.items():
+            field.widget.attrs["autocomplete"] = autocomplete.get(name, "on")
+            field.widget.attrs.pop("data-toggle", None)
+            if name in {"tel", "mobile"}:
+                field.widget.attrs.update({"inputmode": "tel", "placeholder": "+256 777 123456"})
+        self.fields["email"].widget = forms.EmailInput(attrs={"class": "form-control", "autocomplete": "email", "placeholder": "you@example.com"})
+        self.fields["password1"].help_text = password_validators_help_text_html()
+        self.fields["username"].widget.attrs.pop("autofocus", None)
+        for name, label in {"password1": "Password", "password2": "Confirm password", "tel": "Telephone", "mobile": "Mobile number"}.items():
+            self.fields[name].label = label
+
     # fields we want to include and customize in our form
     first_name = forms.CharField(
         max_length=100,
@@ -185,6 +200,12 @@ class RegisterForm(UserCreationForm):
 
 # =================================== Login  ===================================
 class LoginForm(AuthenticationForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["username"].widget.attrs["autocomplete"] = "username"
+        self.fields["password"].widget.attrs["autocomplete"] = "current-password"
+        self.fields["password"].widget.attrs.pop("data-toggle", None)
+
     username = forms.CharField(
         max_length=100,
         required=True,

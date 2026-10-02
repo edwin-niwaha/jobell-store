@@ -1,10 +1,15 @@
 {
-  "$schema": "https://railway.app/railway.schema.json",
+  "$schema": "https://railway.com/railway.schema.json",
   "build": {
-    "builder": "NIXPACKS",
-    "buildCommand": "DJANGO_ENV=production python manage.py collectstatic --noinput"
+    "builder": "DOCKERFILE",
+    "dockerfilePath": "Dockerfile"
   },
   "deploy": {
-    "startCommand": "DJANGO_ENV=production gunicorn core.wsgi"
+    "preDeployCommand": ["python manage.py check --deploy --fail-level WARNING --settings=core.settings.production", "python manage.py migrate --noinput --settings=core.settings.production"],
+    "startCommand": "gunicorn core.wsgi:application --config gunicorn.conf.py",
+    "healthcheckPath": "/health/",
+    "healthcheckTimeout": 120,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 5
   }
 }

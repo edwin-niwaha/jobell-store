@@ -89,7 +89,7 @@ class RegisterView(View):
 
     def get(self, request, *args, **kwargs):
         form = self.form_class(initial=self.initial)
-        return render(request, self.template_name, {"form": form})
+        return render(request, self.template_name, {"form": form, "next": request.GET.get("next", "")})
 
     def post(self, request, *args, **kwargs):
         form = self.form_class(request.POST)
@@ -117,7 +117,7 @@ class RegisterView(View):
                 return redirect(next_url)
             return redirect(to=settings.LOGIN_REDIRECT_URL)
 
-        return render(request, self.template_name, {"form": form})
+        return render(request, self.template_name, {"form": form, "next": request.POST.get("next") or request.GET.get("next", "")})
 
 
 # =================================== Login View ===================================
@@ -125,6 +125,15 @@ class RegisterView(View):
 
 class CustomLoginView(LoginView):
     form_class = LoginForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Django's LoginView otherwise replaces the brand with the host name.
+        context["site_name"] = settings.SITE_NAME
+        context["google_login_enabled"] = bool(
+            settings.SOCIAL_AUTH_GOOGLE_OAUTH2_KEY and settings.SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET
+        )
+        return context
 
     def form_valid(self, form):
         user = form.get_user()
@@ -338,7 +347,7 @@ def contact_us(request):
 
             return HttpResponseRedirect(reverse("contact_us"))
 
-    return render(request, "accounts/contact_us.html", {"form": form})
+    return render(request, "accounts/contact_us.html", {"form": form, "contact_phone": settings.SUPPORT_PHONE or "+256 777-337-491"})
 
 
 # =================================== Display User Feedback ===================================

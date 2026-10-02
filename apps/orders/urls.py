@@ -1,8 +1,11 @@
 from django.urls import path
 from . import views
+from .whatsapp import review as whatsapp_review
 
 app_name = "orders"
 urlpatterns = [
+    path("whatsapp/review/", whatsapp_review, name="whatsapp_cart"),
+    path("whatsapp/product/<uuid:product_uuid>/", whatsapp_review, name="whatsapp_product"),
     # path(
     #     "product/<int:id>/", views.product_details_view, name="product_details_view"
     # ),  # This is the first view

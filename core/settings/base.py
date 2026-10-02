@@ -73,10 +73,10 @@ INSTALLED_APPS = [
     "django.contrib.humanize",
     "djoser",
     "rest_framework",
+    "django_filters",
     "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
     "social_django",
-    "bootstrap5",
     "formtools",
     "crispy_forms",
     "crispy_bootstrap5",
@@ -162,6 +162,7 @@ STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
@@ -183,11 +184,17 @@ CLOUDINARY_STORAGE = {
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.TokenAuthentication",
         "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
     ],
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.SearchFilter",
+        "rest_framework.filters.OrderingFilter",
+    ],
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": int(os.getenv("API_PAGE_SIZE", "20")),
 }
-
 SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
@@ -246,6 +253,9 @@ EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "10"))
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 RESEND_API_URL = os.getenv("RESEND_API_URL", "https://api.resend.com/emails")
 RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", DEFAULT_FROM_EMAIL)
+FLUTTERWAVE_PUBLIC_KEY = os.getenv("FLUTTERWAVE_PUBLIC_KEY", "")
+FLUTTERWAVE_SECRET_KEY = os.getenv("FLUTTERWAVE_SECRET_KEY", "")
+FLUTTERWAVE_WEBHOOK_SECRET_HASH = os.getenv("FLUTTERWAVE_WEBHOOK_SECRET_HASH", "")
 JOBELL_ORDER_EMAIL = os.getenv("JOBELL_ORDER_EMAIL", "jobellinc@gmail.com")
 ED_EMAIL = os.getenv("ED_EMAIL", "")
 ADMIN_ORDER_EMAILS = env_list(
@@ -285,7 +295,6 @@ SESSION_COOKIE_AGE = int(os.getenv("SESSION_COOKIE_AGE", "1209600"))
 SESSION_EXPIRE_AT_BROWSER_CLOSE = env_bool("SESSION_EXPIRE_AT_BROWSER_CLOSE", False)
 
 LOGS_DIR = BASE_DIR / "logs"
-LOGS_DIR.mkdir(parents=True, exist_ok=True)
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 LOGGING = {
     "version": 1,
@@ -301,19 +310,27 @@ LOGGING = {
             "class": "logging.StreamHandler",
             "formatter": "standard",
         },
-        "file": {
-            "class": "logging.FileHandler",
-            "filename": LOGS_DIR / "app.log",
-            "formatter": "standard",
-        },
     },
     "root": {
-        "handlers": ["console", "file"],
+        "handlers": ["console"],
         "level": LOG_LEVEL,
     },
 }
+
+# Railway collects stdout/stderr. File logging is opt-in for persistent hosts.
+if env_bool("LOG_TO_FILE", False):
+    LOGS_DIR.mkdir(parents=True, exist_ok=True)
+    LOGGING["handlers"]["file"] = {
+        "class": "logging.FileHandler", "filename": LOGS_DIR / "app.log",
+        "formatter": "standard",
+    }
+    LOGGING["root"]["handlers"].append("file")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+
+
+

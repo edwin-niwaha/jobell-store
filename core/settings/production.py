@@ -2,10 +2,12 @@ from .base import *  # noqa: F401,F403
 
 
 DEBUG = False
-WHITENOISE_MANIFEST_STRICT = env_bool("WHITENOISE_MANIFEST_STRICT", False)  # noqa: F405
+PRODUCTION = True
+WHITENOISE_MANIFEST_STRICT = True
 
 SECRET_KEY = os.environ["SECRET_KEY"]  # noqa: F405
 ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", [BASE_DOMAIN, f"www.{BASE_DOMAIN}"])  # noqa: F405
+ALLOWED_HOSTS += ["healthcheck.railway.app"]
 CSRF_TRUSTED_ORIGINS = env_list(  # noqa: F405
     "CSRF_TRUSTED_ORIGINS",
     [f"https://{BASE_DOMAIN}", f"https://www.{BASE_DOMAIN}"],  # noqa: F405
@@ -20,6 +22,7 @@ if DATABASE_URL:  # noqa: F405
     )
 
 SECURE_SSL_REDIRECT = env_bool("SECURE_SSL_REDIRECT", True)  # noqa: F405
+SECURE_REDIRECT_EXEMPT = [r"^health/$"]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SESSION_COOKIE_SECURE = env_bool("SESSION_COOKIE_SECURE", True)  # noqa: F405
 CSRF_COOKIE_SECURE = env_bool("CSRF_COOKIE_SECURE", True)  # noqa: F405

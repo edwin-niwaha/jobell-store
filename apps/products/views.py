@@ -13,6 +13,7 @@ from apps.inventory.models import Inventory
 from apps.products.selectors import (
     active_products_queryset,
     build_storefront_cards,
+    storefront_priced_queryset,
 )
 
 # Import models and forms
@@ -66,13 +67,21 @@ def shop_homepage_view(request):
     selected_category = None
 
     # Start with all active products
-    products = active_products_queryset().order_by("name")
+    products = storefront_priced_queryset(active_products_queryset())
 
     # Apply search if the form is valid.
     if form.is_valid():
         search_query = form.cleaned_data.get("search")
         if search_query:
             products = products.filter(name__icontains=search_query)
+        if form.cleaned_data.get("min_price") is not None:
+            products = products.filter(discovery_price__gte=form.cleaned_data["min_price"])
+        if form.cleaned_data.get("max_price") is not None:
+            products = products.filter(discovery_price__lte=form.cleaned_data["max_price"])
+
+    sort = form.cleaned_data.get("sort", "newest") if form.is_valid() else "newest"
+    ordering = {"price_asc": F("discovery_price").asc(nulls_last=True), "price_desc": F("discovery_price").desc(nulls_last=True), "name": "name"}.get(sort, "-created_at")
+    products = products.order_by(ordering, "pk")
 
     # Category filtering is driven exclusively by the category icon cards.
     category_id = request.GET.get("category")
@@ -99,6 +108,11 @@ def shop_homepage_view(request):
 
     products_with_images = build_storefront_cards(page_obj)
 
+    preserved_query = request.GET.copy()
+    preserved_query.pop("page", None)
+    category_query = preserved_query.copy()
+    category_query.pop("category", None)
+
     # Pass the form, filtered products, and pagination to the template
     return render(
         request,
@@ -110,6 +124,8 @@ def shop_homepage_view(request):
             "categories": categories,
             "selected_category": selected_category,
             "result_count": paginator.count,
+            "filter_query": preserved_query.urlencode(),
+            "category_query": category_query.urlencode(),
         },
     )
 

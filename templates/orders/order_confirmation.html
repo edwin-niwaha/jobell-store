@@ -1,255 +1,112 @@
 {% extends 'accounts/base.html' %}
-{% load humanize %}
+{% load humanize static %}
+{% block title %}Order #{{ order.id }} received | {{ branding.site_name }}{% endblock %}
+{% block body_class %}confirmation-body{% endblock %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/order_confirmation.css' %}?v=1">{% endblock %}
 
 {% block content %}
-  <main class="store-page">
-    <div class="container">
-      <section id="printMe" class="store-panel overflow-hidden">
-        <div class="order-confirmation-head">
-          <div class="order-confirmation-check">
-            <i class="fas fa-check" aria-hidden="true"></i>
-          </div>
-          <div>
-            <span class="store-eyebrow">Order received</span>
-            <h1 class="h4 fw-bold mb-1">Thank you for your order</h1>
-            <p class="mb-0">We have received it and will follow up shortly.</p>
-          </div>
-          <strong class="order-confirmation-id">#{{ order.id }}</strong>
-        </div>
-
-        <div class="p-3 p-lg-4">
-          <div class="order-confirmation-grid">
-            <section class="order-confirmation-card">
-              <span class="store-eyebrow">Client</span>
-              <h2 class="h6 fw-bold mt-2 mb-1">{{ order.customer.get_full_name|default:'Customer' }}</h2>
-              <p class="store-muted small mb-0">
-                {% if order.customer.mobile %}{{ order.customer.mobile }}{% endif %}
-                {% if order.customer.email %}{% if order.customer.mobile %}<br>{% endif %}{{ order.customer.email }}{% endif %}
-              </p>
-            </section>
-
-            <section class="order-confirmation-card">
-              <span class="store-eyebrow">{% if order.shipping_method == 'pickup' %}Pickup{% else %}Delivery{% endif %}</span>
-              <h2 class="h6 fw-bold mt-2 mb-1">{{ order.get_shipping_method_display }}</h2>
-              <p class="store-muted small mb-0">
-                {% if order.shipping_method == 'pickup' and order.pickup_station %}
-                  {{ order.pickup_station }}
-                {% elif order.delivery_address_text %}
-                  {{ order.delivery_address_text }}
-                {% else %}
-                  {{ order.customer.address|default:'Address pending confirmation' }}
-                {% endif %}
-              </p>
-            </section>
-
-            <section class="order-confirmation-card">
-              <span class="store-eyebrow">Payment</span>
-              <h2 class="h6 fw-bold mt-2 mb-1">{{ order.get_payment_method_display }}</h2>
-              <p class="store-muted small mb-0">
-                {{ order.status }}
-                {% if order.payment_method == 'mobile' and order.mobile_money_number %}
-                  <br>Paid from: {{ order.mobile_money_number }}
-                {% endif %}
-                {% if order.payment_method == 'mobile' %}
-                  <br>Send to: {{ manual_mobile_money_number }}
-                  {% if order.transaction_id %}
-                    <br>Evidence: {{ order.transaction_id }}
-                  {% endif %}
-                {% endif %}
-              </p>
-            </section>
-          </div>
-
-          <div class="order-confirmation-body">
-            <section class="order-confirmation-items">
-              <div class="d-flex justify-content-between align-items-center gap-3 mb-2">
-                <div>
-                  <span class="store-eyebrow">Items</span>
-                  <h2 class="h6 fw-bold mb-0">Order details</h2>
-                </div>
-              </div>
-
-              <div class="store-panel overflow-hidden shadow-none">
-                {% for detail in order.details.all %}
-                  <div class="order-confirmation-item {% if not forloop.last %}border-bottom{% endif %}">
-                    <div>
-                      <h3 class="fw-bold mb-1">{{ detail.product.name }}</h3>
-                      <p class="store-muted mb-0">
-                        Qty {{ detail.quantity }}{% if detail.product_volume %} / {{ detail.product_volume.variant_label }}{% endif %}
-                      </p>
-                    </div>
-                    <strong>UGX {{ detail.total|floatformat:'0'|intcomma }}</strong>
-                  </div>
-                {% endfor %}
-              </div>
-            </section>
-
-            <aside class="order-confirmation-total">
-              <span class="store-eyebrow">Amount</span>
-              <div class="store-summary-row mt-2">
-                <span>Items subtotal</span>
-                <strong>UGX {{ order_subtotal|floatformat:'0'|intcomma }}</strong>
-              </div>
-              {% if order.shipping_fee %}
-                <div class="store-summary-row">
-                  <span>{% if order.shipping_method == 'pickup' %}Pickup fee{% else %}Delivery fee{% endif %}</span>
-                  <strong>UGX {{ order.shipping_fee|floatformat:'0'|intcomma }}</strong>
-                </div>
-              {% endif %}
-              {% if order.tax_amount %}
-                <div class="store-summary-row">
-                  <span>Tax{% if order.tax_percentage %} ({{ order.tax_percentage|floatformat:'0' }}%){% endif %}</span>
-                  <strong>UGX {{ order.tax_amount|floatformat:'0'|intcomma }}</strong>
-                </div>
-              {% endif %}
-              {% if order_other_fee %}
-                <div class="store-summary-row">
-                  <span>Additional fee</span>
-                  <strong>UGX {{ order_other_fee|floatformat:'0'|intcomma }}</strong>
-                </div>
-              {% endif %}
-              <div class="store-summary-total">
-                <span>Total</span>
-                <strong>UGX {{ order.total_amount|floatformat:'0'|intcomma }}</strong>
-              </div>
-            </aside>
-          </div>
-        </div>
-      </section>
-
-      <div class="d-flex flex-column flex-sm-row justify-content-center gap-2 mt-4">
-        <button class="store-btn-outline" type="button" onclick="printDiv('printMe')">
-          <i class="fas fa-print"></i> Print order
-        </button>
-        <a href="{% url 'orders:customer_order_history' %}" class="store-btn">
-          <i class="fas fa-history"></i> Order history
-        </a>
-        <a href="{% url 'products:shop_homepage' %}" class="store-btn-dark">
-          <i class="fas fa-store"></i> Continue shopping
-        </a>
-      </div>
+<main class="confirmation-page">
+  <div class="confirmation-shell">
+    <div class="confirmation-topline">
+      <span class="confirmation-eyebrow">{{ branding.site_name|default:'Jobell Store' }} · Order confirmation</span>
+      <a href="{% url 'products:shop_homepage' %}"><i class="fas fa-arrow-left" aria-hidden="true"></i> Back to shop</a>
     </div>
-  </main>
+    <article id="printMe" class="confirmation-receipt" aria-labelledby="confirmationTitle">
+      <header class="confirmation-hero">
+        <div class="confirmation-success" aria-hidden="true">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/></svg>
+        </div>
+        <div class="confirmation-hero-copy">
+          <span class="confirmation-eyebrow">Order received</span>
+          <h1 id="confirmationTitle">Thank you for your order.</h1>
+          <p>Your order details are saved. Keep your order number handy when contacting our team.</p>
+        </div>
+        <div class="confirmation-reference">
+          <span>Order number</span>
+          <strong>#{{ order.id }}</strong>
+          <time datetime="{{ order.created_at|date:'c' }}">{{ order.created_at|date:'j M Y' }}</time>
+        </div>
+      </header>
 
-  <script>
-    function printDiv(divId) {
-      const printContents = document.getElementById(divId).outerHTML
-      const originalContents = document.body.innerHTML
-      document.body.innerHTML = printContents
-      window.print()
-      document.body.innerHTML = originalContents
-      window.location.reload()
-    }
-  </script>
+      <div class="confirmation-content">
+        <div class="confirmation-status-row">
+          <span class="confirmation-status"><span class="confirmation-status-dot" aria-hidden="true"></span>Order status: <strong>{{ order.get_status_display }}</strong></span>
+          <span class="confirmation-status-note">Your order at a glance</span>
+        </div>
+        <div class="confirmation-info-grid">
+          <section class="confirmation-info-card" aria-labelledby="confirmationContactTitle">
+            <div class="confirmation-card-heading"><span class="confirmation-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20v-1a7 7 0 0 1 14 0v1"/></svg></span><h2 id="confirmationContactTitle">Contact details</h2></div>
+            <strong class="confirmation-detail-title">{{ order.customer.get_full_name|default:'Customer' }}</strong>
+            {% if order.customer.mobile %}<p>{{ order.customer.mobile }}</p>{% endif %}
+            {% if order.customer.email %}<p>{{ order.customer.email }}</p>{% endif %}
+          </section>
 
-  <style>
-    .order-confirmation-head {
-      align-items: center;
-      background: #050505;
-      color: #fff;
-      display: grid;
-      gap: 1rem;
-      grid-template-columns: auto 1fr auto;
-      padding: 1.25rem;
-    }
+          <section class="confirmation-info-card" aria-labelledby="confirmationDeliveryTitle">
+            <div class="confirmation-card-heading"><span class="confirmation-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></span><h2 id="confirmationDeliveryTitle">{% if order.shipping_method == 'pickup' %}Pickup details{% else %}Delivery details{% endif %}</h2></div>
+            <strong class="confirmation-detail-title">{{ order.get_shipping_method_display }}</strong>
+            <p>{% if order.shipping_method == 'pickup' and order.pickup_station %}{{ order.pickup_station }}{% elif order.delivery_address_text %}{{ order.delivery_address_text }}{% else %}{{ order.customer.address|default:'Address pending confirmation' }}{% endif %}</p>
+          </section>
 
-    .order-confirmation-head p {
-      color: rgba(255, 255, 255, .72);
-      font-size: .92rem;
-    }
+          <section class="confirmation-info-card" aria-labelledby="confirmationPaymentTitle">
+            <div class="confirmation-card-heading"><span class="confirmation-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M7 15h4"/></svg></span><h2 id="confirmationPaymentTitle">Payment details</h2></div>
+            <strong class="confirmation-detail-title">{{ order.get_payment_method_display }}</strong>
+            <span class="confirmation-payment-status {% if order.payment_status == 'completed' %}is-paid{% elif order.payment_status == 'failed' %}is-failed{% endif %}">Payment: {{ order.get_payment_status_display }}</span>
+            {% if order.payment_method == 'mobile' %}
+              {% if order.mobile_money_number %}<p>Payment number: <span>{{ order.mobile_money_number }}</span></p>{% endif %}
+              {% if manual_mobile_money_number %}<p>Recipient: <span>{{ manual_mobile_money_number }}</span></p>{% endif %}
+              {% if order.transaction_id %}<p>Reference: <span>{{ order.transaction_id }}</span></p>{% endif %}
+              {% if order.payment_status == 'pending' %}<p class="confirmation-payment-note">Your payment will be checked by our team.</p>{% endif %}
+            {% elif order.payment_status == 'pending' %}
+              <p>Pay when you receive or collect your order.</p>
+            {% endif %}
+          </section>
+        </div>
 
-    .order-confirmation-check {
-      align-items: center;
-      background: #fff;
-      border-radius: 999px;
-      color: #067d62;
-      display: inline-flex;
-      height: 2.75rem;
-      justify-content: center;
-      width: 2.75rem;
-    }
+        <div class="confirmation-order-grid">
+          <section class="confirmation-items" aria-labelledby="confirmationItemsTitle">
+            <div class="confirmation-section-heading"><div><span class="confirmation-eyebrow">Your selection</span><h2 id="confirmationItemsTitle">Order details</h2></div><span class="confirmation-count">{{ order.details.count }} item{{ order.details.count|pluralize }}</span></div>
+            <ul class="confirmation-item-list">
+              {% for detail in order.details.all %}
+                <li class="confirmation-item">
+                  <span class="confirmation-item-number" aria-hidden="true">{{ forloop.counter|stringformat:'02d' }}</span>
+                  <div class="confirmation-item-copy"><h3>{{ detail.product.name }}</h3>{% if detail.product_volume %}<p>{{ detail.product_volume.variant_label }}</p>{% endif %}<span class="confirmation-quantity">Qty {{ detail.quantity }}</span></div>
+                  <strong class="confirmation-item-price">UGX {{ detail.total|floatformat:'0'|intcomma }}</strong>
+                </li>
+              {% empty %}
+                <li class="confirmation-empty">Your item details are being updated. Please contact our team with your order number.</li>
+              {% endfor %}
+            </ul>
+          </section>
 
-    .order-confirmation-id {
-      border: 1px solid rgba(255, 255, 255, .2);
-      border-radius: 999px;
-      padding: .35rem .75rem;
-      white-space: nowrap;
-    }
+          <aside class="confirmation-total" aria-labelledby="confirmationTotalTitle">
+            <span class="confirmation-eyebrow">Order summary</span>
+            <h2 id="confirmationTotalTitle">Your total</h2>
+            <dl class="confirmation-totals">
+              <div><dt>Items subtotal</dt><dd>UGX {{ order_subtotal|floatformat:'0'|intcomma }}</dd></div>
+              <div><dt>{% if order.shipping_method == 'pickup' %}Pickup fee{% else %}Delivery fee{% endif %}</dt><dd>{% if order.shipping_fee %}UGX {{ order.shipping_fee|floatformat:'0'|intcomma }}{% else %}Free{% endif %}</dd></div>
+              {% if order.tax_amount %}<div><dt>Tax{% if order.tax_percentage %} ({{ order.tax_percentage|floatformat:'0' }}%){% endif %}</dt><dd>UGX {{ order.tax_amount|floatformat:'0'|intcomma }}</dd></div>{% endif %}
+              {% if order_other_fee %}<div><dt>Additional fee</dt><dd>UGX {{ order_other_fee|floatformat:'0'|intcomma }}</dd></div>{% endif %}
+              <div class="confirmation-grand-total"><dt>Total amount</dt><dd>UGX {{ order.total_amount|floatformat:'0'|intcomma }}</dd></div>
+            </dl>
+            <p class="confirmation-total-note">All amounts are in Ugandan shillings.</p>
+          </aside>
+        </div>
 
-    .order-confirmation-grid {
-      display: grid;
-      gap: .75rem;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
+        {% if order.status == 'Pending' or order.status == 'Processing' %}
+        <section class="confirmation-next" aria-labelledby="confirmationNextTitle">
+          <span class="confirmation-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 1-8 8H4v-8a8 8 0 0 1 16 0Z"/><path d="M8 11h8M8 14h5"/></svg></span>
+          <div><h2 id="confirmationNextTitle">What happens next?</h2><p>Our team will contact you to confirm the details and {% if order.shipping_method == 'pickup' %}arrange your pickup{% else %}arrange your delivery{% endif %}.</p></div>
+        </section>
+        {% endif %}
+      </div>
+    </article>
 
-    .order-confirmation-card,
-    .order-confirmation-total {
-      border: 1px solid rgba(15, 23, 42, .1);
-      border-radius: 8px;
-      padding: 1rem;
-    }
-
-    .order-confirmation-body {
-      display: grid;
-      gap: 1rem;
-      grid-template-columns: minmax(0, 1fr) minmax(18rem, .42fr);
-      margin-top: 1rem;
-    }
-
-    .order-confirmation-item {
-      align-items: center;
-      display: flex;
-      gap: 1rem;
-      justify-content: space-between;
-      padding: .85rem 1rem;
-    }
-
-    .order-confirmation-item h3,
-    .order-confirmation-item p {
-      font-size: .92rem;
-    }
-
-    .order-confirmation-item strong {
-      font-size: .95rem;
-      white-space: nowrap;
-    }
-
-    @media (max-width: 991.98px) {
-      .order-confirmation-grid,
-      .order-confirmation-body {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 575.98px) {
-      .order-confirmation-head {
-        grid-template-columns: auto 1fr;
-      }
-
-      .order-confirmation-id {
-        grid-column: 1 / -1;
-        justify-self: start;
-      }
-
-      .order-confirmation-item {
-        align-items: flex-start;
-        flex-direction: column;
-        gap: .35rem;
-      }
-    }
-
-    @media print {
-      .store-btn,
-      .store-btn-outline,
-      .store-btn-dark,
-      .platform-store-nav,
-      .platform-footer,
-      .platform-chat-button {
-        display: none !important;
-      }
-      .store-panel {
-        box-shadow: none !important;
-      }
-    }
-  </style>
+    <nav class="confirmation-actions" aria-label="After your order">
+      <a href="{% url 'products:shop_homepage' %}" class="confirmation-button confirmation-button-primary">Continue shopping <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+      {% if request.user.is_authenticated %}<a href="{% url 'orders:customer_order_history' %}" class="confirmation-button">View order history</a>{% endif %}
+      <button class="confirmation-button confirmation-button-print" type="button" onclick="window.print()"><i class="fas fa-print" aria-hidden="true"></i> Print order</button>
+    </nav>
+    <p class="confirmation-save-note">Save this page or print a copy for your records.</p>
+  </div>
+</main>
 {% endblock %}

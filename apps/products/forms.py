@@ -13,6 +13,17 @@ from apps.inventory.models import Inventory
 
 
 class ProductFilterForm(forms.Form):
+    min_price = forms.DecimalField(required=False, min_value=0, max_digits=12, decimal_places=2, label="Min price (UGX)", widget=forms.NumberInput(attrs={"class": "form-control", "placeholder": "From", "step": "0.01"}))
+    max_price = forms.DecimalField(required=False, min_value=0, max_digits=12, decimal_places=2, label="Max price (UGX)", widget=forms.NumberInput(attrs={"class": "form-control", "placeholder": "To", "step": "0.01"}))
+    sort = forms.ChoiceField(required=False, choices=[("newest", "Newest first"), ("price_asc", "Price: low to high"), ("price_desc", "Price: high to low"), ("name", "Name: A–Z")], widget=forms.Select(attrs={"class": "form-select"}))
+
+    def clean(self):
+        data = super().clean()
+        low, high = data.get("min_price"), data.get("max_price")
+        if low is not None and high is not None and low > high:
+            self.add_error("max_price", "Maximum price must be at least the minimum price.")
+        return data
+
     search = forms.CharField(
         required=False,
         label="Search",

@@ -3,6 +3,9 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Prefetch
 from django.db.models import Avg, Q
+from django.db.models import DecimalField, ExpressionWrapper, F, OuterRef, Subquery, Value
+from django.db.models.functions import Coalesce, Greatest
+from decimal import Decimal
 
 from .models import Product, ProductImage, ProductVolume
 
@@ -33,6 +36,24 @@ def active_products_queryset():
         .filter(status="ACTIVE")
         .annotate(storefront_avg_rating=Avg("reviews__rating", filter=Q(reviews__is_verified=True)))
     )
+
+
+def storefront_priced_queryset(products):
+    """Use the same discounted variant price as cards for discovery ordering."""
+    money = DecimalField(max_digits=18, decimal_places=4)
+    base_price = Coalesce(F("price"), F("volume__price"), output_field=money)
+    discount = Greatest(Coalesce(F("discount_value"), Value(Decimal("0"))), Value(Decimal("0")))
+    current_price = Greatest(
+        ExpressionWrapper(base_price * (Value(Decimal("1")) - discount / Value(Decimal("100"))), output_field=money),
+        Value(Decimal("0")), output_field=money,
+    )
+    variants = ProductVolume.objects.filter(product_id=OuterRef("pk"), is_active=True).annotate(discovery_price=current_price).order_by("discovery_price")
+    in_stock = variants.filter(Q(stock_quantity__gt=0) | Q(stock_quantity__isnull=True, product__inventory__quantity__gt=0))
+    return products.annotate(discovery_price=Coalesce(
+        Subquery(in_stock.values("discovery_price")[:1]),
+        Subquery(variants.values("discovery_price")[:1]),
+        F("selling_price"), output_field=money,
+    ))
 
 
 def _variant_current_price(variant):

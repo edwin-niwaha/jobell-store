@@ -2,7 +2,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q, Avg, Sum
 from django.conf import settings
 from django.contrib import messages
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 import json
 import requests
 import uuid
@@ -18,6 +18,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils import timezone
+from django.utils.crypto import constant_time_compare
 from django.db import transaction
 from .models import Cart, CartItem, Order, OrderDetail, Wishlist
 from .services import (
@@ -25,6 +26,7 @@ from .services import (
     create_order_from_cart,
     get_or_create_cart,
     mark_order_paid_and_capture_sale,
+    validate_purchase_item,
 )
 from .notifications import (
     queue_order_created_emails,
@@ -266,14 +268,8 @@ def product_detail(request, product_uuid):
     cart_items = CartItem.objects.filter(cart=cart).select_related("product", "volume", "volume__volume")
     cart_count = sum(item.quantity for item in cart_items)
 
-    # Fetch product volumes
-    product_volumes = ProductVolume.objects.filter(
-        product=product, is_active=True
-    ).filter(
-        Q(stock_quantity__isnull=True) | Q(stock_quantity__gt=0)
-    ).order_by(
-        "sort_order", "volume__ml", "product_type"
-    )
+    product_card = build_storefront_product_card(product)
+    product_volumes = product_card["sellable_variants"]
 
     # Fetch and paginate reviews
     reviews = Review.objects.filter(product=product, is_verified=True).order_by(
@@ -303,6 +299,7 @@ def product_detail(request, product_uuid):
     context = {
         "product": product,
         "product_volumes": product_volumes,
+        "product_card": product_card,
         "cart_count": cart_count,
         "reviews": page_obj,
         "verified_reviews_count": reviews.count(),
@@ -790,12 +787,19 @@ def add_to_cart(request, product_uuid):
 
 def cart_view(request):
     cart = get_or_create_cart(request)
-    cart_items = cart.items.select_related(
+    cart_items = list(cart.items.select_related(
         "product",
         "product__category",
         "volume",
         "volume__volume",
-    )
+    ))
+    for item in cart_items:
+        item.quantity_limit = max(0, min(item.volume.available_quantity, item.volume.max_quantity_per_order or item.volume.available_quantity))
+        try:
+            validate_purchase_item(item.product, item.volume, item.quantity)
+            item.purchase_error = ""
+        except ValidationError as exc:
+            item.purchase_error = " ".join(exc.messages)
     total_price = cart_total(cart)
     total_items = sum(item.quantity for item in cart_items)
 
@@ -804,6 +808,7 @@ def cart_view(request):
         "cart_items": cart_items,
         "total_price": total_price,
         "total_items": total_items,
+        "cart_needs_attention": any(item.purchase_error for item in cart_items),
     }
 
     return render(request, "orders/cart.html", context)
@@ -909,6 +914,7 @@ def cart_view(request):
 #     return redirect("orders:cart")
 
 
+@require_POST
 def update_cart(request, item_id):
     cart = get_or_create_cart(request)
 
@@ -916,43 +922,21 @@ def update_cart(request, item_id):
     item = get_object_or_404(CartItem.objects.select_related("product", "volume", "volume__volume"), id=item_id, cart=cart)
 
     if request.method == "POST":
-        quantity = int(request.POST.get("quantity", 1))
+        try:
+            quantity = int(request.POST.get("quantity", ""))
+            validate_purchase_item(item.product, item.volume, quantity)
+        except (ValueError, TypeError, ValidationError) as exc:
+            messages.error(request, " ".join(exc.messages) if isinstance(exc, ValidationError) else "Enter a valid whole-number quantity.")
+            return redirect("orders:cart")
 
-        # Validate stock against the selected product variation.
-        if quantity > item.volume.available_quantity:
-            messages.error(
-                request,
-                f"Cannot update to {quantity} units. Only {item.volume.available_quantity} available.",
-                extra_tags="bg-danger text-white",
-            )
-        elif (
-            item.volume.max_quantity_per_order
-            and quantity > item.volume.max_quantity_per_order
-        ):
-            messages.error(
-                request,
-                f"You can keep up to {item.volume.max_quantity_per_order} units of this option in one order.",
-                extra_tags="bg-danger text-white",
-            )
-        elif quantity > 0:
-            item.quantity = quantity
-            item.save()
-            messages.success(
-                request,
-                f"Updated {item.product.name} quantity to {quantity}.",
-                extra_tags="bg-success text-white",
-            )
-        else:
-            item.delete()
-            messages.success(
-                request,
-                f"Removed {item.product.name} from cart.",
-                extra_tags="bg-success text-white",
-            )
+        item.quantity = quantity
+        item.save()
+        messages.success(request, f"Updated {item.product.name} quantity to {quantity}.", extra_tags="bg-success text-white")
 
     return redirect("orders:cart")
 
 
+@require_POST
 def remove_from_cart(request, item_id):
     cart = get_or_create_cart(request)
 
@@ -1293,7 +1277,6 @@ def checkout_delivery_summary(request):
     )
 
 
-@login_required
 def checkout_view(request):
     cart = get_or_create_cart(request)
     cart = (
@@ -1697,6 +1680,8 @@ def payment_flutter_view(request, order_id):
 
 
 def _verify_flutterwave_transaction(transaction_id):
+    if not transaction_id or not str(transaction_id).isdigit():
+        raise ValidationError("A valid payment transaction ID is required.")
     secret_key = getattr(settings, "FLUTTERWAVE_SECRET_KEY", "")
     if not secret_key:
         raise ValidationError("Online payment is not fully configured yet.")
@@ -1710,14 +1695,27 @@ def _verify_flutterwave_transaction(transaction_id):
 
 
 def _complete_flutterwave_payment(order, payload, transaction_id):
-    data = payload.get("data") or payload
-    status = (data.get("status") or payload.get("status") or "").lower()
-    tx_ref = data.get("tx_ref") or payload.get("tx_ref") or order.transaction_id
-    amount = Decimal(str(data.get("amount") or order.total_amount))
-    currency = data.get("currency") or "UGX"
+    data = payload.get("data") if isinstance(payload, dict) else None
+    if not isinstance(data, dict):
+        raise ValidationError("The payment verification response was incomplete.")
+    status = str(data.get("status") or "").lower()
+    tx_ref = data.get("tx_ref")
+    currency = data.get("currency")
+    if not tx_ref or tx_ref != order.transaction_id:
+        raise ValidationError("The payment reference did not match this order.")
+    if currency != "UGX" or str(data.get("id")) != str(transaction_id):
+        raise ValidationError("The payment currency or transaction ID did not match.")
+    try:
+        amount = Decimal(str(data.get("amount")))
+    except (InvalidOperation, TypeError, ValueError):
+        raise ValidationError("A verified payment amount is required.")
+    if not amount.is_finite() or amount <= 0 or amount < order.total_amount:
+        raise ValidationError("The payment amount was less than the order total or invalid.")
 
     old_payment_status = order.payment_status
     if status not in {"successful", "completed"}:
+        if old_payment_status == "completed":
+            raise ValidationError("Ignoring an unsuccessful update for a completed payment.")
         order.payment_status = "failed"
         order.save(update_fields=["payment_status", "updated_at"])
         if old_payment_status != order.payment_status:
@@ -1731,13 +1729,6 @@ def _complete_flutterwave_payment(order, payload, transaction_id):
                 )
             )
         raise ValidationError("The payment was not completed.")
-    if tx_ref and tx_ref != order.transaction_id:
-        raise ValidationError(
-            f"The payment reference did not match this order ({tx_ref} != {order.transaction_id})."
-        )
-    if amount < order.total_amount:
-        raise ValidationError("The payment amount was less than the order total.")
-
     payment, sale, sale_created = mark_order_paid_and_capture_sale(
         order,
         provider="flutterwave",
@@ -1805,7 +1796,7 @@ def flutterwave_callback_view(request):
 @require_POST
 def flutterwave_webhook_view(request):
     expected_hash = getattr(settings, "FLUTTERWAVE_WEBHOOK_SECRET_HASH", "")
-    if expected_hash and request.headers.get("verif-hash") != expected_hash:
+    if not expected_hash or not constant_time_compare(request.headers.get("verif-hash", ""), expected_hash):
         return HttpResponseForbidden("Invalid signature")
 
     try:
@@ -1813,9 +1804,13 @@ def flutterwave_webhook_view(request):
     except (TypeError, ValueError):
         return JsonResponse({"ok": False, "message": "Invalid payload"}, status=400)
 
+    if not isinstance(payload, dict) or not isinstance(payload.get("data", {}), dict):
+        return JsonResponse({"ok": False, "message": "Invalid payload"}, status=400)
     data = payload.get("data") or {}
     tx_ref = data.get("tx_ref") or payload.get("tx_ref")
     transaction_id = data.get("id") or payload.get("id") or payload.get("transaction_id")
+    if not isinstance(tx_ref, str) or not tx_ref or not str(transaction_id).isdigit():
+        return JsonResponse({"ok": False, "message": "Missing payment reference or ID"}, status=400)
     order = Order.objects.select_related("customer").filter(
         transaction_id=tx_ref,
         payment_method="mobile",
@@ -1824,7 +1819,11 @@ def flutterwave_webhook_view(request):
         return JsonResponse({"ok": True})
 
     try:
-        _complete_flutterwave_payment(order, payload, transaction_id)
+        verified = _verify_flutterwave_transaction(transaction_id)
+        _complete_flutterwave_payment(order, verified, transaction_id)
+    except requests.RequestException:
+        logger.warning("Flutterwave verification temporarily unavailable for order %s", order.id)
+        return JsonResponse({"ok": False}, status=503)
     except ValidationError as exc:
         logger.warning("Flutterwave webhook ignored for order %s: %s", order.id, exc)
     return JsonResponse({"ok": True})
