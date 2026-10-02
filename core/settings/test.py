@@ -14,6 +14,9 @@ STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
     "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
 }
+# Profile avatars use CloudinaryField directly, bypassing Django's test storage.
+# Rendering their URLs needs a cloud name, but no real account or upload.
+CLOUDINARY = {"cloud_name": "test-cloud", "secure": True}
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 RESEND_API_KEY = ""
 ORDER_EMAIL_USE_CELERY = False

@@ -60,13 +60,17 @@ python manage.py test --noinput --settings=core.settings.test
 Tests use an isolated SQLite database by default. For PostgreSQL parity, set
 `TEST_DATABASE_URL` to a disposable PostgreSQL database whose user can create test
 databases. Test settings ignore `DATABASE_URL`, disable real emails and Redis
-tasks, and store test uploads in memory. Never set `TEST_DATABASE_URL` to a live
-customer database.
+tasks, and store test uploads in memory. Profile avatar URL rendering uses a
+placeholder Cloudinary cloud name. Set `PYTHON_DOTENV_DISABLED=1` before running
+the checks to prevent local `.env` credentials from masking missing test
+configuration; CI sets this automatically. Never set `TEST_DATABASE_URL` to a
+live customer database.
 
 Browser checkout tests require Node, Playwright in `NODE_PATH`, and an installed
 browser. Set `CHECKOUT_BROWSER_CHANNEL=chromium` for Playwright Chromium (the local
-Windows default is Edge). The GitHub workflow installs these and runs the full
-suite, migration drift check, dependency audit, and Docker build on Linux.
+Windows default is Edge). The GitHub workflow validates both Railway config
+files against Railway's published schema, installs the browser tools, and runs
+the full suite, migration drift check, dependency audit, and Docker build on Linux.
 
 ## Railway services
 
@@ -105,9 +109,10 @@ suite, migration drift check, dependency audit, and Docker build on Linux.
    `/orders/payment/flutter/webhook/`.
    Unconfigured/invalid webhook requests are rejected; successful events are
    verified with the provider before payment is recorded.
-9. Railway's web pre-deploy commands run `check --deploy --fail-level WARNING`
-   and `migrate --noinput`. Review the migration plan and database backup first.
-   A failed check or migration must block the rollout.
+9. Railway accepts one web pre-deploy command. The configured shell command runs
+   `check --deploy --fail-level WARNING` and then `migrate --noinput`, joined with
+   `&&` so a failed check prevents migrations. Review the migration plan and
+   database backup first. A failed check or migration blocks the rollout.
 10. Create a second service from the same image/source for Celery. Select
     `railway.worker.json` as its config file and share the production variables.
     It has no public domain or HTTP health check. Start it after web migrations
