@@ -69,10 +69,16 @@ live customer database.
 Browser checkout tests require Node, Playwright in `NODE_PATH`, and an installed
 browser. Set `CHECKOUT_BROWSER_CHANNEL=chromium` for Playwright Chromium (the local
 Windows default is Edge). The GitHub workflow validates both Railway config
-files against Railway's published schema, installs the browser tools, and runs
+files against the checked-in Railway schema at `.github/railway.schema.json`
+(avoiding upstream rate limits), installs the browser tools, and runs
 the full suite, migration drift check, dependency audit, and Docker build on Linux.
 
 ## Railway services
+
+The schema snapshot was retrieved from `https://railway.com/railway.schema.json`
+on 2 October 2026. When adding Railway configuration features, download and review
+the latest upstream schema, update `.github/railway.schema.json`, and validate
+both configurations before merging. CI deliberately uses the local snapshot.
 
 ### Production branch policy
 

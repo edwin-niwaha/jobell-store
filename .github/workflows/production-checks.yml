@@ -32,7 +32,7 @@ jobs:
       - name: Validate Railway configuration
         shell: pwsh
         run: |
-          $schema = (Invoke-WebRequest -Uri 'https://railway.com/railway.schema.json').Content
+          $schema = Get-Content -Raw '.github/railway.schema.json'
           foreach ($config in @('railway.json', 'railway.worker.json')) {
             if (-not (Test-Json -Path $config -Schema $schema)) {
               throw "Invalid Railway configuration: $config"
