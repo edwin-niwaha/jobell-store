@@ -2,12 +2,12 @@
 
 <nav class="navbar navbar-expand-xl fixed-top platform-store-nav" data-responsive-navbar>
   <div class="container-fluid platform-nav-inner">
-    <a class="platform-brand" href="{% url 'users-home' %}" aria-label="{{ site_name|upper }} home">
+    <a class="platform-brand" href="{% url 'users-home' %}" aria-label="{{ company_name|default:'Jobell Inc.' }} Storefront home">
       <span class="platform-brand-mark">
-        <img src="{% static 'images/file.png' %}" alt="{{ site_name|upper }}" />
+        <img src="{% static 'images/file.png' %}" alt="{{ company_name|default:'Jobell Inc.' }}" />
       </span>
       <span class="platform-brand-copy">
-        <strong>{{ site_name|upper }}</strong>
+        <strong>{{ company_name|default:'Jobell Inc.'|upper }}</strong>
         <small>Storefront</small>
       </span>
     </a>

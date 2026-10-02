@@ -122,6 +122,9 @@ and [Git branch metadata](https://docs.railway.com/variables/reference).
    `REDIS_URL`, `CELERY_BROKER_URL`, and `CELERY_RESULT_BACKEND` from Redis. Set
    `DB_SSL_REQUIRE` according to the database endpoint: Railway private
    networking typically uses `False`; a TLS endpoint requires `True`.
+   Set `COMPANY_NAME=Jobell Inc.` and `SITE_NAME=Jobell Inc.` in existing
+   services as well; Railway variables override the defaults in the code.
+   The storefront header uses `COMPANY_NAME` followed by the `Storefront` label.
 6. Generate a new unique `SECRET_KEY`, for example with
    `python -c "import secrets; print(secrets.token_urlsafe(64))"`. Set the public
    HTTPS domain in `SITE_URL`, `ALLOWED_HOSTS`, `BASE_DOMAIN`,
