@@ -134,6 +134,15 @@ celerybeat.pid
 # Environments
 .env
 .venv
+.venv-*/
+.prod-check/
+.env.*
+!.env.example
+!.env.production.example
+staticfiles/
+media/
+logs/
+.ruff_cache/
 .env_online
 env/
 venv/

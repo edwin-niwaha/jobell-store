@@ -1,40 +1,18 @@
-{% extends 'accounts/base.html' %}
-{% load crispy_forms_tags %}
-
-{% block title %}
-  Contact Us
-{% endblock %}
-
+{% extends 'accounts/base.html' %}{% load static %}
+{% block title %}Contact us | {{ branding.site_name }}{% endblock %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/account_forms.css' %}?v=1"><script src="{% static 'js/account_forms.js' %}?v=1" defer></script>{% endblock %}
 {% block content %}
-  <section class="platform-info-page">
-    <div class="platform-info-hero">
-      <div>
-        <span class="platform-page-kicker">Support</span>
-        <h1>Get in touch</h1>
-        <p>Questions about an order, delivery, product details, or returns? Send us a message and the {{ site_name|upper }} team will help.</p>
-      </div>
-      <a class="platform-page-action" href="{% url 'products:shop_homepage' %}">Continue shopping</a>
-    </div>
-
-    <div class="platform-contact-grid">
-      <aside class="platform-info-panel">
-        <h2>Contact details</h2>
-        <div class="platform-contact-list">
-          <p><i class="mdi mdi-map-marker-outline"></i><span>Makerere, Kampala</span></p>
-          <p><i class="mdi mdi-phone-outline"></i><span>+256 777-337-491</span></p>
-          <p><i class="mdi mdi-whatsapp"></i><a href="https://wa.me/256777337491" target="_blank" rel="noopener">WhatsApp support</a></p>
-          <p><i class="mdi mdi-email-outline"></i><a href="mailto:{{ support_email }}">{{ support_email }}</a></p>
-        </div>
-      </aside>
-
-      <div class="platform-info-panel">
-        <h2>Send a message</h2>
-        <form id="contact-form" method="post" action="{% url 'contact_us' %}">
-          {% csrf_token %}
-          {{ form|crispy }}
-          <button type="submit" class="platform-page-button" onclick="return confirm('Are you sure you want to proceed?') && validateForm()">Send message</button>
-        </form>
-      </div>
-    </div>
-  </section>
-{% endblock %}
+<main class="account-page"><div class="account-contact-layout">
+<section class="account-story"><span class="account-kicker">{{ branding.site_name }} · Customer care</span><h1>How can<br>we help?</h1><p>Have a question about a fragrance, your order, or delivery? Find a way to reach our team below.</p>
+<div class="account-contact-methods">
+<div class="account-contact-method"><i class="mdi mdi-map-marker-outline" aria-hidden="true"></i><div><strong>Find us</strong><span>Makerere, Kampala</span></div></div>
+<div class="account-contact-method"><i class="mdi mdi-phone-outline" aria-hidden="true"></i><div><strong>Call us</strong><a href="tel:{{ contact_phone|cut:' '|cut:'-' }}">{{ contact_phone }}</a></div></div>
+<div class="account-contact-method"><i class="mdi mdi-email-outline" aria-hidden="true"></i><div><strong>Email us</strong><a href="mailto:{{ support_email }}">{{ support_email }}</a></div></div>
+<div class="account-contact-method"><i class="mdi mdi-whatsapp" aria-hidden="true"></i><div><strong>Chat with us</strong><a href="https://wa.me/{{ contact_phone|cut:' '|cut:'-'|cut:'+' }}" target="_blank" rel="noopener">WhatsApp support ↗</a></div></div>
+</div><p class="mt-4"><a class="account-back" href="{% url 'products:shop_homepage' %}">← Continue shopping</a></p></section>
+<section class="account-card" aria-labelledby="contactTitle"><header><h2 id="contactTitle">Send us a message</h2><p>Include your order number if your question is about a purchase.</p></header>
+{% if not user.is_authenticated %}<div class="account-signin-note"><strong>Sign in to send a message through this form.</strong><br><a href="{% url 'login' %}?next={{ request.path|urlencode }}">Sign in</a> or <a href="{% url 'users-register' %}?next={{ request.path|urlencode }}">create an account</a>. You can also use the contact options alongside this form.</div>{% endif %}
+{% if form.non_field_errors %}<div class="account-alert" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+{% if user.is_authenticated %}<form id="contact-form" class="account-form" method="post" action="{% url 'contact_us' %}">{% csrf_token %}{% for field in form %}{% include 'accounts/_partials/form_field.html' with field=field %}{% endfor %}<button class="account-primary" type="submit">Send message</button></form>
+{% else %}<a class="account-primary" href="{% url 'login' %}?next={{ request.path|urlencode }}">Sign in to send a message</a>{% endif %}
+</section></div></main>{% endblock %}

@@ -19,7 +19,7 @@
 
           <div class="platform-actions">
             <a href="{% url 'products:shop_homepage' %}" class="platform-btn platform-btn-accent">
-              Shop now
+              Shop fragrances
             </a>
             <a href="#platform-categories" class="platform-btn platform-btn-secondary">
               Browse categories
@@ -102,23 +102,14 @@
         <div class="platform-section-heading">
           <div>
             <h2>Shop by category</h2>
-            <p>{{ categories_count|default:0 }} categories available</p>
+            <p>Find a fragrance for every mood and occasion.</p>
           </div>
 
-          {% if categories %}
-            <div class="platform-scroll-actions d-none d-md-flex" aria-label="Category scroll controls">
-              <button class="platform-scroll-btn" type="button" data-scroll-target="[data-category-scroll]" data-scroll-direction="-1" aria-label="Scroll categories left">
-                <i class="mdi mdi-chevron-left" aria-hidden="true"></i>
-              </button>
-              <button class="platform-scroll-btn" type="button" data-scroll-target="[data-category-scroll]" data-scroll-direction="1" aria-label="Scroll categories right">
-                <i class="mdi mdi-chevron-right" aria-hidden="true"></i>
-              </button>
-            </div>
-          {% endif %}
+          <a href="{% url 'products:shop_homepage' %}">Shop all fragrances →</a>
         </div>
 
         {% if categories %}
-          <div class="platform-category-scroll d-flex flex-nowrap" data-category-scroll aria-label="Product categories">
+          <div class="platform-category-scroll" data-category-scroll aria-label="Product categories">
             {% for category in categories %}
               <a class="platform-category-card" href="{% url 'products:shop_homepage' %}?category={{ category.id }}">
                 <span class="platform-category-media">
@@ -148,7 +139,7 @@
         <div class="platform-section-heading">
             <div>
               <span class="platform-eyebrow">Handpicked</span>
-              <h2>Featured Collection</h2>
+              <h2>Featured Fragrances</h2>
             </div>
           <a href="{% url 'products:shop_homepage' %}">See more</a>
         </div>
@@ -173,9 +164,9 @@
           <a href="{% url 'products:shop_homepage' %}">View all</a>
         </div>
 
-        {% if products_with_images %}
+        {% if new_arrivals %}
           <div class="platform-product-grid">
-            {% for product_info in products_with_images|slice:':8' %}
+            {% for product_info in new_arrivals %}
               {% include 'partials/home_product_tile.html' with product_info=product_info grid=True %}
             {% endfor %}
           </div>

@@ -82,6 +82,17 @@ def _clean_customer_data(customer_data):
     }
 
 
+def validate_purchase_item(product, variant, quantity):
+    if variant.product_id != product.pk or not variant.is_active or not product.is_active:
+        raise ValidationError(f"{product.name} ({variant.variant_label}) is no longer available.")
+    if quantity <= 0:
+        raise ValidationError(f"{product.name} has an invalid quantity.")
+    if variant.max_quantity_per_order and quantity > variant.max_quantity_per_order:
+        raise ValidationError(f"You can order up to {variant.max_quantity_per_order} units of {product.name} ({variant.variant_label}).")
+    if quantity > variant.available_quantity:
+        raise ValidationError(f"Only {variant.available_quantity} units of {product.name} ({variant.variant_label}) are available.")
+
+
 def _validate_cart_items(cart):
     items = list(
         cart.items.select_related("product", "volume", "volume__volume").order_by("id")
@@ -90,26 +101,7 @@ def _validate_cart_items(cart):
         raise ValueError("Cannot create an order from an empty cart.")
 
     for item in items:
-        variant = item.volume
-        if not variant.is_active or not item.product.is_active:
-            raise ValidationError(
-                f"{item.product.name} ({variant.variant_label}) is no longer available."
-            )
-        if item.quantity <= 0:
-            raise ValidationError(f"{item.product.name} has an invalid quantity.")
-        if (
-            variant.max_quantity_per_order
-            and item.quantity > variant.max_quantity_per_order
-        ):
-            raise ValidationError(
-                f"You can order up to {variant.max_quantity_per_order} units of "
-                f"{item.product.name} ({variant.variant_label})."
-            )
-        if item.quantity > variant.available_quantity:
-            raise ValidationError(
-                f"Only {variant.available_quantity} units of {item.product.name} "
-                f"({variant.variant_label}) are available."
-            )
+        validate_purchase_item(item.product, item.volume, item.quantity)
     return items
 
 

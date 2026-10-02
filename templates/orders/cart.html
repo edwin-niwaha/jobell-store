@@ -1,5 +1,10 @@
 {% extends 'accounts/base.html' %}
 {% load humanize %}
+{% load static %}
+{% block body_class %}commerce-app commerce-cart{% endblock %}
+{% block topbar %}{% include 'accounts/_partials/navbar.html' %}<header class="commerce-mobile-header"><a href="{% url 'products:shop_homepage' %}" aria-label="Back to shopping">←</a><div><strong>Your cart</strong><span>{{ branding.site_name }}</span></div><a href="#cartItems" aria-label="Review cart items"><i class="mdi mdi-shopping-outline" aria-hidden="true"></i></a></header>{% endblock %}
+{% block title %}Your cart | {{ branding.site_name }}{% endblock %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/cart.css' %}?v=3"><link rel="stylesheet" href="{% static 'css/commerce_mobile.css' %}?v=2"><script src="{% static 'js/cart.js' %}?v=4" defer></script>{% endblock %}
 
 {% block content %}
   <style>
@@ -364,8 +369,8 @@
       <div class="cart-head">
         <div>
           <span class="cart-eyebrow">Shopping cart</span>
-          <h1 class="cart-title">Review your order</h1>
-          <p class="cart-muted">Keep the flow short: confirm quantities, checkout, place order.</p>
+          <h1 class="cart-title">Your cart</h1>
+          <p class="cart-muted">Review your items and quantities before checkout.</p>
         </div>
 
         <a href="{% url 'products:shop_homepage' %}" class="btn btn-cart-outline px-4">
@@ -374,8 +379,10 @@
       </div>
 
       {% if cart_items %}
+        <ol class="commerce-cart-progress" aria-label="Order progress"><li aria-current="step">1 · Cart</li><li>2 · Details</li><li>3 · Place order</li></ol>
+        <div class="commerce-dock"><div class="commerce-dock-total"><span>Items total · delivery next</span><strong>UGX {{ total_price|floatformat:'0'|intcomma }}</strong></div>{% if cart_needs_attention %}<a class="commerce-dock-button commerce-dock-warning" href="#cartItems">Check items ↑</a>{% else %}<a class="commerce-dock-button" data-cart-continue href="{% url 'orders:checkout' %}">Checkout →</a>{% endif %}</div>
         <div class="cart-grid">
-          <section class="cart-panel" aria-label="Cart items">
+          <section class="cart-panel" id="cartItems" aria-label="Cart items">
             <div class="cart-list-head">
               <h2>Items</h2>
               <span class="cart-count-pill">{{ total_items }} item{{ total_items|pluralize }}</span>
@@ -395,6 +402,7 @@
                     {{ item.product.category|default:'Product' }}{% if item.product.gender %} / {{ item.product.gender }}{% endif %}
                   </div>
                   <div class="cart-line-meta">{{ item.volume.variant_label }}</div>
+                  {% if item.purchase_error %}<p class="cart-error" role="alert">{{ item.purchase_error }}</p>{% else %}<p class="cart-stock">In stock · Up to {{ item.quantity_limit }} per order</p>{% endif %}
 
                   {% if item.volume.discount_value %}
                     <div class="mt-2">
@@ -416,25 +424,27 @@
                   <div class="d-flex gap-2 justify-content-end">
                     <form method="post" action="{% url 'orders:update_cart' item.id %}" class="cart-qty-form">
                       {% csrf_token %}
-                      <label for="quantity-{{ item.id }}" class="visually-hidden">Quantity</label>
+                      <label for="quantity-{{ item.id }}">Quantity <span class="visually-hidden">for {{ item.product.name }}</span></label>
+                      <div class="cart-stepper"><button type="button" data-step="-1" aria-label="Decrease quantity for {{ item.product.name }}" hidden>−</button>
                       <input
                         type="number"
                         name="quantity"
                         id="quantity-{{ item.id }}"
                         value="{{ item.quantity }}"
                         min="1"
-                        {% if item.volume.max_quantity_per_order %}max="{{ item.volume.max_quantity_per_order }}"{% endif %}
+                        max="{{ item.quantity_limit }}" required inputmode="numeric"
+                        {% if not item.quantity_limit or not item.product.is_active or not item.volume.is_active %}disabled{% endif %}
                         class="cart-qty-input"
                       >
-                      <button type="submit" class="btn btn-cart-dark btn-cart-icon" title="Update quantity">
-                        <i class="fas fa-sync-alt"></i>
+                      <button type="button" data-step="1" aria-label="Increase quantity for {{ item.product.name }}" hidden>+</button></div>
+                      <button type="submit" class="btn btn-cart-outline" {% if not item.quantity_limit or not item.product.is_active or not item.volume.is_active %}disabled{% endif %}>
+                        Update
                       </button>
                     </form>
 
-                    <a href="{% url 'orders:remove_from_cart' item.id %}" class="btn btn-outline-danger btn-cart-icon" title="Remove item" onclick="return confirm('Remove this item from your cart?');">
-                      <i class="fas fa-trash-alt"></i>
-                    </a>
+                    <form method="post" action="{% url 'orders:remove_from_cart' item.id %}" class="cart-remove-form">{% csrf_token %}<button type="submit" class="cart-remove" aria-label="Remove {{ item.product.name }} from cart">Remove</button></form>
                   </div>
+                  <p class="cart-field-status" aria-live="polite"></p>
                 </div>
               </article>
             {% endfor %}
@@ -442,7 +452,7 @@
 
           <aside class="cart-panel cart-summary" aria-label="Cart summary">
             <span class="cart-eyebrow">Summary</span>
-            <h2 class="h4 font-weight-bold text-dark mb-4">Ready to checkout</h2>
+            <h2 class="h4 font-weight-bold text-dark mb-4">Order summary</h2>
 
             <div class="summary-row">
               <span>Items</span>
@@ -454,18 +464,21 @@
             </div>
 
             <div class="summary-total">
-              <span>Total</span>
+              <span>Items total</span>
               <strong>UGX {{ total_price|floatformat:'0'|intcomma }}</strong>
             </div>
 
-            <a href="{% url 'orders:checkout' %}" class="btn btn-cart-primary btn-lg w-100 mt-4">
-              <i class="fas fa-credit-card me-2"></i>Checkout
+            <p class="cart-muted small mt-3">Delivery options and any delivery charges are calculated at checkout.</p>
+            <p id="cart-action-status" class="cart-error" role="status" aria-live="polite">{% if cart_needs_attention %}Update or remove unavailable items before continuing.{% endif %}</p>
+            {% if cart_needs_attention %}<button class="btn btn-cart-primary w-100" disabled>Check your items to continue</button>{% else %}
+            <a href="{% url 'orders:checkout' %}" data-cart-continue class="btn btn-cart-primary btn-lg w-100 mt-4">
+              Continue to checkout →
             </a>
+            <p class="cart-or">or order with personal assistance</p><a href="{% url 'orders:whatsapp_cart' %}" data-cart-continue class="cart-whatsapp"><i class="mdi mdi-whatsapp" aria-hidden="true"></i> Order this cart on WhatsApp</a>{% endif %}
 
             <div class="checkout-steps">
-              <span><i class="fas fa-check-circle"></i> Cart reviewed</span>
-              <span><i class="fas fa-map-marker-alt"></i> Delivery details next</span>
-              <span><i class="fas fa-bag-shopping"></i> Place order</span>
+              <span><i class="fas fa-map-marker-alt" aria-hidden="true"></i> Delivery options at checkout</span>
+              <span>WhatsApp starts an enquiry. Our team confirms availability and delivery.</span>
             </div>
           </aside>
         </div>
@@ -475,7 +488,7 @@
             <i class="fas fa-shopping-cart"></i>
           </div>
           <h2 class="h3 font-weight-bold text-dark">Your cart is empty</h2>
-          <p class="cart-muted mb-4">Add a product to start a new order.</p>
+          <p class="cart-muted mb-4">Your next favourite is waiting. Explore our fragrances and find a scent you love.</p>
           <a href="{% url 'products:shop_homepage' %}" class="btn btn-cart-primary btn-lg px-5">
             <i class="fas fa-store me-2"></i>Start shopping
           </a>

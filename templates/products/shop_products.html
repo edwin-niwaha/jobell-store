@@ -563,6 +563,7 @@
               <span class="search-icon">
                 <i class="fas fa-search" aria-hidden="true"></i>
               </span>
+              <label class="visually-hidden" for="{{ form.search.id_for_label }}">Search fragrances</label>
               {{ form.search }}
             </div>
 
@@ -573,6 +574,14 @@
               <i class="fas fa-search" aria-hidden="true"></i>
             </button>
           </div>
+          {% if selected_category %}<input type="hidden" name="category" value="{{ selected_category.id }}">{% endif %}
+          <div class="shopping-filters">
+            <div><label for="{{ form.min_price.id_for_label }}">Min price (UGX)</label>{{ form.min_price }}{{ form.min_price.errors }}</div>
+            <div><label for="{{ form.max_price.id_for_label }}">Max price (UGX)</label>{{ form.max_price }}{{ form.max_price.errors }}</div>
+            <div><label for="{{ form.sort.id_for_label }}">Sort products</label>{{ form.sort }}{{ form.sort.errors }}</div>
+            <div class="d-flex align-items-end"><button class="btn btn-gold w-100" type="submit">Apply filters</button></div>
+          </div>
+          {{ form.search.errors }}{{ form.non_field_errors }}
         </div>
       </form>
 
@@ -598,7 +607,7 @@
 
           {% if categories %}
             <div class="shop-category-scroll d-flex flex-nowrap" data-shop-category-scroll aria-label="Product categories">
-              <a href="{% url 'products:shop_homepage' %}{% if request.GET.search %}?search={{ request.GET.search }}{% endif %}" class="shop-category-card {% if not selected_category %}active{% endif %}">
+              <a href="{% url 'products:shop_homepage' %}?{{ category_query }}" class="shop-category-card {% if not selected_category %}active{% endif %}">
                 <span class="shop-category-media">
                   <i class="fas fa-border-all" aria-hidden="true"></i>
                 </span>
@@ -609,7 +618,7 @@
               </a>
 
               {% for category in categories %}
-                <a href="?category={{ category.id }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="shop-category-card {% if selected_category and selected_category.id == category.id %}active{% endif %}">
+                <a href="?category={{ category.id }}&{{ category_query }}" class="shop-category-card {% if selected_category and selected_category.id == category.id %}active{% endif %}">
                   <span class="shop-category-media">
                     {% if category.image_url %}
                       <img src="{{ category.image_url }}" alt="{{ category.name }}">
@@ -634,7 +643,15 @@
         </div>
       </section>
 
-      <div id="product-list" class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xxl-5 g-2 g-lg-3">
+      <div class="shopping-filter-summary" role="status">
+        <strong>{{ result_count }} product{{ result_count|pluralize }}</strong>
+        {% if request.GET.search %}<span>Search: {{ request.GET.search }}</span>{% endif %}
+        {% if selected_category %}<span>{{ selected_category.name }}</span>{% endif %}
+        {% if request.GET.min_price %}<span>From UGX {{ request.GET.min_price }}</span>{% endif %}
+        {% if request.GET.max_price %}<span>Up to UGX {{ request.GET.max_price }}</span>{% endif %}
+        <a href="{% url 'products:shop_homepage' %}">Reset filters</a>
+      </div>
+      <div id="product-list" class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-2 g-lg-3">
         {% if products_with_images %}
           {% for product_info in products_with_images %}
             {% with product=product_info.product %}
@@ -683,11 +700,11 @@
                     <div class="mb-2">
                       {% if product_info.has_sellable_price %}
                         {% if product_info.min_price == product_info.max_price %}
-                          <strong class="{% if product_info.has_discount %}text-danger{% else %}price-text{% endif %}">
+                          <strong data-variant-price class="{% if product_info.has_discount %}text-danger{% else %}price-text{% endif %}">
                             UGX {{ product_info.min_price|floatformat:'0'|intcomma }}
                           </strong>
                         {% else %}
-                          <strong class="{% if product_info.has_discount %}text-danger{% else %}price-text{% endif %}">
+                          <strong data-variant-price class="{% if product_info.has_discount %}text-danger{% else %}price-text{% endif %}">
                             UGX {{ product_info.min_price|floatformat:'0'|intcomma }} - {{ product_info.max_price|floatformat:'0'|intcomma }}
                           </strong>
                         {% endif %}
@@ -711,6 +728,7 @@
                       {% endif %}
                     </div>
 
+                    <p class="small {% if product_info.is_in_stock %}text-success{% else %}text-muted{% endif %}">{% if product_info.is_in_stock %}In stock{% else %}Out of stock{% endif %}</p>
                     <div class="mt-auto">
                       {% if product_info.sellable_variants and product_info.has_sellable_price and product_info.is_in_stock %}
                         {% if product_info.sellable_variants|length > 6 %}
@@ -750,7 +768,7 @@
                               </a>
 
                               <button type="submit" class="btn btn-gold rounded-pill flex-grow-1" data-cart-submit>
-                                <i class="fas fa-shopping-cart me-2"></i>Add
+                                <i class="fas fa-shopping-cart me-2" aria-hidden="true"></i>Add to cart
                               </button>
                             </div>
                           </form>
@@ -787,7 +805,7 @@
           <ul class="pagination flex-wrap justify-content-center">
             {% if page_obj.has_previous %}
               <li class="page-item">
-                <a class="page-link text-dark" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" aria-label="Previous">
+                <a class="page-link text-dark" href="?page={{ page_obj.previous_page_number }}&{{ filter_query }}" aria-label="Previous">
                   <i class="fas fa-angle-left"></i>
                 </a>
               </li>
@@ -800,7 +818,7 @@
                 </li>
               {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
                 <li class="page-item">
-                  <a class="page-link text-dark" href="?page={{ i }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}">
+                  <a class="page-link text-dark" href="?page={{ i }}&{{ filter_query }}">
                     {{ i }}
                   </a>
                 </li>
@@ -809,7 +827,7 @@
 
             {% if page_obj.has_next %}
               <li class="page-item">
-                <a class="page-link text-dark" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" aria-label="Next">
+                <a class="page-link text-dark" href="?page={{ page_obj.next_page_number }}&{{ filter_query }}" aria-label="Next">
                   <i class="fas fa-angle-right"></i>
                 </a>
               </li>

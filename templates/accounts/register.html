@@ -1,106 +1,17 @@
-{% extends 'accounts/base.html' %}
-{% load static %}
-
-{% block title %}
-  Create Account | {{ site_name|upper }}
-{% endblock %}
-
+{% extends 'accounts/base.html' %}{% load static %}
+{% block title %}Create account | {{ branding.site_name }}{% endblock %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/account_forms.css' %}?v=1"><script src="{% static 'js/account_forms.js' %}?v=1" defer></script>{% endblock %}
 {% block content %}
-  <main class="platform-register-page d-flex align-items-center">
-    <section class="container">
-      <div class="row justify-content-center">
-        <div class="col-12 col-xl-10">
-          <div class="card border shadow-sm overflow-hidden">
-            <div class="card-body p-4 p-md-5">
-              <div class="text-center mb-4">
-                <span class="platform-login-kicker">Join {{ site_name|upper }}</span>
-                <h1 class="h3 font-weight-bold mb-2">Create your account</h1>
-                <p class="text-muted mb-0">Save your details, track orders, and check out faster.</p>
-              </div>
-
-              {% if form.errors %}
-                <div class="alert alert-danger d-flex align-items-start" role="alert">
-                  <i class="mdi mdi-alert-circle-outline" aria-hidden="true"></i>
-                  <div class="ml-2">
-                    {% for key, value in form.errors.items %}
-                      <strong>{{ value }}</strong>
-                    {% endfor %}
-                  </div>
-                </div>
-              {% endif %}
-
-              <form method="POST">
-                {% csrf_token %}
-                {% if request.GET.next %}
-                  <input type="hidden" name="next" value="{{ request.GET.next }}">
-                {% endif %}
-
-                <div class="mb-4">
-                  <div class="d-flex align-items-center mb-3">
-                    <span class="platform-register-step">1</span>
-                    <h2 class="h6 font-weight-bold mb-0 ml-2">Your details</h2>
-                  </div>
-                  <div class="form-row">
-                    <div class="form-group col-md-6">
-                      <label class="font-weight-bold" for="{{ form.first_name.id_for_label }}">First name</label>
-                      {{ form.first_name }}
-                    </div>
-                    <div class="form-group col-md-6">
-                      <label class="font-weight-bold" for="{{ form.last_name.id_for_label }}">Last name</label>
-                      {{ form.last_name }}
-                    </div>
-                    <div class="form-group col-md-6">
-                      <label class="font-weight-bold" for="{{ form.tel.id_for_label }}">Telephone</label>
-                      {{ form.tel }}
-                    </div>
-                    <div class="form-group col-md-6">
-                      <label class="font-weight-bold" for="{{ form.mobile.id_for_label }}">Mobile</label>
-                      {{ form.mobile }}
-                    </div>
-                  </div>
-                </div>
-
-                <div class="mb-4">
-                  <div class="d-flex align-items-center mb-3">
-                    <span class="platform-register-step">2</span>
-                    <h2 class="h6 font-weight-bold mb-0 ml-2">Login credentials</h2>
-                  </div>
-                  <div class="form-row">
-                    <div class="form-group col-md-6">
-                      <label class="font-weight-bold" for="{{ form.username.id_for_label }}">Username</label>
-                      {{ form.username }}
-                    </div>
-                    <div class="form-group col-md-6">
-                      <label class="font-weight-bold" for="{{ form.email.id_for_label }}">Email</label>
-                      {{ form.email }}
-                    </div>
-                    <div class="form-group col-md-6">
-                      <label class="font-weight-bold" for="{{ form.password1.id_for_label }}">Password</label>
-                      {{ form.password1 }}
-                    </div>
-                    <div class="form-group col-md-6">
-                      <label class="font-weight-bold" for="{{ form.password2.id_for_label }}">Confirm password</label>
-                      {{ form.password2 }}
-                    </div>
-                  </div>
-                </div>
-
-                <button type="submit" class="btn btn-primary btn-block font-weight-bold">
-                  <i class="mdi mdi-account-plus-outline" aria-hidden="true"></i>
-                  Create account
-                </button>
-              </form>
-
-              <div class="border-top mt-4 pt-3 text-center text-muted">
-                <span>Already have an account?</span>
-                <a class="font-weight-bold" href="{% url 'login' %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}">Sign in</a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <script src="{% static 'js/phone-input.js' %}"></script>
-{% endblock %}
+<main class="account-page"><div class="account-layout">
+<section class="account-story"><span class="account-kicker">Join {{ branding.site_name }}</span><h1>A little more personal.<br>A lot easier to shop.</h1><p>Create your account to save your favourite fragrances and make your next checkout easier.</p><ul class="account-benefits"><li><i class="mdi mdi-heart-outline" aria-hidden="true"></i>Save fragrances you love</li><li><i class="mdi mdi-package-variant-closed" aria-hidden="true"></i>View your order history</li><li><i class="mdi mdi-map-marker-outline" aria-hidden="true"></i>Keep delivery addresses handy</li></ul><a class="account-back" href="{% url 'products:shop_homepage' %}">← Continue shopping</a></section>
+<section class="account-card" aria-labelledby="registerTitle"><header><h2 id="registerTitle">Create your account</h2><p>Tell us a little about yourself. Phone numbers are optional.</p></header>
+{% if form.non_field_errors %}<div class="account-alert" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+<form method="post" class="account-form">{% csrf_token %}{% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+<div class="account-grid">
+{% include 'accounts/_partials/form_field.html' with field=form.first_name %}{% include 'accounts/_partials/form_field.html' with field=form.last_name %}
+{% include 'accounts/_partials/form_field.html' with field=form.username %}{% include 'accounts/_partials/form_field.html' with field=form.email %}
+{% include 'accounts/_partials/form_field.html' with field=form.password1 %}{% include 'accounts/_partials/form_field.html' with field=form.password2 %}
+{% include 'accounts/_partials/form_field.html' with field=form.mobile %}{% include 'accounts/_partials/form_field.html' with field=form.tel %}
+</div><button type="submit" class="account-primary">Create account</button></form>
+<div class="account-footer">Already have an account? <a href="{% url 'login' %}{% if next %}?next={{ next|urlencode }}{% endif %}">Sign in</a></div></section>
+</div></main>{% endblock %}

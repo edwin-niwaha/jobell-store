@@ -32,6 +32,56 @@ from apps.supplier.models import Supplier
 
 
 class EcommerceFlowTests(TestCase):
+    def test_product_detail_explains_unavailable_inventory_without_purchase_form(self):
+        self.variant.stock_quantity = None
+        self.variant.save()
+        response = self.client.get(reverse("orders:product_detail", args=[self.product.uuid]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "This fragrance is currently unavailable.")
+        self.assertContains(response, "Save to wishlist")
+        self.assertNotContains(response, 'id="add-to-cart-form"')
+        self.assertEqual(response.context["product_volumes"], [])
+
+    def test_product_detail_shows_price_and_sellable_purchase_options(self):
+        response = self.client.get(reverse("orders:product_detail", args=[self.product.uuid]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="selected-price">UGX 25')
+        self.assertContains(response, 'id="add-to-cart-form"')
+        self.assertContains(response, "In stock")
+        self.assertEqual(response.context["product_volumes"], [self.variant])
+
+    def test_storefront_filters_use_discounted_variant_prices(self):
+        self.variant.price = Decimal("100")
+        self.variant.discount_value = Decimal("50")
+        self.variant.save()
+        response = self.client.get(reverse("products:shop_homepage"), {"min_price": "45", "max_price": "55", "sort": "price_asc"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["result_count"], 1)
+        self.assertEqual(response.context["products_with_images"][0]["min_price"], Decimal("50"))
+        response = self.client.get(reverse("products:shop_homepage"), {"min_price": "60"})
+        self.assertEqual(response.context["result_count"], 0)
+
+    def test_storefront_preserves_encoded_filters(self):
+        response = self.client.get(reverse("products:shop_homepage"), {"search": "Citrus & Rose", "min_price": "10", "sort": "price_desc", "page": "1"})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("search=Citrus+%26+Rose", response.context["filter_query"])
+        self.assertIn("min_price=10", response.context["filter_query"])
+        self.assertNotIn("page=", response.context["filter_query"])
+
+    def test_home_new_arrivals_include_new_nonfeatured_products(self):
+        self.product.is_featured = True
+        self.product.save()
+        newest = Product.objects.create(name="New Rose", status="ACTIVE", category=self.category, supplier=self.supplier)
+        response = self.client.get(reverse("users-home"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["new_arrivals"][0]["product"], newest)
+        self.assertNotIn(newest, [card["product"] for card in response.context["products_with_images"]])
+
+    def test_storefront_rejects_reversed_price_range(self):
+        response = self.client.get(reverse("products:shop_homepage"), {"min_price": "100", "max_price": "10"})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("max_price", response.context["form"].errors)
+
     def setUp(self):
         self.user = User.objects.create_user(
             username="buyer",
@@ -226,12 +276,19 @@ class EcommerceFlowTests(TestCase):
         self.assertEqual(Sale.objects.filter(order=order).count(), 1)
         self.assertEqual(self.variant.stock_quantity, 4)
 
-    def test_checkout_requires_login_and_keeps_next_url(self):
+    def test_empty_guest_checkout_returns_to_cart(self):
         response = self.client.get(reverse("orders:checkout"))
+        self.assertRedirects(response, reverse("orders:cart"), fetch_redirect_response=False)
 
-        self.assertEqual(response.status_code, 302)
-        self.assertIn(reverse("orders:checkout"), response["Location"])
-        self.assertIn(reverse("login"), response["Location"])
+    def test_guest_with_items_can_checkout_without_login(self):
+        session = self.client.session
+        session.save()
+        cart = Cart.objects.create(session_key=session.session_key)
+        CartItem.objects.create(cart=cart, product=self.product, volume=self.variant, quantity=1)
+        response = self.client.get(reverse("orders:checkout"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Complete your order")
+        self.assertContains(response, 'id="checkoutForm"')
 
     def test_checkout_form_allows_pickup_without_delivery_address(self):
         station = PickupStation.objects.create(

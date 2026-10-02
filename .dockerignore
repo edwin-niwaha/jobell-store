@@ -1,0 +1,17 @@
+.git
+.agents
+.env
+.env.*
+.venv*
+.prod-check
+__pycache__
+**/__pycache__
+*.pyc
+logs
+media
+staticfiles
+tmp_email_previews
+.ruff_cache
+.pytest_cache
+*.log
+*.sqlite3

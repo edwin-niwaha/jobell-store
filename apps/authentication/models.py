@@ -134,3 +134,28 @@ class Contact(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()  # Calls clean() before saving to enforce validations
         super().save(*args, **kwargs)
+
+
+class DeviceToken(models.Model):
+    PLATFORM_CHOICES = (
+        ("android", "Android"),
+        ("ios", "iOS"),
+        ("web", "Web"),
+    )
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="device_tokens")
+    token = models.CharField(max_length=512, unique=True)
+    platform = models.CharField(max_length=16, choices=PLATFORM_CHOICES)
+    app = models.CharField(max_length=40, default="jobell-mobile")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["user", "platform"], name="device_user_platform_idx"),
+            models.Index(fields=["is_active", "updated_at"], name="device_active_updated_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.user} {self.platform} token"

@@ -68,6 +68,7 @@ easy-thumbnails==2.10
 et-xmlfile==1.1.0
 filelock==3.13.1
 filetype==1.2.0
+firebase-admin==6.5.0
 flake8==7.1.0
 fonttools==4.53.1
 future==1.0.0

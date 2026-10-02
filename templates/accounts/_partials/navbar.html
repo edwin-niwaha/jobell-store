@@ -12,12 +12,21 @@
       </span>
     </a>
 
+    <a class="platform-icon-action d-xl-none shopping-mobile-cart" href="{% url 'orders:cart' %}" aria-label="View cart">
+      <i class="mdi mdi-cart-outline" aria-hidden="true"></i><span class="platform-count-badge" data-cart-count>{{ cart_count_user|default:0 }}</span>
+    </a>
     <button class="navbar-toggler platform-nav-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#siteNavbar" aria-controls="siteNavbar" aria-expanded="false" aria-label="Toggle navigation">
       <i class="mdi mdi-menu"></i>
     </button>
 
+      <form class="platform-nav-search" role="search" action="{% url 'products:shop_homepage' %}" method="get">
+        <label class="visually-hidden" for="navProductSearch">Search fragrances</label>
+        <input id="navProductSearch" type="search" name="search" value="{{ request.GET.search|default:'' }}" placeholder="Find your fragrance…" />
+        <button type="submit" aria-label="Search products"><i class="mdi mdi-magnify" aria-hidden="true"></i></button>
+      </form>
     <div class="collapse navbar-collapse" id="siteNavbar" data-navbar-menu>
       <ul class="navbar-nav platform-nav-links">
+        <li class="nav-item"><a class="nav-link" href="{% url 'users-home' %}#platform-categories">Categories</a></li>
         <li class="nav-item">
           <a class="nav-link" href="{% url 'products:shop_homepage' %}"><i class="mdi mdi-storefront-outline"></i> Shop</a>
         </li>
@@ -25,21 +34,7 @@
           <a class="nav-link" href="{% url 'orders:wishlist' %}"><i class="mdi mdi-heart-outline"></i> Wishlist</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="{% url 'orders:customer_order_history' %}"><i class="mdi mdi-receipt-text-outline"></i> Orders</a>
-        </li>
-        {% if user.is_authenticated %}
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'addresses:list' %}"><i class="mdi mdi-map-marker-outline"></i> Addresses</a>
-          </li>
-        {% endif %}
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'about_us' %}"><i class="mdi mdi-information-outline"></i> About</a>
-        </li>
-        <li class="nav-item">
           <a class="nav-link" href="{% url 'contact_us' %}"><i class="mdi mdi-headphones"></i> Support</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'blog:blog_list' %}"><i class="mdi mdi-newspaper-variant-outline"></i> Blog</a>
         </li>
         {% if user.is_authenticated and user.profile.role != 'guest' %}
           <li class="nav-item">
@@ -71,6 +66,8 @@
               </span>
             </a>
             <div class="dropdown-menu dropdown-menu-right platform-dropdown" aria-labelledby="userMenu">
+              <a class="dropdown-item" href="{% url 'orders:customer_order_history' %}">My orders</a>
+              <a class="dropdown-item" href="{% url 'addresses:list' %}">Delivery addresses</a>
               <a class="dropdown-item" href="{% url 'users-profile' %}"><i class="mdi mdi-account-outline"></i> My profile</a>
               <a class="dropdown-item" href="{% url 'password_change' %}"><i class="mdi mdi-shield-key-outline"></i> Security</a>
               <div class="dropdown-divider"></div>

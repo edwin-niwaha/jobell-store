@@ -1,8 +1,4 @@
 :root {
-    --primary-color: #D4AF37;
-    --secondary-color: #000000;
-    --text-color: #212529;
-    --border-radius: 12px;
     --app-gold: var(--primary-color);
     --app-gold-dark: #f0c96a;
     --app-black: var(--secondary-color);

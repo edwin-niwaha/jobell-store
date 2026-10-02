@@ -1,5 +1,10 @@
 # Jobel Retail
 
+For production releases, use the Railway deployment instructions in
+[DEPLOYMENT.md](DEPLOYMENT.md), the locked `requirements-production.txt`, and
+Python 3.12. The older general setup notes below describe the original development
+environment and are not the production release procedure.
+
 **Jobel Retail** is a comprehensive retail management system designed to streamline business operations, enhance inventory tracking, monitor sales, and strengthen customer relationships. With real-time data updates and an intuitive interface, it is ideal for managing retail stores of any size.
 
 ## Features
@@ -137,3 +142,6 @@ celery -A core worker -l info
 
 
 python manage.py collectstatic --noinput
+
+For Mobile App
+python manage.py runserver 0.0.0.0:8000

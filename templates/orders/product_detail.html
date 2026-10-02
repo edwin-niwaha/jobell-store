@@ -2,6 +2,9 @@
 {% load static %}
 {% load humanize %}
 
+{% block title %}{{ product.name }} | {{ site_name }}{% endblock %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/product_detail.css' %}?v=1" /><link rel="stylesheet" href="{% static 'css/whatsapp_orders.css' %}"><script src="{% static 'js/whatsapp_orders.js' %}" defer></script>{% endblock %}
+
 {% block content %}
 <style>
   :root {
@@ -274,9 +277,14 @@
 
 <section class="product-detail-page">
   <div class="product-detail-shell">
+    <nav class="detail-breadcrumb" aria-label="Breadcrumb">
+      <a href="{% url 'users-home' %}">Home</a><span aria-hidden="true">/</span>
+      <a href="{% url 'products:shop_homepage' %}">Fragrances</a><span aria-hidden="true">/</span>
+      <span aria-current="page">{{ product.name }}</span>
+    </nav>
     <div class="product-detail-hero">
       <div class="detail-gallery">
-        <div id="product-carousel" class="carousel slide" data-bs-ride="carousel" aria-label="Product images">
+        <div id="product-carousel" class="carousel slide" data-bs-interval="false" aria-label="Product images">
           <div class="carousel-inner detail-gallery-main">
             {% if product_images %}
               {% for image_url in product_images %}
@@ -306,7 +314,9 @@
         {% if product_images|length > 1 %}
           <div class="detail-gallery-strip">
             {% for image_url in product_images|slice:':8' %}
-              <img src="{{ image_url }}" alt="{{ product.name }} thumbnail {{ forloop.counter }}" loading="lazy">
+              <button type="button" class="detail-thumbnail {% if forloop.first %}is-selected{% endif %}" data-bs-target="#product-carousel" data-bs-slide-to="{{ forloop.counter0 }}" aria-label="Show {{ product.name }} image {{ forloop.counter }}" aria-pressed="{% if forloop.first %}true{% else %}false{% endif %}">
+                <img src="{{ image_url }}" alt="" loading="lazy">
+              </button>
             {% endfor %}
           </div>
         {% endif %}
@@ -315,24 +325,29 @@
       <aside class="detail-buy-box">
         <span class="detail-eyebrow">{{ product.category|default:'Product' }}</span>
         <h1 class="detail-title">{{ product.name }}</h1>
-        <div class="detail-meta">{{ product.gender|default:'Unisex' }}{% if product.supplier %} / {{ product.supplier }}{% endif %}</div>
+        <div class="detail-meta">{{ product.gender|default:'Unisex' }} <span class="detail-availability {% if not product_card.is_in_stock %}is-unavailable{% endif %}">{% if product_card.is_in_stock %}In stock{% else %}Out of stock{% endif %}</span></div>
 
         <div class="detail-rating-row">
-          <span class="detail-stars">
-            {% if average_rating %}
-              {% for _ in "12345" %}&#9733;{% endfor %}
-            {% else %}
-              &#9734;&#9734;&#9734;&#9734;&#9734;
-            {% endif %}
-          </span>
+          {% if average_rating %}<span class="detail-stars" aria-hidden="true">&#9733;</span>{% endif %}
           <span class="detail-meta">
             {% if average_rating %}{{ average_rating }} / 5{% else %}No ratings yet{% endif %}
             · {{ verified_reviews_count }} verified review{{ verified_reviews_count|pluralize }}
           </span>
+          <a href="#productReviews">Read reviews</a>
+        </div>
+
+        <p class="detail-intro">{{ product.description|default:'Discover your next signature fragrance.'|truncatewords:30 }}</p>
+        <div class="detail-price-card" role="status" aria-live="polite">
+          <div>
+            <small>{% if product_volumes %}Price{% else %}Product price{% endif %}</small>
+            <span id="selected-price">{% if product_card.has_sellable_price %}UGX {{ product_card.min_price|floatformat:'0'|intcomma }}{% if product_card.min_price != product_card.max_price %} – {{ product_card.max_price|floatformat:'0'|intcomma }}{% endif %}{% else %}Price unavailable{% endif %}</span>
+            <span id="selected-original-price"></span>
+          </div>
+          <span id="selected-stock" class="detail-stock-label">{% if not product_volumes %}Currently unavailable{% else %}Choose your option{% endif %}</span>
         </div>
 
         {% if product_volumes %}
-          <label for="volume-select" class="detail-label">Choose volume</label>
+          <label for="volume-select" class="detail-label">Choose your fragrance option</label>
           <select name="volume_id" id="volume-select" form="add-to-cart-form" class="form-select" required>
             <option value="" disabled selected>Select product type and volume</option>
             {% for product_volume in product_volumes %}
@@ -350,42 +365,35 @@
             {% endfor %}
           </select>
 
-          <div class="detail-price-card" role="status">
-            <div>
-              <small>Selected price</small>
-              <span id="selected-price">Choose an option</span>
-              <span id="selected-original-price"></span>
-            </div>
-            <span id="selected-stock" class="badge rounded-pill text-bg-light"></span>
-          </div>
-
           <div class="detail-actions">
             <form id="add-to-cart-form" action="{% url 'orders:add_to_cart' product.uuid %}" method="post" class="detail-cart-row js-add-to-cart-form">
               {% csrf_token %}
               <input type="hidden" name="next" value="{{ request.get_full_path }}">
-              <label for="quantity-input" class="visually-hidden">Quantity</label>
-              <input type="number" name="quantity" id="quantity-input" class="form-control text-center" value="1" min="1" aria-label="Product quantity">
+              <div class="detail-quantity"><label for="quantity-input">Quantity</label><input type="number" name="quantity" id="quantity-input" class="form-control text-center" value="1" min="1" aria-label="Product quantity"></div>
               <button title="Add to Cart" type="submit" class="btn btn-detail-primary" data-cart-submit>
                 <i class="fas fa-shopping-cart me-2"></i>Add to Cart
               </button>
             </form>
-
-            <form method="post" action="{% url 'orders:wishlist_add' product.uuid %}">
-              {% csrf_token %}
-              <input type="hidden" name="next" value="{{ request.get_full_path }}">
-              <button title="Add to Wishlist" type="submit" class="btn btn-detail-outline w-100">
-                <i class="fas fa-heart me-2"></i>Add to Wishlist
-              </button>
+            <form id="whatsapp-product-form" method="get" action="{% url 'orders:whatsapp_product' product.uuid %}">
+              <input type="hidden" name="volume_id"><input type="hidden" name="quantity">
+              <button type="submit" class="wa-secondary w-100" disabled><i class="mdi mdi-whatsapp" aria-hidden="true"></i>Order on WhatsApp</button>
             </form>
           </div>
         {% else %}
-          <div class="detail-note">
-            This product is currently unavailable.
+          <div class="detail-unavailable" role="status">
+            <strong>This fragrance is currently unavailable.</strong>
+            <button type="button" class="wa-secondary w-100" disabled>Order on WhatsApp · Unavailable</button>
+            <p>Explore other fragrances or save this one to your wishlist.</p>
+            <a class="btn btn-detail-primary w-100" href="{% url 'products:shop_homepage' %}{% if product.category %}?category={{ product.category.id }}{% endif %}">Explore available fragrances</a>
           </div>
         {% endif %}
+        <form class="detail-wishlist" method="post" action="{% url 'orders:wishlist_add' product.uuid %}">
+          {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button type="submit" class="btn btn-detail-outline w-100"><i class="far fa-heart me-2" aria-hidden="true"></i>Save to wishlist</button>
+        </form>
 
         <div class="detail-note">
-          <strong>Short checkout:</strong> choose a volume, add to cart, then confirm delivery details.
+          <i class="mdi mdi-truck-delivery-outline" aria-hidden="true"></i> Delivery options and charges are shown at checkout.
           {% if user.is_authenticated %}
             <a href="{% url 'orders:cart' %}" class="btn btn-detail-dark btn-sm mt-2 w-100">View cart ({{ cart_count|default:0 }})</a>
           {% endif %}
@@ -393,12 +401,12 @@
       </aside>
     </div>
 
-    <section class="detail-section">
+    <section class="detail-section" id="productDescription">
       <h2>Description</h2>
       <p class="mb-0">{{ product.description|default:'No description available.' }}</p>
     </section>
 
-    <section class="detail-section">
+    <section class="detail-section" id="productReviews">
       <div class="d-flex flex-column flex-md-row justify-content-between gap-2 mb-3">
         <div>
           <h2 class="mb-1">Customer Reviews</h2>
@@ -407,7 +415,7 @@
         {% if average_rating %}
           <div class="text-md-right">
             <strong class="h4 mb-0 d-block">{{ average_rating }} / 5</strong>
-            <span class="detail-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+            <span class="detail-meta">Verified customer rating</span>
           </div>
         {% endif %}
       </div>
@@ -497,6 +505,14 @@
     const selectedPrice = document.getElementById('selected-price')
     const selectedOriginalPrice = document.getElementById('selected-original-price')
     const selectedStock = document.getElementById('selected-stock')
+    const gallery = document.getElementById('product-carousel')
+    gallery?.addEventListener('slid.bs.carousel', function (event) {
+      document.querySelectorAll('.detail-thumbnail').forEach(function (thumbnail) {
+        const active = Number(thumbnail.dataset.bsSlideTo) === event.to
+        thumbnail.classList.toggle('is-selected', active)
+        thumbnail.setAttribute('aria-pressed', String(active))
+      })
+    })
 
     const formatUgx = (value) => Number(value || 0).toLocaleString('en-US', {
       maximumFractionDigits: 0
@@ -519,9 +535,11 @@
           : ''
 
       selectedStock.textContent =
-        stock > 999999
+        stock <= 0 ? 'Out of stock' : stock > 999999
           ? `Limit ${maxQuantity} per order`
           : `${formatUgx(stock)} available`
+      const purchaseButton = addToCartForm?.querySelector('[data-cart-submit]')
+      if (purchaseButton) purchaseButton.disabled = stock <= 0
 
       quantityInput.max = Math.max(1, Math.min(stock || maxQuantity, maxQuantity))
       if (Number(quantityInput.value) > Number(quantityInput.max)) {
@@ -531,6 +549,10 @@
 
     if (volumeSelect) {
       volumeSelect.addEventListener('change', updateSelectedVolume)
+      if (volumeSelect.options.length === 2 && Number(volumeSelect.options[1].dataset.stock) > 0) {
+        volumeSelect.selectedIndex = 1
+        updateSelectedVolume()
+      }
     }
 
     if (addToCartForm) {
